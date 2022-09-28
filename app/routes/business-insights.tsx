@@ -22,6 +22,7 @@ import {
     get_r4_googleAdsLiveCampaignsCount,
     get_r4_googleAdsRevenue,
     get_r4_googleAdsSpends,
+    r3_ordersRevenuePivotedByAssistAndBusiness,
 } from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
 import {joinValues} from "~/backend/utilities/utilities";
@@ -118,6 +119,7 @@ export const loader: LoaderFunction = async ({request}) => {
         r2_assistedOrdersCount: await get_r2_assistedOrdersCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r2_r3_directOrdersRevenue: await get_r2_r3_directOrdersRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r2_r3_assistedOrdersRevenue: await get_r2_r3_assistedOrdersRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        r3_ordersRevenuePivotedByAssistAndBusiness: await r3_ordersRevenuePivotedByAssistAndBusiness(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r4_facebookAdsSpends: await get_r4_facebookAdsSpends(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r4_googleAdsSpends: await get_r4_googleAdsSpends(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r4_facebookAdsLiveCampaignsCount: await get_r4_facebookAdsLiveCampaignsCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
@@ -150,6 +152,7 @@ export default function () {
         r2_assistedOrdersCount,
         r2_r3_directOrdersRevenue,
         r2_r3_assistedOrdersRevenue,
+        r3_ordersRevenuePivotedByAssistAndBusiness,
         r4_facebookAdsSpends,
         r4_googleAdsSpends,
         r4_facebookAdsLiveCampaignsCount,
@@ -226,11 +229,40 @@ export default function () {
         drr: r2_r3_assistedOrdersRevenue.netSales / numberOfSelectedDays,
     };
 
+    function getNetRevenue(row) {
+        let multiplier;
+
+        if (row.category == "Mattress" || row.category == "Non Mattress") {
+            multiplier = 8.5;
+        } else if (row.category == "Water Purifier") {
+            multiplier = 5;
+        } else if (row.category == "Appliances") {
+            // TODO: Replace with correct value
+            multiplier = 0;
+        } else if (row.category == null) {
+            // TODO: Remove
+            multiplier = 0;
+        } else {
+            throw new Error(`Multiplier for category ${row.category} not specified!`);
+        }
+
+        return (row.netSales / 1.18) * (1 - multiplier / 100);
+    }
+
     // const r3_directOrdersNetRevenue = r2_r3_directOrdersRevenue / r2_directOrdersCount.count;
     // const r3_assistedOrdersNetRevenue = r2_r3_assistedOrdersRevenue / r2_assistedOrdersCount;
-    const r3_directOrdersNetRevenue = "?";
-    const r3_assistedOrdersNetRevenue = "?";
-    const r3_totalNetRevenue = r3_directOrdersNetRevenue + r3_assistedOrdersNetRevenue;
+    const r3_directOrdersNetRevenue = {
+        metaInformation: "",
+        netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter(row => row.isAssisted == false).reduce((partialSum, row) => partialSum + getNetRevenue(row), 0),
+    };
+    const r3_assistedOrdersNetRevenue = {
+        metaInformation: "",
+        netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter(row => row.isAssisted == true).reduce((partialSum, row) => partialSum + getNetRevenue(row), 0),
+    };
+    const r3_totalNetRevenue = {
+        metaInformation: "",
+        netRevenue: r3_directOrdersNetRevenue.netRevenue + r3_assistedOrdersNetRevenue.netRevenue,
+    };
 
     const r4_netSpends = {
         metaInformation: `Facebook Ads Spends + Google Ads Spends = ${r4_facebookAdsSpends.amountSpent} + ${r4_googleAdsSpends.amountSpent}`,
@@ -446,7 +478,7 @@ export default function () {
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Revenue</div>
 
-            <Card information={numberToHumanFriendlyString(r3_totalNetRevenue)} label="Total Net Revenue" className="tw-row-span-2 tw-col-span-4" />
+            <Card information={numberToHumanFriendlyString(r3_totalNetRevenue.netRevenue)} label="Total Net Revenue" metaInformation={r3_totalNetRevenue.metaInformation} className="tw-row-span-2 tw-col-span-4" />
 
             <Card
                 information={numberToHumanFriendlyString(r2_r3_directOrdersRevenue.netSales, true)}
@@ -455,7 +487,7 @@ export default function () {
                 className="tw-col-span-2"
             />
 
-            <Card information={numberToHumanFriendlyString(r3_directOrdersNetRevenue, true)} label="Net Direct Revenue" className="tw-col-span-2" />
+            <Card information={numberToHumanFriendlyString(r3_directOrdersNetRevenue.netRevenue, true)} label="Net Direct Revenue" metaInformation={r3_directOrdersNetRevenue.metaInformation} className="tw-col-span-2" />
 
             <div className="tw-col-span-2" />
 
@@ -468,7 +500,7 @@ export default function () {
                 className="tw-col-span-2"
             />
 
-            <Card information={numberToHumanFriendlyString(r3_assistedOrdersNetRevenue, true)} label="Net Assisted Revenue" className="tw-col-span-2" />
+            <Card information={numberToHumanFriendlyString(r3_assistedOrdersNetRevenue.netRevenue, true)} label="Net Assisted Revenue" metaInformation={r3_assistedOrdersNetRevenue.metaInformation} className="tw-col-span-2" />
 
             <div className="tw-col-span-2" />
 

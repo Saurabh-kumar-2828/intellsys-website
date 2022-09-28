@@ -832,6 +832,81 @@ export async function get_r2_r3_assistedOrdersRevenue(
     }
 }
 
+export async function r3_ordersRevenuePivotedByAssistAndBusiness(
+    selectedCategories: Array<string>,
+    selectedProducts: Array<string>,
+    selectedPlatforms: Array<string>,
+    selectedCampaigns: Array<string>,
+    selectedGranularity: string,
+    minDate: string,
+    maxDate: string,
+) {
+    try {
+        const selectValues = [];
+        const whereValues = [];
+        const groupByValues = [];
+
+        if (selectedCategories.length > 0) {
+            whereValues.push(`product_category IN (${joinValues(selectedCategories, ", ", "'")})`);
+        }
+
+        // if (selectedProducts.length > 0) {
+        //     groupByValues.push("source_information_category");
+        // }
+
+        if (selectedPlatforms.length > 0) {
+            whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
+        }
+
+        if (selectedCampaigns.length > 0) {
+            whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
+        }
+
+        selectValues.push("SUM(net_sales) AS net_sales");
+        selectValues.push("is_assisted");
+        selectValues.push("product_category");
+
+        whereValues.push("cancelled = 'No'");
+        if (minDate != null) {
+            whereValues.push(`date >= '${minDate}'`);
+        }
+        if (maxDate != null) {
+            whereValues.push(`date <= '${maxDate}'`);
+        }
+
+        groupByValues.push("is_assisted");
+        groupByValues.push("product_category");
+
+        const query = (
+            `
+                SELECT
+                    ${joinValues(selectValues, ", ")}
+                FROM
+                    shopify_sales_to_source_with_information
+                WHERE
+                    ${joinValues(whereValues, " AND ")}
+                GROUP BY
+                    ${joinValues(groupByValues, ", ")}
+            `
+        );
+
+        const result = await execute(query);
+
+        return {
+            metaQuery: query,
+            rows: result.rows.map(row => ({
+                netSales: row.net_sales,
+                isAssisted: row.is_assisted,
+                category: row.product_category,
+            })),
+        };
+    } catch (e) {
+        console.log("Error executing function");
+        console.trace();
+        return "?";
+    }
+}
+
 export async function get_r4_facebookAdsSpends(
     selectedCategories: Array<string>,
     selectedProducts: Array<string>,

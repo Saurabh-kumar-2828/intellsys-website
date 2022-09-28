@@ -11,8 +11,6 @@ import {concatenateNonNullStringsWithSpaces, getNonEmptyStringOrNull} from "~/ut
 import {getAuthenticatedUserDetails} from "~/backend/utilities/sessionsHelper.server";
 
 export const action: ActionFunction = async ({request}) => {
-    console.log("ASD");
-
     const body = await request.formData();
 
     const username = getNonEmptyStringOrNull(body.get("username") as string);

@@ -16,7 +16,7 @@ const {getSession, commitSession, destroySession} = createCookieSessionStorage({
         path: "/",
         sameSite: "strict",
         secrets: [process.env.SESSION_SECRET],
-        secure: true,
+        secure: false,
     },
 });
 

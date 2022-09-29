@@ -158,7 +158,7 @@ export default function () {
                         `/facebook-campaigns?selected_granularity=${selectedGranularity}`,
                         `min_date=${selectedMinDate}`,
                         `max_date=${selectedMaxDate}`,
-                        selectedCampaigns.length == 0 ? null : `max_date=${JSON.stringify(selectedCampaigns)}`,
+                        selectedCampaigns.length == 0 ? null : `selected_campaigns=${JSON.stringify(selectedCampaigns)}`,
                         selectedCategories.length == 0 ? null : `selected_categories=${JSON.stringify(selectedCategories)}`,
                         selectedProducts.length == 0 ? null : `selected_products=${JSON.stringify(selectedProducts)}`,
                         selectedPlatforms.length == 0 ? null : `selected_platforms=${JSON.stringify(selectedPlatforms)}`

@@ -75,6 +75,84 @@ export async function getCampaignsInformation(
     }
 }
 
+export async function getCampaignsTrends (
+    selectedCategories: Array<string>,
+    selectedProducts: Array<string>,
+    selectedPlatforms: Array<string>,
+    selectedCampaigns: Array<string>,
+    selectedGranularity: string,
+    minDate: string,
+    maxDate: string,
+) {
+    try {
+        const selectValues = [];
+        const whereValues = [];
+        const groupByValues = [];
+
+        if (selectedCategories.length > 0) {
+            whereValues.push(`category IN (${joinValues(selectedCategories, ", ", "'")})`);
+        }
+
+        // if (selectedProducts.length > 0) {
+        //     groupByValues.push("source_information_category");
+        // }
+
+        if (selectedPlatforms.length > 0) {
+            whereValues.push(`platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
+        }
+
+        if (selectedCampaigns.length > 0) {
+            whereValues.push(`campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
+        }
+
+        selectValues.push("SUM(amount_spent) AS amount_spent");
+        selectValues.push("SUM(impressions) AS impressions");
+        selectValues.push("SUM(clicks) AS clicks");
+        selectValues.push(`${getGranularityQuery(selectedGranularity, "date")} AS date`);
+
+        whereValues.push("platform = 'Facebook'");
+        if (minDate != null) {
+            whereValues.push(`date >= '${minDate}'`);
+        }
+        if (maxDate != null) {
+            whereValues.push(`date <= '${maxDate}'`);
+        }
+
+        groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
+
+        const query = (
+            `
+                SELECT
+                    ${joinValues(selectValues, ", ")}
+                FROM
+                    ads_with_information
+                WHERE
+                    ${joinValues(whereValues, " AND ")}
+                GROUP BY
+                    ${joinValues(groupByValues, ", ")}
+                ORDER BY
+                    date
+            `
+        );
+
+        const result = await execute(query);
+
+        return {
+            metaQuery: query,
+            rows: result.rows.map(row => ({
+                date: row.date,
+                amountSpent: parseFloat(row.amount_spent),
+                impressions: parseFloat(row.impressions),
+                clicks: parseFloat(row.clicks),
+            })),
+        };
+    } catch (e) {
+        console.log("Error executing function");
+        console.trace();
+        return "?";
+    }
+}
+
 export async function getLeads(
     selectedCategories: Array<string>,
     selectedProducts: Array<string>,

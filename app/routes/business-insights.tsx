@@ -26,7 +26,8 @@ import {
 } from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
 import {joinValues} from "~/backend/utilities/utilities";
-import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, QueryFilterType, ValueDisplayingCard, ValueDisplayingCardInformationType} from "~/components/scratchpad";
+import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
+import { QueryFilterType, ValueDisplayingCardInformationType } from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithAmpersand, concatenateNonNullStringsWithSpaces, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
 import {BarGraphComponent} from "./barGraphComponent";
 
@@ -229,7 +230,7 @@ export default function () {
         drr: r2_r3_assistedOrdersRevenue.netSales / numberOfSelectedDays,
     };
 
-    function getNetRevenue(row) {
+    function getNetRevenue(row): number {
         let multiplier;
 
         if (row.category == "Mattress" || row.category == "Non Mattress") {
@@ -253,11 +254,11 @@ export default function () {
     // const r3_assistedOrdersNetRevenue = r2_r3_assistedOrdersRevenue / r2_assistedOrdersCount;
     const r3_directOrdersNetRevenue = {
         metaInformation: "",
-        netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter(row => row.isAssisted == false).reduce((partialSum, row) => partialSum + getNetRevenue(row), 0),
+        netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter(row => row.isAssisted == false).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
     };
     const r3_assistedOrdersNetRevenue = {
         metaInformation: "",
-        netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter(row => row.isAssisted == true).reduce((partialSum, row) => partialSum + getNetRevenue(row), 0),
+        netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter(row => row.isAssisted == true).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
     };
     const r3_totalNetRevenue = {
         metaInformation: "",
@@ -411,10 +412,10 @@ export default function () {
             {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg-100 tw-grid tw-items-center tw-h-[40rem]">
                 <BarGraphComponent
                     data={{
-                        x: r1_performanceLeadsCountTrend.rows.map((item) => item.date),
+                        x: r1_performanceLeadsCountTrend.rows.map(row => item.date),
                         y: {
-                            "Performance Leads": r1_performanceLeadsCountTrend.rows.map((item) => item.count),
-                            "Facebook Leads": r1_facebookLeadsCountTrend.rows.map((item) => item.count),
+                            "Performance Leads": r1_performanceLeadsCountTrend.rows.map(row => row.count),
+                            "Facebook Leads": r1_facebookLeadsCountTrend.rows.map(row => row.count),
                         },
                     }}
                     yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
@@ -470,10 +471,10 @@ export default function () {
             {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg-100 tw-grid tw-items-center tw-h-[40rem]">
                 <BarGraphComponent
                     data={{
-                        x: r1_performanceLeadsCountTrend.map((item) => item.date),
+                        x: r1_performanceLeadsCountTrend.map(row => row.date),
                         y: {
-                            "Dummy 1": r1_performanceLeadsCountTrend.map((item, itemIndex) => 0.5 + 0.25 * Math.sin(itemIndex * 2 * 3.141 / 20)),
-                            "Dummy 2": r1_performanceLeadsCountTrend.map((item, itemIndex) => 0.5 + 0.25 * Math.sin(0.5 + itemIndex * 2 * 3.141 / 20)),
+                            "Dummy 1": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(rowIndex * 2 * 3.141 / 20)),
+                            "Dummy 2": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(0.5 + rowIndex * 2 * 3.141 / 20)),
                         },
                     }}
                     yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
@@ -515,10 +516,10 @@ export default function () {
             {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg-100 tw-grid tw-items-center tw-h-[40rem]">
                 <BarGraphComponent
                     data={{
-                        x: r1_performanceLeadsCountTrend.map((item) => item.date),
+                        x: r1_performanceLeadsCountTrend.map(row => row.date),
                         y: {
-                            "Dummy 1": r1_performanceLeadsCountTrend.map((item, itemIndex) => 0.5 + 0.25 * Math.sin(itemIndex * 2 * 3.141 / 20)),
-                            "Dummy 2": r1_performanceLeadsCountTrend.map((item, itemIndex) => 0.5 + 0.25 * Math.sin(0.5 + itemIndex * 2 * 3.141 / 20)),
+                            "Dummy 1": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(rowIndex * 2 * 3.141 / 20)),
+                            "Dummy 2": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(0.5 + rowIndex * 2 * 3.141 / 20)),
                        },
                     }}
                     yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
@@ -560,10 +561,10 @@ export default function () {
             {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg-100 tw-grid tw-items-center tw-h-[40rem]">
                 <BarGraphComponent
                     data={{
-                        x: r1_performanceLeadsCountTrend.map((item) => item.date),
+                        x: r1_performanceLeadsCountTrend.map(row => row.date),
                         y: {
-                            "Dummy 1": r1_performanceLeadsCountTrend.map((item, itemIndex) => 0.5 + 0.25 * Math.sin(itemIndex * 2 * 3.141 / 20)),
-                            "Dummy 2": r1_performanceLeadsCountTrend.map((item, itemIndex) => 0.5 + 0.25 * Math.sin(0.5 + itemIndex * 2 * 3.141 / 20)),
+                            "Dummy 1": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(rowIndex * 2 * 3.141 / 20)),
+                            "Dummy 2": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(0.5 + rowIndex * 2 * 3.141 / 20)),
                         },
                     }}
                     yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
@@ -595,10 +596,10 @@ export default function () {
             {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg-100 tw-grid tw-items-center tw-h-[40rem]">
                 <BarGraphComponent
                     data={{
-                        x: r1_performanceLeadsCountTrend.map((item) => item.date),
+                        x: r1_performanceLeadsCountTrend.map(row => item.date),
                         y: {
-                            "Dummy 1": r1_performanceLeadsCountTrend.map((item, itemIndex) => 0.5 + 0.25 * Math.sin(itemIndex * 2 * 3.141 / 20)),
-                            "Dummy 2": r1_performanceLeadsCountTrend.map((item, itemIndex) => 0.5 + 0.25 * Math.sin(0.5 + itemIndex * 2 * 3.141 / 20)),
+                            "Dummy 1": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(rowIndex * 2 * 3.141 / 20)),
+                            "Dummy 2": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(0.5 + rowIndex * 2 * 3.141 / 20)),
                         },
                     }}
                     yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}

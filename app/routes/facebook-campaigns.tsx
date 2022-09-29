@@ -4,9 +4,10 @@ import {Link, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {get_r1_facebookLeadsAmountSpent, get_r1_facebookLeadsCount, get_r1_facebookLeadsCountTrend, get_r1_facebookLeadsSales, get_r1_performanceLeadsAmountSpent, get_r1_performanceLeadsCount, get_r1_performanceLeadsCountTrend, get_r1_performanceLeadsSales, get_r2_assistedOrdersCount, get_r2_directOrdersCount, get_r2_r3_assistedOrdersRevenue, get_r2_r3_directOrdersRevenue, get_r4_facebookAdsLiveCampaignsCount, get_r4_facebookAdsSpends, get_r4_googleAdsLiveCampaignsCount, get_r4_googleAdsSpends} from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
-import { getCampaignsInformation, getLeads, getSales } from "~/backend/facebook-campaigns";
+import { getCampaignsInformation, getCampaignsTrends, getLeads, getSales } from "~/backend/facebook-campaigns";
 import { joinValues } from "~/backend/utilities/utilities";
-import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect} from "~/components/scratchpad";
+import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
+import { QueryFilterType } from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithAmpersand, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
 import {BarGraphComponent} from "./barGraphComponent";
 
@@ -90,6 +91,7 @@ export const loader: LoaderFunction = async ({request}) => {
         campaignsInformation: await getCampaignsInformation(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         leads: await getLeads(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         sales: await getSales(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        campaignTrends: await getCampaignsTrends(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
     });
 };
 
@@ -107,6 +109,7 @@ export default function () {
         campaignsInformation,
         leads,
         sales,
+        campaignTrends,
     } = useLoaderData();
 
     // TODO: Add additional filtering to ensure this only shows facebook campaigns
@@ -137,13 +140,13 @@ export default function () {
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
             <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
-                <FancySearchableMultiSelect label="Business" options={businesses} selectedOptions={selectedCategories} setSelectedOptions={setSelectedCategories} />
+                <FancySearchableMultiSelect label="Business" options={businesses} selectedOptions={selectedCategories} setSelectedOptions={setSelectedCategories} filterType={QueryFilterType.category} />
 
-                <FancySearchableMultiSelect label="Product" options={products} selectedOptions={selectedProducts} setSelectedOptions={setSelectedProducts} />
+                <FancySearchableMultiSelect label="Product" options={products} selectedOptions={selectedProducts} setSelectedOptions={setSelectedProducts} filterType={QueryFilterType.product} />
 
-                <FancySearchableMultiSelect label="Platform" options={platforms} selectedOptions={selectedPlatforms} setSelectedOptions={setSelectedPlatforms} />
+                <FancySearchableMultiSelect label="Platform" options={platforms} selectedOptions={selectedPlatforms} setSelectedOptions={setSelectedPlatforms} filterType={QueryFilterType.platform} />
 
-                <FancySearchableMultiSelect label="Campaign" options={campaigns} selectedOptions={selectedCampaigns} setSelectedOptions={setSelectedCampaigns} />
+                <FancySearchableMultiSelect label="Campaign" options={campaigns} selectedOptions={selectedCampaigns} setSelectedOptions={setSelectedCampaigns} filterType={QueryFilterType.campaign} />
 
                 <FancySearchableSelect label="Granularity" options={granularities} selectedOption={selectedGranularity} setSelectedOption={setSelectedGranularity} />
 
@@ -225,6 +228,26 @@ export default function () {
                     height={640}
                 />
             </div> */}
+
+            <GenericCard
+                className="tw-col-span-6"
+                content={
+                    <BarGraphComponent
+                        data={{
+                            x: campaignTrends.rows.map(row => row.date),
+                            y: {
+                                "Amount Spent": campaignTrends.rows.map(row => row.amountSpent),
+                                "Impressions": campaignTrends.rows.map(row => row.impressions),
+                                "Clicks": campaignTrends.rows.map(row => row.clicks),
+                            },
+                        }}
+                        yClasses={["tw-fill-blue-500", "tw-fill-red-500", "tw-fill-yellow-400"]}
+                        barWidth={20}
+                        height={640}
+                    />
+                }
+                metaQuery={campaignTrends.metaQuery}
+            />
         </div>
     );
 }

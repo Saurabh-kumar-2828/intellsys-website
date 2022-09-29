@@ -1,7 +1,8 @@
 import {useState} from "react";
 import {ChevronDown, Clipboard, Filter, Funnel, InfoCircle, RecordCircle} from "react-bootstrap-icons";
-import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
+import {concatenateNonNullStringsWithSpaces, numberToHumanFriendlyString} from "~/utilities/utilities";
 import {Listbox} from "@headlessui/react";
+import { filterToHumanReadableString, filterToTextColor, ValueDisplayingCardInformationType } from "~/utilities/typeDefinitions";
 
 export function FancySearchableSelect(props: {id: string; className?: string; placeholder: string; options: Array<string>; label: string, selectedOption; setSelectedOption}) {
     return (
@@ -108,62 +109,22 @@ export function ValueDisplayingCard(props: {queryInformation, contentExtractor, 
                     )}
                 </div>
             )}
-            <div className="tw-text-[3rem]">{content}</div>
+            <div className="tw-text-[3rem]">
+                {
+                    props.type == ValueDisplayingCardInformationType.integer ? numberToHumanFriendlyString(content) :
+                    props.type == ValueDisplayingCardInformationType.float ? numberToHumanFriendlyString(content, true) :
+                    props.type == ValueDisplayingCardInformationType.percentage ? numberToHumanFriendlyString(content, true, true, true) :
+                    content
+                }
+            </div>
             <div className="tw-font-bold">{props.label}</div>
         </div>
     );
 }
 
-export enum ValueDisplayingCardInformationType {
-    integer,
-    float,
-    percentage,
-    text,
-}
-
-export enum QueryFilterType {
-    category,
-    product,
-    platform,
-    campaign,
-    date,
-}
-
-export function filterToTextColor(filterType: QueryFilterType) {
-    if (filterType == QueryFilterType.category) {
-        return "tw-text-red-500";
-    } else if (filterType == QueryFilterType.product) {
-        return "tw-text-blue-500";
-    } else if (filterType == QueryFilterType.platform) {
-        return "tw-text-green-500";
-    } else if (filterType == QueryFilterType.campaign) {
-        return "tw-text-purple-500";
-    } else if (filterType == QueryFilterType.date) {
-        return "tw-text-yellow-500";
-    } else {
-        throw new Error(`Unexpected value for QueryFilterType ${filterType}`);
-    }
-}
-
-export function filterToHumanReadableString(filterType: QueryFilterType) {
-    if (filterType == QueryFilterType.category) {
-        return "Category";
-    } else if (filterType == QueryFilterType.product) {
-        return "Product";
-    } else if (filterType == QueryFilterType.platform) {
-        return "Platform";
-    } else if (filterType == QueryFilterType.campaign) {
-        return "Campaign";
-    } else if (filterType == QueryFilterType.date) {
-        return "Date";
-    } else {
-        throw new Error(`Unexpected value for QueryFilterType ${filterType}`);
-    }
-}
-
 export function GenericCard(props: {content: JSX.Element, label?: string, className?: string, metaQuery?: string, metaInformation?: string}) {
     return (
-        <div className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-bg-100 tw-p-4 tw-grid tw-grid-cols-1 tw-place-items-center", props.className)} title={props.information}>
+        <div className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-bg-100 tw-p-4 tw-grid tw-grid-cols-1", props.className)} title={props.information}>
             {props.metaInformation == null && props.metaQuery == null ? null : (
                 <div className="tw-absolute tw-top-4 tw-right-4 tw-bg-bg-400 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
                     {props.metaInformation == null ? null : (

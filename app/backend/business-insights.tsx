@@ -1,7 +1,7 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {dateToMediumEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
-import { QueryFilterType } from "~/components/scratchpad";
+import { QueryFilterType } from "~/utilities/typeDefinitions";
 
 // TODO: Fix nomenclature
 
@@ -477,7 +477,7 @@ export async function get_r1_performanceLeadsCountTrend(
 
         return {
             metaQuery: query,
-            rows: result.rows.map((row) => ({
+            rows: result.rows.map(row => ({
                 date: dateToMediumEnFormat(row.date),
                 count: parseInt(row.count),
             })),
@@ -558,7 +558,7 @@ export async function get_r1_facebookLeadsCountTrend(
 
         return {
             metaQuery: query,
-            rows: result.rows.map((row) => ({
+            rows: result.rows.map(row => ({
                 date: dateToMediumEnFormat(row.date),
                 count: parseInt(row.count),
             })),

@@ -311,8 +311,8 @@ export default function () {
     const platforms = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.platform));
     const campaigns = distinct(
         allSourceInformation
-            .filter((sourceInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(sourceInformation.platform))
             .filter((sourceInformation) => selectedCategories.length == 0 || selectedCategories.includes(sourceInformation.category))
+            .filter((sourceInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(sourceInformation.platform))
             .map((sourceInformation) => sourceInformation.campaignName)
     );
     const granularities = ["Daily", "Weekly", "Monthly", "Yearly"];

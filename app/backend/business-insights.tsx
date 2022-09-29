@@ -299,6 +299,10 @@ export async function get_r1_performanceLeadsSales(
             whereValues.push(`product_title IN (${joinValues(selectedProducts, ", ", "'")})`);
         }
 
+        if (selectedCampaigns.length > 0) {
+            whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
+        }
+
         selectValues.push("SUM(net_sales) AS net_sales");
 
         whereValues.push("source NOT IN ('GJ_LeadGen_18May', 'GJ_LeadGen_Mattress_10 May', 'SOK/LSH_LeadGen_All_Int_InterestAudiences_India_20012022', 'Sok_LeadGen_Int_InterestAudience_04082021')");
@@ -365,7 +369,7 @@ export async function get_r1_facebookLeadsSales(
         }
 
         if (selectedCampaigns.length > 0) {
-            whereValues.push(`source_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
+            whereValues.push(`source_information_campaign IN (${joinValues(selectedCampaigns, ", ", "'")})`);
         }
 
         selectValues.push("SUM(net_sales) AS net_sales");

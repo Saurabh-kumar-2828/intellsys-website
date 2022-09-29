@@ -40,7 +40,7 @@ export function HeaderComponent(props: {className?: string}) {
         },
         {
             url: "/data-management",
-            displayName: "Data Managemnet",
+            displayName: "Data Management",
             exactMatch: false,
         },
         {

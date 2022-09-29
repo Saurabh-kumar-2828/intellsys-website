@@ -14,8 +14,8 @@ import {
     get_r1_performanceLeadsSales,
     get_r2_assistedOrdersCount,
     get_r2_directOrdersCount,
-    get_r2_r3_assistedOrdersRevenue,
-    get_r2_r3_directOrdersRevenue,
+    get_r2_r3_assistedOrdersGrossRevenue,
+    get_r2_r3_directOrdersGrossRevenue,
     get_r4_facebookAdsLiveCampaignsCount,
     get_r4_facebookAdsRevenue,
     get_r4_facebookAdsSpends,
@@ -118,8 +118,8 @@ export const loader: LoaderFunction = async ({request}) => {
         r1_facebookLeadsCountTrend: await get_r1_facebookLeadsCountTrend(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r2_directOrdersCount: await get_r2_directOrdersCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r2_assistedOrdersCount: await get_r2_assistedOrdersCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r2_r3_directOrdersRevenue: await get_r2_r3_directOrdersRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r2_r3_assistedOrdersRevenue: await get_r2_r3_assistedOrdersRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        r2_r3_directOrdersGrossRevenue: await get_r2_r3_directOrdersGrossRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        r2_r3_assistedOrdersGrossRevenue: await get_r2_r3_assistedOrdersGrossRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r3_ordersRevenuePivotedByAssistAndBusiness: await r3_ordersRevenuePivotedByAssistAndBusiness(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r4_facebookAdsSpends: await get_r4_facebookAdsSpends(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r4_googleAdsSpends: await get_r4_googleAdsSpends(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
@@ -151,8 +151,8 @@ export default function () {
         r1_facebookLeadsCountTrend,
         r2_directOrdersCount,
         r2_assistedOrdersCount,
-        r2_r3_directOrdersRevenue,
-        r2_r3_assistedOrdersRevenue,
+        r2_r3_directOrdersGrossRevenue,
+        r2_r3_assistedOrdersGrossRevenue,
         r3_ordersRevenuePivotedByAssistAndBusiness,
         r4_facebookAdsSpends,
         r4_googleAdsSpends,
@@ -208,26 +208,26 @@ export default function () {
         count: r2_directOrdersCount.count + r2_assistedOrdersCount.count,
     };
     const r2_directOrdersAov = {
-        metaInformation: `Orders Revenue / Orders Count | Direct = ${numberToHumanFriendlyString(r2_r3_directOrdersRevenue.netSales)} / ${numberToHumanFriendlyString(r2_directOrdersCount.count)}`,
-        aov: r2_r3_directOrdersRevenue.netSales / r2_directOrdersCount.count,
+        metaInformation: `Orders Revenue / Orders Count | Direct = ${numberToHumanFriendlyString(r2_r3_directOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(r2_directOrdersCount.count)}`,
+        aov: r2_r3_directOrdersGrossRevenue.netSales / r2_directOrdersCount.count,
     };
     const r2_assistedOrdersAov = {
-        metaInformation: `Orders Revenue / Orders Count | Assisted = ${numberToHumanFriendlyString(r2_r3_assistedOrdersRevenue.netSales)} / ${numberToHumanFriendlyString(
+        metaInformation: `Orders Revenue / Orders Count | Assisted = ${numberToHumanFriendlyString(r2_r3_assistedOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(
             r2_assistedOrdersCount.count
         )}`,
-        aov: r2_r3_assistedOrdersRevenue.netSales / r2_assistedOrdersCount.count,
+        aov: r2_r3_assistedOrdersGrossRevenue.netSales / r2_assistedOrdersCount.count,
     };
     const r2_directOrdersDrr = {
-        metaInformation: `Orders Revenue / Number of Days | Direct = ${numberToHumanFriendlyString(r2_r3_directOrdersRevenue.netSales)} / ${numberToHumanFriendlyString(
+        metaInformation: `Orders Revenue / Number of Days | Direct = ${numberToHumanFriendlyString(r2_r3_directOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(
             numberOfSelectedDays
         )}`,
-        drr: r2_r3_directOrdersRevenue.netSales / numberOfSelectedDays,
+        drr: r2_r3_directOrdersGrossRevenue.netSales / numberOfSelectedDays,
     };
     const r2_assistedOrdersDrr = {
-        metaInformation: `Orders Revenue / Number of Days | Assisted = ${numberToHumanFriendlyString(r2_r3_assistedOrdersRevenue.netSales)} / ${numberToHumanFriendlyString(
+        metaInformation: `Orders Revenue / Number of Days | Assisted = ${numberToHumanFriendlyString(r2_r3_assistedOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(
             numberOfSelectedDays
         )}`,
-        drr: r2_r3_assistedOrdersRevenue.netSales / numberOfSelectedDays,
+        drr: r2_r3_assistedOrdersGrossRevenue.netSales / numberOfSelectedDays,
     };
 
     function getNetRevenue(row): number {
@@ -250,8 +250,8 @@ export default function () {
         return (row.netSales / 1.18) * (1 - multiplier / 100);
     }
 
-    // const r3_directOrdersNetRevenue = r2_r3_directOrdersRevenue / r2_directOrdersCount.count;
-    // const r3_assistedOrdersNetRevenue = r2_r3_assistedOrdersRevenue / r2_assistedOrdersCount;
+    // const r3_directOrdersNetRevenue = r2_r3_directOrdersGrossRevenue / r2_directOrdersCount.count;
+    // const r3_assistedOrdersNetRevenue = r2_r3_assistedOrdersGrossRevenue / r2_assistedOrdersCount;
     const r3_directOrdersNetRevenue = {
         metaInformation: "",
         netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter(row => row.isAssisted == false).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
@@ -312,6 +312,7 @@ export default function () {
     const campaigns = distinct(
         allSourceInformation
             .filter((sourceInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(sourceInformation.platform))
+            .filter((sourceInformation) => selectedCategories.length == 0 || selectedCategories.includes(sourceInformation.category))
             .map((sourceInformation) => sourceInformation.campaignName)
     );
     const granularities = ["Daily", "Weekly", "Monthly", "Yearly"];
@@ -488,9 +489,9 @@ export default function () {
             <Card information={numberToHumanFriendlyString(r3_totalNetRevenue.netRevenue)} label="Total Net Revenue" metaInformation={r3_totalNetRevenue.metaInformation} className="tw-row-span-2 tw-col-span-4" />
 
             <Card
-                information={numberToHumanFriendlyString(r2_r3_directOrdersRevenue.netSales, true)}
-                label="Direct Revenue"
-                metaQuery={r2_r3_directOrdersRevenue.metaQuery}
+                information={numberToHumanFriendlyString(r2_r3_directOrdersGrossRevenue.netSales, true)}
+                label="Direct Gross Revenue"
+                metaQuery={r2_r3_directOrdersGrossRevenue.metaQuery}
                 className="tw-col-span-2"
             />
 
@@ -501,9 +502,9 @@ export default function () {
             <div className="tw-col-span-2" />
 
             <Card
-                information={numberToHumanFriendlyString(r2_r3_assistedOrdersRevenue.netSales, true)}
-                label="Assisted Revenue"
-                metaQuery={r2_r3_assistedOrdersRevenue.metaQuery}
+                information={numberToHumanFriendlyString(r2_r3_assistedOrdersGrossRevenue.netSales, true)}
+                label="Assisted Gross Revenue"
+                metaQuery={r2_r3_assistedOrdersGrossRevenue.metaQuery}
                 className="tw-col-span-2"
             />
 

@@ -2,7 +2,7 @@ import type {MetaFunction, LoaderFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
-import {get_r1_facebookLeadsAmountSpent, get_r1_facebookLeadsCount, get_r1_facebookLeadsCountTrend, get_r1_facebookLeadsSales, get_r1_performanceLeadsAmountSpent, get_r1_performanceLeadsCount, get_r1_performanceLeadsCountTrend, get_r1_performanceLeadsSales, get_r2_assistedOrdersCount, get_r2_directOrdersCount, get_r2_r3_assistedOrdersRevenue, get_r2_r3_directOrdersRevenue, get_r4_facebookAdsLiveCampaignsCount, get_r4_facebookAdsSpends, get_r4_googleAdsLiveCampaignsCount, get_r4_googleAdsSpends} from "~/backend/business-insights";
+import {get_r1_facebookLeadsAmountSpent, get_r1_facebookLeadsCount, get_r1_facebookLeadsCountTrend, get_r1_facebookLeadsSales, get_r1_performanceLeadsAmountSpent, get_r1_performanceLeadsCount, get_r1_performanceLeadsCountTrend, get_r1_performanceLeadsSales, get_r2_assistedOrdersCount, get_r2_directOrdersCount, get_r2_r3_assistedOrdersGrossRevenue, get_r2_r3_directOrdersGrossRevenue, get_r4_facebookAdsLiveCampaignsCount, get_r4_facebookAdsSpends, get_r4_googleAdsLiveCampaignsCount, get_r4_googleAdsSpends} from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
 import { getCampaignsInformation, getCampaignsTrends, getLeads, getSales } from "~/backend/facebook-campaigns";
 import { joinValues } from "~/backend/utilities/utilities";
@@ -132,6 +132,7 @@ export default function () {
     const platforms = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.platform));
     const campaigns = distinct(
         allSourceInformation
+            .filter((sourceInformation) => selectedCategories.length == 0 || selectedCategories.includes(sourceInformation.category))
             .filter((sourceInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(sourceInformation.platform))
             .map((sourceInformation) => sourceInformation.campaignName)
     );

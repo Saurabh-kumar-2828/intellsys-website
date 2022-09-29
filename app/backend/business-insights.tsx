@@ -708,7 +708,7 @@ export async function get_r2_assistedOrdersCount(
     }
 }
 
-export async function get_r2_r3_directOrdersRevenue(
+export async function get_r2_r3_directOrdersGrossRevenue(
     selectedCategories: Array<string>,
     selectedProducts: Array<string>,
     selectedPlatforms: Array<string>,
@@ -777,7 +777,7 @@ export async function get_r2_r3_directOrdersRevenue(
     }
 }
 
-export async function get_r2_r3_assistedOrdersRevenue(
+export async function get_r2_r3_assistedOrdersGrossRevenue(
     selectedCategories: Array<string>,
     selectedProducts: Array<string>,
     selectedPlatforms: Array<string>,

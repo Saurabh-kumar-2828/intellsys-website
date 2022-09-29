@@ -1,6 +1,7 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {dateToMediumEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
+import { QueryFilterType } from "~/components/scratchpad";
 
 // TODO: Fix nomenclature
 
@@ -59,6 +60,13 @@ export async function get_r1_performanceLeadsCount(
         const row = result.rows[0];
         return {
             metaQuery: query,
+            metaFiltersPossible: [QueryFilterType.category, QueryFilterType.platform, QueryFilterType.campaign, QueryFilterType.date],
+            metaFiltersApplied: [
+                selectedCategories.length > 0 ? QueryFilterType.category : null,
+                selectedPlatforms.length > 0 ? QueryFilterType.platform : null,
+                selectedCampaigns.length > 0 ? QueryFilterType.campaign : null,
+                minDate != null || maxDate != null ? QueryFilterType.date : null,
+            ].filter(x => x != null),
             count: parseInt(row.count),
         };
     } catch (e) {
@@ -123,6 +131,12 @@ export async function get_r1_facebookLeadsCount(
         const row = result.rows[0];
         return {
             metaQuery: query,
+            metaFiltersRespected: ["Categories", "Platforms", "Campaigns"],
+            metaFiltersApplied: [
+                selectedCategories.length > 0 ? "Categories" : null,
+                selectedPlatforms.length > 0 ? "Platforms" : null,
+                selectedCampaigns.length > 0 ? "Campaigns" : null,
+            ].filter(x => x != null),
             count: parseInt(row.count),
         };
     } catch (e) {

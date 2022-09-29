@@ -26,7 +26,7 @@ import {
 } from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
 import {joinValues} from "~/backend/utilities/utilities";
-import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
+import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, QueryFilterType, ValueDisplayingCard, ValueDisplayingCardInformationType} from "~/components/scratchpad";
 import {concatenateNonNullStringsWithAmpersand, concatenateNonNullStringsWithSpaces, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
 import {BarGraphComponent} from "./barGraphComponent";
 
@@ -318,13 +318,13 @@ export default function () {
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
             <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
-                <FancySearchableMultiSelect label="Business" options={businesses} selectedOptions={selectedCategories} setSelectedOptions={setSelectedCategories} />
+                <FancySearchableMultiSelect label="Business" options={businesses} selectedOptions={selectedCategories} setSelectedOptions={setSelectedCategories} filterType={QueryFilterType.category} />
 
-                <FancySearchableMultiSelect label="Product" options={products} selectedOptions={selectedProducts} setSelectedOptions={setSelectedProducts} />
+                <FancySearchableMultiSelect label="Product" options={products} selectedOptions={selectedProducts} setSelectedOptions={setSelectedProducts} filterType={QueryFilterType.product} />
 
-                <FancySearchableMultiSelect label="Platform" options={platforms} selectedOptions={selectedPlatforms} setSelectedOptions={setSelectedPlatforms} />
+                <FancySearchableMultiSelect label="Platform" options={platforms} selectedOptions={selectedPlatforms} setSelectedOptions={setSelectedPlatforms} filterType={QueryFilterType.platform} />
 
-                <FancySearchableMultiSelect label="Campaign" options={campaigns} selectedOptions={selectedCampaigns} setSelectedOptions={setSelectedCampaigns} />
+                <FancySearchableMultiSelect label="Campaign" options={campaigns} selectedOptions={selectedCampaigns} setSelectedOptions={setSelectedCampaigns} filterType={QueryFilterType.campaign} />
 
                 <FancySearchableSelect label="Granularity" options={granularities} selectedOption={selectedGranularity} setSelectedOption={setSelectedGranularity} />
 
@@ -339,7 +339,7 @@ export default function () {
                         `/business-insights?selected_granularity=${selectedGranularity}`,
                         `min_date=${selectedMinDate}`,
                         `max_date=${selectedMaxDate}`,
-                        selectedCampaigns.length == 0 ? null : `max_date=${JSON.stringify(selectedCampaigns)}`,
+                        selectedCampaigns.length == 0 ? null : `selected_campaigns=${JSON.stringify(selectedCampaigns)}`,
                         selectedCategories.length == 0 ? null : `selected_categories=${JSON.stringify(selectedCategories)}`,
                         selectedProducts.length == 0 ? null : `selected_products=${JSON.stringify(selectedProducts)}`,
                         selectedPlatforms.length == 0 ? null : `selected_platforms=${JSON.stringify(selectedPlatforms)}`
@@ -359,7 +359,13 @@ export default function () {
                 className="tw-row-span-2 tw-col-span-4"
             />
 
-            <Card information={numberToHumanFriendlyString(r1_performanceLeadsCount.count)} label="Performance Leads" metaQuery={r1_performanceLeadsCount.metaQuery} className="tw-col-span-2" />
+            <ValueDisplayingCard
+                queryInformation={r1_performanceLeadsCount}
+                contentExtractor={queryInformation => queryInformation.count}
+                type={ValueDisplayingCardInformationType.integer}
+                label="Performance Leads"
+                className="tw-col-span-2"
+            />
 
             <Card
                 information={numberToHumanFriendlyString(r1_performanceLeadsCpl.cpl, true)}

@@ -28,11 +28,11 @@ export function HeaderComponent(props: {className?: string}) {
             displayName: "Facebook Campaigns",
             exactMatch: false,
         },
-        {
-            url: "/google-campaigns",
-            displayName: "Google Campaigns",
-            exactMatch: false,
-        },
+        // {
+        //     url: "/google-campaigns",
+        //     displayName: "Google Campaigns",
+        //     exactMatch: false,
+        // },
         {
             url: "#",
             displayName: "|",
@@ -46,6 +46,11 @@ export function HeaderComponent(props: {className?: string}) {
         {
             url: "/data-source-information",
             displayName: "Data Source Information",
+            exactMatch: false,
+        },
+        {
+            url: "/dashboard-health-monitoring",
+            displayName: "Dashboard Health Monitoring",
             exactMatch: false,
         },
     ];

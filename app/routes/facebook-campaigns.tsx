@@ -7,7 +7,7 @@ import {getAllProductInformation, getAllSourceToInformation} from "~/backend/com
 import { getCampaignsInformation, getLeads, getSales } from "~/backend/facebook-campaigns";
 import { joinValues } from "~/backend/utilities/utilities";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect} from "~/components/scratchpad";
-import {distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
+import {concatenateNonNullStringsWithAmpersand, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
 import {BarGraphComponent} from "./barGraphComponent";
 
 export const meta: MetaFunction = () => {
@@ -153,7 +153,18 @@ export default function () {
 
                 <div />
 
-                <Link to={`/business-insights?selected_categories=${JSON.stringify(selectedCategories)}&selected_products=${JSON.stringify(selectedProducts)}&selected_platforms=${JSON.stringify(selectedPlatforms)}&selected_campaigns=${JSON.stringify(selectedCampaigns)}&min_date=${selectedMinDate}&max_date=${selectedMaxDate}&selected_granularity=${selectedGranularity}`} className="-tw-col-end-1 tw-bg-lp tw-p-2 tw-rounded-md">
+                <Link
+                    to={concatenateNonNullStringsWithAmpersand(
+                        `/facebook-campaigns?selected_granularity=${selectedGranularity}`,
+                        `min_date=${selectedMinDate}`,
+                        `max_date=${selectedMaxDate}`,
+                        selectedCampaigns.length == 0 ? null : `max_date=${JSON.stringify(selectedCampaigns)}`,
+                        selectedCategories.length == 0 ? null : `selected_categories=${JSON.stringify(selectedCategories)}`,
+                        selectedProducts.length == 0 ? null : `selected_products=${JSON.stringify(selectedProducts)}`,
+                        selectedPlatforms.length == 0 ? null : `selected_platforms=${JSON.stringify(selectedPlatforms)}`
+                    )}
+                    className="-tw-col-end-1 tw-bg-lp tw-p-2 tw-rounded-md"
+                >
                     Update Filters
                 </Link>
             </div>

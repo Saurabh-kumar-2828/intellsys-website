@@ -150,8 +150,8 @@ async function insertIntoTableWrapper(tableName: string, columnInfos, rowObjects
 }
 
 export async function processTruncate(table: Table): Promise<void> {
-    if (table == Table.shopifySalesRaw) {
-        await truncateTable("shopify_sales_raw");
+    if (table == Table.facebookAdsRaw) {
+        await truncateTable("facebook_ads_raw");
     } else if (table == Table.freshsalesLeadsMattressRaw) {
         await truncateTable("freshsales_leads_mattress_raw");
     } else if (table == Table.freshsalesLeadsNonMattressRaw) {
@@ -160,14 +160,14 @@ export async function processTruncate(table: Table): Promise<void> {
         await truncateTable("freshsales_leads_water_purifier_raw");
     } else if (table == Table.googleAdsRaw) {
         await truncateTable("google_ads_raw");
-    } else if (table == Table.facebookAdsRaw) {
-        await truncateTable("facebook_ads_raw");
-    } else if (table == Table.websitePopupFormResponsesRaw) {
-        await truncateTable("website_popup_form_responses_raw");
+    } else if (table == Table.shopifySalesRaw) {
+        await truncateTable("shopify_sales_raw");
     } else if (table == Table.typeformResponsesMattressRaw) {
         await truncateTable("typeform_responses_mattress_raw");
     } else if (table == Table.typeformResponsesWaterPurifierRaw) {
         await truncateTable("typeform_responses_water_purifier_raw");
+    } else if (table == Table.websitePopupFormResponsesRaw) {
+        await truncateTable("website_popup_form_responses_raw");
     } else {
         throw new Response(null, {status: 400});
     }
@@ -313,4 +313,10 @@ const typeformRawColumnInfos = [
 ];
 
 const websitePopupFormResponsesRawColumnInfos = [
+    {tableColumn: "timestamp", csvColumn: "Timestamp"},
+    {tableColumn: "name", csvColumn: "Name"},
+    {tableColumn: "email", csvColumn: "Email"},
+    {tableColumn: "phone", csvColumn: "Phone"},
+    {tableColumn: "interested_product", csvColumn: "Which product are you most interested in?"},
+    {tableColumn: "url", csvColumn: "URL"},
 ];

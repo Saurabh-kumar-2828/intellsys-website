@@ -81,6 +81,10 @@ export async function get_websitePopupFormResponsesDataInformation() {
     return await getDataInformation("website_popup_form_responses", "DATE(timestamp)");
 }
 
+export async function get_websitePopupFormResponsesRawDataInformation() {
+    return await getDataInformation("website_popup_form_responses_raw", "DATE(timestamp)");
+}
+
 export async function get_typeformResponsesDataInformation() {
     return await getDataInformation("typeform_responses", "date");
 }

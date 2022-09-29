@@ -10,7 +10,7 @@ import {
     get_shopifySalesRawDataInformation,
     get_typeformResponsesMattressDataInformation,
     get_typeformResponsesWaterPurifierDataInformation,
-    get_websitePopupFormResponsesDataInformation,
+    get_websitePopupFormResponsesRawDataInformation,
 } from "~/backend/data-source-information";
 import {Card} from "~/components/scratchpad";
 import {dateToMediumEnFormat, numberToHumanFriendlyString} from "~/utilities/utilities";
@@ -59,7 +59,7 @@ export const loader: LoaderFunction = async ({request}) => {
         freshsalesLeadsWaterPurifierRawDataInformation: await get_freshsalesLeadsWaterPurifierRawDataInformation(),
         googleAdsRawDataInformation: await get_googleAdsRawDataInformation(),
         facebookAdsRawDataInformation: await get_facebookAdsRawDataInformation(),
-        websitePopupFormResponsesDataInformation: await get_websitePopupFormResponsesDataInformation(),
+        websitePopupFormResponsesRawDataInformation: await get_websitePopupFormResponsesRawDataInformation(),
         typeformResponsesMattressDataInformation: await get_typeformResponsesMattressDataInformation(),
         typeformResponsesWaterPurifierDataInformation: await get_typeformResponsesWaterPurifierDataInformation(),
     });
@@ -73,25 +73,23 @@ export default function () {
         freshsalesLeadsWaterPurifierRawDataInformation,
         googleAdsRawDataInformation,
         facebookAdsRawDataInformation,
-        websitePopupFormResponsesDataInformation,
+        websitePopupFormResponsesRawDataInformation,
         typeformResponsesMattressDataInformation,
         typeformResponsesWaterPurifierDataInformation,
     } = useLoaderData();
 
-    const [shopifySalesTruncateDataCounter, setShopifySalesTruncateDataCounter] = useState(5);
-
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
-            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Shopify Sales Raw</div>
+            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Facebook Ads Raw</div>
 
-            <Card information={numberToHumanFriendlyString(shopifySalesRawDataInformation.count)} label="Count" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={numberToHumanFriendlyString(facebookAdsRawDataInformation.count)} label="Count" metaQuery={facebookAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(shopifySalesRawDataInformation.minDate)} label="Data Start" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumEnFormat(facebookAdsRawDataInformation.minDate)} label="Data Start" metaQuery={facebookAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(shopifySalesRawDataInformation.maxDate)} label="Data End" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumEnFormat(facebookAdsRawDataInformation.maxDate)} label="Data End" metaQuery={facebookAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value={Table.shopifySalesRaw} readOnly className="tw-hidden" />
+                <input type="text" name="table" value={Table.facebookAdsRaw} readOnly className="tw-hidden" />
                 <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
 
                 <input type="date" name="startDate" required />
@@ -103,7 +101,7 @@ export default function () {
             </Form>
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value={Table.shopifySalesRaw} readOnly className="tw-hidden" />
+                <input type="text" name="table" value={Table.facebookAdsRaw} readOnly className="tw-hidden" />
                 <input type="text" name="operation" value={Operation.truncate} readOnly className="tw-hidden" />
 
                 <button type="submit" className="tw-lp-button" disabled>
@@ -112,7 +110,7 @@ export default function () {
             </Form>
 
             <Form method="post" encType="multipart/form-data" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value={Table.shopifySalesRaw} readOnly className="tw-hidden" />
+                <input type="text" name="table" value={Table.facebookAdsRaw} readOnly className="tw-hidden" />
                 <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
 
                 {/* <FileInputField name="file" /> */}
@@ -124,7 +122,7 @@ export default function () {
             </Form>
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value={Table.shopifySalesRaw} readOnly className="tw-hidden" />
+                <input type="text" name="table" value={Table.facebookAdsRaw} readOnly className="tw-hidden" />
                 <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
                 <button className="tw-lp-button" disabled>
                     Run Data Refresh Pipeline
@@ -372,16 +370,16 @@ export default function () {
                 </button>
             </Form>
 
-            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Facebook Ads Raw</div>
+            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Shopify Sales Raw</div>
 
-            <Card information={numberToHumanFriendlyString(facebookAdsRawDataInformation.count)} label="Count" metaQuery={facebookAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={numberToHumanFriendlyString(shopifySalesRawDataInformation.count)} label="Count" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(facebookAdsRawDataInformation.minDate)} label="Data Start" metaQuery={facebookAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumEnFormat(shopifySalesRawDataInformation.minDate)} label="Data Start" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(facebookAdsRawDataInformation.maxDate)} label="Data End" metaQuery={facebookAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumEnFormat(shopifySalesRawDataInformation.maxDate)} label="Data End" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value={Table.facebookAdsRaw} readOnly className="tw-hidden" />
+                <input type="text" name="table" value={Table.shopifySalesRaw} readOnly className="tw-hidden" />
                 <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
 
                 <input type="date" name="startDate" required />
@@ -393,7 +391,7 @@ export default function () {
             </Form>
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value={Table.facebookAdsRaw} readOnly className="tw-hidden" />
+                <input type="text" name="table" value={Table.shopifySalesRaw} readOnly className="tw-hidden" />
                 <input type="text" name="operation" value={Operation.truncate} readOnly className="tw-hidden" />
 
                 <button type="submit" className="tw-lp-button" disabled>
@@ -402,7 +400,7 @@ export default function () {
             </Form>
 
             <Form method="post" encType="multipart/form-data" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value={Table.facebookAdsRaw} readOnly className="tw-hidden" />
+                <input type="text" name="table" value={Table.shopifySalesRaw} readOnly className="tw-hidden" />
                 <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
 
                 {/* <FileInputField name="file" /> */}
@@ -414,71 +412,7 @@ export default function () {
             </Form>
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value={Table.facebookAdsRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
-                <button className="tw-lp-button" disabled>
-                    Run Data Refresh Pipeline
-                </button>
-            </Form>
-
-            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Website Popup Form Responses</div>
-
-            <Card
-                information={numberToHumanFriendlyString(websitePopupFormResponsesDataInformation.count)}
-                label="Count"
-                metaQuery={websitePopupFormResponsesDataInformation.metaQuery}
-                className="tw-col-span-4"
-            />
-
-            <Card
-                information={dateToMediumEnFormat(websitePopupFormResponsesDataInformation.minDate)}
-                label="Data Start"
-                metaQuery={websitePopupFormResponsesDataInformation.metaQuery}
-                className="tw-col-span-4"
-            />
-
-            <Card
-                information={dateToMediumEnFormat(websitePopupFormResponsesDataInformation.maxDate)}
-                label="Data End"
-                metaQuery={websitePopupFormResponsesDataInformation.metaQuery}
-                className="tw-col-span-4"
-            />
-
-            <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value={Table.websitePopupFormResponsesRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
-
-                <input type="date" name="startDate" required />
-                <input type="date" name="endDate" required />
-
-                <button type="submit" className="tw-lp-button" disabled>
-                    Delete Data Selected Time Period
-                </button>
-            </Form>
-
-            <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value={Table.websitePopupFormResponsesRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.truncate} readOnly className="tw-hidden" />
-
-                <button type="submit" className="tw-lp-button" disabled>
-                    Truncate All Data
-                </button>
-            </Form>
-
-            <Form method="post" encType="multipart/form-data" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value={Table.websitePopupFormResponsesRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
-
-                {/* <FileInputField name="file" /> */}
-                <input type="file" name="file" multiple required />
-
-                <button type="submit" className="tw-lp-button" disabled>
-                    Upload CSV
-                </button>
-            </Form>
-
-            <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value={Table.websitePopupFormResponsesRaw} readOnly className="tw-hidden" />
+                <input type="text" name="table" value={Table.shopifySalesRaw} readOnly className="tw-hidden" />
                 <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
                 <button className="tw-lp-button" disabled>
                     Run Data Refresh Pipeline
@@ -607,6 +541,70 @@ export default function () {
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                 <input type="text" name="table" value={Table.typeformResponsesWaterPurifierRaw} readOnly className="tw-hidden" />
+                <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
+                <button className="tw-lp-button" disabled>
+                    Run Data Refresh Pipeline
+                </button>
+            </Form>
+
+            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Website Popup Form Responses</div>
+
+            <Card
+                information={numberToHumanFriendlyString(websitePopupFormResponsesRawDataInformation.count)}
+                label="Count"
+                metaQuery={websitePopupFormResponsesRawDataInformation.metaQuery}
+                className="tw-col-span-4"
+            />
+
+            <Card
+                information={dateToMediumEnFormat(websitePopupFormResponsesRawDataInformation.minDate)}
+                label="Data Start"
+                metaQuery={websitePopupFormResponsesRawDataInformation.metaQuery}
+                className="tw-col-span-4"
+            />
+
+            <Card
+                information={dateToMediumEnFormat(websitePopupFormResponsesRawDataInformation.maxDate)}
+                label="Data End"
+                metaQuery={websitePopupFormResponsesRawDataInformation.metaQuery}
+                className="tw-col-span-4"
+            />
+
+            <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                <input type="text" name="table" value={Table.websitePopupFormResponsesRaw} readOnly className="tw-hidden" />
+                <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
+
+                <input type="date" name="startDate" required />
+                <input type="date" name="endDate" required />
+
+                <button type="submit" className="tw-lp-button" disabled>
+                    Delete Data Selected Time Period
+                </button>
+            </Form>
+
+            <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                <input type="text" name="table" value={Table.websitePopupFormResponsesRaw} readOnly className="tw-hidden" />
+                <input type="text" name="operation" value={Operation.truncate} readOnly className="tw-hidden" />
+
+                <button type="submit" className="tw-lp-button" disabled>
+                    Truncate All Data
+                </button>
+            </Form>
+
+            <Form method="post" encType="multipart/form-data" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                <input type="text" name="table" value={Table.websitePopupFormResponsesRaw} readOnly className="tw-hidden" />
+                <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
+
+                {/* <FileInputField name="file" /> */}
+                <input type="file" name="file" multiple required />
+
+                <button type="submit" className="tw-lp-button">
+                    Upload CSV
+                </button>
+            </Form>
+
+            <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                <input type="text" name="table" value={Table.websitePopupFormResponsesRaw} readOnly className="tw-hidden" />
                 <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
                 <button className="tw-lp-button" disabled>
                     Run Data Refresh Pipeline

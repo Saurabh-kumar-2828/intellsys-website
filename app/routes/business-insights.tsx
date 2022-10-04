@@ -1,4 +1,4 @@
-import type {MetaFunction, LoaderFunction} from "@remix-run/node";
+import type {LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";
 import {DateTime} from "luxon";
@@ -25,11 +25,10 @@ import {
     r3_ordersRevenuePivotedByAssistAndBusiness,
 } from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
-import {joinValues} from "~/backend/utilities/utilities";
+import {BarGraphComponent} from "~/components/reusableComponents/barGraphComponent";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
-import { QueryFilterType, ValueDisplayingCardInformationType } from "~/utilities/typeDefinitions";
-import {concatenateNonNullStringsWithAmpersand, concatenateNonNullStringsWithSpaces, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
-import {BarGraphComponent} from "./barGraphComponent";
+import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
+import {concatenateNonNullStringsWithAmpersand, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -120,7 +119,15 @@ export const loader: LoaderFunction = async ({request}) => {
         r2_assistedOrdersCount: await get_r2_assistedOrdersCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r2_r3_directOrdersGrossRevenue: await get_r2_r3_directOrdersGrossRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r2_r3_assistedOrdersGrossRevenue: await get_r2_r3_assistedOrdersGrossRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r3_ordersRevenuePivotedByAssistAndBusiness: await r3_ordersRevenuePivotedByAssistAndBusiness(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        r3_ordersRevenuePivotedByAssistAndBusiness: await r3_ordersRevenuePivotedByAssistAndBusiness(
+            selectedCategories,
+            selectedProducts,
+            selectedPlatforms,
+            selectedCampaigns,
+            selectedGranularity,
+            minDate,
+            maxDate
+        ),
         r4_facebookAdsSpends: await get_r4_facebookAdsSpends(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r4_googleAdsSpends: await get_r4_googleAdsSpends(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r4_facebookAdsLiveCampaignsCount: await get_r4_facebookAdsLiveCampaignsCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
@@ -208,7 +215,9 @@ export default function () {
         count: r2_directOrdersCount.count + r2_assistedOrdersCount.count,
     };
     const r2_directOrdersAov = {
-        metaInformation: `Orders Revenue / Orders Count | Direct = ${numberToHumanFriendlyString(r2_r3_directOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(r2_directOrdersCount.count)}`,
+        metaInformation: `Orders Revenue / Orders Count | Direct = ${numberToHumanFriendlyString(r2_r3_directOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(
+            r2_directOrdersCount.count
+        )}`,
         aov: r2_r3_directOrdersGrossRevenue.netSales / r2_directOrdersCount.count,
     };
     const r2_assistedOrdersAov = {
@@ -218,9 +227,7 @@ export default function () {
         aov: r2_r3_assistedOrdersGrossRevenue.netSales / r2_assistedOrdersCount.count,
     };
     const r2_directOrdersDrr = {
-        metaInformation: `Orders Revenue / Number of Days | Direct = ${numberToHumanFriendlyString(r2_r3_directOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(
-            numberOfSelectedDays
-        )}`,
+        metaInformation: `Orders Revenue / Number of Days | Direct = ${numberToHumanFriendlyString(r2_r3_directOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`,
         drr: r2_r3_directOrdersGrossRevenue.netSales / numberOfSelectedDays,
     };
     const r2_assistedOrdersDrr = {
@@ -254,11 +261,11 @@ export default function () {
     // const r3_assistedOrdersNetRevenue = r2_r3_assistedOrdersGrossRevenue / r2_assistedOrdersCount;
     const r3_directOrdersNetRevenue = {
         metaInformation: "",
-        netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter(row => row.isAssisted == false).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
+        netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter((row) => row.isAssisted == false).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
     };
     const r3_assistedOrdersNetRevenue = {
         metaInformation: "",
-        netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter(row => row.isAssisted == true).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
+        netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter((row) => row.isAssisted == true).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
     };
     const r3_totalNetRevenue = {
         metaInformation: "",
@@ -284,7 +291,7 @@ export default function () {
     const r4_googleAdsAcos = {
         metaInformation: `Total Spend / Revenue | Google = ${r4_googleAdsSpends.amountSpent} / ${r4_googleAdsRevenue.netSales}`,
         acos: r4_googleAdsSpends.amountSpent / r4_googleAdsRevenue.netSales,
-    };;
+    };
 
     const r5_marketingAcos = "?";
     const r5_facebookAcos = "?";
@@ -320,7 +327,13 @@ export default function () {
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
             <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
-                <FancySearchableMultiSelect label="Business" options={businesses} selectedOptions={selectedCategories} setSelectedOptions={setSelectedCategories} filterType={QueryFilterType.category} />
+                <FancySearchableMultiSelect
+                    label="Business"
+                    options={businesses}
+                    selectedOptions={selectedCategories}
+                    setSelectedOptions={setSelectedCategories}
+                    filterType={QueryFilterType.category}
+                />
 
                 <FancySearchableMultiSelect label="Product" options={products} selectedOptions={selectedProducts} setSelectedOptions={setSelectedProducts} filterType={QueryFilterType.product} />
 
@@ -363,7 +376,7 @@ export default function () {
 
             <ValueDisplayingCard
                 queryInformation={r1_performanceLeadsCount}
-                contentExtractor={queryInformation => queryInformation.count}
+                contentExtractor={(queryInformation) => queryInformation.count}
                 type={ValueDisplayingCardInformationType.integer}
                 label="Performance Leads"
                 className="tw-col-span-2"
@@ -486,7 +499,12 @@ export default function () {
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Revenue</div>
 
-            <Card information={numberToHumanFriendlyString(r3_totalNetRevenue.netRevenue)} label="Total Net Revenue" metaInformation={r3_totalNetRevenue.metaInformation} className="tw-row-span-2 tw-col-span-4" />
+            <Card
+                information={numberToHumanFriendlyString(r3_totalNetRevenue.netRevenue)}
+                label="Total Net Revenue"
+                metaInformation={r3_totalNetRevenue.metaInformation}
+                className="tw-row-span-2 tw-col-span-4"
+            />
 
             <Card
                 information={numberToHumanFriendlyString(r2_r3_directOrdersGrossRevenue.netSales, true)}
@@ -495,7 +513,12 @@ export default function () {
                 className="tw-col-span-2"
             />
 
-            <Card information={numberToHumanFriendlyString(r3_directOrdersNetRevenue.netRevenue, true)} label="Net Direct Revenue" metaInformation={r3_directOrdersNetRevenue.metaInformation} className="tw-col-span-2" />
+            <Card
+                information={numberToHumanFriendlyString(r3_directOrdersNetRevenue.netRevenue, true)}
+                label="Net Direct Revenue"
+                metaInformation={r3_directOrdersNetRevenue.metaInformation}
+                className="tw-col-span-2"
+            />
 
             <div className="tw-col-span-2" />
 
@@ -508,7 +531,12 @@ export default function () {
                 className="tw-col-span-2"
             />
 
-            <Card information={numberToHumanFriendlyString(r3_assistedOrdersNetRevenue.netRevenue, true)} label="Net Assisted Revenue" metaInformation={r3_assistedOrdersNetRevenue.metaInformation} className="tw-col-span-2" />
+            <Card
+                information={numberToHumanFriendlyString(r3_assistedOrdersNetRevenue.netRevenue, true)}
+                label="Net Assisted Revenue"
+                metaInformation={r3_assistedOrdersNetRevenue.metaInformation}
+                className="tw-col-span-2"
+            />
 
             <div className="tw-col-span-2" />
 
@@ -542,7 +570,12 @@ export default function () {
                 className="tw-col-span-2"
             />
 
-            <Card information={numberToHumanFriendlyString(r4_facebookAdsDailySpend.amountSpent, true)} label="Daily Spend" metaInformation={r4_facebookAdsDailySpend.metaInformation} className="tw-col-span-2" />
+            <Card
+                information={numberToHumanFriendlyString(r4_facebookAdsDailySpend.amountSpent, true)}
+                label="Daily Spend"
+                metaInformation={r4_facebookAdsDailySpend.metaInformation}
+                className="tw-col-span-2"
+            />
 
             <Card information={numberToHumanFriendlyString(r4_facebookAdsAcos.acos, true, true, true)} label="ACoS" metaInformation={r4_facebookAdsAcos.metaInformation} className="tw-col-span-2" />
 
@@ -555,7 +588,12 @@ export default function () {
                 className="tw-col-span-2"
             />
 
-            <Card information={numberToHumanFriendlyString(r4_googleAdsDailySpend.amountSpent, true)} label="Daily Spend" metaInformation={r4_googleAdsDailySpend.metaInformation} className="tw-col-span-2" />
+            <Card
+                information={numberToHumanFriendlyString(r4_googleAdsDailySpend.amountSpent, true)}
+                label="Daily Spend"
+                metaInformation={r4_googleAdsDailySpend.metaInformation}
+                className="tw-col-span-2"
+            />
 
             <Card information={numberToHumanFriendlyString(r4_googleAdsAcos.acos, true, true, true)} label="ACoS" metaInformation={r4_googleAdsAcos.metaInformation} className="tw-col-span-2" />
 

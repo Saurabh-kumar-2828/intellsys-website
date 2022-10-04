@@ -1,6 +1,7 @@
-import type {MetaFunction, LoaderFunction, ActionFunction} from "@remix-run/node";
+import type {ActionFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Form, useLoaderData} from "@remix-run/react";
+import {fullRefresh, Operation, processFileUpload, processIngestDataFromApi, processTruncate, Table} from "~/backend/data-management";
 import {
     get_facebookAdsRawDataInformation,
     get_freshsalesLeadsMattressRawDataInformation,
@@ -14,9 +15,6 @@ import {
 } from "~/backend/data-source-information";
 import {Card} from "~/components/scratchpad";
 import {dateToMediumEnFormat, numberToHumanFriendlyString} from "~/utilities/utilities";
-import {FileInputField} from "~/components/reusableComponents/fileInputField";
-import {useState} from "react";
-import {fullRefresh, Operation, processFileUpload, processTruncate, Table} from "~/backend/data-management";
 
 export const meta: MetaFunction = () => {
     return {
@@ -44,6 +42,8 @@ export const action: ActionFunction = async ({request}) => {
         await processTruncate(table);
     } else if (operation == Operation.refresh) {
         await fullRefresh();
+    } else if (operation == Operation.ingestDataFromApi) {
+        await processIngestDataFromApi(table);
     } else {
         throw new Response(null, {status: 400});
     }
@@ -615,9 +615,14 @@ export default function () {
                 <input type="text" name="table" value="" readOnly className="tw-hidden" />
                 <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
 
-                <button className="tw-lp-button">
-                    Run Complete Data Refresh Pipeline
-                </button>
+                <button className="tw-lp-button">Run Complete Data Refresh Pipeline</button>
+            </Form>
+
+            <Form method="post" className="tw-col-span-12 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                <input type="text" name="table" value="" readOnly className="tw-hidden" />
+                <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
+
+                <button className="tw-lp-button">Dummy Button</button>
             </Form>
         </div>
     );

@@ -1,15 +1,13 @@
-import type {MetaFunction, LoaderFunction} from "@remix-run/node";
+import type {LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
-import {get_r1_facebookLeadsAmountSpent, get_r1_facebookLeadsCount, get_r1_facebookLeadsCountTrend, get_r1_facebookLeadsSales, get_r1_performanceLeadsAmountSpent, get_r1_performanceLeadsCount, get_r1_performanceLeadsCountTrend, get_r1_performanceLeadsSales, get_r2_assistedOrdersCount, get_r2_directOrdersCount, get_r2_r3_assistedOrdersGrossRevenue, get_r2_r3_directOrdersGrossRevenue, get_r4_facebookAdsLiveCampaignsCount, get_r4_facebookAdsSpends, get_r4_googleAdsLiveCampaignsCount, get_r4_googleAdsSpends} from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
-import { getCampaignsInformation, getCampaignsTrends, getLeads, getSales } from "~/backend/facebook-campaigns";
-import { joinValues } from "~/backend/utilities/utilities";
+import {getCampaignsInformation, getCampaignsTrends, getLeads, getSales} from "~/backend/facebook-campaigns";
+import {BarGraphComponent} from "~/components/reusableComponents/barGraphComponent";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
-import { QueryFilterType } from "~/utilities/typeDefinitions";
+import {QueryFilterType} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithAmpersand, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
-import {BarGraphComponent} from "./barGraphComponent";
 
 export const meta: MetaFunction = () => {
     return {
@@ -138,10 +136,21 @@ export default function () {
     );
     const granularities = ["Daily", "Monthly", "Yearly"];
 
+    // const yTemp = {};
+    // for (const campaignInfo of campaignTrends) {
+    //     yTemp[campaignInfo.campaignName] = campaignInfo.amountSpent;
+    // }
+
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
             <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
-                <FancySearchableMultiSelect label="Business" options={businesses} selectedOptions={selectedCategories} setSelectedOptions={setSelectedCategories} filterType={QueryFilterType.category} />
+                <FancySearchableMultiSelect
+                    label="Business"
+                    options={businesses}
+                    selectedOptions={selectedCategories}
+                    setSelectedOptions={setSelectedCategories}
+                    filterType={QueryFilterType.category}
+                />
 
                 <FancySearchableMultiSelect label="Product" options={products} selectedOptions={selectedProducts} setSelectedOptions={setSelectedProducts} filterType={QueryFilterType.product} />
 
@@ -176,7 +185,12 @@ export default function () {
             <div className="tw-col-span-6 tw-grid tw-grid-cols-[1fr_2fr] tw-items-stretch tw-gap-x-4">
                 <Card information={numberToHumanFriendlyString(campaignsInformation.amountSpent)} label="Spends" metaInformation={campaignsInformation.metaInformation} className="tw-row-start-1" />
 
-                <Card information={numberToHumanFriendlyString(campaignsInformation.impressions)} label="Impressions" metaInformation={campaignsInformation.metaInformation} className="tw-row-start-2" />
+                <Card
+                    information={numberToHumanFriendlyString(campaignsInformation.impressions)}
+                    label="Impressions"
+                    metaInformation={campaignsInformation.metaInformation}
+                    className="tw-row-start-2"
+                />
 
                 <Card information={numberToHumanFriendlyString(campaignsInformation.clicks)} label="Clicks" metaInformation={campaignsInformation.metaInformation} className="tw-row-start-3" />
 
@@ -235,11 +249,12 @@ export default function () {
                 content={
                     <BarGraphComponent
                         data={{
-                            x: campaignTrends.rows.map(row => row.date),
+                            x: campaignTrends.rows.map((row) => row.date),
+                            // y: yTemp,
                             y: {
-                                "Amount Spent": campaignTrends.rows.map(row => row.amountSpent),
-                                "Impressions": campaignTrends.rows.map(row => row.impressions),
-                                "Clicks": campaignTrends.rows.map(row => row.clicks),
+                                "Amount Spent": campaignTrends.rows.map((row) => row.amountSpent),
+                                Impressions: campaignTrends.rows.map((row) => row.impressions),
+                                Clicks: campaignTrends.rows.map((row) => row.clicks),
                             },
                         }}
                         yClasses={["tw-fill-blue-500", "tw-fill-red-500", "tw-fill-yellow-400"]}

@@ -108,6 +108,7 @@ export async function getCampaignsTrends (
         selectValues.push("SUM(amount_spent) AS amount_spent");
         selectValues.push("SUM(impressions) AS impressions");
         selectValues.push("SUM(clicks) AS clicks");
+        selectValues.push("campaign_name");
         selectValues.push(`${getGranularityQuery(selectedGranularity, "date")} AS date`);
 
         whereValues.push("platform = 'Facebook'");
@@ -119,6 +120,7 @@ export async function getCampaignsTrends (
         }
 
         groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
+        groupByValues.push("campaign_name");
 
         const query = (
             `
@@ -141,6 +143,7 @@ export async function getCampaignsTrends (
             metaQuery: query,
             rows: result.rows.map(row => ({
                 date: row.date,
+                campaignName: row.campaign_name,
                 amountSpent: parseFloat(row.amount_spent),
                 impressions: parseFloat(row.impressions),
                 clicks: parseFloat(row.clicks),

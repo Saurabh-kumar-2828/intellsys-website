@@ -106,6 +106,7 @@ export enum Operation {
     delete,
     truncate,
     refresh,
+    ingestDataFromApi,
 }
 
 export async function processFileUpload(table: Table, file: File): Promise<void> {
@@ -171,6 +172,10 @@ export async function processTruncate(table: Table): Promise<void> {
     } else {
         throw new Response(null, {status: 400});
     }
+}
+
+export async function processIngestDataFromApi(table: Table): Promise<void> {
+    console.log("dummy operation succeeded");
 }
 
 function convertObjectArrayIntoArrayArray(rowObjects: Array<{[k: string]: string}>, columns: Array<string>) {

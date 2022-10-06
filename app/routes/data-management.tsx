@@ -1,7 +1,7 @@
 import type {ActionFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Form, useLoaderData} from "@remix-run/react";
-import {fullRefresh, Operation, processFileUpload, processIngestDataFromApi, processTruncate, Table} from "~/backend/data-management";
+import {fullRefresh, Operation, processDelete, processFileUpload, processIngestDataFromApi, processTruncate, Table} from "~/backend/data-management";
 import {
     get_facebookAdsRawDataInformation,
     get_freshsalesLeadsMattressRawDataInformation,
@@ -35,9 +35,16 @@ export const action: ActionFunction = async ({request}) => {
             throw new Response(null, {status: 400});
         }
 
-        for (const file of files) {
+        for (const file_ of files) {
+            const file = file_ as File;
+
             await processFileUpload(table, file);
         }
+    } else if (operation == Operation.delete) {
+        const startDate = (body.get("startDate") as string);
+        const endDate = (body.get("endDate") as string);
+
+        await processDelete(table, startDate, endDate);
     } else if (operation == Operation.truncate) {
         await processTruncate(table);
     } else if (operation == Operation.refresh) {
@@ -93,9 +100,9 @@ export default function () {
                 <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
 
                 <input type="date" name="startDate" required />
-                <input type="date" name="endDate" required />
+                <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
-                <button type="submit" className="tw-lp-button" disabled>
+                <button type="submit" className="tw-lp-button">
                     Delete Data Selected Time Period
                 </button>
             </Form>
@@ -157,9 +164,9 @@ export default function () {
                 <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
 
                 <input type="date" name="startDate" required />
-                <input type="date" name="endDate" required />
+                <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
-                <button type="submit" className="tw-lp-button" disabled>
+                <button type="submit" className="tw-lp-button">
                     Delete Data Selected Time Period
                 </button>
             </Form>
@@ -221,9 +228,9 @@ export default function () {
                 <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
 
                 <input type="date" name="startDate" required />
-                <input type="date" name="endDate" required />
+                <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
-                <button type="submit" className="tw-lp-button" disabled>
+                <button type="submit" className="tw-lp-button">
                     Delete Data Selected Time Period
                 </button>
             </Form>
@@ -285,9 +292,9 @@ export default function () {
                 <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
 
                 <input type="date" name="startDate" required />
-                <input type="date" name="endDate" required />
+                <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
-                <button type="submit" className="tw-lp-button" disabled>
+                <button type="submit" className="tw-lp-button">
                     Delete Data Selected Time Period
                 </button>
             </Form>
@@ -334,9 +341,9 @@ export default function () {
                 <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
 
                 <input type="date" name="startDate" required />
-                <input type="date" name="endDate" required />
+                <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
-                <button type="submit" className="tw-lp-button" disabled>
+                <button type="submit" className="tw-lp-button">
                     Delete Data Selected Time Period
                 </button>
             </Form>
@@ -383,9 +390,9 @@ export default function () {
                 <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
 
                 <input type="date" name="startDate" required />
-                <input type="date" name="endDate" required />
+                <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
-                <button type="submit" className="tw-lp-button" disabled>
+                <button type="submit" className="tw-lp-button">
                     Delete Data Selected Time Period
                 </button>
             </Form>
@@ -447,7 +454,7 @@ export default function () {
                 <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
 
                 <input type="date" name="startDate" required />
-                <input type="date" name="endDate" required />
+                <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
                 <button type="submit" className="tw-lp-button" disabled>
                     Delete Data Selected Time Period
@@ -511,7 +518,7 @@ export default function () {
                 <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
 
                 <input type="date" name="startDate" required />
-                <input type="date" name="endDate" required />
+                <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
                 <button type="submit" className="tw-lp-button" disabled>
                     Delete Data Selected Time Period
@@ -575,9 +582,9 @@ export default function () {
                 <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
 
                 <input type="date" name="startDate" required />
-                <input type="date" name="endDate" required />
+                <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
-                <button type="submit" className="tw-lp-button" disabled>
+                <button type="submit" className="tw-lp-button">
                     Delete Data Selected Time Period
                 </button>
             </Form>

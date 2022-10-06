@@ -1,6 +1,7 @@
 import type {LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";
+import {DateTime} from "luxon";
 import {useState} from "react";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
 import {getCampaignsInformation, getCampaignsTrends, getLeads, getSales} from "~/backend/facebook-campaigns";
@@ -61,7 +62,7 @@ export const loader: LoaderFunction = async ({request}) => {
     const minDateRaw = urlSearchParams.get("min_date");
     let minDate;
     if (minDateRaw == null || minDateRaw.length == 0) {
-        minDate = null;
+        minDate = DateTime.now().startOf("month").toISODate();
     } else {
         minDate = minDateRaw;
     }
@@ -69,7 +70,7 @@ export const loader: LoaderFunction = async ({request}) => {
     const maxDateRaw = urlSearchParams.get("max_date");
     let maxDate;
     if (maxDateRaw == null || maxDateRaw.length == 0) {
-        maxDate = null;
+        maxDate = DateTime.now().toISODate();
     } else {
         maxDate = maxDateRaw;
     }
@@ -136,10 +137,21 @@ export default function () {
     );
     const granularities = ["Daily", "Monthly", "Yearly"];
 
-    // const yTemp = {};
-    // for (const campaignInfo of campaignTrends) {
-    //     yTemp[campaignInfo.campaignName] = campaignInfo.amountSpent;
-    // }
+    const yAmountSpent = {};
+    const campaignNamesRetrieved = Array<string>();
+
+    for (const campaignInfo of campaignTrends.rows) {
+        if (!campaignNamesRetrieved.includes(campaignInfo.campaignName)) {
+            campaignNamesRetrieved.push(campaignInfo.campaignName);
+            yAmountSpent[campaignInfo.campaignName] = [];
+        }
+    }
+
+    for (const campaignInfo of campaignTrends.rows) {
+        yAmountSpent[campaignInfo.campaignName].push(campaignInfo.amountSpent);
+        // yTemp[campaignInfo.campaignName]["impressions"] = campaignInfo.impressions;
+        // yTemp[campaignInfo.campaignName]["clicks"] = campaignInfo.clicks;
+    }
 
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
@@ -249,13 +261,13 @@ export default function () {
                 content={
                     <BarGraphComponent
                         data={{
-                            x: campaignTrends.rows.map((row) => row.date),
-                            // y: yTemp,
-                            y: {
-                                "Amount Spent": campaignTrends.rows.map((row) => row.amountSpent),
-                                Impressions: campaignTrends.rows.map((row) => row.impressions),
-                                Clicks: campaignTrends.rows.map((row) => row.clicks),
-                            },
+                            x: distinct(campaignTrends.rows.map((row) => row.date)),
+                            y: yAmountSpent,
+                            // y: {
+                            //     "Amount Spent": campaignTrends.rows.map((row) => row.amountSpent),
+                            //     Impressions: campaignTrends.rows.map((row) => row.impressions),
+                            //     Clicks: campaignTrends.rows.map((row) => row.clicks),
+                            // },
                         }}
                         yClasses={["tw-fill-blue-500", "tw-fill-red-500", "tw-fill-yellow-400"]}
                         barWidth={20}

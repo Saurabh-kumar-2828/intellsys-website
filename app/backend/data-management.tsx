@@ -77,6 +77,18 @@ async function insertIntoTable(tableName: string, tableColumns: Array<string>, r
     }
 }
 
+async function deleteDataFromTable(tableName: string, dateColumn: string, startDate: string, endDate: string): Promise<void> {
+    try {
+        const query = `DELETE FROM ${tableName} WHERE ${dateColumn} >= $1 AND ${dateColumn} <= $2`;
+
+        await execute(query, [startDate, endDate]);
+    } catch (e) {
+        console.log("Error executing function");
+        console.log(e);
+        console.trace();
+    }
+}
+
 async function truncateTable(tableName: string): Promise<void> {
     try {
         const query = `DELETE FROM ${tableName}`;
@@ -114,17 +126,18 @@ export async function processFileUpload(table: Table, file: File): Promise<void>
     const rowObjects = csv.parse(fileContents, {output: "objects"});
 
     if (rowObjects.length == 0) {
+        console.log("processFileUpload: File empty");
         throw new Response(null, {status: 400});
     }
 
     if (table == Table.facebookAdsRaw) {
         await insertIntoTableWrapper("facebook_ads_raw", facebookAdsRawColumnInfos, rowObjects);
     } else if (table == Table.freshsalesLeadsMattressRaw) {
-        await insertIntoTableWrapper("freshsales_mattress_raw", freshsalesColumnInfos, rowObjects);
+        await insertIntoTableWrapper("freshsales_leads_mattress_raw", freshsalesColumnInfos, rowObjects);
     } else if (table == Table.freshsalesLeadsNonMattressRaw) {
-        await insertIntoTableWrapper("freshsales_non_mattress_raw", freshsalesColumnInfos, rowObjects);
+        await insertIntoTableWrapper("freshsales_leads_non_mattress_raw", freshsalesColumnInfos, rowObjects);
     } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
-        await insertIntoTableWrapper("freshsales_water_purifier_raw", freshsalesColumnInfos, rowObjects);
+        await insertIntoTableWrapper("freshsales_leads_water_purifier_raw", freshsalesColumnInfos, rowObjects);
     } else if (table == Table.googleAdsRaw) {
         await insertIntoTableWrapper("google_ads_raw", googleAdsRawColumnInfos, rowObjects);
     } else if (table == Table.shopifySalesRaw) {
@@ -136,6 +149,7 @@ export async function processFileUpload(table: Table, file: File): Promise<void>
     } else if (table == Table.websitePopupFormResponsesRaw) {
         await insertIntoTableWrapper("website_popup_form_responses_raw", websitePopupFormResponsesRawColumnInfos, rowObjects);
     } else {
+        console.log("processFileUpload: invalid table");
         throw new Response(null, {status: 400});
     }
 }
@@ -148,6 +162,30 @@ async function insertIntoTableWrapper(tableName: string, columnInfos, rowObjects
         columnInfos.map(columnInfo => columnInfo.tableColumn),
         rows,
     );
+}
+
+export async function processDelete(table: Table, startDate: string, endDate: string): Promise<void> {
+    if (table == Table.facebookAdsRaw) {
+        await deleteDataFromTable("facebook_ads_raw", "day", startDate, endDate);
+    } else if (table == Table.freshsalesLeadsMattressRaw) {
+        await deleteDataFromTable("freshsales_leads_mattress_raw", "DATE(lead_created_at)", startDate, endDate);
+    } else if (table == Table.freshsalesLeadsNonMattressRaw) {
+        await deleteDataFromTable("freshsales_leads_non_mattress_raw", "DATE(lead_created_at)", startDate, endDate);
+    } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
+        await deleteDataFromTable("freshsales_leads_water_purifier_raw", "DATE(lead_created_at)", startDate, endDate);
+    } else if (table == Table.googleAdsRaw) {
+        await deleteDataFromTable("google_ads_raw", "day", startDate, endDate);
+    } else if (table == Table.shopifySalesRaw) {
+        await deleteDataFromTable("shopify_sales_raw", "DATE(hour)", startDate, endDate);
+    // } else if (table == Table.typeformResponsesMattressRaw) {
+    //     await truncateTable("typeform_responses_mattress_raw");
+    // } else if (table == Table.typeformResponsesWaterPurifierRaw) {
+    //     await truncateTable("typeform_responses_water_purifier_raw");
+    } else if (table == Table.websitePopupFormResponsesRaw) {
+        await deleteDataFromTable("shopify_sales_raw", "DATE(timestamp)", startDate, endDate);
+    } else {
+        throw new Response(null, {status: 400});
+    }
 }
 
 export async function processTruncate(table: Table): Promise<void> {
@@ -183,6 +221,7 @@ function convertObjectArrayIntoArrayArray(rowObjects: Array<{[k: string]: string
 
     for (const column of columns) {
         if (!headers.includes(column)) {
+            console.log(`convertObjectArrayIntoArrayArray: column ${column} not found`);
             throw new Response(null, {status: 400});
         }
     }
@@ -191,20 +230,20 @@ function convertObjectArrayIntoArrayArray(rowObjects: Array<{[k: string]: string
 }
 
 const freshsalesColumnInfos = [
-    {csvColumn: "lead_id", tableColumn: "Lead : id"},
-    {csvColumn: "lead_first_name", tableColumn: "Lead : First name"},
-    {csvColumn: "lead_last_name", tableColumn: "Lead : Last name"},
-    {csvColumn: "lead_emails", tableColumn: "Lead : Emails"},
-    {csvColumn: "lead_job_title", tableColumn: "Lead : Job title"},
-    {csvColumn: "lead_sales_owner", tableColumn: "Lead : Sales owner"},
-    {csvColumn: "lead_sales_owner_email", tableColumn: "Lead : Sales owner email"},
-    {csvColumn: "lead_created_at", tableColumn: "Lead : Created at"},
-    {csvColumn: "lead_lead_stage", tableColumn: "Lead : Lead stage"},
-    {csvColumn: "lead_last_contacted_time", tableColumn: "Lead : Last contacted time"},
-    {csvColumn: "lead_converted_leads", tableColumn: "Lead : Converted Leads"},
-    {csvColumn: "lead_source", tableColumn: "Lead : Source"},
-    {csvColumn: "lead_phone_number", tableColumn: "Lead : Phone_Number"},
-    {csvColumn: "lead_updated_at", tableColumn: "Lead : Updated at"},
+    {tableColumn: "lead_id", csvColumn: "Lead : id"},
+    {tableColumn: "lead_first_name", csvColumn: "Lead : First name"},
+    {tableColumn: "lead_last_name", csvColumn: "Lead : Last name"},
+    {tableColumn: "lead_emails", csvColumn: "Lead : Emails"},
+    {tableColumn: "lead_job_title", csvColumn: "Lead : Job title"},
+    {tableColumn: "lead_sales_owner", csvColumn: "Lead : Sales owner"},
+    {tableColumn: "lead_sales_owner_email", csvColumn: "Lead : Sales owner email"},
+    {tableColumn: "lead_created_at", csvColumn: "Lead : Created at"},
+    {tableColumn: "lead_lead_stage", csvColumn: "Lead : Lead stage"},
+    {tableColumn: "lead_last_contacted_time", csvColumn: "Lead : Last contacted time"},
+    {tableColumn: "lead_converted_leads", csvColumn: "Lead : Converted Leads"},
+    {tableColumn: "lead_source", csvColumn: "Lead : Source"},
+    {tableColumn: "lead_phone_number", csvColumn: "Lead : Phone_Number"},
+    {tableColumn: "lead_updated_at", csvColumn: "Lead : Updated at"},
 ];
 
 const shopifyTableColumnInfos = [

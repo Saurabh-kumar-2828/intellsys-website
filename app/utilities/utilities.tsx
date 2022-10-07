@@ -102,7 +102,7 @@ export function distinct(arr) {
     return arr.filter(onlyUnique);
 };
 
-export function dateToMediumEnFormat(date) {
+export function dateToMediumEnFormat(date: string) {
     if (date == null) {
         return "?";
     }

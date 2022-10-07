@@ -6,6 +6,7 @@ import {useState} from "react";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
 import {getCampaignsInformation, getCampaignsTrends, getLeads, getSales} from "~/backend/facebook-campaigns";
 import {BarGraphComponent} from "~/components/reusableComponents/barGraphComponent";
+import {LineGraphComponent} from "~/components/reusableComponents/lineGraphComponent";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
 import {QueryFilterType} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithAmpersand, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
@@ -140,15 +141,53 @@ export default function () {
     const yAmountSpent = {};
     const campaignNamesRetrieved = Array<string>();
 
+    const fillColors = [
+        "tw-fill-blue-500",
+        "tw-fill-red-500",
+        "tw-fill-yellow-400",
+        "tw-fill-pink-400",
+        "tw-fill-purple-400",
+        "tw-fill-white",
+        "tw-fill-teal-400",
+        "tw-fill-orange-400",
+        "tw-fill-indigo-400",
+        "tw-fill-amber-400",
+        "tw-fill-lime-400",
+        "tw-fill-sky-400",
+        "tw-fill-fuchsia-400",
+        "tw-fill-rose-400",
+    ];
+    const strokeColors = [
+        "tw-stroke-blue-500",
+        "tw-stroke-red-500",
+        "tw-stroke-yellow-400",
+        "tw-stroke-pink-400",
+        "tw-stroke-purple-400",
+        "tw-stroke-white",
+        "tw-stroke-teal-400",
+        "tw-stroke-orange-400",
+        "tw-stroke-indigo-400",
+        "tw-stroke-amber-400",
+        "tw-stroke-lime-400",
+        "tw-stroke-sky-400",
+        "tw-stroke-fuchsia-400",
+        "tw-stroke-rose-400",
+    ];
+    let colorIndex = 0;
     for (const campaignInfo of campaignTrends.rows) {
         if (!campaignNamesRetrieved.includes(campaignInfo.campaignName)) {
             campaignNamesRetrieved.push(campaignInfo.campaignName);
-            yAmountSpent[campaignInfo.campaignName] = [];
+            yAmountSpent[campaignInfo.campaignName] = {
+                pointClassName: fillColors[colorIndex],
+                lineClassName: strokeColors[colorIndex],
+                data: [],
+            };
+            colorIndex++;
         }
     }
 
     for (const campaignInfo of campaignTrends.rows) {
-        yAmountSpent[campaignInfo.campaignName].push(campaignInfo.amountSpent);
+        yAmountSpent[campaignInfo.campaignName].data.push(campaignInfo.amountSpent);
         // yTemp[campaignInfo.campaignName]["impressions"] = campaignInfo.impressions;
         // yTemp[campaignInfo.campaignName]["clicks"] = campaignInfo.clicks;
     }
@@ -259,7 +298,7 @@ export default function () {
             <GenericCard
                 className="tw-col-span-6"
                 content={
-                    <BarGraphComponent
+                    <LineGraphComponent
                         data={{
                             x: distinct(campaignTrends.rows.map((row) => row.date)),
                             y: yAmountSpent,
@@ -269,12 +308,12 @@ export default function () {
                             //     Clicks: campaignTrends.rows.map((row) => row.clicks),
                             // },
                         }}
-                        yClasses={["tw-fill-blue-500", "tw-fill-red-500", "tw-fill-yellow-400"]}
-                        barWidth={20}
+                        barWidth={100}
                         height={640}
                     />
                 }
                 metaQuery={campaignTrends.metaQuery}
+                label="Amount Spent per Campaign"
             />
         </div>
     );

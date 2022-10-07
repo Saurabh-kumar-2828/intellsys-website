@@ -98,7 +98,7 @@ export class LineGraphComponent extends React.Component {
             // Draw the line
             node.append("path")
                 .datum(dataForLine)
-                .attr("class", `tw-fill-[none] tw-stroke-2 tw-stroke-red-400 ${yInfo.lineClassName}`)
+                .attr("class", `tw-fill-[none] tw-stroke-2 ${yInfo.lineClassName}`)
                 .attr(
                     "d",
                     line()

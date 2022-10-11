@@ -1,12 +1,13 @@
-var format = require('pg-format');
+var format = require("pg-format");
 import * as csv from "csv-string";
 import {execute} from "~/backend/utilities/databaseManager.server";
-import { getNonEmptyStringOrNull } from "~/utilities/utilities";
+import {getNonEmptyStringOrNull} from "~/utilities/utilities";
+
+const freshSalesApiBaseUrl = "https://livpuresmart.freshsales.io/api/leads/";
 
 export async function fullRefresh(): Promise<void> {
     try {
-        const query = (
-            `
+        const query = `
                 REFRESH MATERIALIZED VIEW shopify_sales;
                 REFRESH MATERIALIZED VIEW shopify_sales_deduped_by_email;
 
@@ -40,8 +41,7 @@ export async function fullRefresh(): Promise<void> {
                 REFRESH MATERIALIZED VIEW freshsales_leads_to_possible_sources;
                 REFRESH MATERIALIZED VIEW freshsales_leads_to_source;
                 REFRESH MATERIALIZED VIEW freshsales_leads_to_source_with_information;
-            `
-        );
+            `;
 
         await execute(query);
     } catch (e) {
@@ -154,13 +154,16 @@ export async function processFileUpload(table: Table, file: File): Promise<void>
     }
 }
 
-async function insertIntoTableWrapper(tableName: string, columnInfos, rowObjects): Promise<void> {
-    const rows = convertObjectArrayIntoArrayArray(rowObjects, columnInfos.map(columnInfo => columnInfo.csvColumn));
+async function insertIntoTableWrapper(tableName: string, columnInfos: any[], rowObjects: {[k: string]: string}[]): Promise<void> {
+    const rows = convertObjectArrayIntoArrayArray(
+        rowObjects,
+        columnInfos.map((columnInfo: {csvColumn: any}) => columnInfo.csvColumn)
+    );
 
     await insertIntoTable(
         tableName,
-        columnInfos.map(columnInfo => columnInfo.tableColumn),
-        rows,
+        columnInfos.map((columnInfo: {tableColumn: any}) => columnInfo.tableColumn),
+        rows
     );
 }
 
@@ -212,8 +215,87 @@ export async function processTruncate(table: Table): Promise<void> {
     }
 }
 
-export async function processIngestDataFromApi(table: Table): Promise<void> {
-    console.log("dummy operation succeeded");
+async function getLeadInformation(leadId: number) {
+    const url = freshSalesApiBaseUrl + leadId + "?include=owner&include=source&include=lead_stage";
+    const response = await fetch(url, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: process.env.FRESHSALES_API_TOKEN!,
+        },
+    });
+    const leadInformation = await response.json();
+    return leadInformation;
+}
+
+async function getSingleLeadsInformation(leadIds: Array<number>) {
+    try {
+        let allSingleLeadsInformation = await Promise.all(
+            leadIds.map(async (leadId) => {
+                const leadInformation = await getLeadInformation(leadId);
+                return leadInformation;
+            })
+        );
+        return allSingleLeadsInformation;
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+async function getLeadsOfCurrentPage(pageNumber: Number, date: string) {
+    try {
+        const urlToFetchLeads = freshSalesApiBaseUrl + "view/15000010043" + "?page=" + pageNumber + "&updated_at=" + date;
+        const response = await fetch(urlToFetchLeads, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: process.env.FRESHSALES_API_TOKEN!,
+            },
+        });
+        const leadsData = await response.json();
+        return leadsData;
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+async function fetchNumberOfPages(date: string) {
+    try {
+        const allLeadsCreatedOnAndAfterSpecifiedDate = await getLeadsOfCurrentPage(1, date);
+        return allLeadsCreatedOnAndAfterSpecifiedDate["meta"]["total_pages"];
+    } catch (e) {
+        console.log(e);
+    }
+}
+async function getAllLeadIds(date: string) {
+    const allLeadIds = [];
+    try {
+        const totalPages = await fetchNumberOfPages(date);
+
+        for (let pageNo = 1; pageNo <= 2; pageNo++) {
+            const leadsOfCurrentPage = await getLeadsOfCurrentPage(pageNo, date);
+            const leadIdsOfCurrentPage = leadsOfCurrentPage.leads.map((lead) => lead.id);
+            allLeadIds.push(...leadIdsOfCurrentPage!);
+        }
+
+        return allLeadIds;
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+async function dataFromFreshSalesApi(date: string) {
+    // Get all lead Ids.
+    const leadIds = await getAllLeadIds(date);
+
+    // Get lead information.
+    const leadsInformation = await getSingleLeadsInformation(leadIds);
+
+    return leadsInformation;
+}
+
+export async function processIngestDataFromApi(table: Table, date: string): Promise<void> {
+    const leads = await dataFromFreshSalesApi(date);
 }
 
 function convertObjectArrayIntoArrayArray(rowObjects: Array<{[k: string]: string}>, columns: Array<string>) {
@@ -226,7 +308,7 @@ function convertObjectArrayIntoArrayArray(rowObjects: Array<{[k: string]: string
         }
     }
 
-    return rowObjects.map(rowObject => columns.map(column => getNonEmptyStringOrNull(rowObject[column].trim())));
+    return rowObjects.map((rowObject) => columns.map((column) => getNonEmptyStringOrNull(rowObject[column].trim())));
 }
 
 const freshsalesColumnInfos = [
@@ -353,8 +435,7 @@ const facebookAdsRawColumnInfos = [
     {tableColumn: "cpi", csvColumn: "CPI"},
 ];
 
-const typeformRawColumnInfos = [
-];
+const typeformRawColumnInfos: never[] = [];
 
 const websitePopupFormResponsesRawColumnInfos = [
     {tableColumn: "timestamp", csvColumn: "Timestamp"},

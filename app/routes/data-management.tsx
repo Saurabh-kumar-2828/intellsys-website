@@ -50,7 +50,7 @@ export const action: ActionFunction = async ({request}) => {
     } else if (operation == Operation.refresh) {
         await fullRefresh();
     } else if (operation == Operation.ingestDataFromApi) {
-        await processIngestDataFromApi(table);
+        await processIngestDataFromApi(table, "2021-12-12T16:01:16+05:30");
     } else {
         throw new Response(null, {status: 400});
     }

@@ -42,6 +42,8 @@ export const action: ActionFunction = async ({request}) => {
 
     if (username == "gj" && password == "gj") {
         return redirect("/set-session?userId=admin");
+    } else if (username == "harsha@livpure.com" && password == "Livpure!") {
+        return redirect("/set-session?userId=harsha@livpure.com");
     } else {
         errors.push("Invalid credentials!");
     }

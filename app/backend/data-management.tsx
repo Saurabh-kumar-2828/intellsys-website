@@ -2,6 +2,7 @@ var format = require("pg-format");
 import * as csv from "csv-string";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
+const { GoogleSpreadsheet } = require('google-spreadsheet');
 
 const freshSalesApiBaseUrl = "https://livpuresmart.freshsales.io/api/leads/";
 
@@ -272,7 +273,7 @@ async function getAllLeadIds(date: string) {
     try {
         const totalPages = await fetchNumberOfPages(date);
 
-        for (let pageNo = 1; pageNo <= 2; pageNo++) {
+        for (let pageNo = 1; pageNo <= totalPages; pageNo++) {
             const leadsOfCurrentPage = await getLeadsOfCurrentPage(pageNo, date);
             const leadIdsOfCurrentPage = leadsOfCurrentPage.leads.map((lead) => lead.id);
             allLeadIds.push(...leadIdsOfCurrentPage!);
@@ -294,8 +295,60 @@ async function dataFromFreshSalesApi(date: string) {
     return leadsInformation;
 }
 
+function convertDate(inputFormat: string) {
+    //YYYY-MM-DD
+    function pad(s) {
+        return s < 10 ? "0" + s : s;
+    }
+    const [year, month, day] = inputFormat.split("/");
+    var d = new Date(+year, +month - 1, +day);
+
+    return [pad(d.getDate()), pad(d.getMonth() + 1), d.getFullYear()].join("-");
+}
+
+async function getRowsFilterByDate(rows: any, date: string) {
+    if (date == "") {
+        return;
+    }
+    const filterRows: any[] = [];
+    const [d, time] = date.split(" ");
+    const filterDate = convertDate(d);
+
+    rows.map((row) => {
+        const [date, time] = row["Submitted At"].split(" ");
+        var d = convertDate(date);
+        if (d != "") {
+            if (d >= filterDate) {
+                filterRows.push(row);
+            }
+        }
+    });
+    return filterRows;
+}
+
+async function dataFromGoogleSheet(date: string) {
+    const doc = new GoogleSpreadsheet(process.env.SPREADSHEET_ID);
+
+    await doc.useServiceAccountAuth({
+        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        private_key: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
+    });
+    await doc.loadInfo(); // loads document properties and worksheets
+
+    const sheet = doc.sheetsByIndex[1]; // the first sheet
+
+    //get all rows
+    const rows = await sheet.getRows();
+
+    const rowsFilterByDate = await getRowsFilterByDate(rows, date);
+    return rowsFilterByDate;
+}
+
+
 export async function processIngestDataFromApi(table: Table, date: string): Promise<void> {
-    const leads = await dataFromFreshSalesApi(date);
+    // const leads = await dataFromFreshSalesApi(date);
+
+    const wpLeads = await dataFromGoogleSheet(date);
 }
 
 function convertObjectArrayIntoArrayArray(rowObjects: Array<{[k: string]: string}>, columns: Array<string>) {

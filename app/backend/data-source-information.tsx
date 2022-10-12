@@ -86,13 +86,13 @@ export async function get_websitePopupFormResponsesRawDataInformation() {
 }
 
 export async function get_typeformResponsesDataInformation() {
-    return await getDataInformation("typeform_responses", "date");
+    return await getDataInformation("typeform_responses", "submitted_at");
 }
 
 export async function get_typeformResponsesMattressDataInformation() {
-    return await getDataInformation("typeform_responses_mattress_raw", "date");
+    return await getDataInformation("typeform_responses_mattress_raw", "TO_DATE(submitted_at, 'DD/MM/YYYY HH24:MI:SS')");
 }
 
 export async function get_typeformResponsesWaterPurifierDataInformation() {
-    return await getDataInformation("typeform_responses_water_purifier_raw", "date");
+    return await getDataInformation("typeform_responses_water_purifier_raw", "TO_DATE(submitted_at, 'DD/MM/YYYY HH24:MI:SS')");
 }

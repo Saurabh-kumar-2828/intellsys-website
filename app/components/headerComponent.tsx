@@ -1,59 +1,13 @@
 import {Link, useLocation} from "@remix-run/react";
+import {List} from "react-bootstrap-icons";
 
-import {ResponsiveImage} from "~/components/reusableComponents/responsiveImage";
+import {MenuComponent} from "~/components/menuComponent";
+import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
+import {User} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
-import { ItemBuilder } from "./reusableComponents/itemBuilder";
 
-export function HeaderComponent(props: {className?: string}) {
+export function HeaderComponent(props: {userDetails: User | null, className?: string}) {
     const currentUrl = useLocation().pathname;
-
-    const pages = currentUrl == "/sign-in" ? [] : [
-        {
-            url: "/",
-            displayName: "Home",
-            exactMatch: true,
-        },
-        {
-            url: "#",
-            displayName: "|",
-            exactMatch: true,
-        },
-        {
-            url: "/business-insights",
-            displayName: "Business Insights",
-            exactMatch: false,
-        },
-        {
-            url: "/facebook-campaigns",
-            displayName: "Facebook Campaigns",
-            exactMatch: false,
-        },
-        // {
-        //     url: "/google-campaigns",
-        //     displayName: "Google Campaigns",
-        //     exactMatch: false,
-        // },
-        {
-            url: "#",
-            displayName: "|",
-            exactMatch: true,
-        },
-        {
-            url: "/data-management",
-            displayName: "Data Management",
-            exactMatch: false,
-        },
-        {
-            url: "/data-source-information",
-            displayName: "Data Source Information",
-            exactMatch: false,
-        },
-        {
-            url: "/dashboard-health-monitoring",
-            displayName: "Dashboard Health Monitoring",
-            exactMatch: false,
-        },
-    ];
 
     return (
         <div className={concatenateNonNullStringsWithSpaces("tw-sticky tw-top-0 tw-h-16 tw-bg-lp tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900", props.className)}>
@@ -65,18 +19,7 @@ export function HeaderComponent(props: {className?: string}) {
                     </div>
                 </Link>
 
-                <div className="tw-col-start-3 tw-flex tw-flex-row tw-gap-x-4">
-                    <ItemBuilder
-                        items={pages}
-                        itemBuilder={((item, itemIndex) => (
-                            <Link to={item.url} className={concatenateNonNullStringsWithSpaces("hover:tw-underline", (item.exactMatch && currentUrl == item.url) || (!item.exactMatch && currentUrl.startsWith(item.url)) ? "tw-font-bold" : null)} key={itemIndex}>
-                                {item.displayName}
-                            </Link>
-                        ))}
-                    />
-                </div>
-
-                {/* <MenuComponent userDetails={props.userDetails} /> */}
+                {currentUrl.startsWith("/sign-in") ? null : <MenuComponent className="tw-col-start-3 tw-h-8" userDetails={props.userDetails} />}
             </div>
         </div>
     );

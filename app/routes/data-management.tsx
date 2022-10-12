@@ -50,7 +50,7 @@ export const action: ActionFunction = async ({request}) => {
     } else if (operation == Operation.refresh) {
         await fullRefresh();
     } else if (operation == Operation.ingestDataFromApi) {
-        await processIngestDataFromApi(table, "2021-12-12T16:01:16+05:30");
+        await processIngestDataFromApi(table, "1990-01-01T00:00:00Z");
     } else {
         throw new Response(null, {status: 400});
     }
@@ -103,7 +103,7 @@ export default function () {
                 <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
                 <button type="submit" className="tw-lp-button">
-                    Delete Data Selected Time Period
+                    Delete Data For Selected Time Period
                 </button>
             </Form>
 
@@ -130,9 +130,9 @@ export default function () {
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                 <input type="text" name="table" value={Table.facebookAdsRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
+                <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                 <button className="tw-lp-button" disabled>
-                    Run Data Refresh Pipeline
+                    Fetch Data From API
                 </button>
             </Form>
 
@@ -167,7 +167,7 @@ export default function () {
                 <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
                 <button type="submit" className="tw-lp-button">
-                    Delete Data Selected Time Period
+                    Delete Data For Selected Time Period
                 </button>
             </Form>
 
@@ -194,9 +194,9 @@ export default function () {
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                 <input type="text" name="table" value={Table.freshsalesLeadsMattressRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
+                <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                 <button className="tw-lp-button" disabled>
-                    Run Data Refresh Pipeline
+                    Fetch Data From API
                 </button>
             </Form>
 
@@ -231,7 +231,7 @@ export default function () {
                 <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
                 <button type="submit" className="tw-lp-button">
-                    Delete Data Selected Time Period
+                    Delete Data For Selected Time Period
                 </button>
             </Form>
 
@@ -258,9 +258,9 @@ export default function () {
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                 <input type="text" name="table" value={Table.freshsalesLeadsNonMattressRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
+                <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                 <button className="tw-lp-button" disabled>
-                    Run Data Refresh Pipeline
+                    Fetch Data From API
                 </button>
             </Form>
 
@@ -295,7 +295,7 @@ export default function () {
                 <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
                 <button type="submit" className="tw-lp-button">
-                    Delete Data Selected Time Period
+                    Delete Data For Selected Time Period
                 </button>
             </Form>
 
@@ -322,9 +322,9 @@ export default function () {
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                 <input type="text" name="table" value={Table.freshsalesLeadsWaterPurifierRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
+                <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                 <button className="tw-lp-button" disabled>
-                    Run Data Refresh Pipeline
+                    Fetch Data From API
                 </button>
             </Form>
 
@@ -344,7 +344,7 @@ export default function () {
                 <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
                 <button type="submit" className="tw-lp-button">
-                    Delete Data Selected Time Period
+                    Delete Data For Selected Time Period
                 </button>
             </Form>
 
@@ -371,9 +371,9 @@ export default function () {
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                 <input type="text" name="table" value={Table.googleAdsRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
+                <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                 <button className="tw-lp-button" disabled>
-                    Run Data Refresh Pipeline
+                    Fetch Data From API
                 </button>
             </Form>
 
@@ -393,7 +393,7 @@ export default function () {
                 <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
                 <button type="submit" className="tw-lp-button">
-                    Delete Data Selected Time Period
+                    Delete Data For Selected Time Period
                 </button>
             </Form>
 
@@ -420,9 +420,9 @@ export default function () {
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                 <input type="text" name="table" value={Table.shopifySalesRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
+                <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                 <button className="tw-lp-button" disabled>
-                    Run Data Refresh Pipeline
+                    Fetch Data From API
                 </button>
             </Form>
 
@@ -457,7 +457,7 @@ export default function () {
                 <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
                 <button type="submit" className="tw-lp-button" disabled>
-                    Delete Data Selected Time Period
+                    Delete Data For Selected Time Period
                 </button>
             </Form>
 
@@ -484,9 +484,9 @@ export default function () {
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                 <input type="text" name="table" value={Table.typeformResponsesMattressRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
-                <button className="tw-lp-button" disabled>
-                    Run Data Refresh Pipeline
+                <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
+                <button className="tw-lp-button">
+                    Fetch Data From API
                 </button>
             </Form>
 
@@ -521,7 +521,7 @@ export default function () {
                 <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
                 <button type="submit" className="tw-lp-button" disabled>
-                    Delete Data Selected Time Period
+                    Delete Data For Selected Time Period
                 </button>
             </Form>
 
@@ -548,9 +548,9 @@ export default function () {
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                 <input type="text" name="table" value={Table.typeformResponsesWaterPurifierRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
-                <button className="tw-lp-button" disabled>
-                    Run Data Refresh Pipeline
+                <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
+                <button className="tw-lp-button">
+                    Fetch Data From API
                 </button>
             </Form>
 
@@ -585,7 +585,7 @@ export default function () {
                 <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
 
                 <button type="submit" className="tw-lp-button">
-                    Delete Data Selected Time Period
+                    Delete Data For Selected Time Period
                 </button>
             </Form>
 
@@ -612,9 +612,9 @@ export default function () {
 
             <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                 <input type="text" name="table" value={Table.websitePopupFormResponsesRaw} readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
+                <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                 <button className="tw-lp-button" disabled>
-                    Run Data Refresh Pipeline
+                    Fetch Data From API
                 </button>
             </Form>
 
@@ -623,13 +623,6 @@ export default function () {
                 <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />
 
                 <button className="tw-lp-button">Run Complete Data Refresh Pipeline</button>
-            </Form>
-
-            <Form method="post" className="tw-col-span-12 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                <input type="text" name="table" value="" readOnly className="tw-hidden" />
-                <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
-
-                <button className="tw-lp-button">Dummy Button</button>
             </Form>
         </div>
     );

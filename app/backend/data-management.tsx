@@ -1,7 +1,8 @@
 var format = require("pg-format");
 import * as csv from "csv-string";
+import {DateTime} from "luxon";
 import {execute} from "~/backend/utilities/databaseManager.server";
-import {getNonEmptyStringOrNull} from "~/utilities/utilities";
+import {getIntegerArrayOfLength, getNonEmptyStringOrNull} from "~/utilities/utilities";
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 
 const freshSalesApiBaseUrl = "https://livpuresmart.freshsales.io/api/leads/";
@@ -155,15 +156,15 @@ export async function processFileUpload(table: Table, file: File): Promise<void>
     }
 }
 
-async function insertIntoTableWrapper(tableName: string, columnInfos: any[], rowObjects: {[k: string]: string}[]): Promise<void> {
+async function insertIntoTableWrapper(tableName: string, columnInfos, rowObjects): Promise<void> {
     const rows = convertObjectArrayIntoArrayArray(
         rowObjects,
-        columnInfos.map((columnInfo: {csvColumn: any}) => columnInfo.csvColumn)
+        columnInfos.map((columnInfo) => columnInfo.csvColumn)
     );
 
     await insertIntoTable(
         tableName,
-        columnInfos.map((columnInfo: {tableColumn: any}) => columnInfo.tableColumn),
+        columnInfos.map((columnInfo) => columnInfo.tableColumn),
         rows
     );
 }
@@ -181,10 +182,10 @@ export async function processDelete(table: Table, startDate: string, endDate: st
         await deleteDataFromTable("google_ads_raw", "day", startDate, endDate);
     } else if (table == Table.shopifySalesRaw) {
         await deleteDataFromTable("shopify_sales_raw", "DATE(hour)", startDate, endDate);
-    // } else if (table == Table.typeformResponsesMattressRaw) {
-    //     await truncateTable("typeform_responses_mattress_raw");
-    // } else if (table == Table.typeformResponsesWaterPurifierRaw) {
-    //     await truncateTable("typeform_responses_water_purifier_raw");
+    } else if (table == Table.typeformResponsesMattressRaw) {
+        await truncateTable("typeform_responses_mattress_raw");
+    } else if (table == Table.typeformResponsesWaterPurifierRaw) {
+        await truncateTable("typeform_responses_water_purifier_raw");
     } else if (table == Table.websitePopupFormResponsesRaw) {
         await deleteDataFromTable("shopify_sales_raw", "DATE(timestamp)", startDate, endDate);
     } else {
@@ -295,60 +296,110 @@ async function dataFromFreshSalesApi(date: string) {
     return leadsInformation;
 }
 
-function convertDate(inputFormat: string) {
-    //YYYY-MM-DD
-    function pad(s) {
-        return s < 10 ? "0" + s : s;
-    }
-    const [year, month, day] = inputFormat.split("/");
-    var d = new Date(+year, +month - 1, +day);
+async function getTypeformRowsFilteredByTime(rows: any, filterTimestamp: Date) {
+    const timestampColumnIndex = typeformRawColumnInfos.filter(columnInfo => columnInfo.tableColumn == "submitted_at")[0].sheetColumnIndex;
 
-    return [pad(d.getDate()), pad(d.getMonth() + 1), d.getFullYear()].join("-");
-}
+    const filteredRows = [];
 
-async function getRowsFilterByDate(rows: any, date: string) {
-    if (date == "") {
-        return;
-    }
-    const filterRows: any[] = [];
-    const [d, time] = date.split(" ");
-    const filterDate = convertDate(d);
+    for (const row of rows) {
+        const timestampStr = row._rawData[timestampColumnIndex];
 
-    rows.map((row) => {
-        const [date, time] = row["Submitted At"].split(" ");
-        var d = convertDate(date);
-        if (d != "") {
-            if (d >= filterDate) {
-                filterRows.push(row);
-            }
+        if (timestampStr == "") {
+            continue;
         }
-    });
-    return filterRows;
+
+        const timestamp = DateTime.fromFormat(timestampStr, "dd/MM/yyyy HH:mm:ss", {zone: "utc"}).toJSDate();
+
+        if (timestamp > filterTimestamp) {
+            filteredRows.push(row);
+        }
+    }
+
+    return filteredRows;
 }
 
-async function dataFromGoogleSheet(date: string) {
-    const doc = new GoogleSpreadsheet(process.env.SPREADSHEET_ID);
+// async function getRowsFilteredByTime(rows: any, filterTimestamp: Date) {
+//     return rows.filter(row => {
+//         const timestampStr = row["Submitted At"];
 
-    await doc.useServiceAccountAuth({
+//         if (timestampStr == "") {
+//             return false;
+//         }
+
+//         const timestamp = DateTime.fromFormat(timestampStr, "DD/MM/YYYY HH:MM:SS").toJSDate();
+
+//         if (timestamp <= filterTimestamp) {
+//             return false;
+//         }
+
+//         return true;
+//     });
+// }
+
+async function dataFromGoogleSheet(sheetId: string, sheetTitle: string, timestamp: string) {
+    const document = new GoogleSpreadsheet(sheetId);
+
+    await document.useServiceAccountAuth({
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
         private_key: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
     });
-    await doc.loadInfo(); // loads document properties and worksheets
 
-    const sheet = doc.sheetsByIndex[1]; // the first sheet
+    await document.loadInfo();
 
-    //get all rows
-    const rows = await sheet.getRows();
+    const sheet = document.sheetsByTitle[sheetTitle];
 
-    const rowsFilterByDate = await getRowsFilterByDate(rows, date);
-    return rowsFilterByDate;
+    // get all rows
+    const spreadsheetRows = (await sheet.getRows()).filter(spreadsheetRow => spreadsheetRow._rawData.some(cellValue => cellValue != null && cellValue != ""));
+
+    const filteredSpreadsheetRows = await getTypeformRowsFilteredByTime(spreadsheetRows, new Date(timestamp));
+
+    return filteredSpreadsheetRows.map(spreadsheetRow => typeformRawColumnInfos.map(columnInfo => getNonEmptyStringOrNull(spreadsheetRow._rawData[columnInfo.sheetColumnIndex])));
 }
 
+async function ingestDataFromTypeformMattressApi(date: string) {
+    const rows = await dataFromGoogleSheet(process.env.TYPEFORM_MATTRESS_SPREADSHEET_ID!, process.env.TYPEFORM_MATTRESS_SHEET_TITLE!, date);
+
+    await insertIntoTable(
+        "typeform_responses_mattress_raw",
+        typeformRawColumnInfos.map((columnInfo) => columnInfo.tableColumn),
+        rows
+    );
+}
+
+async function ingestDataFromTypeformWaterPurifierApi(date: string) {
+    const rows = await dataFromGoogleSheet(process.env.TYPEFORM_WATER_PURIFIER_SPREADSHEET_ID!, process.env.TYPEFORM_WATER_PURIFIER_SHEET_TITLE!, date);
+
+    await insertIntoTable(
+        "typeform_responses_water_purifier_raw",
+        typeformRawColumnInfos.map((columnInfo) => columnInfo.tableColumn),
+        rows
+    );
+}
 
 export async function processIngestDataFromApi(table: Table, date: string): Promise<void> {
+    // if (table == Table.facebookAdsRaw) {
+    //     await truncateTable("facebook_ads_raw");
+    // } else if (table == Table.freshsalesLeadsMattressRaw) {
     // const leads = await dataFromFreshSalesApi(date);
-
-    const wpLeads = await dataFromGoogleSheet(date);
+    //     await truncateTable("freshsales_leads_mattress_raw");
+    // } else if (table == Table.freshsalesLeadsNonMattressRaw) {
+    //     await truncateTable("freshsales_leads_non_mattress_raw");
+    // } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
+    //     await truncateTable("freshsales_leads_water_purifier_raw");
+    // } else if (table == Table.googleAdsRaw) {
+    //     await truncateTable("google_ads_raw");
+    // } else if (table == Table.shopifySalesRaw) {
+    //     await truncateTable("shopify_sales_raw");
+    // } else if (table == Table.typeformResponsesMattressRaw) {
+    if (table == Table.typeformResponsesMattressRaw) {
+        await ingestDataFromTypeformMattressApi(date);
+    } else if (table == Table.typeformResponsesWaterPurifierRaw) {
+        await ingestDataFromTypeformWaterPurifierApi(date);
+    // } else if (table == Table.websitePopupFormResponsesRaw) {
+        // await truncateTable("website_popup_form_responses_raw");
+    } else {
+        throw new Response(null, {status: 400});
+    }
 }
 
 function convertObjectArrayIntoArrayArray(rowObjects: Array<{[k: string]: string}>, columns: Array<string>) {
@@ -488,7 +539,19 @@ const facebookAdsRawColumnInfos = [
     {tableColumn: "cpi", csvColumn: "CPI"},
 ];
 
-const typeformRawColumnInfos: never[] = [];
+const typeformRawColumnInfos = [
+    {tableColumn: "name", sheetColumnIndex: 0},
+    {tableColumn: "mobile_number", sheetColumnIndex: 1},
+    {tableColumn: "email_id", sheetColumnIndex: 3},
+    {tableColumn: "what_are_you_looking_for", sheetColumnIndex: 2},
+    {tableColumn: "would_you_like_to_explore_more_products", sheetColumnIndex: 4},
+    {tableColumn: "utm_term", sheetColumnIndex: 5},
+    {tableColumn: "utm_campaign", sheetColumnIndex: 6},
+    {tableColumn: "utm_content", sheetColumnIndex: 7},
+    {tableColumn: "utm_medium", sheetColumnIndex: 8},
+    {tableColumn: "utm_source", sheetColumnIndex: 9},
+    {tableColumn: "submitted_at", sheetColumnIndex: 10},
+];
 
 const websitePopupFormResponsesRawColumnInfos = [
     {tableColumn: "timestamp", csvColumn: "Timestamp"},

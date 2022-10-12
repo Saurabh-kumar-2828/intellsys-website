@@ -138,4 +138,8 @@ export function numberToHumanFriendlyString(n, isFloat = false, shorten = true, 
     }
 }
 
+export function getIntegerArrayOfLength(n: number) {
+    return Array(n).fill(null).map((_, i) => i);
+}
+
 const cloudflareImagesAccountHash = "QSJTsX8HH4EtEhHrJthznA";

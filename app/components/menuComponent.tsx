@@ -1,16 +1,14 @@
+import {Link, useLocation} from "@remix-run/react";
 import React, {useState} from "react";
-import ReactDOM from "react-dom";
-import {Link} from "@remix-run/react";
 
-import {HamburgerMenuSvgIconComponent} from "~/components/reusableComponents/svgIconComponents/hamburgerMenuSvgIconComponent";
-import {CloseSvgIconComponent} from "~/components/reusableComponents/svgIconComponents/closeSvgIconComponent";
-import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
+import {List, XLg} from "react-bootstrap-icons";
+import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
-import {AccountSvgIconComponent} from "~/components/reusableComponents/svgIconComponents/accountSvgIconComponent";
-import {UserDetails} from "~/utilities/typeDefinitions";
+import {User} from "~/utilities/typeDefinitions";
+import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
 
-export function MenuComponent(props: {userDetails: UserDetails | null}) {
-    const userDetails = props.userDetails;
+export function MenuComponent(props: {userDetails: User | null; className?: string}) {
+    const currentUrl = useLocation().pathname;
 
     const [isMenuExpanded, setIsMenuExpanded] = useState(false);
 
@@ -27,26 +25,134 @@ export function MenuComponent(props: {userDetails: UserDetails | null}) {
         // }
     }
 
+    const pages = [
+        {
+            url: "/",
+            displayName: "Home",
+            exactMatch: true,
+        },
+        {
+            url: "#",
+            displayName: "",
+            exactMatch: true,
+        },
+        {
+            url: "#",
+            displayName: "",
+            exactMatch: true,
+        },
+        {
+            url: "/business-insights",
+            displayName: "Business Insights",
+            exactMatch: false,
+        },
+        {
+            url: "/facebook-campaigns",
+            displayName: "Facebook Campaigns",
+            exactMatch: false,
+        },
+        // {
+        //     url: "/google-campaigns",
+        //     displayName: "Google Campaigns",
+        //     exactMatch: false,
+        // },
+        {
+            url: "#",
+            displayName: "",
+            exactMatch: true,
+        },
+        {
+            url: "#",
+            displayName: "",
+            exactMatch: true,
+        },
+        {
+            url: "/data-management",
+            displayName: "Data Management",
+            exactMatch: false,
+        },
+        {
+            url: "/data-source-information",
+            displayName: "Data Source Information",
+            exactMatch: false,
+        },
+        {
+            url: "/dashboard-health-monitoring",
+            displayName: "Dashboard Health Monitoring",
+            exactMatch: false,
+        },
+    ];
+
+    // return (
+    //     <div className="tw-col-start-3 tw-relative tw-group">
+    //         <List className="tw-w-8 tw-h-8" />
+
+    //         <div className="tw-absolute tw-hidden group-hover:tw-block tw-top-8 -tw-right-4 tw-pl-20 tw-pb-20">
+    //             <div className="tw-flex tw-flex-col tw-gap-y-4 tw-min-w-16 tw-w-80 tw-bg-lp tw-p-4">
+    //                 <ItemBuilder
+    //                     items={pages}
+    //                     itemBuilder={((item, itemIndex) => (
+    //                         <Link to={item.url} className={concatenateNonNullStringsWithSpaces("hover:tw-underline", (item.exactMatch && currentUrl == item.url) || (!item.exactMatch && currentUrl.startsWith(item.url)) ? "tw-font-bold" : null)} key={itemIndex}>
+    //                             {item.displayName}
+    //                         </Link>
+    //                     ))}
+    //                 />
+    //             </div>
+    //         </div>
+    //     </div>
+    // );
+
     return (
-        <div>
+        <div className={props.className}>
             <button onClick={toggleMenu}>
-                <HamburgerMenuSvgIconComponent className="tw-h-8" />
+                <List className="tw-w-8 tw-h-8" />
             </button>
 
             <div className={concatenateNonNullStringsWithSpaces("tw-inset-0", isMenuExpanded ? "tw-fixed" : "tw-hidden")}>
                 <div className="tw-flex tw-flex-row tw-w-full tw-h-full">
-                    <div className="tw-flex-grow tw-bg-black tw-opacity-50" onClick={toggleMenu} />
+                    <div className="tw-flex-grow tw-backdrop-blur-md tw-backdrop-brightness-75" onClick={toggleMenu} />
 
-                    <div className="tw-flex tw-flex-col tw-p-4 tw-min-w-[66%] xl:tw-min-w-[20rem] tw-bg-black tw-overflow-y-auto">
+                    <div className="tw-flex tw-flex-col tw-p-4 tw-min-w-[66%] xl:tw-min-w-[20rem] tw-bg-lp tw-overflow-y-auto">
                         <div className="tw-flex tw-flex-row tw-justify-end tw-items-center tw-h-10">
                             <button onClick={toggleMenu}>
-                                <CloseSvgIconComponent className="tw-h-8" />
+                                <XLg className="tw-w-8 tw-h-8" />
                             </button>
                         </div>
 
                         <VerticalSpacer />
 
-                        {userDetails == null ? <GuestSubMenu toggleMenu={toggleMenu} /> : <LoggedInUserSubMenu userDetails={userDetails} toggleMenu={toggleMenu} />}
+                        <ItemBuilder
+                            items={pages}
+                            itemBuilder={(item, itemIndex) => (
+                                <MenuClosingLink
+                                    to={item.url}
+                                    className={concatenateNonNullStringsWithSpaces(
+                                        "tw-py-2 hover:tw-underline",
+                                        (item.exactMatch && currentUrl == item.url) || (!item.exactMatch && currentUrl.startsWith(item.url)) ? "tw-font-bold" : null
+                                    )}
+                                    toggleMenu={toggleMenu}
+                                    key={itemIndex}
+                                >
+                                    {item.displayName}
+                                </MenuClosingLink>
+                            )}
+                        />
+
+                        <VerticalSpacer className="tw-h-6" />
+
+                        <Divider />
+
+                        <div className="tw-flex-grow" />
+
+                        <Divider />
+
+                        <VerticalSpacer className="tw-h-6" />
+
+                        <MenuClosingLink to="/clear-session" className="hover:tw-underline" toggleMenu={toggleMenu}>
+                            Sign Out
+                        </MenuClosingLink>
+
+                        <VerticalSpacer className="tw-h-2" />
                     </div>
                 </div>
             </div>
@@ -54,111 +160,14 @@ export function MenuComponent(props: {userDetails: UserDetails | null}) {
     );
 }
 
-function GuestSubMenu(props: {toggleMenu: React.MouseEventHandler}) {
-    const toggleMenu = props.toggleMenu;
-
+function MenuClosingLink(props: {to: string; children: string; className?: string; toggleMenu: React.MouseEventHandler}) {
     return (
-        <>
-            <div className="tw-text-center">
-                <div>To Access Account</div>
-                <div>And Manage Bookings</div>
-
-                <VerticalSpacer className="tw-h-4" />
-
-                <MenuClosingLink to="/sign-in" className="tw-lectrix-rounded-button-dark" toggleMenu={toggleMenu}>
-                    Log In
-                </MenuClosingLink>
-            </div>
-
-            <VerticalSpacer />
-
-            <div className="tw-h-0.5 tw-w-full tw-bg-white tw-opacity-[15%]" />
-
-            <VerticalSpacer />
-
-            <StandardNavigationSubMenu toggleMenu={toggleMenu} />
-
-            <VerticalSpacer />
-        </>
+        <Link to={props.to} className={props.className} onClick={props.toggleMenu}>
+            {props.children}
+        </Link>
     );
 }
 
-function LoggedInUserSubMenu(props: {userDetails: UserDetails, toggleMenu: React.MouseEventHandler}) {
-    const toggleMenu = props.toggleMenu;
-
-    return (
-        <>
-            <div className="tw-text-center">
-                <div>Welcome back, {props.userDetails.name ?? props.userDetails.phoneNumber?.substring(3)}!</div>
-            </div>
-
-            <VerticalSpacer />
-
-            <div className="tw-h-0.5 tw-w-full tw-bg-white tw-opacity-[15%]" />
-
-            <StandardNavigationSubMenu toggleMenu={toggleMenu} />
-
-            <div className="tw-h-0.5 tw-w-full tw-bg-white tw-opacity-[15%]" />
-
-            <VerticalSpacer />
-
-            <Link to="/account">Account</Link>
-
-            <VerticalSpacer className="tw-h-4" />
-
-            <Link to="/account/profile">Profile</Link>
-
-            <VerticalSpacer className="tw-h-4" />
-
-            <div>Address</div>
-
-            <VerticalSpacer className="tw-h-4" />
-
-            <div>Payments</div>
-
-            <VerticalSpacer className="tw-h-4" />
-
-            <div>Subscriptions</div>
-
-            <VerticalSpacer />
-
-            <div className="tw-h-0.5 tw-w-full tw-bg-white tw-opacity-[15%]" />
-
-            <div className="tw-flex-grow" />
-
-            <div className="tw-h-0.5 tw-w-full tw-bg-white tw-opacity-[15%]" />
-
-            <VerticalSpacer />
-
-            <MenuClosingLink to="/clear-session" toggleMenu={toggleMenu}>Sign Out</MenuClosingLink>
-        </>
-    );
-}
-
-function StandardNavigationSubMenu(props: {toggleMenu: React.MouseEventHandler}) {
-    const toggleMenu = props.toggleMenu;
-
-    return (
-        <>
-            <VerticalSpacer />
-
-            <MenuClosingLink to="/" toggleMenu={toggleMenu}>Home</MenuClosingLink>
-
-            <VerticalSpacer className="tw-h-4" />
-
-            <MenuClosingLink to="/about-us" toggleMenu={toggleMenu}>About Us</MenuClosingLink>
-
-            <VerticalSpacer className="tw-h-4" />
-
-            <MenuClosingLink to="/contact-us" toggleMenu={toggleMenu}>Contact Us</MenuClosingLink>
-
-            <VerticalSpacer />
-        </>
-    );
-}
-
-function MenuClosingLink(props: {to: string, children: string, className?: string, toggleMenu: React.MouseEventHandler}) {
-    return <Link to={props.to} className={props.className} onClick={props.toggleMenu}>
-        {props.children}
-    </Link>
+function Divider() {
+    return <div className="tw-h-0.5 tw-w-full tw-bg-white tw-opacity-[15%]" />;
 }

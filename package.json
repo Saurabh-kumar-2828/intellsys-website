@@ -20,6 +20,7 @@
         "@types/luxon": "^3.0.1",
         "csv-string": "^4.1.0",
         "d3-node": "^3.0.0",
+        "google-spreadsheet": "^3.3.0",
         "js-base64": "^3.7.2",
         "jsonwebtoken": "^8.5.1",
         "jwt-decode": "^3.1.2",

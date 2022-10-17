@@ -6,7 +6,7 @@ export function FileInputField({className, name}) {
 
     return (
         <div className={concatenateNonNullStringsWithSpaces("tw-w-full", className)}>
-            <label className="tw-flex tw-text-fg tw-justify-center tw-w-full tw-h-32 tw-px-4 tw-transition tw-bg-bg-100 tw-border-2 tw-border-gray-300 tw-border-dashed tw-rounded-md tw-appearance-none tw-cursor-pointer tw-hover:border-gray-400 tw-focus:outline-none">
+            <label className="tw-flex tw-text-fg tw-justify-center tw-w-full tw-h-32 tw-px-4 tw-transition tw-bg-bg+1 tw-border-2 tw-border-gray-300 tw-border-dashed tw-rounded-md tw-appearance-none tw-cursor-pointer tw-hover:border-gray-400 tw-focus:outline-none">
                 <span className="tw-flex tw-items-center tw-space-x-2">
                     <span>
                         {selectedFile != null ? (

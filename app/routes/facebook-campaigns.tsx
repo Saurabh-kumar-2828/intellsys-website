@@ -1,3 +1,4 @@
+import * as Tabs from "@radix-ui/react-tabs";
 import type {LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";
@@ -9,7 +10,7 @@ import {BarGraphComponent} from "~/components/reusableComponents/barGraphCompone
 import {LineGraphComponent} from "~/components/reusableComponents/lineGraphComponent";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
 import {QueryFilterType} from "~/utilities/typeDefinitions";
-import {concatenateNonNullStringsWithAmpersand, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
+import {concatenateNonNullStringsWithAmpersand, dateToMediumEnFormat, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -138,6 +139,9 @@ export default function () {
     );
     const granularities = ["Daily", "Monthly", "Yearly"];
 
+    const y = {};
+    const yClicks = {};
+    const yImpressions = {};
     const yAmountSpent = {};
     const campaignNamesRetrieved = Array<string>();
 
@@ -177,19 +181,52 @@ export default function () {
     for (const campaignInfo of campaignTrends.rows) {
         if (!campaignNamesRetrieved.includes(campaignInfo.campaignName)) {
             campaignNamesRetrieved.push(campaignInfo.campaignName);
+            // y[campaignInfo.campaignName] = {
+            //     pointClassName: fillColors[colorIndex],
+            //     lineClassName: strokeColors[colorIndex],
+            //     clicks: {
+            //         data: [],
+            //     },
+            //     impressions: {
+            //         data: [],
+            //     },
+            //     amountSpent: {
+            //         data: [],
+            //     },
+            // };
+
+            yClicks[campaignInfo.campaignName] = {
+                pointClassName: fillColors[colorIndex],
+                lineClassName: strokeColors[colorIndex],
+                data: [],
+            };
+
+            yImpressions[campaignInfo.campaignName] = {
+                pointClassName: fillColors[colorIndex],
+                lineClassName: strokeColors[colorIndex],
+                data: [],
+            };
+
             yAmountSpent[campaignInfo.campaignName] = {
                 pointClassName: fillColors[colorIndex],
                 lineClassName: strokeColors[colorIndex],
                 data: [],
             };
+
             colorIndex++;
         }
     }
 
     for (const campaignInfo of campaignTrends.rows) {
+        // const yForCampaignInfo = y[campaignInfo.campaignName];
+
+        // yForCampaignInfo.clicks.data.push(campaignInfo.clicks);
+        // yForCampaignInfo.impressions.data.push(campaignInfo.impressions);
+        // yForCampaignInfo.amountSpent.data.push(campaignInfo.amountSpent);
+
+        yClicks[campaignInfo.campaignName].data.push(campaignInfo.clicks);
+        yImpressions[campaignInfo.campaignName].data.push(campaignInfo.impressions);
         yAmountSpent[campaignInfo.campaignName].data.push(campaignInfo.amountSpent);
-        // yTemp[campaignInfo.campaignName]["impressions"] = campaignInfo.impressions;
-        // yTemp[campaignInfo.campaignName]["clicks"] = campaignInfo.clicks;
     }
 
     return (
@@ -280,7 +317,7 @@ export default function () {
                 </div>
             </div>
 
-            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg-100 tw-grid tw-items-center tw-h-[40rem]">
+            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg+1 tw-grid tw-items-center tw-h-[40rem]">
                 <BarGraphComponent
                     data={{
                         x: r1_performanceLeadsCountTrend.rows.map((item) => item.date),
@@ -295,26 +332,71 @@ export default function () {
                 />
             </div> */}
 
-            <GenericCard
-                className="tw-col-span-6"
-                content={
-                    <LineGraphComponent
-                        data={{
-                            x: distinct(campaignTrends.rows.map((row) => row.date)),
-                            y: yAmountSpent,
-                            // y: {
-                            //     "Amount Spent": campaignTrends.rows.map((row) => row.amountSpent),
-                            //     Impressions: campaignTrends.rows.map((row) => row.impressions),
-                            //     Clicks: campaignTrends.rows.map((row) => row.clicks),
-                            // },
-                        }}
-                        barWidth={100}
-                        height={640}
+            <Tabs.Root defaultValue="1" className="tw-col-span-6">
+                <Tabs.List className="">
+                    <Tabs.Trigger value="1" className="tw-p-4 tw-bg-bg+1 radix-tab-active:tw-bg-lp zzz">
+                        Impressions
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="2" className="tw-p-4 tw-bg-bg+1 radix-tab-active:tw-bg-lp zzz">
+                        Clicks
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="3" className="tw-p-4 tw-bg-bg+1 radix-tab-active:tw-bg-lp zzz">
+                        Amount Spent
+                    </Tabs.Trigger>
+                </Tabs.List>
+                <Tabs.Content value="1">
+                    <GenericCard
+                        className="tw-col-span-6"
+                        content={
+                            <LineGraphComponent
+                                data={{
+                                    x: distinct(campaignTrends.rows.map((row) => dateToMediumEnFormat(row.date))),
+                                    y: yImpressions,
+                                }}
+                                barWidth={100}
+                                height={640}
+                            />
+                        }
+                        metaQuery={campaignTrends.metaQuery}
+                        label="Impressions per Campaign"
                     />
-                }
-                metaQuery={campaignTrends.metaQuery}
-                label="Amount Spent per Campaign"
-            />
+                </Tabs.Content>
+                <Tabs.Content value="2">
+                    <GenericCard
+                        className="tw-col-span-6"
+                        content={
+                            <LineGraphComponent
+                                data={{
+                                    x: distinct(campaignTrends.rows.map((row) => dateToMediumEnFormat(row.date))),
+                                    y: yClicks,
+                                    // y: Object.entries(y).map(([key, value]) => [key, value]).reduce((dict, [key, value]) => dict[key] = value, {}),
+                                }}
+                                barWidth={100}
+                                height={640}
+                            />
+                        }
+                        metaQuery={campaignTrends.metaQuery}
+                        label="Clicks per Campaign"
+                    />
+                </Tabs.Content>
+                <Tabs.Content value="3">
+                    <GenericCard
+                        className="tw-col-span-6"
+                        content={
+                            <LineGraphComponent
+                                data={{
+                                    x: distinct(campaignTrends.rows.map((row) => dateToMediumEnFormat(row.date))),
+                                    y: yAmountSpent,
+                                }}
+                                barWidth={100}
+                                height={640}
+                            />
+                        }
+                        metaQuery={campaignTrends.metaQuery}
+                        label="Amount Spent per Campaign"
+                    />
+                </Tabs.Content>
+            </Tabs.Root>
         </div>
     );
 }

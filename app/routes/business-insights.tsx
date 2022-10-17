@@ -423,7 +423,7 @@ export default function () {
                 className="tw-col-span-2"
             />
 
-            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg-100 tw-grid tw-items-center tw-h-[40rem]">
+            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg+1 tw-grid tw-items-center tw-h-[40rem]">
                 <BarGraphComponent
                     data={{
                         x: r1_performanceLeadsCountTrend.rows.map(row => item.date),
@@ -482,7 +482,7 @@ export default function () {
 
             <div className="tw-col-span-2" />
 
-            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg-100 tw-grid tw-items-center tw-h-[40rem]">
+            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg+1 tw-grid tw-items-center tw-h-[40rem]">
                 <BarGraphComponent
                     data={{
                         x: r1_performanceLeadsCountTrend.map(row => row.date),
@@ -542,7 +542,7 @@ export default function () {
 
             <div className="tw-col-span-2" />
 
-            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg-100 tw-grid tw-items-center tw-h-[40rem]">
+            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg+1 tw-grid tw-items-center tw-h-[40rem]">
                 <BarGraphComponent
                     data={{
                         x: r1_performanceLeadsCountTrend.map(row => row.date),
@@ -597,7 +597,7 @@ export default function () {
 
             <Card information={numberToHumanFriendlyString(r4_googleAdsAcos.acos, true, true, true)} label="ACoS" metaInformation={r4_googleAdsAcos.metaInformation} className="tw-col-span-2" />
 
-            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg-100 tw-grid tw-items-center tw-h-[40rem]">
+            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg+1 tw-grid tw-items-center tw-h-[40rem]">
                 <BarGraphComponent
                     data={{
                         x: r1_performanceLeadsCountTrend.map(row => row.date),
@@ -632,7 +632,7 @@ export default function () {
 
             <div className="tw-col-span-2" /> */}
 
-            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg-100 tw-grid tw-items-center tw-h-[40rem]">
+            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg+1 tw-grid tw-items-center tw-h-[40rem]">
                 <BarGraphComponent
                     data={{
                         x: r1_performanceLeadsCountTrend.map(row => item.date),

@@ -18,12 +18,17 @@ async function getLeadInformation(leadId: number) {
 
 async function getSingleLeadsInformation(leadIds: Array<number>) {
     try {
-        let allSingleLeadsInformation = await Promise.all(
-            leadIds.map(async (leadId) => {
-                const leadInformation = await getLeadInformation(leadId);
-                return leadInformation;
-            })
-        );
+        let allSingleLeadsInformation = [];
+        for (let i = 0; i < leadIds.length; i++) {
+            const leadInformation = await getLeadInformation(leadIds[i]);
+            allSingleLeadsInformation.push(leadInformation);
+        }
+        // let allSingleLeadsInformation = await Promise.all(
+        //     leadIds.map(async (leadId) => {
+        //         const leadInformation = await getLeadInformation(leadId);
+        //         return leadInformation;
+        //     })
+        // );
         return allSingleLeadsInformation;
     } catch (e) {
         console.log(e);
@@ -50,14 +55,14 @@ async function getLeadsOfCurrentPage(pageNumber: Number) {
 }
 
 function filterLeadsOnDate(leadsOfCurrentPage: any, date: string) {
-    const filterLeadIds = leadsOfCurrentPage.leads.filter(lead => lead.updated_at >= date).map(lead => lead.id);
+    const filterLeadIds = leadsOfCurrentPage.leads.filter((lead) => lead.updated_at >= date).map((lead) => lead.id);
 
-    const dates = leadsOfCurrentPage.leads.map(lead => lead.updated_at);
-    const minDate = dates.reduce((minDate, date) => minDate == null || date < minDate ? date : minDate, null);
-    const maxDate = dates.reduce((maxDate, date) => maxDate == null || date > maxDate ? date : maxDate, null);
+    const dates = leadsOfCurrentPage.leads.map((lead) => lead.updated_at);
+    const minDate = dates.reduce((minDate, date) => (minDate == null || date < minDate ? date : minDate), null);
+    const maxDate = dates.reduce((maxDate, date) => (maxDate == null || date > maxDate ? date : maxDate), null);
 
     return {
-        idsFilterByDate: filterLeadIds,
+        idsFilterByDate: filterLeadIds.reverse(),
         minDate: minDate,
         maxDate: maxDate,
     };
@@ -72,36 +77,37 @@ async function getAllLeadIds(date: string): Promise<Array<number>> {
 
             const leads = filterLeadsOnDate(leadsOfCurrentPage, date);
 
-            console.log("count: %d", leads.idsFilterByDate.length);
-            console.log("max date: ", leads.maxDate);
-            console.log("min date: ", leads.minDate);
-            console.log(".........................");
+            // console.log("count: %d", leads.idsFilterByDate.length);
+            // console.log("max date: ", leads.maxDate);
+            // console.log("min date: ", leads.minDate);
+            // console.log(".........................");
 
             allLeadIds.push(...leads.idsFilterByDate!);
             if (leads.minDate < date) {
                 break;
             }
 
-            console.log(distinct(allLeadIds).length);
+            // console.log(distinct(allLeadIds).length);
         }
+        // console.log(distinct([1,2,3,4]));
     } catch (e) {
         console.log(e);
         throw e;
     }
-
     return allLeadIds;
 }
 
 export async function ingestDataFromFreshsalesApi(date: string) {
     // Get all lead IDs
-    const leadIds = await getAllLeadIds(date);
+    let leadIds = await getAllLeadIds(date);
 
     // TODO: Convert to unique
+    leadIds = distinct(leadIds);
 
     // Get lead information
-    // const leadsInformation = await getSingleLeadsInformation(leadIds);
+    const leadsInformation = await getSingleLeadsInformation(leadIds);
 
-    // console.log(JSON.stringify(leadsInformation));
+    console.log(JSON.stringify(leadsInformation));
 }
 
 export const freshsalesColumnInfos: Array<ColumnInfo> = [

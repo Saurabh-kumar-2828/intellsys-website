@@ -1,5 +1,5 @@
 import {ColumnInfo} from "~/backend/data-management";
-import {distinct} from "~/utilities/utilities";
+import {delay, distinct} from "~/utilities/utilities";
 
 const freshSalesApiBaseUrl = "https://livpuresmart.freshsales.io/api/leads/";
 

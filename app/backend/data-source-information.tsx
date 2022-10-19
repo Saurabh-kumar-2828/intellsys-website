@@ -49,16 +49,8 @@ export async function get_freshsalesLeadsDataInformation() {
     return await getDataInformation("freshsales_leads", "lead_created_at");
 }
 
-export async function get_freshsalesLeadsMattressRawDataInformation() {
-    return await getDataInformation("freshsales_leads_mattress_raw", "lead_created_at");
-}
-
-export async function get_freshsalesLeadsNonMattressRawDataInformation() {
-    return await getDataInformation("freshsales_leads_non_mattress_raw", "lead_created_at");
-}
-
-export async function get_freshsalesLeadsWaterPurifierRawDataInformation() {
-    return await getDataInformation("freshsales_leads_water_purifier_raw", "lead_created_at");
+export async function get_freshsalesLeadsRawDataInformation() {
+    return await getDataInformation("freshsales_leads_raw", "lead_created_at");
 }
 
 export async function get_googleAdsDataInformation() {

@@ -299,13 +299,17 @@ export async function get_r1_performanceLeadsSales(
             whereValues.push(`product_title IN (${joinValues(selectedProducts, ", ", "'")})`);
         }
 
+        if (selectedPlatforms.length > 0) {
+            whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
+        }
+
         if (selectedCampaigns.length > 0) {
             whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
         }
 
         selectValues.push("SUM(net_sales) AS net_sales");
 
-        whereValues.push("source NOT IN ('GJ_LeadGen_18May', 'GJ_LeadGen_Mattress_10 May')");
+        whereValues.push("NOT(source IN ('GJ_LeadGen_18May', 'GJ_LeadGen_Mattress_10 May') OR source LIKE 'Freshsales - % - Facebook Ads')");
         whereValues.push("cancelled = 'No'");
         if (minDate != null) {
             whereValues.push(`date >= '${minDate}'`);
@@ -374,7 +378,7 @@ export async function get_r1_facebookLeadsSales(
 
         selectValues.push("SUM(net_sales) AS net_sales");
 
-        whereValues.push("source NOT IN ('GJ_LeadGen_18May', 'GJ_LeadGen_Mattress_10 May')");
+        whereValues.push("(source IN ('GJ_LeadGen_18May', 'GJ_LeadGen_Mattress_10 May') OR source LIKE 'Freshsales - % - Facebook Ads')");
         whereValues.push("cancelled = 'No'");
         if (minDate != null) {
             whereValues.push(`date >= '${minDate}'`);

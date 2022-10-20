@@ -115,12 +115,24 @@ export enum Table {
     websitePopupFormResponsesRaw,
 }
 
-export enum Operation {
-    upload,
-    delete,
-    truncate,
-    refresh,
-    ingestDataFromApi,
+export function getNameForTable(table: Table): string {
+    if (table == Table.facebookAdsRaw) {
+        return "facebook_ads_raw";
+    } else if (table == Table.freshsalesLeadsRaw) {
+        return "freshsales_leads_raw";
+    } else if (table == Table.googleAdsRaw) {
+        return "google_ads_raw";
+    } else if (table == Table.shopifySalesRaw) {
+        return "shopify_sales_raw";
+    } else if (table == Table.typeformResponsesMattressRaw) {
+        return "typeform_responses_mattress_raw";
+    } else if (table == Table.typeformResponsesWaterPurifierRaw) {
+        return "typeform_responses_water_purifier_raw";
+    } else if (table == Table.websitePopupFormResponsesRaw) {
+        return "website_popup_form_responses_raw";
+    } else {
+        throw new Response(null, {status: 400});
+    }
 }
 
 export async function processFileUpload(table: Table, file: File): Promise<void> {

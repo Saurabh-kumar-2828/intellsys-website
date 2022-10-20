@@ -1,7 +1,7 @@
 import type {ActionFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Form, useLoaderData} from "@remix-run/react";
-import {fullRefresh, Operation, processDelete, processFileUpload, processIngestDataFromApi, processTruncate, Table} from "~/backend/data-management";
+import {fullRefresh, processDelete, processFileUpload, processIngestDataFromApi, processTruncate, Table} from "~/backend/data-management";
 import {
     get_facebookAdsRawDataInformation,
     get_freshsalesLeadsRawDataInformation,
@@ -513,4 +513,12 @@ export default function () {
             </>
         </div>
     );
+}
+
+enum Operation {
+    upload,
+    delete,
+    truncate,
+    refresh,
+    ingestDataFromApi,
 }

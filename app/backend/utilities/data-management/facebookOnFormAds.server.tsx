@@ -2,9 +2,10 @@ import {ColumnInfo} from "~/backend/data-management";
 const facebookApiBaseUrl = "https://graph.facebook.com/";
 
 function filterFbResponseOnDate(dataFromFacebookApi: any, date: string) {
-    const data = dataFromFacebookApi.filter((campaign) => campaign.updated_time >= date);
 
-    const dates = dataFromFacebookApi.map((campaign) => campaign.updated_time);
+    const data = dataFromFacebookApi.filter((campaign) => campaign.created_time >= date);
+
+    const dates = dataFromFacebookApi.map((campaign) => campaign.created_time);
     const minDate = dates.reduce((minDate, date) => (minDate == null || date < minDate ? date : minDate), null);
     const maxDate = dates.reduce((maxDate, date) => (maxDate == null || date > maxDate ? date : maxDate), null);
 
@@ -15,10 +16,10 @@ function filterFbResponseOnDate(dataFromFacebookApi: any, date: string) {
     };
 }
 
-async function getFacebookOnFormLeads(limit: number, endCursor: string | null) {
-    const fields = "created_time,id,ad_id,form_id,field_data,campaign_name,adset_name,platform,ad_name";
+async function getFacebookOnFormLeads(limit: number, endCursor: string) {
+    const fields = "id,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,custom_disclaimer_responses,field_data,created_time,form_id,is_organic,platform";
 
-    let url = `${facebookApiBaseUrl}${process.env.FACEBOOK_API_VERSION!}/${process.env.FACEBOOK_FORM_ID!}/insights?fields=${fields}&access_token=${process.env
+    let url = `${facebookApiBaseUrl}${process.env.FACEBOOK_API_VERSION!}/${process.env.FACEBOOK_FORM_ID!}/leads?fields=${fields}&access_token=${process.env
         .FACEBOOK_ACCESS_TOKEN!}&sort=created_time_descending&limit=${limit}&after=${endCursor}`;
     const response = await fetch(url, {
         method: "GET",
@@ -29,29 +30,30 @@ async function getFacebookOnFormLeads(limit: number, endCursor: string | null) {
 }
 
 export async function ingestDataFromFacebookOnFormsApi(date: string): Promise<Array<object>> {
-    const allCampaigns: Array<object> = [];
+    const allLeads: Array<object> = [];
 
     try {
-        let onFormLeads = await getFacebookOnFormLeads(5, null);
+        let onFormLeads = await getFacebookOnFormLeads(5, "");
         let filteredResponse = filterFbResponseOnDate(onFormLeads.data, date);
 
-        allCampaigns.push(...filteredResponse.filterData!);
+        allLeads.push(...filteredResponse.filterData!);
         while ("next" in onFormLeads.paging) {
             onFormLeads = await getFacebookOnFormLeads(5, onFormLeads.paging.cursors.after);
             filteredResponse = filterFbResponseOnDate(onFormLeads.data, date);
-            allCampaigns.push(...filteredResponse.filterData!);
+            allLeads.push(...filteredResponse.filterData!);
 
             if (filteredResponse.filterData.length < onFormLeads.length) {
                 break;
             }
         }
-        // console.log(JSON.stringify(allCampaigns));
-        // console.log(allCampaigns.length);
+
+        console.log(JSON.stringify(allLeads));
+        console.log(allLeads.length);
     } catch (e) {
         console.log(e);
         throw e;
     }
-    return allCampaigns;
+    return allLeads;
 }
 
 // export const facebookAdsRawColumnInfos: Array<ColumnInfo> = [

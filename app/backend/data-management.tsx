@@ -8,6 +8,7 @@ import {shopifyTableColumnInfos} from "~/backend/utilities/data-management/shopi
 import {websitePopupFormResponsesRawColumnInfos} from "~/backend/utilities/data-management/websitePopupFormResponses.server";
 import {freshsalesColumnInfos, ingestDataFromFreshsalesApi} from "~/backend/utilities/data-management/freshsales.server";
 import {facebookAdsRawColumnInfos} from "~/backend/utilities/data-management/facebookAds.server";
+import {ingestDataFromFacebookOnFormsApi} from "~/backend/utilities/data-management/facebookOnFormAds.server";
 
 export async function fullRefresh(): Promise<void> {
     try {
@@ -206,9 +207,10 @@ export async function processTruncate(table: Table): Promise<void> {
 }
 
 export async function processIngestDataFromApi(table: Table, date: string): Promise<void> {
-    // if (table == Table.facebookAdsRaw) {
-    //     await truncateTable("facebook_ads_raw");
-    if (table == Table.freshsalesLeadsRaw) {
+    if (table == Table.facebookAdsRaw) {
+        await ingestDataFromFacebookOnFormsApi(date);
+    }
+    else if (table == Table.freshsalesLeadsRaw) {
         await ingestDataFromFreshsalesApi(date);
         // } else if (table == Table.freshsalesLeadsNonMattressRaw) {
         //     await truncateTable("freshsales_leads_non_mattress_raw");

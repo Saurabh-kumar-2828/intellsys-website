@@ -5,11 +5,12 @@ import {Link, useLoaderData} from "@remix-run/react";
 import {DateTime} from "luxon";
 import {useState} from "react";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
-import {getCampaignsInformation, getCampaignsTrends, getLeads, getSales} from "~/backend/facebook-campaigns";
+import {getCampaignsInformation, getCampaignsTrends, getSales} from "~/backend/facebook-campaigns";
 import {BarGraphComponent} from "~/components/reusableComponents/barGraphComponent";
 import {LineGraphComponent} from "~/components/reusableComponents/lineGraphComponent";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
 import {QueryFilterType} from "~/utilities/typeDefinitions";
+import {get_r1_performanceLeadsCountTrend} from "~/backend/business-insights";
 import {concatenateNonNullStringsWithAmpersand, dateToMediumEnFormat, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
@@ -90,7 +91,8 @@ export const loader: LoaderFunction = async ({request}) => {
         allProductInformation: await getAllProductInformation(),
         allSourceInformation: await getAllSourceToInformation(),
         campaignsInformation: await getCampaignsInformation(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        leads: await getLeads(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        // leads: await getLeads(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        r1_performanceLeadsCountTrend: await get_r1_performanceLeadsCountTrend(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         sales: await getSales(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         campaignTrends: await getCampaignsTrends(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
     });
@@ -108,7 +110,8 @@ export default function () {
         allProductInformation,
         allSourceInformation,
         campaignsInformation,
-        leads,
+        // leads,
+        r1_performanceLeadsCountTrend,
         sales,
         campaignTrends,
     } = useLoaderData();
@@ -144,6 +147,11 @@ export default function () {
     const yImpressions = {};
     const yAmountSpent = {};
     const campaignNamesRetrieved = Array<string>();
+
+    const leads = {
+        count: r1_performanceLeadsCountTrend.rows.reduce((sum, item) => sum + item.count, 0),
+        metaInformation: "performance leads",
+    };
 
     const fillColors = [
         "tw-fill-blue-500",

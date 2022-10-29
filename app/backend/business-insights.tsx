@@ -1,150 +1,9 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {dateToMediumEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
-import { QueryFilterType } from "~/utilities/typeDefinitions";
+import {QueryFilterType} from "~/utilities/typeDefinitions";
 
 // TODO: Fix nomenclature
-
-export async function get_r1_performanceLeadsCount(
-    selectedCategories: Array<string>,
-    selectedProducts: Array<string>,
-    selectedPlatforms: Array<string>,
-    selectedCampaigns: Array<string>,
-    selectedGranularity: string,
-    minDate: string,
-    maxDate: string,
-) {
-    try {
-        const selectValues = [];
-        const whereValues = [];
-
-        if (selectedCategories.length > 0) {
-            whereValues.push(`category IN (${joinValues(selectedCategories, ", ", "'")})`);
-        }
-
-        if (selectedPlatforms.length > 0) {
-            whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
-        }
-
-        if (selectedCampaigns.length > 0) {
-            whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
-        }
-
-        selectValues.push("COUNT(*) AS count");
-
-        whereValues.push("source != 'Facebook Ads'");
-        if (minDate != null) {
-            whereValues.push(`DATE(lead_created_at) >= '${minDate}'`);
-        }
-        if (maxDate != null) {
-            whereValues.push(`DATE(lead_created_at) <= '${maxDate}'`);
-        }
-
-        const query = (
-            `
-                SELECT
-                    ${joinValues(selectValues, ", ")}
-                FROM
-                    freshsales_leads_to_source_with_information
-                WHERE
-                    ${joinValues(whereValues, " AND ")}
-            `
-        );
-
-        const result = await execute(query);
-
-        if (result.rows.length != 1) {
-            throw "";
-        }
-
-        const row = result.rows[0];
-        return {
-            metaQuery: query,
-            metaFiltersPossible: [QueryFilterType.category, QueryFilterType.platform, QueryFilterType.campaign, QueryFilterType.date],
-            metaFiltersApplied: [
-                selectedCategories.length > 0 ? QueryFilterType.category : null,
-                selectedPlatforms.length > 0 ? QueryFilterType.platform : null,
-                selectedCampaigns.length > 0 ? QueryFilterType.campaign : null,
-                minDate != null || maxDate != null ? QueryFilterType.date : null,
-            ].filter(x => x != null),
-            count: parseInt(row.count),
-        };
-    } catch (e) {
-        console.log("Error executing function");
-        console.trace();
-        return "?";
-    }
-}
-
-export async function get_r1_facebookLeadsCount(
-    selectedCategories: Array<string>,
-    selectedProducts: Array<string>,
-    selectedPlatforms: Array<string>,
-    selectedCampaigns: Array<string>,
-    selectedGranularity: string,
-    minDate: string,
-    maxDate: string,
-) {
-    try {
-        const selectValues = [];
-        const whereValues = [];
-
-        if (selectedCategories.length > 0) {
-            whereValues.push(`category IN (${joinValues(selectedCategories, ", ", "'")})`);
-        }
-
-        if (selectedPlatforms.length > 0) {
-            whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
-        }
-
-        if (selectedCampaigns.length > 0) {
-            whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
-        }
-
-        selectValues.push("COUNT(*) AS count");
-
-        whereValues.push("source = 'Facebook Ads'");
-        if (minDate != null) {
-            whereValues.push(`DATE(lead_created_at) >= '${minDate}'`);
-        }
-        if (maxDate != null) {
-            whereValues.push(`DATE(lead_created_at) <= '${maxDate}'`);
-        }
-
-        const query = (
-            `
-                SELECT
-                    ${joinValues(selectValues, ", ")}
-                FROM
-                    freshsales_leads_to_source_with_information
-                WHERE
-                    ${joinValues(whereValues, " AND ")}
-            `
-        );
-
-        const result = await execute(query);
-
-        if (result.rows.length != 1) {
-            throw "";
-        }
-
-        const row = result.rows[0];
-        return {
-            metaQuery: query,
-            metaFiltersRespected: ["Categories", "Platforms", "Campaigns"],
-            metaFiltersApplied: [
-                selectedCategories.length > 0 ? "Categories" : null,
-                selectedPlatforms.length > 0 ? "Platforms" : null,
-                selectedCampaigns.length > 0 ? "Campaigns" : null,
-            ].filter(x => x != null),
-            count: parseInt(row.count),
-        };
-    } catch (e) {
-        console.log("Error executing function");
-        console.trace();
-        return "?";
-    }
-}
 
 export async function get_r1_performanceLeadsAmountSpent(
     selectedCategories: Array<string>,
@@ -153,7 +12,7 @@ export async function get_r1_performanceLeadsAmountSpent(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
@@ -185,16 +44,14 @@ export async function get_r1_performanceLeadsAmountSpent(
             whereValues.push(`date <= '${maxDate}'`);
         }
 
-        const query = (
-            `
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
                     ads_with_information
                 WHERE
                     ${joinValues(whereValues, " AND ")}
-            `
-        );
+            `;
 
         const result = await execute(query);
 
@@ -221,7 +78,7 @@ export async function get_r1_facebookLeadsAmountSpent(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
@@ -249,16 +106,14 @@ export async function get_r1_facebookLeadsAmountSpent(
             whereValues.push(`date <= '${maxDate}'`);
         }
 
-        const query = (
-            `
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
                     ads_with_information
                 WHERE
                     ${joinValues(whereValues, " AND ")}
-            `
-        );
+            `;
 
         const result = await execute(query);
 
@@ -285,7 +140,7 @@ export async function get_r1_performanceLeadsSales(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
@@ -314,16 +169,14 @@ export async function get_r1_performanceLeadsSales(
             whereValues.push(`date <= '${maxDate}'`);
         }
 
-        const query = (
-            `
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
                     shopify_sales_to_source_with_information
                 WHERE
                     ${joinValues(whereValues, " AND ")}
-            `
-        );
+            `;
 
         const result = await execute(query);
 
@@ -350,7 +203,7 @@ export async function get_r1_facebookLeadsSales(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
@@ -383,16 +236,14 @@ export async function get_r1_facebookLeadsSales(
             whereValues.push(`date <= '${maxDate}'`);
         }
 
-        const query = (
-            `
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
                     shopify_sales_to_source_with_information
                 WHERE
                     ${joinValues(whereValues, " AND ")}
-            `
-        );
+            `;
 
         const result = await execute(query);
 
@@ -419,7 +270,7 @@ export async function get_r1_performanceLeadsCountTrend(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
@@ -462,8 +313,7 @@ export async function get_r1_performanceLeadsCountTrend(
 
         groupByValues.push(getGranularityQuery(selectedGranularity, "lead_created_at"));
 
-        const query = (
-            `
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
@@ -474,14 +324,13 @@ export async function get_r1_performanceLeadsCountTrend(
                     ${joinValues(groupByValues, ", ")}
                 ORDER BY
                     date
-            `
-        );
+            `;
 
         const result = await execute(query);
 
         return {
             metaQuery: query,
-            rows: result.rows.map(row => ({
+            rows: result.rows.map((row) => ({
                 date: dateToMediumEnFormat(row.date),
                 count: parseInt(row.count),
             })),
@@ -500,7 +349,7 @@ export async function get_r1_facebookLeadsCountTrend(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
@@ -543,8 +392,7 @@ export async function get_r1_facebookLeadsCountTrend(
 
         groupByValues.push(getGranularityQuery(selectedGranularity, "lead_created_at"));
 
-        const query = (
-            `
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
@@ -555,14 +403,13 @@ export async function get_r1_facebookLeadsCountTrend(
                     ${joinValues(groupByValues, ", ")}
                 ORDER BY
                     date
-            `
-        );
+            `;
 
         const result = await execute(query);
 
         return {
             metaQuery: query,
-            rows: result.rows.map(row => ({
+            rows: result.rows.map((row) => ({
                 date: dateToMediumEnFormat(row.date),
                 count: parseInt(row.count),
             })),
@@ -581,14 +428,17 @@ export async function get_r2_directOrdersCount(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
+
         const selectValues = [];
         const whereValues = [];
+        const groupByValues = [];
 
         if (selectedCategories.length > 0) {
             whereValues.push(`product_category IN (${joinValues(selectedCategories, ", ", "'")})`);
+            groupByValues.push("category");
         }
 
         // if (selectedProducts.length > 0) {
@@ -597,13 +447,16 @@ export async function get_r2_directOrdersCount(
 
         if (selectedPlatforms.length > 0) {
             whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
+            groupByValues.push("source_information_platform");
         }
 
         if (selectedCampaigns.length > 0) {
             whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
+            groupByValues.push("source_information_campaign_name");
         }
 
         selectValues.push("COUNT(*) AS count");
+        selectValues.push(`${getGranularityQuery(selectedGranularity, "date")} AS date`);
 
         whereValues.push("cancelled = 'No'");
         whereValues.push("is_assisted = false");
@@ -614,27 +467,30 @@ export async function get_r2_directOrdersCount(
             whereValues.push(`date <= '${maxDate}'`);
         }
 
-        const query = (
-            `
+        groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
+
+
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
                     shopify_sales_to_source_with_information
                 WHERE
                     ${joinValues(whereValues, " AND ")}
-            `
-        );
+                GROUP BY
+                    ${joinValues(groupByValues, ", ")}
+                ORDER BY
+                    date
+            `;
 
         const result = await execute(query);
 
-        if (result.rows.length != 1) {
-            throw "";
-        }
-
-        const row = result.rows[0];
         return {
             metaQuery: query,
-            count: parseInt(row.count),
+            rows: result.rows.map((row) => ({
+                date: dateToMediumEnFormat(row.date),
+                count: parseInt(row.count),
+            })),
         };
     } catch (e) {
         console.log("Error executing function");
@@ -650,14 +506,17 @@ export async function get_r2_assistedOrdersCount(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
         const whereValues = [];
+        const groupByValues = [];
+
 
         if (selectedCategories.length > 0) {
             whereValues.push(`product_category IN (${joinValues(selectedCategories, ", ", "'")})`);
+            groupByValues.push("category");
         }
 
         // if (selectedProducts.length > 0) {
@@ -666,13 +525,16 @@ export async function get_r2_assistedOrdersCount(
 
         if (selectedPlatforms.length > 0) {
             whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
+            groupByValues.push("source_information_platform");
         }
 
         if (selectedCampaigns.length > 0) {
             whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
+            groupByValues.push("source_information_campaign_name");
         }
 
         selectValues.push("COUNT(*) AS count");
+        selectValues.push(`${getGranularityQuery(selectedGranularity, "date")} AS date`);
 
         whereValues.push("cancelled = 'No'");
         whereValues.push("is_assisted = true");
@@ -683,27 +545,30 @@ export async function get_r2_assistedOrdersCount(
             whereValues.push(`date <= '${maxDate}'`);
         }
 
-        const query = (
-            `
+        groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
+
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
                     shopify_sales_to_source_with_information
                 WHERE
                     ${joinValues(whereValues, " AND ")}
-            `
-        );
+                GROUP BY
+                    ${joinValues(groupByValues, ", ")}
+                ORDER BY
+                    date
+            `;
 
         const result = await execute(query);
-
-        if (result.rows.length != 1) {
-            throw "";
-        }
 
         const row = result.rows[0];
         return {
             metaQuery: query,
-            count: parseInt(row.count),
+            rows: result.rows.map((row) => ({
+                date: dateToMediumEnFormat(row.date),
+                count: parseInt(row.count),
+            })),
         };
     } catch (e) {
         console.log("Error executing function");
@@ -712,153 +577,251 @@ export async function get_r2_assistedOrdersCount(
     }
 }
 
-export async function get_r2_r3_directOrdersGrossRevenue(
+// export async function get_r2_r3_directOrdersGrossRevenue(
+//     selectedCategories: Array<string>,
+//     selectedProducts: Array<string>,
+//     selectedPlatforms: Array<string>,
+//     selectedCampaigns: Array<string>,
+//     selectedGranularity: string,
+//     minDate: string,
+//     maxDate: string
+// ) {
+//     try {
+//         const selectValues = [];
+//         const whereValues = [];
+//         const groupByValues = [];
+
+//         if (selectedCategories.length > 0) {
+//             whereValues.push(`product_category IN (${joinValues(selectedCategories, ", ", "'")})`);
+//             groupByValues.push("category");
+//         }
+
+//         // if (selectedProducts.length > 0) {
+//         //     groupByValues.push("source_information_category");
+//         // }
+
+//         if (selectedPlatforms.length > 0) {
+//             whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
+//             groupByValues.push("source_information_platform");
+//         }
+
+//         if (selectedCampaigns.length > 0) {
+//             whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
+//             groupByValues.push("source_information_campaign_name");
+//         }
+
+//         selectValues.push("SUM(net_sales) AS net_sales");
+//         selectValues.push(`${getGranularityQuery(selectedGranularity, "date")} AS date`);
+
+//         whereValues.push("cancelled = 'No'");
+//         whereValues.push("is_assisted = false");
+//         if (minDate != null) {
+//             whereValues.push(`date >= '${minDate}'`);
+//         }
+//         if (maxDate != null) {
+//             whereValues.push(`date <= '${maxDate}'`);
+//         }
+
+//         groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
+
+
+//         const query = `
+//                 SELECT
+//                     ${joinValues(selectValues, ", ")}
+//                 FROM
+//                     shopify_sales_to_source_with_information
+//                 WHERE
+//                     ${joinValues(whereValues, " AND ")}
+//                 GROUP BY
+//                     ${joinValues(groupByValues, ", ")}, product_category
+//                 ORDER BY
+//                     date
+//             `;
+
+//         const result = await execute(query);
+
+//         return {
+//             metaQuery: query,
+//             rows: result.rows.map((row) => ({
+//                 date: dateToMediumEnFormat(row.date),
+//                 netSales: parseFloat(row.net_sales)
+//             }))
+//         };
+//     } catch (e) {
+//         console.log("Error executing function");
+//         console.trace();
+//         return "?";
+//     }
+// }
+
+// export async function get_r2_r3_assistedOrdersGrossRevenue(
+//     selectedCategories: Array<string>,
+//     selectedProducts: Array<string>,
+//     selectedPlatforms: Array<string>,
+//     selectedCampaigns: Array<string>,
+//     selectedGranularity: string,
+//     minDate: string,
+//     maxDate: string
+// ) {
+//     try {
+//         const selectValues = [];
+//         const whereValues = [];
+//         const groupByValues = [];
+
+//         if (selectedCategories.length > 0) {
+//             whereValues.push(`product_category IN (${joinValues(selectedCategories, ", ", "'")})`);
+//             groupByValues.push("category");
+//         }
+
+//         // if (selectedProducts.length > 0) {
+//         //     groupByValues.push("source_information_category");
+//         // }
+
+//         if (selectedPlatforms.length > 0) {
+//             whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
+//             groupByValues.push("source_information_platform");
+//         }
+
+//         if (selectedCampaigns.length > 0) {
+//             whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
+//             groupByValues.push("source_information_campaign_name");
+//         }
+
+//         selectValues.push("SUM(net_sales) AS net_sales");
+//         selectValues.push(`${getGranularityQuery(selectedGranularity, "date")} AS date`);
+
+
+//         whereValues.push("cancelled = 'No'");
+//         whereValues.push("is_assisted = true");
+//         if (minDate != null) {
+//             whereValues.push(`date >= '${minDate}'`);
+//         }
+//         if (maxDate != null) {
+//             whereValues.push(`date <= '${maxDate}'`);
+//         }
+
+//         groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
+
+
+//         const query = `
+//                 SELECT
+//                     ${joinValues(selectValues, ", ")}
+//                 FROM
+//                     shopify_sales_to_source_with_information
+//                 WHERE
+//                     ${joinValues(whereValues, " AND ")}
+//                 GROUP BY
+//                     ${joinValues(groupByValues, ", ")}, product_category
+//                 ORDER BY
+//                     date
+//             `;
+
+//         const result = await execute(query);
+
+//         return {
+//             metaQuery: query,
+//             rows: result.rows.map((row) => ({
+//                 date: dateToMediumEnFormat(row.date),
+//                 netSales: parseFloat(row.net_sales)
+//             }))
+//         };
+//     } catch (e) {
+//         console.log("Error executing function");
+//         console.trace();
+//         return "?";
+//     }
+// }
+
+// export async function r3_ordersRevenuePivotedByAssistAndBusiness(
+//     selectedCategories: Array<string>,
+//     selectedProducts: Array<string>,
+//     selectedPlatforms: Array<string>,
+//     selectedCampaigns: Array<string>,
+//     selectedGranularity: string,
+//     minDate: string,
+//     maxDate: string
+// ) {
+//     try {
+//         const selectValues = [];
+//         const whereValues = [];
+//         const groupByValues = [];
+
+//         if (selectedCategories.length > 0) {
+//             whereValues.push(`product_category IN (${joinValues(selectedCategories, ", ", "'")})`);
+//         }
+
+//         // if (selectedProducts.length > 0) {
+//         //     groupByValues.push("source_information_category");
+//         // }
+
+//         if (selectedPlatforms.length > 0) {
+//             whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
+//         }
+
+//         if (selectedCampaigns.length > 0) {
+//             whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
+//         }
+
+//         selectValues.push("SUM(net_sales) AS net_sales");
+//         selectValues.push("is_assisted");
+//         selectValues.push("product_category");
+//         selectValues.push(`${getGranularityQuery(selectedGranularity, "date")} AS date`);
+
+//         whereValues.push("cancelled = 'No'");
+//         if (minDate != null) {
+//             whereValues.push(`date >= '${minDate}'`);
+//         }
+//         if (maxDate != null) {
+//             whereValues.push(`date <= '${maxDate}'`);
+//         }
+
+//         groupByValues.push("is_assisted");
+//         groupByValues.push("product_category");
+//         groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
+
+//         const query = `
+//                 SELECT
+//                     ${joinValues(selectValues, ", ")}
+//                 FROM
+//                     shopify_sales_to_source_with_information
+//                 WHERE
+//                     ${joinValues(whereValues, " AND ")}
+//                 GROUP BY
+//                     ${joinValues(groupByValues, ", ")}
+//                 ORDER BY
+//                     date
+//             `;
+
+//         const result = await execute(query);
+
+//         const temp = {
+//             metaQuery: query,
+//             rows: result.rows.map((row) => ({
+//                 date: dateToMediumEnFormat(row.date),
+//                 netSales: parseFloat(row.net_sales),
+//                 isAssisted: row.is_assisted,
+//                 category: row.product_category,
+//             })),
+//         }
+
+//         console.log(temp.rows);
+//         return temp;
+//     } catch (e) {
+//         console.log("Error executing function");
+//         console.trace();
+//         return "?";
+//     }
+// }
+
+export async function getOrdersRevenue(
     selectedCategories: Array<string>,
     selectedProducts: Array<string>,
     selectedPlatforms: Array<string>,
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
-) {
-    try {
-        const selectValues = [];
-        const whereValues = [];
-
-        if (selectedCategories.length > 0) {
-            whereValues.push(`product_category IN (${joinValues(selectedCategories, ", ", "'")})`);
-        }
-
-        // if (selectedProducts.length > 0) {
-        //     groupByValues.push("source_information_category");
-        // }
-
-        if (selectedPlatforms.length > 0) {
-            whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
-        }
-
-        if (selectedCampaigns.length > 0) {
-            whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
-        }
-
-        selectValues.push("SUM(net_sales) AS net_sales");
-
-        whereValues.push("cancelled = 'No'");
-        whereValues.push("is_assisted = false");
-        if (minDate != null) {
-            whereValues.push(`date >= '${minDate}'`);
-        }
-        if (maxDate != null) {
-            whereValues.push(`date <= '${maxDate}'`);
-        }
-
-        const query = (
-            `
-                SELECT
-                    ${joinValues(selectValues, ", ")}
-                FROM
-                    shopify_sales_to_source_with_information
-                WHERE
-                    ${joinValues(whereValues, " AND ")}
-            `
-        );
-
-        const result = await execute(query);
-
-        if (result.rows.length != 1) {
-            throw "";
-        }
-
-        const row = result.rows[0];
-        return {
-            metaQuery: query,
-            netSales: parseFloat(row.net_sales),
-        };
-    } catch (e) {
-        console.log("Error executing function");
-        console.trace();
-        return "?";
-    }
-}
-
-export async function get_r2_r3_assistedOrdersGrossRevenue(
-    selectedCategories: Array<string>,
-    selectedProducts: Array<string>,
-    selectedPlatforms: Array<string>,
-    selectedCampaigns: Array<string>,
-    selectedGranularity: string,
-    minDate: string,
-    maxDate: string,
-) {
-    try {
-        const selectValues = [];
-        const whereValues = [];
-
-        if (selectedCategories.length > 0) {
-            whereValues.push(`product_category IN (${joinValues(selectedCategories, ", ", "'")})`);
-        }
-
-        // if (selectedProducts.length > 0) {
-        //     groupByValues.push("source_information_category");
-        // }
-
-        if (selectedPlatforms.length > 0) {
-            whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
-        }
-
-        if (selectedCampaigns.length > 0) {
-            whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
-        }
-
-        selectValues.push("SUM(net_sales) AS net_sales");
-
-        whereValues.push("cancelled = 'No'");
-        whereValues.push("is_assisted = true");
-        if (minDate != null) {
-            whereValues.push(`date >= '${minDate}'`);
-        }
-        if (maxDate != null) {
-            whereValues.push(`date <= '${maxDate}'`);
-        }
-
-        const query = (
-            `
-                SELECT
-                    ${joinValues(selectValues, ", ")}
-                FROM
-                    shopify_sales_to_source_with_information
-                WHERE
-                    ${joinValues(whereValues, " AND ")}
-            `
-        );
-
-        const result = await execute(query);
-
-        if (result.rows.length != 1) {
-            throw "";
-        }
-
-        const row = result.rows[0];
-        return {
-            metaQuery: query,
-            netSales: parseFloat(row.net_sales),
-        };
-    } catch (e) {
-        console.log("Error executing function");
-        console.trace();
-        return "?";
-    }
-}
-
-export async function r3_ordersRevenuePivotedByAssistAndBusiness(
-    selectedCategories: Array<string>,
-    selectedProducts: Array<string>,
-    selectedPlatforms: Array<string>,
-    selectedCampaigns: Array<string>,
-    selectedGranularity: string,
-    minDate: string,
-    maxDate: string,
-) {
+    maxDate: string
+){
     try {
         const selectValues = [];
         const whereValues = [];
@@ -883,6 +846,7 @@ export async function r3_ordersRevenuePivotedByAssistAndBusiness(
         selectValues.push("SUM(net_sales) AS net_sales");
         selectValues.push("is_assisted");
         selectValues.push("product_category");
+        selectValues.push(`${getGranularityQuery(selectedGranularity, "date")} AS date`);
 
         whereValues.push("cancelled = 'No'");
         if (minDate != null) {
@@ -894,9 +858,10 @@ export async function r3_ordersRevenuePivotedByAssistAndBusiness(
 
         groupByValues.push("is_assisted");
         groupByValues.push("product_category");
+        groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
 
-        const query = (
-            `
+
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
@@ -905,19 +870,24 @@ export async function r3_ordersRevenuePivotedByAssistAndBusiness(
                     ${joinValues(whereValues, " AND ")}
                 GROUP BY
                     ${joinValues(groupByValues, ", ")}
-            `
-        );
+                ORDER BY
+                    date
+            `;
+
 
         const result = await execute(query);
 
-        return {
+        const temp = {
             metaQuery: query,
-            rows: result.rows.map(row => ({
-                netSales: row.net_sales,
+            rows: result.rows.map((row) => ({
+                date: dateToMediumEnFormat(row.date),
+                netSales: parseFloat(row.net_sales),
                 isAssisted: row.is_assisted,
                 category: row.product_category,
             })),
-        };
+        }
+
+        return temp;
     } catch (e) {
         console.log("Error executing function");
         console.trace();
@@ -932,14 +902,16 @@ export async function get_r4_facebookAdsSpends(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
         const whereValues = [];
+        const groupByValues = [];
 
         if (selectedCategories.length > 0) {
             whereValues.push(`category IN (${joinValues(selectedCategories, ", ", "'")})`);
+            groupByValues.push("category");
         }
 
         // if (selectedProducts.length > 0) {
@@ -948,13 +920,17 @@ export async function get_r4_facebookAdsSpends(
 
         if (selectedPlatforms.length > 0) {
             whereValues.push(`platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
+            groupByValues.push("source_information_platform");
         }
 
         if (selectedCampaigns.length > 0) {
             whereValues.push(`campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
+            groupByValues.push("source_information_campaign_name");
         }
 
         selectValues.push("SUM(amount_spent) AS amount_spent");
+        selectValues.push(`${getGranularityQuery(selectedGranularity, "date")} AS date`);
+
 
         whereValues.push("platform = 'Facebook'");
         if (minDate != null) {
@@ -964,27 +940,30 @@ export async function get_r4_facebookAdsSpends(
             whereValues.push(`date <= '${maxDate}'`);
         }
 
-        const query = (
-            `
+        groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
+
+
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
                     ads_with_information
                 WHERE
                     ${joinValues(whereValues, " AND ")}
-            `
-        );
+                GROUP BY
+                    ${joinValues(groupByValues, ", ")}
+                ORDER BY
+                    date
+            `;
 
         const result = await execute(query);
 
-        if (result.rows.length != 1) {
-            throw "";
-        }
-
-        const row = result.rows[0];
         return {
             metaQuery: query,
-            amountSpent: parseFloat(row.amount_spent),
+            rows: result.rows.map((row) => ({
+                date: dateToMediumEnFormat(row.date),
+                amountSpent: parseFloat(row.amount_spent),
+            }))
         };
     } catch (e) {
         console.log("Error executing function");
@@ -1000,14 +979,16 @@ export async function get_r4_googleAdsSpends(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
         const whereValues = [];
+        const groupByValues = [];
 
         if (selectedCategories.length > 0) {
             whereValues.push(`category IN (${joinValues(selectedCategories, ", ", "'")})`);
+            groupByValues.push("category");
         }
 
         // if (selectedProducts.length > 0) {
@@ -1016,13 +997,16 @@ export async function get_r4_googleAdsSpends(
 
         if (selectedPlatforms.length > 0) {
             whereValues.push(`platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
+            groupByValues.push("source_information_platform");
         }
 
         if (selectedCampaigns.length > 0) {
             whereValues.push(`campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
+            groupByValues.push("source_information_campaign_name");
         }
 
         selectValues.push("SUM(amount_spent) AS amount_spent");
+        selectValues.push(`${getGranularityQuery(selectedGranularity, "date")} AS date`);
 
         whereValues.push("platform = 'Google'");
         if (minDate != null) {
@@ -1032,28 +1016,33 @@ export async function get_r4_googleAdsSpends(
             whereValues.push(`date <= '${maxDate}'`);
         }
 
-        const query = (
-            `
+        groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
+
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
                     ads_with_information
                 WHERE
                     ${joinValues(whereValues, " AND ")}
-            `
-        );
+                GROUP BY
+                    ${joinValues(groupByValues, ", ")}
+                ORDER BY
+                    date
+            `;
 
         const result = await execute(query);
 
-        if (result.rows.length != 1) {
-            throw "";
-        }
-
-        const row = result.rows[0];
-        return {
+        const temp = {
             metaQuery: query,
-            amountSpent: parseFloat(row.amount_spent),
+            rows: result.rows.map((row) => ({
+                date: dateToMediumEnFormat(row.date),
+                amountSpent: parseFloat(row.amount_spent),
+            })),
+
         };
+
+        return temp;
     } catch (e) {
         console.log("Error executing function");
         console.trace();
@@ -1068,7 +1057,7 @@ export async function get_r4_facebookAdsLiveCampaignsCount(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
@@ -1107,8 +1096,7 @@ export async function get_r4_facebookAdsLiveCampaignsCount(
 
         havingValues.push("SUM(amount_spent) > 0");
 
-        const query = (
-            `
+        const query = `
                 SELECT
                     COUNT(*)
                 FROM
@@ -1124,8 +1112,7 @@ export async function get_r4_facebookAdsLiveCampaignsCount(
                         HAVING
                             ${joinValues(havingValues, ", ")}
                     ) AS _
-            `
-        );
+            `;
 
         const result = await execute(query);
 
@@ -1152,7 +1139,7 @@ export async function get_r4_googleAdsLiveCampaignsCount(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
@@ -1191,8 +1178,7 @@ export async function get_r4_googleAdsLiveCampaignsCount(
 
         havingValues.push("SUM(amount_spent) > 0");
 
-        const query = (
-            `
+        const query = `
                 SELECT
                     COUNT(*)
                 FROM
@@ -1208,8 +1194,7 @@ export async function get_r4_googleAdsLiveCampaignsCount(
                         HAVING
                             ${joinValues(havingValues, ", ")}
                     ) AS _
-            `
-        );
+            `;
 
         const result = await execute(query);
 
@@ -1236,7 +1221,7 @@ export async function get_r4_facebookAdsRevenue(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
@@ -1263,16 +1248,14 @@ export async function get_r4_facebookAdsRevenue(
             whereValues.push(`date <= '${maxDate}'`);
         }
 
-        const query = (
-            `
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
                     shopify_sales_to_source_with_information
                 WHERE
                     ${joinValues(whereValues, " AND ")}
-            `
-        );
+            `;
 
         const result = await execute(query);
 
@@ -1299,7 +1282,7 @@ export async function get_r4_googleAdsRevenue(
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
     minDate: string,
-    maxDate: string,
+    maxDate: string
 ) {
     try {
         const selectValues = [];
@@ -1326,16 +1309,14 @@ export async function get_r4_googleAdsRevenue(
             whereValues.push(`date <= '${maxDate}'`);
         }
 
-        const query = (
-            `
+        const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
                 FROM
                     shopify_sales_to_source_with_information
                 WHERE
                     ${joinValues(whereValues, " AND ")}
-            `
-        );
+            `;
 
         const result = await execute(query);
 

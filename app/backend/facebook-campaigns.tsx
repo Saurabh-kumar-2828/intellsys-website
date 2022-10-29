@@ -1,7 +1,7 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {dateToMediumEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
-import { get_r1_performanceLeadsCount, get_r4_facebookAdsSpends } from "~/backend/business-insights";
+import {get_r4_facebookAdsSpends } from "~/backend/business-insights";
 
 export async function getCampaignsInformation(
     selectedCategories: Array<string>,
@@ -156,17 +156,20 @@ export async function getCampaignsTrends (
     }
 }
 
-export async function getLeads(
-    selectedCategories: Array<string>,
-    selectedProducts: Array<string>,
-    selectedPlatforms: Array<string>,
-    selectedCampaigns: Array<string>,
-    selectedGranularity: string,
-    minDate: string,
-    maxDate: string,
-) {
-    return get_r1_performanceLeadsCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate);
-}
+// export async function getLeads(
+//     selectedCategories: Array<string>,
+//     selectedProducts: Array<string>,
+//     selectedPlatforms: Array<string>,
+//     selectedCampaigns: Array<string>,
+//     selectedGranularity: string,
+//     minDate: string,
+//     maxDate: string,
+// ) {
+//     const r1_performanceLeadsCountTrend= await get_r1_performanceLeadsCountTrend(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate);
+//     return {
+//             count: r1_performanceLeadsCountTrend.rows.reduce((sum, item) => sum + item.count, 0)
+//     };
+// }
 
 export async function getSales(
     selectedCategories: Array<string>,

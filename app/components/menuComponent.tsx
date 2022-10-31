@@ -44,7 +44,7 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
         },
         {
             url: "/facebook-campaigns",
-            displayName: "Facebook Campaigns",
+            displayName: "Facebook Campaigns Funnel",
         },
         // {
         //     url: "/google-campaigns",

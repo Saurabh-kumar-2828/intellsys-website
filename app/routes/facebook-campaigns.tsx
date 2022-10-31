@@ -10,7 +10,7 @@ import {BarGraphComponent} from "~/components/reusableComponents/barGraphCompone
 import {LineGraphComponent} from "~/components/reusableComponents/lineGraphComponent";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
 import {QueryFilterType} from "~/utilities/typeDefinitions";
-import {get_r1_performanceLeadsCountTrend} from "~/backend/business-insights";
+import {get_freshSalesData} from "~/backend/business-insights";
 import {concatenateNonNullStringsWithAmpersand, dateToMediumEnFormat, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
@@ -92,7 +92,7 @@ export const loader: LoaderFunction = async ({request}) => {
         allSourceInformation: await getAllSourceToInformation(),
         campaignsInformation: await getCampaignsInformation(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         // leads: await getLeads(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r1_performanceLeadsCountTrend: await get_r1_performanceLeadsCountTrend(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        freshSalesLeadsData: await get_freshSalesData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         sales: await getSales(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         campaignTrends: await getCampaignsTrends(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
     });
@@ -110,8 +110,8 @@ export default function () {
         allProductInformation,
         allSourceInformation,
         campaignsInformation,
+        freshSalesLeadsData,
         // leads,
-        r1_performanceLeadsCountTrend,
         sales,
         campaignTrends,
     } = useLoaderData();
@@ -149,7 +149,7 @@ export default function () {
     const campaignNamesRetrieved = Array<string>();
 
     const leads = {
-        count: r1_performanceLeadsCountTrend.rows.reduce((sum, item) => sum + item.count, 0),
+        count: freshSalesLeadsData.rows.filter((row) => row.source!='Facebook Ads').reduce((sum, item) => sum + item.count, 0),
         metaInformation: "performance leads",
     };
 

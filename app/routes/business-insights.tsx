@@ -6,8 +6,7 @@ import {DateTime} from "luxon";
 import {useState} from "react";
 import {
     get_shopifyData,
-    get_r1_facebookLeadsCountTrend,
-    get_r1_performanceLeadsCountTrend,
+    get_freshSalesData,
     get_adsData,
     getOrdersRevenue,
 } from "~/backend/business-insights";
@@ -16,7 +15,6 @@ import {BarGraphComponent} from "~/components/reusableComponents/barGraphCompone
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
 import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithAmpersand, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
-import {LineGraphComponent} from "~/components/reusableComponents/lineGraphComponent";
 
 export const meta: MetaFunction = () => {
     return {
@@ -95,8 +93,7 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedMaxDate: maxDate,
         allProductInformation: await getAllProductInformation(),
         allSourceInformation: await getAllSourceToInformation(),
-        r1_performanceLeadsCountTrend: await get_r1_performanceLeadsCountTrend(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r1_facebookLeadsCountTrend: await get_r1_facebookLeadsCountTrend(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        freshSalesLeadsData: await get_freshSalesData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         r3_ordersRevenue: await getOrdersRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         adsData: await get_adsData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         shopifyData: await get_shopifyData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
@@ -114,8 +111,7 @@ export default function () {
         appliedMaxDate,
         allProductInformation,
         allSourceInformation,
-        r1_performanceLeadsCountTrend,
-        r1_facebookLeadsCountTrend,
+        freshSalesLeadsData,
         r3_ordersRevenue,
         adsData,
         shopifyData,
@@ -143,49 +139,24 @@ export default function () {
         return result;
     }
 
-    const googleAdsDataGroupByDate = adsData.rows.filter((row) => row.platform=='Google').reduce((googleAdsDataGroupByDate, ad) => {
-        const date = (googleAdsDataGroupByDate[ad.date] || []);
-        date.push(ad);
-        googleAdsDataGroupByDate[ad.date] = date;
-        return googleAdsDataGroupByDate;
-    }, {})
-
-    const facebookAdsDataGroupByDate = adsData.rows.filter((row) => row.platform=='Facebook').reduce((facebookAdsDataGroupByDate, ad) => {
-        const date = (facebookAdsDataGroupByDate[ad.date] || []);
-        date.push(ad);
-        facebookAdsDataGroupByDate[ad.date] = date;
-        return facebookAdsDataGroupByDate;
-    }, {})
-
-    const adsDataGoogleSpends=[];
-    const adsDataFacebookSpends=[];
-    for(const ads in googleAdsDataGroupByDate){
-        let googleAmountSpent = googleAdsDataGroupByDate[ads].reduce((total, sum) => total+sum.amountSpent, 0);
-        let date = ads;
-
-        adsDataGoogleSpends.push({
-            "amountSpent":googleAmountSpent,
-            "date": date
-        });
+    //TO DO: correct its implementation
+    function match2(input: string, pattern: string){
+        return input.match(pattern)? null: pattern;
     }
 
-    for(const ads in facebookAdsDataGroupByDate){
-        let facebookAmountSpent = facebookAdsDataGroupByDate[ads].reduce((total, sum) => total+sum.amountSpent, 0);
-        let date = ads;
+    const adsDataGoogleSpends= aggregateByDate(adsData.rows.filter((row) => row.platform=='Google'), "amountSpent");
+    const adsDataFacebookSpends= aggregateByDate(adsData.rows.filter((row) => row.platform=='Facebook'), "amountSpent");
 
-        adsDataFacebookSpends.push({
-            "amountSpent":facebookAmountSpent,
-            "date": date
-        })
-    }
     const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
     const performanceLeadsCount = {
-        count: r1_performanceLeadsCountTrend.rows.reduce((sum, item) => sum + item.count, 0),
+        count: aggregateByDate(freshSalesLeadsData.rows.filter((row) => row.source!='Facebook Ads'), "count").reduce((sum, item) => sum + item.param, 0),
         metaInformation: "performance leads",
     };
 
+
+
     const facebookLeadsCount = {
-        count: r1_facebookLeadsCountTrend.rows.reduce((sum, item) => sum + item.count, 0),
+        count: freshSalesLeadsData.rows.filter((row) => row.source=='Facebook Ads').reduce((sum, item) => sum + item.count, 0),
         metaInformation: "facebook leads",
     };
 
@@ -213,20 +184,20 @@ export default function () {
     };
 
     const r1_performanceLeadsSales = {
-        netSales: shopifyData.rows.filter((row) => row.source !='GJ_LeadGen_18May' && row.source != 'GJ_LeadGen_Mattress_10 May').reduce((sum, item) => sum + item.netSales, 0),
+        netSales: shopifyData.rows.filter((row) => row.source !='GJ_LeadGen_18May' && row.source != 'GJ_LeadGen_Mattress_10 May' && row.source != match2(row.source, "/^Freshsales - .* - Facebook Ads$/")).reduce((sum, item) => sum + item.netSales, 0),
 
     };
 
     const r1_facebookLeadsSales = {
-        netSales: shopifyData.rows.filter((row) => row.source =='GJ_LeadGen_18May' || row.source == 'GJ_LeadGen_Mattress_10 May').reduce((sum, item) => sum + item.netSales, 0),
+        netSales: shopifyData.rows.filter((row) => row.source =='GJ_LeadGen_18May' || row.source == 'GJ_LeadGen_Mattress_10 May' || row.source == match2(row.source, "/^Freshsales - .* - Facebook Ads$/")).reduce((sum, item) => sum + item.netSales, 0),
     };
 
     const googleAdsSpends = {
-        amountSpent: adsDataGoogleSpends.reduce((sum, item) => sum + item.amountSpent, 0),
+        amountSpent: adsDataGoogleSpends.reduce((sum, item) => sum + item.param, 0),
     };
 
     const facebookAdsSpends = {
-        amountSpent: adsDataFacebookSpends.reduce((sum, item) => sum + item.amountSpent, 0),
+        amountSpent: adsDataFacebookSpends.reduce((sum, item) => sum + item.param, 0),
     };
 
     const r1_performanceLeadsAmountSpent = {
@@ -274,7 +245,7 @@ export default function () {
         spl: r1_facebookLeadsSales.netSales / facebookLeadsCount.count,
     };
     const r1_performanceLeadsAcos = {
-        metaInformation: `Amount Spent / Net Sales | Facebook = ${numberToHumanFriendlyString(r1_performanceLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
+        metaInformation: `Amount Spent / Net Sales | Performance = ${numberToHumanFriendlyString(r1_performanceLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
             r1_performanceLeadsSales.netSales
         )}`,
         acos: r1_performanceLeadsAmountSpent.amountSpent / r1_performanceLeadsSales.netSales,
@@ -487,10 +458,10 @@ export default function () {
                 content={
                     <BarGraphComponent
                         data={{
-                            x: r1_performanceLeadsCountTrend.rows.map((item) => item.date),
+                            x: freshSalesLeadsData.rows.filter((row) => row.source=='Facebook Ads').map((item) => item.date),
                             y: {
-                                "Performance Leads": r1_performanceLeadsCountTrend.rows.map((item) => item.count),
-                                "Facebook Leads": r1_facebookLeadsCountTrend.rows.map((item) => item.count),
+                                "Performance Leads": aggregateByDate(freshSalesLeadsData.rows.filter((row) => row.source!='Facebook Ads'), "count").map((item) => item.param),
+                                "Facebook Leads": freshSalesLeadsData.rows.filter((row) => row.source=='Facebook Ads').map((item) => item.count),
                             },
                         }}
                         yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
@@ -498,7 +469,7 @@ export default function () {
                         height={640}
                     />
                 }
-                metaQuery={r1_performanceLeadsCountTrend.metaQuery}
+                metaQuery={freshSalesLeadsData.metaQuery}
             />
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Orders</div>
@@ -685,8 +656,8 @@ export default function () {
                         data={{
                             x: adsDataGoogleSpends.map((item) => item.date),
                             y: {
-                                "GoogleAds Spends": adsDataGoogleSpends.map((item) => item.amountSpent),
-                                "FacebookAds Spends": adsDataFacebookSpends.map((item) => item.amountSpent),
+                                "GoogleAds Spends": adsDataGoogleSpends.map((item) => item.param,),
+                                "FacebookAds Spends": adsDataFacebookSpends.map((item) => item.param),
                             },
                         }}
                         yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}

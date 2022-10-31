@@ -76,9 +76,8 @@ export async function get_shopifyData(
                 netSales: parseFloat(row.net_sales),
                 sourcePlatform: row.source_information_platform,
                 isAssisted: row.is_assisted,
-                source: row.source
-            }))
-
+                source: row.source,
+            })),
         };
     } catch (e) {
         console.log("Error executing function");
@@ -87,78 +86,7 @@ export async function get_shopifyData(
     }
 }
 
-
-
-export async function get_r1_facebookLeadsSales(
-    selectedCategories: Array<string>,
-    selectedProducts: Array<string>,
-    selectedPlatforms: Array<string>,
-    selectedCampaigns: Array<string>,
-    selectedGranularity: string,
-    minDate: string,
-    maxDate: string
-) {
-    try {
-        const selectValues = [];
-        const whereValues = [];
-
-        if (selectedCategories.length > 0) {
-            whereValues.push(`product_category IN (${joinValues(selectedCategories, ", ", "'")})`);
-        }
-
-        if (selectedProducts.length > 0) {
-            whereValues.push(`product_title IN (${joinValues(selectedProducts, ", ", "'")})`);
-        }
-
-        if (selectedPlatforms.length > 0) {
-            whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
-        }
-
-        if (selectedCampaigns.length > 0) {
-            whereValues.push(`source_information_campaign IN (${joinValues(selectedCampaigns, ", ", "'")})`);
-        }
-
-        selectValues.push("SUM(net_sales) AS net_sales");
-
-        whereValues.push("source IN ('GJ_LeadGen_18May', 'GJ_LeadGen_Mattress_10 May')");
-        whereValues.push("cancelled = 'No'");
-        if (minDate != null) {
-            whereValues.push(`date >= '${minDate}'`);
-        }
-        if (maxDate != null) {
-            whereValues.push(`date <= '${maxDate}'`);
-        }
-
-        const query = `
-                SELECT
-                    ${joinValues(selectValues, ", ")}
-                FROM
-                    shopify_sales_to_source_with_information
-                WHERE
-                    ${joinValues(whereValues, " AND ")}
-            `;
-
-        console.log(query);
-
-        const result = await execute(query);
-
-        if (result.rows.length != 1) {
-            throw "";
-        }
-
-        const row = result.rows[0];
-        return {
-            metaQuery: query,
-            netSales: parseFloat(row.net_sales),
-        };
-    } catch (e) {
-        console.log("Error executing function");
-        console.trace();
-        return "?";
-    }
-}
-
-export async function get_r1_performanceLeadsCountTrend(
+export async function get_freshSalesData(
     selectedCategories: Array<string>,
     selectedProducts: Array<string>,
     selectedPlatforms: Array<string>,
@@ -197,8 +125,8 @@ export async function get_r1_performanceLeadsCountTrend(
 
         selectValues.push("COUNT(*) AS count");
         selectValues.push(`${getGranularityQuery(selectedGranularity, "lead_created_at")} AS date`);
+        selectValues.push("source");
 
-        whereValues.push("source != 'Facebook Ads'");
         if (minDate != null) {
             whereValues.push(`DATE(lead_created_at) >= '${minDate}'`);
         }
@@ -207,7 +135,7 @@ export async function get_r1_performanceLeadsCountTrend(
         }
 
         groupByValues.push(getGranularityQuery(selectedGranularity, "lead_created_at"));
-
+        groupByValues.push("source");
         const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
@@ -228,6 +156,7 @@ export async function get_r1_performanceLeadsCountTrend(
             rows: result.rows.map((row) => ({
                 date: dateToMediumEnFormat(row.date),
                 count: parseInt(row.count),
+                source: row.source,
             })),
         };
     } catch (e) {
@@ -236,86 +165,6 @@ export async function get_r1_performanceLeadsCountTrend(
         return "?";
     }
 }
-
-export async function get_r1_facebookLeadsCountTrend(
-    selectedCategories: Array<string>,
-    selectedProducts: Array<string>,
-    selectedPlatforms: Array<string>,
-    selectedCampaigns: Array<string>,
-    selectedGranularity: string,
-    minDate: string,
-    maxDate: string
-) {
-    try {
-        const selectValues = [];
-        const whereValues = [];
-        const groupByValues = [];
-
-        if (selectedCategories.length > 0) {
-            selectValues.push("category AS category");
-            whereValues.push(`category IN (${joinValues(selectedCategories, ", ", "'")})`);
-            groupByValues.push("category");
-        }
-
-        // if (selectedProducts.length > 0) {
-        //     selectValues.push("source_information_category");
-        //     groupByValues.push("source_information_category");
-        // }
-
-        if (selectedPlatforms.length > 0) {
-            selectValues.push("source_information_platform AS platform");
-            whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
-            groupByValues.push("source_information_platform");
-        }
-
-        if (selectedCampaigns.length > 0) {
-            selectValues.push("source_information_campaign_name AS campaign_name");
-            whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
-            groupByValues.push("source_information_campaign_name");
-        }
-
-        selectValues.push("COUNT(*) AS count");
-        selectValues.push(`${getGranularityQuery(selectedGranularity, "lead_created_at")} AS date`);
-
-        whereValues.push("source = 'Facebook Ads'");
-        if (minDate != null) {
-            whereValues.push(`DATE(lead_created_at) >= '${minDate}'`);
-        }
-        if (maxDate != null) {
-            whereValues.push(`DATE(lead_created_at) <= '${maxDate}'`);
-        }
-
-        groupByValues.push(getGranularityQuery(selectedGranularity, "lead_created_at"));
-
-        const query = `
-                SELECT
-                    ${joinValues(selectValues, ", ")}
-                FROM
-                    freshsales_leads_to_source_with_information
-                WHERE
-                    ${joinValues(whereValues, " AND ")}
-                GROUP BY
-                    ${joinValues(groupByValues, ", ")}
-                ORDER BY
-                    date
-            `;
-
-        const result = await execute(query);
-
-        return {
-            metaQuery: query,
-            rows: result.rows.map((row) => ({
-                date: dateToMediumEnFormat(row.date),
-                count: parseInt(row.count),
-            })),
-        };
-    } catch (e) {
-        console.log("Error executing function");
-        console.trace();
-        return "?";
-    }
-}
-
 
 export async function getOrdersRevenue(
     selectedCategories: Array<string>,
@@ -325,7 +174,7 @@ export async function getOrdersRevenue(
     selectedGranularity: string,
     minDate: string,
     maxDate: string
-){
+) {
     try {
         const selectValues = [];
         const whereValues = [];
@@ -364,7 +213,6 @@ export async function getOrdersRevenue(
         groupByValues.push("product_category");
         groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
 
-
         const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
@@ -378,7 +226,6 @@ export async function getOrdersRevenue(
                     date
             `;
 
-
         const result = await execute(query);
 
         const temp = {
@@ -389,7 +236,7 @@ export async function getOrdersRevenue(
                 isAssisted: row.is_assisted,
                 category: row.product_category,
             })),
-        }
+        };
 
         return temp;
     } catch (e) {
@@ -407,7 +254,7 @@ export async function get_adsData(
     selectedGranularity: string,
     minDate: string,
     maxDate: string
-){
+) {
     try {
         const selectValues = [];
         const whereValues = [];
@@ -469,8 +316,8 @@ export async function get_adsData(
                 date: dateToMediumEnFormat(row.date),
                 amountSpent: parseFloat(row.amount_spent),
                 platform: row.platform,
-                campaignName: row.campaign_name
-            }))
+                campaignName: row.campaign_name,
+            })),
         };
     } catch (e) {
         console.log("Error executing function");

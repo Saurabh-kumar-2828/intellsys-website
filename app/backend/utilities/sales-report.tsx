@@ -33,11 +33,12 @@ export async function get_shopifyInsights(
             groupByValues.push("source_information_campaign_name");
         }
 
-        selectValues.push("*");
 
-        // selectValues.push("SUM(net_sales) AS net_sales");
-        // selectValues.push("COUNT(*) AS count");
-        // selectValues.push(`${getGranularityQuery(selectedGranularity, "date")} AS date`);
+        selectValues.push("SUM(net_sales) AS net_sales");
+        selectValues.push("COUNT(*) AS count");
+        selectValues.push("SUM(net_quantity) AS net_quantity");
+        selectValues.push("product_category");
+        selectValues.push(`${getGranularityQuery(selectedGranularity, "date")} AS date`);
         // selectValues.push("source_information_platform");
         // selectValues.push("is_assisted");
         // selectValues.push("source");
@@ -50,8 +51,8 @@ export async function get_shopifyInsights(
             whereValues.push(`date <= '${maxDate}'`);
         }
 
-        // groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
-        // groupByValues.push("source_information_platform");
+        groupByValues.push(getGranularityQuery(selectedGranularity, "date"));
+        groupByValues.push("product_category");
         // groupByValues.push("is_assisted");
         // groupByValues.push("source");
 
@@ -62,12 +63,11 @@ export async function get_shopifyInsights(
                     shopify_sales_to_source_with_information
                 WHERE
                     ${joinValues(whereValues, " AND ")}
+                GROUP BY
+                    ${joinValues(groupByValues, ", ")}
+                ORDER BY
+                    date
             `;
-
-        // GROUP BY
-        //     ${joinValues(groupByValues, ", ")}
-        // ORDER BY
-        //     date
 
         const result = await execute(query);
         return {

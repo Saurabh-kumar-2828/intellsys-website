@@ -4,12 +4,7 @@ import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";
 import {DateTime} from "luxon";
 import {useState} from "react";
-import {
-    get_shopifyData,
-    get_freshSalesData,
-    get_adsData,
-    getOrdersRevenue,
-} from "~/backend/business-insights";
+import {get_shopifyData, get_freshSalesData, get_adsData} from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
 import {BarGraphComponent} from "~/components/reusableComponents/barGraphComponent";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
@@ -94,7 +89,6 @@ export const loader: LoaderFunction = async ({request}) => {
         allProductInformation: await getAllProductInformation(),
         allSourceInformation: await getAllSourceToInformation(),
         freshSalesLeadsData: await get_freshSalesData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r3_ordersRevenue: await getOrdersRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         adsData: await get_adsData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         shopifyData: await get_shopifyData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
     });
@@ -112,51 +106,83 @@ export default function () {
         allProductInformation,
         allSourceInformation,
         freshSalesLeadsData,
-        r3_ordersRevenue,
         adsData,
         shopifyData,
     } = useLoaderData();
 
-    function helperAggregateByDate(result, item){
-        let date= (result[item.date] || []);
+    function helperAggregateByDate(result, item) {
+        let date = result[item.date] || [];
         date.push(item);
         result[item.date] = date;
         return result;
     }
 
-    function aggregateByDate(array: Array<object>, param:string){
-        const result=[]
-        let arrayAggregateByDate : any = array.reduce(helperAggregateByDate,{});
-        for(const item in arrayAggregateByDate){
-            let paramValue = arrayAggregateByDate[item].reduce((total, sum) => total+ sum[`${param}`], 0);
+    function helperAggregateByCategory(result, item) {
+        let category = result[item.category] || 0;
+        category = category + parseInt(item.netSales);
+        result[item.category] = category;
+        return result;
+    }
+
+    function aggregateByDate(array: Array<object>, param: string) {
+        const result = [];
+        let arrayAggregateByDate: any = array.reduce(helperAggregateByDate, {});
+        for (const item in arrayAggregateByDate) {
+            let paramValue = arrayAggregateByDate[item].reduce((total, sum) => total + sum[`${param}`], 0);
             let date = item;
 
             result.push({
                 param: paramValue,
-                "date": date
+                date: date,
             });
         }
         return result;
     }
 
-    //TO DO: correct its implementation
-    function match2(input: string, pattern: string){
-        return input.match(pattern)? null: pattern;
+    function get_r3_ordersRevenue(array: Array<object>) {
+        let aggregateByDate = array.reduce(helperAggregateByDate, {});
+        for (const item in aggregateByDate) {
+            let result = aggregateByDate[item].reduce(helperAggregateByCategory, {});
+            aggregateByDate[item] = result;
+        }
+
+        let result = [];
+        for (const date in aggregateByDate) {
+            for (const category in aggregateByDate[date]) {
+                result.push({
+                    date: date,
+                    category: category,
+                    netSales: aggregateByDate[date][category],
+                });
+            }
+        }
+        return result;
     }
 
-    const adsDataGoogleSpends= aggregateByDate(adsData.rows.filter((row) => row.platform=='Google'), "amountSpent");
-    const adsDataFacebookSpends= aggregateByDate(adsData.rows.filter((row) => row.platform=='Facebook'), "amountSpent");
+    const adsDataGoogleSpends = aggregateByDate(
+        adsData.rows.filter((row) => row.platform == "Google"),
+        "amountSpent"
+    );
+    const adsDataFacebookSpends = aggregateByDate(
+        adsData.rows.filter((row) => row.platform == "Facebook"),
+        "amountSpent"
+    );
 
     const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
     const performanceLeadsCount = {
-        count: aggregateByDate(freshSalesLeadsData.rows.filter((row) => row.source!='Facebook Ads'), "count").reduce((sum, item) => sum + item.param, 0),
+        count: aggregateByDate(
+            freshSalesLeadsData.rows.filter((row) => row.source != "Facebook Ads"),
+            "count"
+        ).reduce((sum, item) => sum + item.param, 0),
         metaInformation: "performance leads",
     };
 
+    const directOrdersRevenue = get_r3_ordersRevenue(shopifyData.rows.filter((row) => row.isAssisted == false));
 
+    const assistedOrdersRevenue = get_r3_ordersRevenue(shopifyData.rows.filter((row) => row.isAssisted == true));
 
     const facebookLeadsCount = {
-        count: freshSalesLeadsData.rows.filter((row) => row.source=='Facebook Ads').reduce((sum, item) => sum + item.count, 0),
+        count: freshSalesLeadsData.rows.filter((row) => row.source == "Facebook Ads").reduce((sum, item) => sum + item.count, 0),
         metaInformation: "facebook leads",
     };
 
@@ -165,8 +191,14 @@ export default function () {
         count: performanceLeadsCount.count + facebookLeadsCount.count,
     };
 
-    const directOrders = aggregateByDate(shopifyData.rows.filter((row) => row.isAssisted == false), "count");
-    const assistedOrders = aggregateByDate(shopifyData.rows.filter((row) => row.isAssisted == true), "count");
+    const directOrders = aggregateByDate(
+        shopifyData.rows.filter((row) => row.isAssisted == false),
+        "count"
+    );
+    const assistedOrders = aggregateByDate(
+        shopifyData.rows.filter((row) => row.isAssisted == true),
+        "count"
+    );
     const directOrdersTotalCount = {
         count: directOrders.reduce((sum, item) => sum + item.param, 0),
     };
@@ -176,20 +208,23 @@ export default function () {
     };
 
     const r4_facebookAdsRevenue = {
-        netSales: shopifyData.rows.filter((row) => row.sourcePlatform=='Facebook' && row.netSales>0).reduce((sum, item) => sum + item.netSales, 0),
+        netSales: shopifyData.rows.filter((row) => row.sourcePlatform == "Facebook" && row.netSales > 0).reduce((sum, item) => sum + item.netSales, 0),
     };
 
     const r4_googleAdsRevenue = {
-        netSales: shopifyData.rows.filter((row) => row.sourcePlatform=='Google' && row.netSales>0).reduce((sum, item) => sum + item.netSales, 0),
+        netSales: shopifyData.rows.filter((row) => row.sourcePlatform == "Google" && row.netSales > 0).reduce((sum, item) => sum + item.netSales, 0),
     };
 
     const r1_performanceLeadsSales = {
-        netSales: shopifyData.rows.filter((row) => row.source !='GJ_LeadGen_18May' && row.source != 'GJ_LeadGen_Mattress_10 May' && row.source != match2(row.source, "/^Freshsales - .* - Facebook Ads$/")).reduce((sum, item) => sum + item.netSales, 0),
-
+        netSales: shopifyData.rows
+            .filter((row) => row.source != "GJ_LeadGen_18May" && row.source != "GJ_LeadGen_Mattress_10 May" && row.source.match("^Freshsales - .* - Facebook Ads$") == null)
+            .reduce((sum, item) => sum + item.netSales, 0),
     };
 
     const r1_facebookLeadsSales = {
-        netSales: shopifyData.rows.filter((row) => row.source =='GJ_LeadGen_18May' || row.source == 'GJ_LeadGen_Mattress_10 May' || row.source == match2(row.source, "/^Freshsales - .* - Facebook Ads$/")).reduce((sum, item) => sum + item.netSales, 0),
+        netSales: shopifyData.rows
+            .filter((row) => row.source == "GJ_LeadGen_18May" || row.source == "GJ_LeadGen_Mattress_10 May" || row.source.match("^Freshsales - .* - Facebook Ads$") != null)
+            .reduce((sum, item) => sum + item.netSales, 0),
     };
 
     const googleAdsSpends = {
@@ -201,27 +236,27 @@ export default function () {
     };
 
     const r1_performanceLeadsAmountSpent = {
-        amountSpent: adsData.rows.filter((row) => row.campaignName != 'GJ_LeadGen_18May' && row.campaignName != 'GJ_LeadGen_Mattress_10 May').reduce((sum, item) => sum + item.amountSpent, 0),
-    }
+        amountSpent: adsData.rows.filter((row) => row.campaignName != "GJ_LeadGen_18May" && row.campaignName != "GJ_LeadGen_Mattress_10 May").reduce((sum, item) => sum + item.amountSpent, 0),
+    };
 
     const r1_facebookLeadsAmountSpent = {
-        amountSpent: adsData.rows.filter((row) => row.campaignName == 'GJ_LeadGen_18May' || row.campaignName == 'GJ_LeadGen_Mattress_10 May').reduce((sum, item) => sum + item.amountSpent, 0),
-    }
+        amountSpent: adsData.rows.filter((row) => row.campaignName == "GJ_LeadGen_18May" || row.campaignName == "GJ_LeadGen_Mattress_10 May").reduce((sum, item) => sum + item.amountSpent, 0),
+    };
 
     const r4_facebookAdsLiveCampaignsCount = {
-        count: distinct(adsData.rows.filter((row) => row.platform == 'Facebook' && row.amountSpent>0).map((row) => row.campaignName)).length,
-    }
+        count: distinct(adsData.rows.filter((row) => row.platform == "Facebook" && row.amountSpent > 0).map((row) => row.campaignName)).length,
+    };
 
     const r4_googleAdsLiveCampaignsCount = {
-        count: distinct(adsData.rows.filter((row) => row.platform == 'Google' && row.amountSpent>0).map((row) => row.campaignName)).length,
-    }
+        count: distinct(adsData.rows.filter((row) => row.platform == "Google" && row.amountSpent > 0).map((row) => row.campaignName)).length,
+    };
 
     const directOrdersGrossRevenue = {
-        netSales: r3_ordersRevenue.rows.filter((row) => row.isAssisted == false).reduce((sum, item) => sum + item.netSales, 0),
+        netSales: directOrdersRevenue.reduce((sum, item) => sum + item.netSales, 0),
     };
 
     const assistedOrdersGrossRevenue = {
-        netSales: r3_ordersRevenue.rows.filter((row) => row.isAssisted == true).reduce((sum, item) => sum + item.netSales, 0),
+        netSales: assistedOrdersRevenue.reduce((sum, item) => sum + item.netSales, 0),
     };
 
     const r1_performanceLeadsCpl = {
@@ -266,7 +301,9 @@ export default function () {
         aov: directOrdersGrossRevenue.netSales / directOrdersTotalCount.count,
     };
     const r2_assistedOrdersAov = {
-        metaInformation: `Orders Revenue / Orders Count | Assisted = ${numberToHumanFriendlyString(assistedOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(assistedOrdersTotalCount.count)}`,
+        metaInformation: `Orders Revenue / Orders Count | Assisted = ${numberToHumanFriendlyString(assistedOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(
+            assistedOrdersTotalCount.count
+        )}`,
         aov: assistedOrdersGrossRevenue.netSales / assistedOrdersTotalCount.count,
     };
     const r2_directOrdersDrr = {
@@ -291,6 +328,9 @@ export default function () {
         } else if (row.category == null) {
             // TODO: Remove
             multiplier = 0;
+        } else if (row.category == "null") {
+            // TODO: Remove
+            multiplier = 0;
         } else {
             throw new Error(`Multiplier for category ${row.category} not specified!`);
         }
@@ -302,11 +342,11 @@ export default function () {
     // const r3_assistedOrdersNetRevenue = r2_r3_assistedOrdersGrossRevenue / r2_assistedOrdersCount;
     const r3_directOrdersNetRevenue = {
         metaInformation: "",
-        netRevenue: r3_ordersRevenue.rows.filter((row) => row.isAssisted == false).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
+        netRevenue: directOrdersRevenue.reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
     };
     const r3_assistedOrdersNetRevenue = {
         metaInformation: "",
-        netRevenue: r3_ordersRevenue.rows.filter((row) => row.isAssisted == true).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
+        netRevenue: assistedOrdersRevenue.reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
     };
     const r3_totalNetRevenue = {
         metaInformation: "",
@@ -458,10 +498,13 @@ export default function () {
                 content={
                     <BarGraphComponent
                         data={{
-                            x: freshSalesLeadsData.rows.filter((row) => row.source=='Facebook Ads').map((item) => item.date),
+                            x: freshSalesLeadsData.rows.filter((row) => row.source == "Facebook Ads").map((item) => item.date),
                             y: {
-                                "Performance Leads": aggregateByDate(freshSalesLeadsData.rows.filter((row) => row.source!='Facebook Ads'), "count").map((item) => item.param),
-                                "Facebook Leads": freshSalesLeadsData.rows.filter((row) => row.source=='Facebook Ads').map((item) => item.count),
+                                "Performance Leads": aggregateByDate(
+                                    freshSalesLeadsData.rows.filter((row) => row.source != "Facebook Ads"),
+                                    "count"
+                                ).map((item) => item.param),
+                                "Facebook Leads": freshSalesLeadsData.rows.filter((row) => row.source == "Facebook Ads").map((item) => item.count),
                             },
                         }}
                         yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
@@ -525,7 +568,7 @@ export default function () {
                 className="tw-row-span-2 tw-col-span-4"
             />
 
-            <Card information={numberToHumanFriendlyString(directOrdersGrossRevenue.netSales, true)} label="Direct Gross Revenue" metaQuery={r3_ordersRevenue.metaQuery} className="tw-col-span-2" />
+            <Card information={numberToHumanFriendlyString(directOrdersGrossRevenue.netSales, true)} label="Direct Gross Revenue" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />
 
             <Card
                 information={numberToHumanFriendlyString(r3_directOrdersNetRevenue.netRevenue, true)}
@@ -538,12 +581,7 @@ export default function () {
 
             <div className="tw-col-span-2" />
 
-            <Card
-                information={numberToHumanFriendlyString(assistedOrdersGrossRevenue.netSales, true)}
-                label="Assisted Gross Revenue"
-                metaQuery={r3_ordersRevenue.metaQuery}
-                className="tw-col-span-2"
-            />
+            <Card information={numberToHumanFriendlyString(assistedOrdersGrossRevenue.netSales, true)} label="Assisted Gross Revenue" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />
 
             <Card
                 information={numberToHumanFriendlyString(r3_assistedOrdersNetRevenue.netRevenue, true)}
@@ -571,11 +609,11 @@ export default function () {
                         content={
                             <BarGraphComponent
                                 data={{
-                                    x: r3_ordersRevenue.rows.filter((row) => row.isAssisted == false).map((item) => item.date),
+                                    x: directOrdersRevenue.map((item) => item.date),
 
                                     y: {
-                                        "Direct Revenue": r3_ordersRevenue.rows.filter((row) => row.isAssisted == false).map((item) => item.netSales),
-                                        "Assisted Revenue": r3_ordersRevenue.rows.filter((row) => row.isAssisted == true).map((item) => item.netSales),
+                                        "Direct Revenue": directOrdersRevenue.map((item) => item.netSales),
+                                        "Assisted Revenue": assistedOrdersRevenue.map((item) => item.netSales),
                                     },
                                 }}
                                 yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
@@ -592,10 +630,10 @@ export default function () {
                         content={
                             <BarGraphComponent
                                 data={{
-                                    x: r3_ordersRevenue.rows.filter((row) => row.isAssisted == true).map((item) => item.date),
+                                    x: directOrdersRevenue.map((item) => item.date),
                                     y: {
-                                        "Direct Revenue": r3_ordersRevenue.rows.filter((row) => row.isAssisted == false).map((item) => getNetRevenue(item)),
-                                        "Assisted Revenue": r3_ordersRevenue.rows.filter((row) => row.isAssisted == true).map((item) => getNetRevenue(item)),
+                                        "Direct Revenue": directOrdersRevenue.map((item) => getNetRevenue(item)),
+                                        "Assisted Revenue": assistedOrdersRevenue.map((item) => getNetRevenue(item)),
                                     },
                                 }}
                                 yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
@@ -603,7 +641,7 @@ export default function () {
                                 height={640}
                             />
                         }
-                        metaQuery={r3_ordersRevenue.metaQuery}
+                        metaQuery={shopifyData.metaQuery}
                         label="Clicks per Campaign"
                     />
                 </Tabs.Content>
@@ -615,12 +653,7 @@ export default function () {
 
             <Card information={numberToHumanFriendlyString(facebookAdsSpends.amountSpent)} label="Facebook Ads" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
 
-            <Card
-                information={numberToHumanFriendlyString(r4_facebookAdsLiveCampaignsCount.count)}
-                label="Live Campaigns"
-                metaQuery={adsData.metaQuery}
-                className="tw-col-span-2"
-            />
+            <Card information={numberToHumanFriendlyString(r4_facebookAdsLiveCampaignsCount.count)} label="Live Campaigns" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
 
             <Card
                 information={numberToHumanFriendlyString(r4_facebookAdsDailySpend.amountSpent, true)}
@@ -633,12 +666,7 @@ export default function () {
 
             <Card information={numberToHumanFriendlyString(googleAdsSpends.amountSpent)} label="Google Ads" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
 
-            <Card
-                information={numberToHumanFriendlyString(r4_googleAdsLiveCampaignsCount.count)}
-                label="Live Campaigns"
-                metaQuery={adsData.metaQuery}
-                className="tw-col-span-2"
-            />
+            <Card information={numberToHumanFriendlyString(r4_googleAdsLiveCampaignsCount.count)} label="Live Campaigns" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
 
             <Card
                 information={numberToHumanFriendlyString(r4_googleAdsDailySpend.amountSpent, true)}
@@ -656,7 +684,7 @@ export default function () {
                         data={{
                             x: adsDataGoogleSpends.map((item) => item.date),
                             y: {
-                                "GoogleAds Spends": adsDataGoogleSpends.map((item) => item.param,),
+                                "GoogleAds Spends": adsDataGoogleSpends.map((item) => item.param),
                                 "FacebookAds Spends": adsDataFacebookSpends.map((item) => item.param),
                             },
                         }}

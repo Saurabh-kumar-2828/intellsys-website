@@ -22,22 +22,6 @@ export const meta: MetaFunction = () => {
 export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;
 
-    // const selectedCategoryRaw = urlSearchParams.get("selected_categories");
-    // let selectedCategory;
-    // if (selectedCategoryRaw == null || selectedCategoryRaw.length == 0) {
-    //     selectedCategory = [];
-    // } else {
-    //     selectedCategory = JSON.parse(selectedCategoryRaw);
-    // }
-
-    // const selectedProductsRaw = urlSearchParams.get("selected_products");
-    // let selectedProducts;
-    // if (selectedProductsRaw == null || selectedProductsRaw.length == 0) {
-    //     selectedProducts = [];
-    // } else {
-    //     selectedProducts = JSON.parse(selectedProductsRaw);
-    // }
-
     const selectedGranularityRaw = urlSearchParams.get("selected_granularity");
     let selectedGranularity;
     if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
@@ -50,7 +34,6 @@ export const loader: LoaderFunction = async ({request}) => {
     let minDate;
     if (minDateRaw == null || minDateRaw.length == 0) {
         minDate = DateTime.now().startOf("month").toISODate();
-        // minDate = "2022-10-1";
     } else {
         minDate = minDateRaw;
     }
@@ -66,8 +49,6 @@ export const loader: LoaderFunction = async ({request}) => {
     // TODO: Add filters
 
     return json({
-        // appliedSelectedCategory: selectedCategory,
-        // appliedSelectedProducts: selectedProducts,
         appliedSelectedGranularity: selectedGranularity,
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
@@ -240,7 +221,7 @@ export default function () {
     //     colorIndex++;
     // }
 
-    // // product sub category vs quantity
+    // Product sub-category vs quantity
 
     const resultAggregateBySubcategory = helperAggregate(
         shopifyData.rows.filter((row) => row.category == selectedCategory),
@@ -254,7 +235,6 @@ export default function () {
 
     let colorIndex = 0;
     const subCategoryDate = getDates(appliedMinDate, appliedMaxDate);
-    console.log(subCategoryDate);
     for (const subCategory in resultAggregateBySubcategory) {
         const result = {
             data: resultAggregateBySubcategory[subCategory].map((row) => row.param),
@@ -265,7 +245,7 @@ export default function () {
         colorIndex++;
     }
 
-    // // product vs quantity
+    // Product vs quantity
 
     const resultAggregateByProductQuantity = helperAggregate(
         shopifyData.rows.filter((row) => row.category == selectedCategory),
@@ -288,7 +268,7 @@ export default function () {
         colorIndex++;
     }
 
-    // // product vs revenue
+    // Product vs revenue
     // const resultAggregateByProductRevenue = helperAggregate(shopifyData.rows, "productTitle");
     // for (const product in resultAggregateByProductRevenue) {
     //     const aggregateByDate = aggregate(resultAggregateByProductRevenue[product], "date", "netSales");
@@ -328,7 +308,7 @@ export default function () {
         colorIndex++;
     }
 
-    // // variant vs revenue
+    // variant vs revenue
 
     // const resultAggregateByVariantRevenue = helperAggregate(shopifyData.rows, "variantTitle");
     // for (const variant in resultAggregateByVariantRevenue) {
@@ -361,10 +341,7 @@ export default function () {
                         `/sales-report?selected_granularity=${selectedGranularity}`,
                         `min_date=${selectedMinDate}`,
                         `max_date=${selectedMaxDate}`,
-                        // selectedCampaigns.length == 0 ? null : `selected_campaigns=${JSON.stringify(selectedCampaigns)}`,
                         selectedCategory.length == 0 ? null : `selected_categories=${JSON.stringify(selectedCategory)}`
-                        // selectedProducts.length == 0 ? null : `selected_products=${JSON.stringify(selectedProducts)}`,
-                        // selectedPlatforms.length == 0 ? null : `selected_platforms=${JSON.stringify(selectedPlatforms)}`
                     )}
                     className="-tw-col-end-1 tw-bg-lp tw-p-2 tw-rounded-md"
                 >

@@ -3,7 +3,6 @@ import {dateToMediumEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
 import {QueryFilterType} from "~/utilities/typeDefinitions";
 
-
 export async function get_shopifyInsights(
     // selectedCategories: Array<string>,
     // selectedProducts: Array<string>,
@@ -25,7 +24,6 @@ export async function get_shopifyInsights(
         //     whereValues.push(`product_title IN (${joinValues(selectedProducts, ", ", "'")})`);
         //     groupByValues.push("source_information_platform");
         // }
-
 
         selectValues.push("SUM(net_sales) AS net_sales");
         selectValues.push("SUM(net_quantity) AS net_quantity");
@@ -49,7 +47,6 @@ export async function get_shopifyInsights(
         groupByValues.push("product_title");
         groupByValues.push("variant_title");
 
-
         const query = `
                 SELECT
                     ${joinValues(selectValues, ", ")}
@@ -64,8 +61,6 @@ export async function get_shopifyInsights(
             `;
 
         const result = await execute(query);
-        // console.log(query);
-
         return {
             metaQuery: query,
             rows: result.rows.map((row) => ({

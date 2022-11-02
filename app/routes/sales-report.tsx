@@ -78,14 +78,7 @@ export const loader: LoaderFunction = async ({request}) => {
 };
 
 export default function () {
-    const {
-        appliedSelectedGranularity,
-        appliedMinDate,
-        appliedMaxDate,
-        allProductInformation,
-        shopifyData,
-    } = useLoaderData();
-
+    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, shopifyData} = useLoaderData();
 
     const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
 
@@ -97,12 +90,11 @@ export default function () {
     const r5_lowestAcos = "?";
     const r5_netAcos = "?";
 
-
     const [selectedCategory, setSelectedCategory] = useState("Non Mattress");
     const [selectedGranularity, setSelectedGranularity] = useState(appliedSelectedGranularity);
     const [selectedMinDate, setSelectedMinDate] = useState(appliedMinDate ?? "");
     const [selectedMaxDate, setSelectedMaxDate] = useState(appliedMaxDate ?? "");
-    const [selectedInsight, setSelectedInsight] = useState("netQuantity")
+    const [selectedInsight, setSelectedInsight] = useState("netQuantity");
     // TODO: Update filters when changing another one
 
     const businesses = distinct(allProductInformation.map((productInformation) => productInformation.category));
@@ -111,9 +103,7 @@ export default function () {
         .map((productInformation) => productInformation.productName);
     const insights = ["netQuantity", "netSales"];
 
-
     const [selectedProduct, setSelectedProduct] = useState([]);
-
 
     const granularities = ["Daily", "Weekly", "Monthly", "Yearly"];
 
@@ -168,13 +158,13 @@ export default function () {
         "tw-stroke-Fuchsia-800",
     ];
 
-    function getDates(minDate: any, maxDate: any){
+    function getDates(minDate: any, maxDate: any) {
         const dates = [];
         dates.push(minDate);
 
         let tempDate = minDate;
-        while(tempDate <= maxDate){
-            tempDate = DateTime.fromISO(tempDate).plus({ days: 1 }).toISODate();
+        while (tempDate <= maxDate) {
+            tempDate = DateTime.fromISO(tempDate).plus({days: 1}).toISODate();
             dates.push(tempDate);
         }
         return dates;
@@ -252,7 +242,10 @@ export default function () {
 
     // // product sub category vs quantity
 
-    const resultAggregateBySubcategory = helperAggregate(shopifyData.rows.filter((row) => row.category == selectedCategory), "subCategory");
+    const resultAggregateBySubcategory = helperAggregate(
+        shopifyData.rows.filter((row) => row.category == selectedCategory),
+        "subCategory"
+    );
 
     for (const subCategory in resultAggregateBySubcategory) {
         const aggregateByDate = aggregate(resultAggregateBySubcategory[subCategory], "date", selectedInsight);
@@ -272,10 +265,12 @@ export default function () {
         colorIndex++;
     }
 
-
     // // product vs quantity
 
-    const resultAggregateByProductQuantity = helperAggregate(shopifyData.rows.filter((row) => row.category == selectedCategory), "productTitle");
+    const resultAggregateByProductQuantity = helperAggregate(
+        shopifyData.rows.filter((row) => row.category == selectedCategory),
+        "productTitle"
+    );
     for (const product in resultAggregateByProductQuantity) {
         const aggregateByDate = aggregate(resultAggregateByProductQuantity[product], "date", selectedInsight);
         resultAggregateByProductQuantity[product] = aggregateByDate;
@@ -313,7 +308,10 @@ export default function () {
     // }
 
     // // variant vs quQuantity
-    const resultAggregateByVariantQuantity = helperAggregate(shopifyData.rows.filter((row) => row.category == selectedCategory && row.productTitle == selectedProduct), "variantTitle");
+    const resultAggregateByVariantQuantity = helperAggregate(
+        shopifyData.rows.filter((row) => row.category == selectedCategory && row.productTitle == selectedProduct),
+        "variantTitle"
+    );
     for (const variant in resultAggregateByVariantQuantity) {
         const aggregateByDate = aggregate(resultAggregateByVariantQuantity[variant], "date", selectedInsight);
         resultAggregateByVariantQuantity[variant] = aggregateByDate;
@@ -352,14 +350,11 @@ export default function () {
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
             <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
-
                 <FancySearchableSelect label="Granularity" options={granularities} selectedOption={selectedGranularity} setSelectedOption={setSelectedGranularity} />
 
                 <FancyCalendar label="Start Date" value={selectedMinDate} setValue={setSelectedMinDate} />
 
                 <FancyCalendar label="End Date" value={selectedMaxDate} setValue={setSelectedMaxDate} />
-
-
 
                 <Link
                     to={concatenateNonNullStringsWithAmpersand(
@@ -367,7 +362,7 @@ export default function () {
                         `min_date=${selectedMinDate}`,
                         `max_date=${selectedMaxDate}`,
                         // selectedCampaigns.length == 0 ? null : `selected_campaigns=${JSON.stringify(selectedCampaigns)}`,
-                        selectedCategory.length == 0 ? null : `selected_categories=${JSON.stringify(selectedCategory)}`,
+                        selectedCategory.length == 0 ? null : `selected_categories=${JSON.stringify(selectedCategory)}`
                         // selectedProducts.length == 0 ? null : `selected_products=${JSON.stringify(selectedProducts)}`,
                         // selectedPlatforms.length == 0 ? null : `selected_platforms=${JSON.stringify(selectedPlatforms)}`
                     )}
@@ -381,7 +376,6 @@ export default function () {
                 <FancySearchableSelect label="Choose Category" options={businesses} selectedOption={selectedCategory} setSelectedOption={setSelectedCategory} />
                 <FancySearchableSelect label="Insights On" options={insights} selectedOption={selectedInsight} setSelectedOption={setSelectedInsight} />
             </div>
-
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">{selectedCategory}</div>
 
@@ -499,7 +493,6 @@ export default function () {
             <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
                 <FancySearchableSelect label="Product" options={products} selectedOption={selectedProduct} setSelectedOption={setSelectedProduct} />
             </div>
-
 
             {/* <div className="tw-col-span-12 tw-text-[3rem] tw-text-center"> Product vs Revenue sold</div>
             <GenericCard

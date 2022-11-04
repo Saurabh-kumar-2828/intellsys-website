@@ -3,7 +3,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";
 import {DateTime} from "luxon";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {get_shopifyData, get_freshSalesData, get_adsData} from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
 import {BarGraphComponent} from "~/components/reusableComponents/barGraphComponent";
@@ -88,8 +88,8 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedMaxDate: maxDate,
         allProductInformation: await getAllProductInformation(),
         allSourceInformation: await getAllSourceToInformation(),
-        freshSalesLeadsData: await get_freshSalesData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        adsData: await get_adsData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        freshSalesLeadsData: await get_freshSalesData(selectedCategories, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        adsData: await get_adsData(selectedCategories, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         shopifyData: await get_shopifyData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
     });
 };
@@ -170,10 +170,7 @@ export default function () {
 
     const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
     const performanceLeadsCount = {
-        count: aggregateByDate(
-            freshSalesLeadsData.rows.filter((row) => row.source != "Facebook Ads"),
-            "count"
-        ).reduce((sum, item) => sum + item.param, 0),
+        count: freshSalesLeadsData.rows.filter((row) => row.source != "Facebook Ads").reduce((sum, item) => sum + item.count, 0),
         metaInformation: "performance leads",
     };
 
@@ -405,6 +402,16 @@ export default function () {
     );
     const granularities = ["Daily", "Weekly", "Monthly", "Yearly"];
 
+    useEffect(() => {
+        setSelectedProducts([]);
+        setSelectedPlatforms([]);
+        setSelectedCampaigns([]);
+    }, [selectedCategories]);
+
+    useEffect(() => {
+        setSelectedCampaigns([]);
+    }, [selectedProducts]);
+
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
             <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
@@ -498,13 +505,19 @@ export default function () {
                 content={
                     <BarGraphComponent
                         data={{
-                            x: freshSalesLeadsData.rows.filter((row) => row.source == "Facebook Ads").map((item) => item.date),
+                            x: aggregateByDate(
+                                freshSalesLeadsData.rows.filter((row) => row.source != "Facebook Ads"),
+                                "count"
+                            ).map((item) => item.date),
                             y: {
                                 "Performance Leads": aggregateByDate(
                                     freshSalesLeadsData.rows.filter((row) => row.source != "Facebook Ads"),
                                     "count"
                                 ).map((item) => item.param),
-                                "Facebook Leads": freshSalesLeadsData.rows.filter((row) => row.source == "Facebook Ads").map((item) => item.count),
+                                "Facebook Leads": aggregateByDate(
+                                    freshSalesLeadsData.rows.filter((row) => row.source == "Facebook Ads"),
+                                    "count"
+                                ).map((item) => item.param),
                             },
                         }}
                         yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}

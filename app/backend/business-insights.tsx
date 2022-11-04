@@ -21,17 +21,18 @@ export async function get_shopifyData(
 
         if (selectedCategories.length > 0) {
             whereValues.push(`product_category IN (${joinValues(selectedCategories, ", ", "'")})`);
-            groupByValues.push("category");
+        }
+
+        if (selectedPlatforms.length > 0) {
+            whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
         }
 
         if (selectedProducts.length > 0) {
             whereValues.push(`product_title IN (${joinValues(selectedProducts, ", ", "'")})`);
-            groupByValues.push("source_information_platform");
         }
 
         if (selectedCampaigns.length > 0) {
             whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
-            groupByValues.push("source_information_campaign_name");
         }
 
         selectValues.push("SUM(net_sales) AS net_sales");
@@ -70,6 +71,7 @@ export async function get_shopifyData(
             `;
 
         const result = await execute(query);
+
         return {
             metaQuery: query,
             rows: result.rows.map((row) => ({
@@ -91,7 +93,7 @@ export async function get_shopifyData(
 
 export async function get_freshSalesData(
     selectedCategories: Array<string>,
-    selectedProducts: Array<string>,
+    // selectedProducts: Array<string>,
     selectedPlatforms: Array<string>,
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
@@ -104,9 +106,7 @@ export async function get_freshSalesData(
         const groupByValues = [];
 
         if (selectedCategories.length > 0) {
-            selectValues.push("category AS category");
             whereValues.push(`category IN (${joinValues(selectedCategories, ", ", "'")})`);
-            groupByValues.push("category");
         }
 
         // if (selectedProducts.length > 0) {
@@ -115,15 +115,11 @@ export async function get_freshSalesData(
         // }
 
         if (selectedPlatforms.length > 0) {
-            selectValues.push("source_information_platform AS platform");
             whereValues.push(`source_information_platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
-            groupByValues.push("source_information_platform");
         }
 
         if (selectedCampaigns.length > 0) {
-            selectValues.push("source_information_campaign_name AS campaign_name");
             whereValues.push(`source_information_campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
-            groupByValues.push("source_information_campaign_name");
         }
 
         selectValues.push("COUNT(*) AS count");
@@ -171,7 +167,7 @@ export async function get_freshSalesData(
 
 export async function get_adsData(
     selectedCategories: Array<string>,
-    selectedProducts: Array<string>,
+    // selectedProducts: Array<string>,
     selectedPlatforms: Array<string>,
     selectedCampaigns: Array<string>,
     selectedGranularity: string,
@@ -185,21 +181,14 @@ export async function get_adsData(
 
         if (selectedCategories.length > 0) {
             whereValues.push(`category IN (${joinValues(selectedCategories, ", ", "'")})`);
-            groupByValues.push("category");
         }
-
-        // if (selectedProducts.length > 0) {
-        //     groupByValues.push("source_information_category");
-        // }
 
         if (selectedPlatforms.length > 0) {
             whereValues.push(`platform IN (${joinValues(selectedPlatforms, ", ", "'")})`);
-            groupByValues.push("source_information_platform");
         }
 
         if (selectedCampaigns.length > 0) {
             whereValues.push(`campaign_name IN (${joinValues(selectedCampaigns, ", ", "'")})`);
-            groupByValues.push("source_information_campaign_name");
         }
 
         selectValues.push("SUM(amount_spent) AS amount_spent");

@@ -467,9 +467,7 @@ export default function () {
                 metaQuery={shopifyData.metaQuery}
             />
 
-            <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
-                <FancySearchableSelect label="Product" options={products} selectedOption={selectedProduct} setSelectedOption={setSelectedProduct} />
-            </div>
+
 
             {/* <div className="tw-col-span-12 tw-text-[3rem] tw-text-center"> Product vs Revenue sold</div>
             <GenericCard
@@ -488,6 +486,9 @@ export default function () {
             /> */}
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center"> Variant vs {selectedInsight}</div>
+            <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
+                <FancySearchableSelect label="Product" options={products} selectedOption={selectedProduct} setSelectedOption={setSelectedProduct} />
+            </div>
             <GenericCard
                 className="tw-col-span-12"
                 content={

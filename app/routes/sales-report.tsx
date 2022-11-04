@@ -467,8 +467,6 @@ export default function () {
                 metaQuery={shopifyData.metaQuery}
             />
 
-
-
             {/* <div className="tw-col-span-12 tw-text-[3rem] tw-text-center"> Product vs Revenue sold</div>
             <GenericCard
                 className="tw-col-span-12"

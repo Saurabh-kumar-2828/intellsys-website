@@ -1,4 +1,74 @@
-import {ColumnInfo} from "~/backend/data-management";
+import { ColumnInfo } from "~/backend/data-management";
+import { shopifyQuery } from "../api-integration-utilities/shopifyQuery";
+import { delay } from "~/utilities/utilities";
+
+
+const shopifyApiBaseUrl = "https://livpuresleep.myshopify.com/admin/api/2022-10/graphql.json";
+
+
+async function getShopifyData(minDate: string, maxDate: string = "2030-10-2", numProducts: number, endCursor: string | null): Promise<Array<object>> {
+    const response = await fetch(shopifyApiBaseUrl, {
+        method: "POST",
+        headers: {
+            "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_TOKEN!,
+            "Content-Type": "application/json",
+            "X-GraphQL-Cost-Include-Fields": "true",
+        },
+        body: JSON.stringify({
+            query: shopifyQuery,
+            variables: {
+                updated_at: "updated_at:>" + minDate + " " + "updated_at:<" + maxDate,
+                numProducts: numProducts,
+                cursor: endCursor ?? null,
+            },
+        }),
+    });
+    const ordersInformation = await response.json();
+    return ordersInformation;
+}
+
+function findDateRange(orders: any): object {
+    const dates = orders.map((order) => order.node.updatedAt);
+    const minDate = dates.reduce((minDate, date) => (minDate == null || date < minDate ? date : minDate), null);
+    const maxDate = dates.reduce((maxDate, date) => (maxDate == null || date > maxDate ? date : maxDate), null);
+
+    return {
+        count: dates.length,
+        minDate: minDate,
+        maxDate: maxDate,
+    };
+}
+
+export async function ingestDataFromShopifyApi(minDate: string, maxDate: string = "2030-10-2"): Promise<Array<object>> {
+    try {
+        const orders: Array<object> = [];
+        let orderInfo = await getShopifyData(minDate, maxDate, 1, null);
+        if(orderInfo.data.orders.edges[0].node.lineItems.pageInfo.hasNextPage){
+            throw "Lineitems exceeded!"
+        }
+        orders.push(...orderInfo.data.orders.edges!);
+        let pageNo = 1;
+        while (orderInfo && orderInfo.data.orders.pageInfo.hasNextPage) {
+            if (pageNo > 10) {
+                break;
+            }
+            orderInfo = await getShopifyData(minDate, maxDate, 1, orderInfo.data.orders.pageInfo.endCursor);
+            delay(1000);
+            if(orderInfo.data.orders.edges[0].node.lineItems.pageInfo.hasNextPage){
+                throw "Lineitems exceeded!"
+            }
+            orders.push(...orderInfo.data.orders.edges!);
+            pageNo++;
+        }
+        console.log(findDateRange(orders));
+
+        return orders;
+    } catch (e) {
+        console.log(e);
+        throw e;
+    }
+}
+
 
 export const shopifyTableColumnInfos: Array<ColumnInfo> = [
     {tableColumn: "hour", csvColumn: "hour"},

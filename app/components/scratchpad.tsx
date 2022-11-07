@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {ChevronDown, Clipboard, Filter, Funnel, InfoCircle, RecordCircle} from "react-bootstrap-icons";
+import {ChevronDown, Clipboard, Filter, Funnel, FunnelFill, InfoCircle, RecordCircle} from "react-bootstrap-icons";
 import {concatenateNonNullStringsWithSpaces, numberToHumanFriendlyString} from "~/utilities/utilities";
 import {Listbox} from "@headlessui/react";
 import { filterToHumanReadableString, filterToTextColor, ValueDisplayingCardInformationType } from "~/utilities/typeDefinitions";
@@ -64,9 +64,9 @@ export function FancyCalendar(props: {label, value, setValue}) {
 
 export function Card(props: {information: string, label: string, className?: string, metaQuery?: string, metaInformation?: string}) {
     return (
-        <div className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-bg-100 tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center", props.className)} title={props.information}>
+        <div className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-bg+1 tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center", props.className)} title={props.information}>
             {props.metaInformation == null && props.metaQuery == null ? null : (
-                <div className="tw-absolute tw-top-4 tw-right-4 tw-bg-bg-400 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
+                <div className="tw-absolute tw-top-4 tw-right-4 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
                     {props.metaInformation == null ? null : (
                         <InfoCircle title={props.metaInformation} className="tw-w-4 tw-h-4 tw-cursor-help" />
                     )}
@@ -88,16 +88,24 @@ export function ValueDisplayingCard(props: {queryInformation, contentExtractor, 
     const content = props.contentExtractor(props.queryInformation);
 
     return (
-        <div className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-bg-100 tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center", props.className)} title={content}>
+        <div className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-bg+1 tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center", props.className)} title={content}>
             {props.queryInformation.metaFiltersPossible == null ? null : (
-                <div className="tw-absolute tw-top-4 tw-left-4 tw-bg-bg-400 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
-                    {props.queryInformation.metaFiltersPossible.map((filter, filterIndex) => (
-                        <Funnel title={filterToHumanReadableString(filter)} className={concatenateNonNullStringsWithSpaces("tw-w-4 tw-h-4 tw-cursor-help", filterToTextColor(filter))} key={filterIndex} />
-                    ))}
+                <div className="tw-absolute tw-top-4 tw-left-4 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
+                    {props.queryInformation.metaFiltersPossible.map((filter, filterIndex) => {
+                        if (props.queryInformation.metaFiltersApplied.includes(filter)) {
+                            return (
+                                <FunnelFill title={filterToHumanReadableString(filter)} className={concatenateNonNullStringsWithSpaces("tw-w-4 tw-h-4 tw-cursor-help", filterToTextColor(filter))} key={filterIndex} />
+                            );
+                        } else {
+                            return (
+                                <Funnel title={filterToHumanReadableString(filter)} className={concatenateNonNullStringsWithSpaces("tw-w-4 tw-h-4 tw-cursor-help", filterToTextColor(filter))} key={filterIndex} />
+                            );
+                        }
+                    })}
                 </div>
             )}
             {props.queryInformation.metaInformation == null && props.queryInformation.metaQuery == null ? null : (
-                <div className="tw-absolute tw-top-4 tw-right-4 tw-bg-bg-400 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
+                <div className="tw-absolute tw-top-4 tw-right-4 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
                     {props.queryInformation.metaInformation == null ? null : (
                         <InfoCircle title={props.queryInformation.metaInformation} className="tw-w-4 tw-h-4 tw-cursor-help" />
                     )}
@@ -124,9 +132,9 @@ export function ValueDisplayingCard(props: {queryInformation, contentExtractor, 
 
 export function GenericCard(props: {content: JSX.Element, label?: string, className?: string, metaQuery?: string, metaInformation?: string}) {
     return (
-        <div className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-bg-100 tw-p-4 tw-grid tw-grid-cols-1", props.className)} title={props.information}>
+        <div className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-bg+1 tw-p-4 tw-grid tw-grid-cols-1", props.className)} title={props.information}>
             {props.metaInformation == null && props.metaQuery == null ? null : (
-                <div className="tw-absolute tw-top-4 tw-right-4 tw-bg-bg-400 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
+                <div className="tw-absolute tw-top-4 tw-right-4 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
                     {props.metaInformation == null ? null : (
                         <InfoCircle title={props.metaInformation} className="tw-w-4 tw-h-4 tw-cursor-help" />
                     )}

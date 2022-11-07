@@ -29,57 +29,50 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
         {
             url: "/",
             displayName: "Home",
-            exactMatch: true,
         },
         {
             url: "#",
             displayName: "",
-            exactMatch: true,
         },
         {
             url: "#",
             displayName: "",
-            exactMatch: true,
         },
         {
             url: "/business-insights",
             displayName: "Business Insights",
-            exactMatch: false,
         },
         {
             url: "/facebook-campaigns",
             displayName: "Facebook Campaigns",
-            exactMatch: false,
         },
         // {
         //     url: "/google-campaigns",
         //     displayName: "Google Campaigns",
-        //     exactMatch: false,
         // },
         {
             url: "#",
             displayName: "",
-            exactMatch: true,
         },
         {
             url: "#",
             displayName: "",
-            exactMatch: true,
         },
         {
             url: "/data-management",
             displayName: "Data Management",
-            exactMatch: false,
         },
         {
             url: "/data-source-information",
             displayName: "Data Source Information",
-            exactMatch: false,
         },
         {
             url: "/dashboard-health-monitoring",
             displayName: "Dashboard Health Monitoring",
-            exactMatch: false,
+        },
+        {
+            url: "/table-management",
+            displayName: "Table Management",
         },
     ];
 
@@ -128,7 +121,7 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
                                     to={item.url}
                                     className={concatenateNonNullStringsWithSpaces(
                                         "tw-py-2 hover:tw-underline",
-                                        (item.exactMatch && currentUrl == item.url) || (!item.exactMatch && currentUrl.startsWith(item.url)) ? "tw-font-bold" : null
+                                        currentUrl == item.url || currentUrl.startsWith(`${item.url}?`) ? "tw-font-bold" : null
                                     )}
                                     toggleMenu={toggleMenu}
                                     key={itemIndex}

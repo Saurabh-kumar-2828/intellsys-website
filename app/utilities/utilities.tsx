@@ -142,4 +142,8 @@ export function getIntegerArrayOfLength(n: number) {
     return Array(n).fill(null).map((_, i) => i);
 }
 
+export async function delay(ms: number) {
+    await new Promise(_ => setTimeout(_, ms));
+}
+
 const cloudflareImagesAccountHash = "QSJTsX8HH4EtEhHrJthznA";

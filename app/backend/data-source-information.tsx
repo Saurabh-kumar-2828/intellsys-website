@@ -61,6 +61,11 @@ export async function get_freshsalesLeadsWaterPurifierRawDataInformation() {
     return await getDataInformation("freshsales_leads_water_purifier_raw", "lead_created_at");
 }
 
+// TODO: Un-deprecate
+// export async function get_freshsalesLeadsRawDataInformation() {
+//     return await getDataInformation("freshsales_leads_raw", "lead_created_at");
+// }
+
 export async function get_googleAdsDataInformation() {
     return await getDataInformation("google_ads", "day");
 }

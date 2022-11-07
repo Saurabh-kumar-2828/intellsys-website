@@ -10,7 +10,7 @@ export async function doesTableExist(tableName: string): Promise<boolean> {
                 FROM
                     pg_class
                 WHERE
-                    relname = 'freshsales_leads_mattress_raw' AND
+                    relname = '${tableName}' AND
                     relkind IN ('r', 'v', 'm', 'p')
             `
         );
@@ -31,4 +31,24 @@ export async function doesTableExist(tableName: string): Promise<boolean> {
         console.log(e);
         console.trace();
     }
+}
+
+export async function createFreshsalesLeadsRaw(): Promise<void> {
+    try {
+        const query = format(
+            `
+
+            `
+        );
+
+        await execute(query);
+    } catch (e) {
+        console.log("Error executing function");
+        console.log(e);
+        console.trace();
+    }
+}
+
+export enum TablesAndViews {
+    freshsalesLeadsRaw,
 }

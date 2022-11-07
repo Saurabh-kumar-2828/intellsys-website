@@ -1,10 +1,10 @@
 import {ColumnInfo} from "~/backend/data-management";
-import {delay, distinct} from "~/utilities/utilities";
+import {distinct} from "~/utilities/utilities";
 
-const freshSalesApiBaseUrl = "https://livpuresmart.freshsales.io/api/leads/";
+const freshSalesApiBaseUrl = "https://livpuresmart.freshsales.io";
 
 async function getLeadInformation(leadId: number) {
-    const url = freshSalesApiBaseUrl + leadId + "?include=owner&include=source&include=lead_stage";
+    const url = `${freshSalesApiBaseUrl}/api/leads/${leadId}?include=owner,creater,updater,source,lead_stage,lead_reason,territory,campaign,tasks,appointments,notes`;
     const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -16,29 +16,25 @@ async function getLeadInformation(leadId: number) {
     return leadInformation;
 }
 
-async function getSingleLeadsInformation(leadIds: Array<number>) {
+async function getLeadsInformation(leadIds: Array<number>) {
+    let allSingleLeadsInformation = [];
+
     try {
-        let allSingleLeadsInformation = [];
-        for (let i = 0; i < leadIds.length; i++) {
-            const leadInformation = await getLeadInformation(leadIds[i]);
+        for (const leadId of leadIds) {
+            const leadInformation = await getLeadInformation(leadId);
             allSingleLeadsInformation.push(leadInformation);
         }
-        // let allSingleLeadsInformation = await Promise.all(
-        //     leadIds.map(async (leadId) => {
-        //         const leadInformation = await getLeadInformation(leadId);
-        //         return leadInformation;
-        //     })
-        // );
-        return allSingleLeadsInformation;
     } catch (e) {
         console.log(e);
-        throw e;
     }
+
+    return allSingleLeadsInformation;
 }
 
-async function getLeadsOfCurrentPage(pageNumber: Number) {
+async function getLeadsOfCurrentPage(sortBy: string, sortType: string, pageNumber: Number) {
     try {
-        const urlToFetchLeads = freshSalesApiBaseUrl + "view/15000010043" + "?page=" + pageNumber + "&sort=updated_at&sort_type=desc";
+        const allLeadsViewId = "15000010043";
+        const urlToFetchLeads = `${freshSalesApiBaseUrl}/api/leads/view/${allLeadsViewId}?sort=${sortBy}&sort_type=${sortType}&page=${pageNumber}`;
         const response = await fetch(urlToFetchLeads, {
             method: "GET",
             headers: {
@@ -54,8 +50,28 @@ async function getLeadsOfCurrentPage(pageNumber: Number) {
     }
 }
 
-function filterLeadsOnDate(leadsOfCurrentPage: any, date: string) {
-    const filterLeadIds = leadsOfCurrentPage.leads.filter((lead) => lead.updated_at >= date).map((lead) => lead.id);
+// function filterLeadsOnDate(leadsOfCurrentPage: any, minDateThreshold: string) {
+//     // TODO: Ensure lead.updated_at does not contain non-zero timezone offset
+//     // TODO: Make sure the inclusive/exclusive bounds make sense here
+
+//     const filterLeadIds = leadsOfCurrentPage.leads.filter((lead) => lead.updated_at > minDateThreshold).map((lead) => lead.id);
+
+//     const dates = leadsOfCurrentPage.leads.map((lead) => lead.updated_at);
+//     const minDate = dates.reduce((minDate, date) => (minDate == null || date < minDate ? date : minDate), null);
+//     const maxDate = dates.reduce((maxDate, date) => (maxDate == null || date > maxDate ? date : maxDate), null);
+
+//     return {
+//         idsFilterByDate: filterLeadIds.reverse(),
+//         minDate: minDate,
+//         maxDate: maxDate,
+//     };
+// }
+
+function filterLeadsOnDate(leadsOfCurrentPage: any, minDateThreshold: string, maxDateThreshold: string) {
+    // TODO: Ensure lead.updated_at does not contain non-zero timezone offset
+    // TODO: Make sure the inclusive/exclusive bounds make sense here
+
+    const filterLeadIds = leadsOfCurrentPage.leads.filter((lead) => lead.updated_at > minDateThreshold && lead.updated_at < maxDateThreshold).map((lead) => lead.id);
 
     const dates = leadsOfCurrentPage.leads.map((lead) => lead.updated_at);
     const minDate = dates.reduce((minDate, date) => (minDate == null || date < minDate ? date : minDate), null);
@@ -68,12 +84,48 @@ function filterLeadsOnDate(leadsOfCurrentPage: any, date: string) {
     };
 }
 
+// Returns all leads after the given cutoff date, in reverse-chronological order
+// For any lead that is updated more than once in the given time frame, only the last update is considered
 async function getAllLeadIds(date: string): Promise<Array<number>> {
     const allLeadIds = [];
 
     try {
         for (let pageNo = 1; true; pageNo++) {
-            const leadsOfCurrentPage = await getLeadsOfCurrentPage(pageNo);
+            const leadsOfCurrentPage = await getLeadsOfCurrentPage("updated_at", "desc", pageNo);
+
+            const leads = filterLeadsOnDate(leadsOfCurrentPage, date, "9999-12-31T23:59:59Z");
+
+            // console.log("count: %d", leads.idsFilterByDate.length);
+            // console.log("max date: ", leads.maxDate);
+            // console.log("min date: ", leads.minDate);
+            // console.log(".........................");
+
+            allLeadIds.push(...leads.idsFilterByDate!);
+            if (leads.minDate < date) {
+                break;
+            }
+
+            // TODO: Added for debugging, remove!
+            break;
+
+            // console.log(distinct(allLeadIds).length);
+        }
+    } catch (e) {
+        console.log(e);
+        throw e;
+    }
+
+    return distinct(allLeadIds);
+}
+
+// Returns all leads after the given cutoff date, in reverse-chronological order
+// For any lead that is updated more than once in the given time frame, only the last update is considered
+async function getAllLeadIdsForHistoricalData(date: string): Promise<Array<number>> {
+    const allLeadIds = [];
+
+    try {
+        for (let pageNo = 1; true; pageNo++) {
+            const leadsOfCurrentPage = await getLeadsOfCurrentPage("created_at", "desc", pageNo);
 
             const leads = filterLeadsOnDate(leadsOfCurrentPage, date);
 
@@ -87,25 +139,25 @@ async function getAllLeadIds(date: string): Promise<Array<number>> {
                 break;
             }
 
+            // TODO: Added for debugging, remove!
+            break;
+
             // console.log(distinct(allLeadIds).length);
         }
-        // console.log(distinct([1,2,3,4]));
     } catch (e) {
         console.log(e);
         throw e;
     }
-    return allLeadIds;
+
+    return distinct(allLeadIds);
 }
 
 export async function ingestDataFromFreshsalesApi(date: string) {
     // Get all lead IDs
     let leadIds = await getAllLeadIds(date);
 
-    // TODO: Convert to unique
-    leadIds = distinct(leadIds);
-
     // Get lead information
-    const leadsInformation = await getSingleLeadsInformation(leadIds);
+    const leadsInformation = await getLeadsInformation(leadIds);
 
     console.log(JSON.stringify(leadsInformation));
 }

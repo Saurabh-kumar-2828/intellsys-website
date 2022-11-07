@@ -107,7 +107,14 @@ async function truncateTable(tableName: string): Promise<void> {
 
 export enum Table {
     facebookAdsRaw,
-    freshsalesLeadsRaw,
+    // TODO: Deprecate
+    freshsalesLeadsMattressRaw,
+    // TODO: Deprecate
+    freshsalesLeadsNonMattressRaw,
+    // TODO: Deprecate
+    freshsalesLeadsWaterPurifierRaw,
+    // TODO: Un-deprecate
+    // freshsalesLeadsRaw,
     googleAdsRaw,
     shopifySalesRaw,
     typeformResponsesMattressRaw,
@@ -115,25 +122,25 @@ export enum Table {
     websitePopupFormResponsesRaw,
 }
 
-export function getNameForTable(table: Table): string {
-    if (table == Table.facebookAdsRaw) {
-        return "facebook_ads_raw";
-    } else if (table == Table.freshsalesLeadsRaw) {
-        return "freshsales_leads_raw";
-    } else if (table == Table.googleAdsRaw) {
-        return "google_ads_raw";
-    } else if (table == Table.shopifySalesRaw) {
-        return "shopify_sales_raw";
-    } else if (table == Table.typeformResponsesMattressRaw) {
-        return "typeform_responses_mattress_raw";
-    } else if (table == Table.typeformResponsesWaterPurifierRaw) {
-        return "typeform_responses_water_purifier_raw";
-    } else if (table == Table.websitePopupFormResponsesRaw) {
-        return "website_popup_form_responses_raw";
-    } else {
-        throw new Response(null, {status: 400});
-    }
-}
+// export function getNameForTable(table: Table): string {
+//     if (table == Table.facebookAdsRaw) {
+//         return "facebook_ads_raw";
+//     } else if (table == Table.freshsalesLeadsRaw) {
+//         return "freshsales_leads_raw";
+//     } else if (table == Table.googleAdsRaw) {
+//         return "google_ads_raw";
+//     } else if (table == Table.shopifySalesRaw) {
+//         return "shopify_sales_raw";
+//     } else if (table == Table.typeformResponsesMattressRaw) {
+//         return "typeform_responses_mattress_raw";
+//     } else if (table == Table.typeformResponsesWaterPurifierRaw) {
+//         return "typeform_responses_water_purifier_raw";
+//     } else if (table == Table.websitePopupFormResponsesRaw) {
+//         return "website_popup_form_responses_raw";
+//     } else {
+//         throw new Response(null, {status: 400});
+//     }
+// }
 
 export async function processFileUpload(table: Table, file: File): Promise<void> {
     const fileContents = await file.text();
@@ -146,16 +153,23 @@ export async function processFileUpload(table: Table, file: File): Promise<void>
 
     if (table == Table.facebookAdsRaw) {
         await insertIntoTableWrapper("facebook_ads_raw", facebookAdsRawColumnInfos, rowObjects);
-    } else if (table == Table.freshsalesLeadsRaw) {
-        await insertIntoTableWrapper("freshsales_leads_raw", freshsalesColumnInfos, rowObjects);
+    } else if (table == Table.freshsalesLeadsMattressRaw) {
+        await insertIntoTableWrapper("freshsales_leads_mattress_raw", freshsalesColumnInfos, rowObjects);
+    } else if (table == Table.freshsalesLeadsNonMattressRaw) {
+        await insertIntoTableWrapper("freshsales_leads_non_mattress_raw", freshsalesColumnInfos, rowObjects);
+    } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
+        await insertIntoTableWrapper("freshsales_leads_water_purifier_raw", freshsalesColumnInfos, rowObjects);
+    // TODO: Un-deprecate
+    // } else if (table == Table.freshsalesLeadsRaw) {
+    //     await insertIntoTableWrapper("freshsales_leads_raw", freshsalesColumnInfos, rowObjects);
     } else if (table == Table.googleAdsRaw) {
         await insertIntoTableWrapper("google_ads_raw", googleAdsRawColumnInfos, rowObjects);
     } else if (table == Table.shopifySalesRaw) {
         await insertIntoTableWrapper("shopify_sales_raw", shopifyTableColumnInfos, rowObjects);
-        // } else if (table == Table.typeformResponsesMattressRaw) {
-        //     await insertIntoTableWrapper("typeform_responses_mattress_raw", typeformRawColumnInfos, rowObjects);
-        // } else if (table == Table.typeformResponsesWaterPurifierRaw) {
-        //     await insertIntoTableWrapper("typeform_responses_water_purifier_raw", typeformRawColumnInfos, rowObjects);
+    // } else if (table == Table.typeformResponsesMattressRaw) {
+    //     await insertIntoTableWrapper("typeform_responses_mattress_raw", typeformRawColumnInfos, rowObjects);
+    // } else if (table == Table.typeformResponsesWaterPurifierRaw) {
+    //     await insertIntoTableWrapper("typeform_responses_water_purifier_raw", typeformRawColumnInfos, rowObjects);
     } else if (table == Table.websitePopupFormResponsesRaw) {
         await insertIntoTableWrapper("website_popup_form_responses_raw", websitePopupFormResponsesRawColumnInfos, rowObjects);
     } else {
@@ -180,8 +194,15 @@ async function insertIntoTableWrapper(tableName: string, columnInfos: Array<Colu
 export async function processDelete(table: Table, startDate: string, endDate: string): Promise<void> {
     if (table == Table.facebookAdsRaw) {
         await deleteDataFromTable("facebook_ads_raw", "day", startDate, endDate);
-    } else if (table == Table.freshsalesLeadsRaw) {
-        await deleteDataFromTable("freshsales_leads_raw", "DATE(lead_created_at)", startDate, endDate);
+    } else if (table == Table.freshsalesLeadsMattressRaw) {
+        await deleteDataFromTable("freshsales_leads_mattress_raw", "DATE(lead_created_at)", startDate, endDate);
+    } else if (table == Table.freshsalesLeadsNonMattressRaw) {
+        await deleteDataFromTable("freshsales_leads_non_mattress_raw", "DATE(lead_created_at)", startDate, endDate);
+    } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
+        await deleteDataFromTable("freshsales_leads_water_purifier_raw", "DATE(lead_created_at)", startDate, endDate);
+    // TODO: Un-deprecate
+    // } else if (table == Table.freshsalesLeadsRaw) {
+    //     await deleteDataFromTable("freshsales_leads_raw", "DATE(lead_created_at)", startDate, endDate);
     } else if (table == Table.googleAdsRaw) {
         await deleteDataFromTable("google_ads_raw", "day", startDate, endDate);
     } else if (table == Table.shopifySalesRaw) {
@@ -200,8 +221,14 @@ export async function processDelete(table: Table, startDate: string, endDate: st
 export async function processTruncate(table: Table): Promise<void> {
     if (table == Table.facebookAdsRaw) {
         await truncateTable("facebook_ads_raw");
-    } else if (table == Table.freshsalesLeadsRaw) {
-        await truncateTable("freshsales_leads_raw");
+    } else if (table == Table.freshsalesLeadsMattressRaw) {
+        await truncateTable("freshsales_leads_mattress_raw");
+    } else if (table == Table.freshsalesLeadsNonMattressRaw) {
+        await truncateTable("freshsales_leads_non_mattress_raw");
+    } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
+        await truncateTable("freshsales_leads_water_purifier_raw");
+    // } else if (table == Table.freshsalesLeadsRaw) {
+    //     await truncateTable("freshsales_leads_raw");
     } else if (table == Table.googleAdsRaw) {
         await truncateTable("google_ads_raw");
     } else if (table == Table.shopifySalesRaw) {
@@ -220,16 +247,19 @@ export async function processTruncate(table: Table): Promise<void> {
 export async function processIngestDataFromApi(table: Table, date: string): Promise<void> {
     // if (table == Table.facebookAdsRaw) {
     //     await truncateTable("facebook_ads_raw");
-    if (table == Table.freshsalesLeadsRaw) {
-        await ingestDataFromFreshsalesApi(date);
-        // } else if (table == Table.freshsalesLeadsNonMattressRaw) {
-        //     await truncateTable("freshsales_leads_non_mattress_raw");
-        // } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
-        //     await truncateTable("freshsales_leads_water_purifier_raw");
-        // } else if (table == Table.googleAdsRaw) {
-        //     await truncateTable("google_ads_raw");
-        // } else if (table == Table.shopifySalesRaw) {
-        //     await truncateTable("shopify_sales_raw");
+    if (table == Table.freshsalesLeadsMattressRaw) {
+        await truncateTable("freshsales_leads_mattress_raw");
+    } else if (table == Table.freshsalesLeadsNonMattressRaw) {
+        await truncateTable("freshsales_leads_non_mattress_raw");
+    } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
+        await truncateTable("freshsales_leads_water_purifier_raw");
+    // TODO: Un-deprecate
+    // if (table == Table.freshsalesLeadsRaw) {
+    //     await ingestDataFromFreshsalesApi(date);
+    // } else if (table == Table.googleAdsRaw) {
+    //     await truncateTable("google_ads_raw");
+    // } else if (table == Table.shopifySalesRaw) {
+    //     await truncateTable("shopify_sales_raw");
     } else if (table == Table.typeformResponsesMattressRaw) {
         await ingestDataFromTypeformMattressApi(date);
     } else if (table == Table.typeformResponsesWaterPurifierRaw) {

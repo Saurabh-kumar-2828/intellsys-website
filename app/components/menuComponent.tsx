@@ -70,10 +70,10 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
             url: "/dashboard-health-monitoring",
             displayName: "Dashboard Health Monitoring",
         },
-        // {
-        //     url: "/table-management",
-        //     displayName: "Table Management",
-        // },
+        {
+            url: "/table-management",
+            displayName: "Table Management",
+        },
     ];
 
     // return (

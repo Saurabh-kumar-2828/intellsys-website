@@ -4,7 +4,9 @@ import {Form, useLoaderData} from "@remix-run/react";
 import {fullRefresh, processDelete, processFileUpload, processIngestDataFromApi, processTruncate, Table} from "~/backend/data-management";
 import {
     get_facebookAdsRawDataInformation,
-    get_freshsalesLeadsRawDataInformation,
+    get_freshsalesLeadsMattressRawDataInformation,
+    get_freshsalesLeadsNonMattressRawDataInformation,
+    get_freshsalesLeadsWaterPurifierRawDataInformation,
     get_googleAdsRawDataInformation,
     get_shopifySalesRawDataInformation,
     get_typeformResponsesMattressDataInformation,
@@ -62,7 +64,11 @@ export const action: ActionFunction = async ({request}) => {
 export const loader: LoaderFunction = async ({request}) => {
     return json({
         shopifySalesRawDataInformation: await get_shopifySalesRawDataInformation(),
-        freshsalesLeadsRawDataInformation: await get_freshsalesLeadsRawDataInformation(),
+        freshsalesLeadsMattressRawDataInformation: await get_freshsalesLeadsMattressRawDataInformation(),
+        freshsalesLeadsNonMattressRawDataInformation: await get_freshsalesLeadsNonMattressRawDataInformation(),
+        freshsalesLeadsWaterPurifierRawDataInformation: await get_freshsalesLeadsWaterPurifierRawDataInformation(),
+        // TODO: Un-deprecate
+        // freshsalesLeadsRawDataInformation: await get_freshsalesLeadsRawDataInformation(),
         googleAdsRawDataInformation: await get_googleAdsRawDataInformation(),
         facebookAdsRawDataInformation: await get_facebookAdsRawDataInformation(),
         websitePopupFormResponsesRawDataInformation: await get_websitePopupFormResponsesRawDataInformation(),
@@ -74,7 +80,11 @@ export const loader: LoaderFunction = async ({request}) => {
 export default function () {
     const {
         shopifySalesRawDataInformation,
-        freshsalesLeadsRawDataInformation,
+        freshsalesLeadsMattressRawDataInformation,
+        freshsalesLeadsNonMattressRawDataInformation,
+        freshsalesLeadsWaterPurifierRawDataInformation,
+        // TODO: Un-deprecate
+        // freshsalesLeadsRawDataInformation,
         googleAdsRawDataInformation,
         facebookAdsRawDataInformation,
         websitePopupFormResponsesRawDataInformation,
@@ -119,7 +129,6 @@ export default function () {
                     <input type="text" name="table" value={Table.facebookAdsRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
 
-                    {/* <FileInputField name="file" /> */}
                     <input type="file" name="file" multiple required />
 
                     <button type="submit" className="tw-lp-button">
@@ -136,8 +145,211 @@ export default function () {
                 </Form>
             </>
 
-            {/* Freshsales Leads Raw */}
+
+            {/* Freshsales Leads Mattress Raw */}
             <>
+                <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Freshsales Leads Mattress Raw</div>
+
+                <Card
+                    information={numberToHumanFriendlyString(freshsalesLeadsMattressRawDataInformation.count)}
+                    label="Count"
+                    metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery}
+                    className="tw-col-span-4"
+                />
+
+                <Card
+                    information={dateToMediumEnFormat(freshsalesLeadsMattressRawDataInformation.minDate)}
+                    label="Data Start"
+                    metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery}
+                    className="tw-col-span-4"
+                />
+
+                <Card
+                    information={dateToMediumEnFormat(freshsalesLeadsMattressRawDataInformation.maxDate)}
+                    label="Data End"
+                    metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery}
+                    className="tw-col-span-4"
+                />
+
+                <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.freshsalesLeadsMattressRaw} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
+
+                    <input type="date" name="startDate" required />
+                    <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
+
+                    <button type="submit" className="tw-lp-button">
+                        Delete Data For Selected Time Period
+                    </button>
+                </Form>
+
+                <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.freshsalesLeadsMattressRaw} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.truncate} readOnly className="tw-hidden" />
+
+                    <button type="submit" className="tw-lp-button" disabled>
+                        Truncate All Data
+                    </button>
+                </Form>
+
+                <Form method="post" encType="multipart/form-data" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.freshsalesLeadsMattressRaw} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
+
+                    <input type="file" name="file" multiple required />
+
+                    <button type="submit" className="tw-lp-button">
+                        Upload CSV
+                    </button>
+                </Form>
+
+                <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.freshsalesLeadsMattressRaw} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
+                    <input type="text" name="startDate" value={"2022-10-20T22:00:00Z"} readOnly className="tw-hidden" />
+                    <button className="tw-lp-button">
+                        Fetch Data From API
+                    </button>
+                </Form>
+            </>
+
+            {/* Freshsales Leads Non Mattress Raw */}
+            <>
+                <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Freshsales Leads Non Mattress Raw</div>
+
+                <Card
+                    information={numberToHumanFriendlyString(freshsalesLeadsNonMattressRawDataInformation.count)}
+                    label="Count"
+                    metaQuery={freshsalesLeadsNonMattressRawDataInformation.metaQuery}
+                    className="tw-col-span-4"
+                />
+
+                <Card
+                    information={dateToMediumEnFormat(freshsalesLeadsNonMattressRawDataInformation.minDate)}
+                    label="Data Start"
+                    metaQuery={freshsalesLeadsNonMattressRawDataInformation.metaQuery}
+                    className="tw-col-span-4"
+                />
+
+                <Card
+                    information={dateToMediumEnFormat(freshsalesLeadsNonMattressRawDataInformation.maxDate)}
+                    label="Data End"
+                    metaQuery={freshsalesLeadsNonMattressRawDataInformation.metaQuery}
+                    className="tw-col-span-4"
+                />
+
+                <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.freshsalesLeadsNonMattressRaw} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
+
+                    <input type="date" name="startDate" required />
+                    <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
+
+                    <button type="submit" className="tw-lp-button">
+                        Delete Data For Selected Time Period
+                    </button>
+                </Form>
+
+                <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.freshsalesLeadsNonMattressRaw} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.truncate} readOnly className="tw-hidden" />
+
+                    <button type="submit" className="tw-lp-button" disabled>
+                        Truncate All Data
+                    </button>
+                </Form>
+
+                <Form method="post" encType="multipart/form-data" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.freshsalesLeadsNonMattressRaw} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
+
+                    <input type="file" name="file" multiple required />
+
+                    <button type="submit" className="tw-lp-button">
+                        Upload CSV
+                    </button>
+                </Form>
+
+                <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.freshsalesLeadsNonMattressRaw} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
+                    <input type="text" name="startDate" value={"2022-10-20T22:00:00Z"} readOnly className="tw-hidden" />
+                    <button className="tw-lp-button">
+                        Fetch Data From API
+                    </button>
+                </Form>
+            </>
+
+            {/* Freshsales Leads Water Purifier Raw */}
+            <>
+                <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Freshsales Leads Water Purifier Raw</div>
+
+                <Card
+                    information={numberToHumanFriendlyString(freshsalesLeadsWaterPurifierRawDataInformation.count)}
+                    label="Count"
+                    metaQuery={freshsalesLeadsWaterPurifierRawDataInformation.metaQuery}
+                    className="tw-col-span-4"
+                />
+
+                <Card
+                    information={dateToMediumEnFormat(freshsalesLeadsWaterPurifierRawDataInformation.minDate)}
+                    label="Data Start"
+                    metaQuery={freshsalesLeadsWaterPurifierRawDataInformation.metaQuery}
+                    className="tw-col-span-4"
+                />
+
+                <Card
+                    information={dateToMediumEnFormat(freshsalesLeadsWaterPurifierRawDataInformation.maxDate)}
+                    label="Data End"
+                    metaQuery={freshsalesLeadsWaterPurifierRawDataInformation.metaQuery}
+                    className="tw-col-span-4"
+                />
+
+                <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.freshsalesLeadsWaterPurifierRaw} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.delete} readOnly className="tw-hidden" />
+
+                    <input type="date" name="startDate" required />
+                    <input type="date" name="endDate" defaultValue={new Date().toISOString().substring(0, 10)} required />
+
+                    <button type="submit" className="tw-lp-button">
+                        Delete Data For Selected Time Period
+                    </button>
+                </Form>
+
+                <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.freshsalesLeadsWaterPurifierRaw} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.truncate} readOnly className="tw-hidden" />
+
+                    <button type="submit" className="tw-lp-button" disabled>
+                        Truncate All Data
+                    </button>
+                </Form>
+
+                <Form method="post" encType="multipart/form-data" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.freshsalesLeadsWaterPurifierRaw} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
+
+                    <input type="file" name="file" multiple required />
+
+                    <button type="submit" className="tw-lp-button">
+                        Upload CSV
+                    </button>
+                </Form>
+
+                <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.freshsalesLeadsWaterPurifierRaw} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
+                    <input type="text" name="startDate" value={"2022-10-20T22:00:00Z"} readOnly className="tw-hidden" />
+                    <button className="tw-lp-button">
+                        Fetch Data From API
+                    </button>
+                </Form>
+            </>
+
+            {/* TODO: Un-deprecate */}
+            {/* Freshsales Leads Raw */}
+            {/* <>
                 <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Freshsales Leads Raw</div>
 
                 <Card
@@ -186,7 +398,6 @@ export default function () {
                     <input type="text" name="table" value={Table.freshsalesLeadsRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
 
-                    {/* <FileInputField name="file" /> */}
                     <input type="file" name="file" multiple required />
 
                     <button type="submit" className="tw-lp-button">
@@ -197,12 +408,12 @@ export default function () {
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                     <input type="text" name="table" value={Table.freshsalesLeadsRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
-                    <input type="text" name="startDate" value={"2022-10-19T00:00:00Z"} readOnly className="tw-hidden" />
+                    <input type="text" name="startDate" value={"2022-10-20T22:00:00Z"} readOnly className="tw-hidden" />
                     <button className="tw-lp-button">
                         Fetch Data From API
                     </button>
                 </Form>
-            </>
+            </> */}
 
             {/* Google Ads Raw */}
             <>
@@ -239,7 +450,6 @@ export default function () {
                     <input type="text" name="table" value={Table.googleAdsRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
 
-                    {/* <FileInputField name="file" /> */}
                     <input type="file" name="file" multiple required />
 
                     <button type="submit" className="tw-lp-button">
@@ -291,7 +501,6 @@ export default function () {
                     <input type="text" name="table" value={Table.shopifySalesRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
 
-                    {/* <FileInputField name="file" /> */}
                     <input type="file" name="file" multiple required />
 
                     <button type="submit" className="tw-lp-button">
@@ -358,7 +567,6 @@ export default function () {
                     <input type="text" name="table" value={Table.typeformResponsesMattressRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
 
-                    {/* <FileInputField name="file" /> */}
                     <input type="file" name="file" multiple required />
 
                     <button type="submit" className="tw-lp-button" disabled>
@@ -423,7 +631,6 @@ export default function () {
                     <input type="text" name="table" value={Table.typeformResponsesMattressRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
 
-                    {/* <FileInputField name="file" /> */}
                     <input type="file" name="file" multiple required />
 
                     <button type="submit" className="tw-lp-button" disabled>
@@ -488,7 +695,6 @@ export default function () {
                     <input type="text" name="table" value={Table.websitePopupFormResponsesRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.upload} readOnly className="tw-hidden" />
 
-                    {/* <FileInputField name="file" /> */}
                     <input type="file" name="file" multiple required />
 
                     <button type="submit" className="tw-lp-button">

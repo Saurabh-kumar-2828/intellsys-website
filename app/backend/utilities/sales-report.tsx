@@ -1,5 +1,5 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
-import {dateToMediumEnFormat} from "~/utilities/utilities";
+import {dateToMediumNoneEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
 import {QueryFilterType} from "~/utilities/typeDefinitions";
 
@@ -64,7 +64,7 @@ export async function get_shopifyInsights(
         return {
             metaQuery: query,
             rows: result.rows.map((row) => ({
-                date: dateToMediumEnFormat(row.date),
+                date: dateToMediumNoneEnFormat(row.date),
                 netQuantity: parseInt(row.net_quantity),
                 grossRevenue: row.net_sales,
                 category: row.product_category,

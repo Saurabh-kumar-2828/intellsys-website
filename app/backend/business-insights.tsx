@@ -1,5 +1,5 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
-import {dateToMediumEnFormat} from "~/utilities/utilities";
+import {dateToMediumNoneEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
 import {QueryFilterType} from "~/utilities/typeDefinitions";
 
@@ -79,7 +79,7 @@ export async function get_shopifyData(
         return {
             metaQuery: query,
             rows: result.rows.map((row) => ({
-                date: dateToMediumEnFormat(row.date),
+                date: dateToMediumNoneEnFormat(row.date),
                 count: parseInt(row.count),
                 netSales: parseFloat(row.net_sales),
                 sourcePlatform: row.source_information_platform,
@@ -157,7 +157,7 @@ export async function get_freshSalesData(
         return {
             metaQuery: query,
             rows: result.rows.map((row) => ({
-                date: dateToMediumEnFormat(row.date),
+                date: dateToMediumNoneEnFormat(row.date),
                 count: parseInt(row.count),
                 source: row.source,
             })),
@@ -229,7 +229,7 @@ export async function get_adsData(
         return {
             metaQuery: query,
             rows: result.rows.map((row) => ({
-                date: dateToMediumEnFormat(row.date),
+                date: dateToMediumNoneEnFormat(row.date),
                 amountSpent: parseFloat(row.amount_spent),
                 platform: row.platform,
                 campaignName: row.campaign_name,

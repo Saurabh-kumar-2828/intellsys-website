@@ -1,4 +1,4 @@
-import type {LoaderFunction, MetaFunction} from "@remix-run/node";
+import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import * as Tabs from "@radix-ui/react-tabs";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";
@@ -9,12 +9,21 @@ import {getAllProductInformation, getAllSourceToInformation} from "~/backend/com
 import {BarGraphComponent} from "~/components/reusableComponents/barGraphComponent";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
 import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
-import {concatenateNonNullStringsWithAmpersand, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
+import {agGridDateComparator, concatenateNonNullStringsWithAmpersand, dateToMediumMediumEnFormat, dateToMediumNoneEnFormat, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
+import {AgGridReact} from "ag-grid-react";
+import "ag-grid-enterprise";
 
 export const meta: MetaFunction = () => {
     return {
         title: "Business Insights - Livpure Data Management",
     };
+};
+
+export const links: LinksFunction = () => {
+    return [
+        {rel: "stylesheet", href: "https://unpkg.com/ag-grid-community/styles/ag-grid.css"},
+        {rel: "stylesheet", href: "https://unpkg.com/ag-grid-community/styles/ag-theme-alpine.css"},
+    ];
 };
 
 export const loader: LoaderFunction = async ({request}) => {
@@ -170,7 +179,7 @@ export default function () {
 
     const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
     const performanceLeadsCount = {
-        count: freshSalesLeadsData.rows.filter((row) => row.source != "Facebook Ads").reduce((sum, item) => sum + item.count, 0),
+        count: freshSalesLeadsData.rows.filter((row) => isSourcePerformanceLead(row.source)).reduce((sum, item) => sum + item.count, 0),
         metaInformation: "performance leads",
     };
 
@@ -412,6 +421,17 @@ export default function () {
         setSelectedCampaigns([]);
     }, [selectedProducts]);
 
+    const defaultColumnDefinitions = {
+        sortable: true,
+        filter: true,
+    };
+
+    const freshsalesColumnDefinitions = [
+        {headerName: "Lead Created At", valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date), filter: "agDateColumnFilter", comparator: agGridDateComparator},
+        {headerName: "Source", field: "source"},
+        {headerName: "Count", field: "count"},
+    ];
+
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
             <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
@@ -528,6 +548,16 @@ export default function () {
                 metaQuery={freshSalesLeadsData.metaQuery}
             />
 
+            <GenericCard
+                className="tw-col-span-12"
+                content={
+                    <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                        <AgGridReact rowData={freshSalesLeadsData.rows} columnDefs={[...freshsalesColumnDefinitions, {headerName: "Is Performance Lead?", valueGetter: (params) => isSourcePerformanceLead(params.data.source) ? "Yes" : "No"}]} defaultColDef={defaultColumnDefinitions} animateRows={true} enableRangeSelection={true} />
+                    </div>
+                }
+                metaQuery={freshSalesLeadsData.metaQuery}
+            />
+
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Orders</div>
 
             <Card
@@ -607,7 +637,7 @@ export default function () {
 
             <div className="tw-col-span-2" />
 
-            <Tabs.Root defaultValue="1" className="tw-col-span-6">
+            <Tabs.Root defaultValue="1" className="tw-col-span-12">
                 <Tabs.List className="">
                     <Tabs.Trigger value="1" className="tw-p-4 tw-bg-bg+1 radix-tab-active:tw-bg-lp zzz">
                         Gross Revenue
@@ -747,6 +777,6 @@ export default function () {
     );
 }
 
-
-
-
+function isSourcePerformanceLead(source: string) {
+    return source != "Facebook Ads";
+}

@@ -3,7 +3,7 @@ import {json} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {get_facebookAdsDataInformation, get_freshsalesLeadsDataInformation, get_googleAdsDataInformation, get_shopifySalesDataInformation, get_typeformResponsesDataInformation, get_websitePopupFormResponsesDataInformation} from "~/backend/data-source-information";
 import {Card} from "~/components/scratchpad";
-import {dateToMediumEnFormat, numberToHumanFriendlyString} from "~/utilities/utilities";
+import {dateToMediumNoneEnFormat, numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -40,9 +40,9 @@ export default function () {
 
             <Card information={numberToHumanFriendlyString(shopifySalesDataInformation.count)} label="Count" metaQuery={shopifySalesDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(shopifySalesDataInformation.minDate)} label="Data Start" metaQuery={shopifySalesDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumNoneEnFormat(shopifySalesDataInformation.minDate)} label="Data Start" metaQuery={shopifySalesDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(shopifySalesDataInformation.maxDate)} label="Data End" metaQuery={shopifySalesDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumNoneEnFormat(shopifySalesDataInformation.maxDate)} label="Data End" metaQuery={shopifySalesDataInformation.metaQuery} className="tw-col-span-4" />
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">
                 Freshsales Leads
@@ -50,9 +50,9 @@ export default function () {
 
             <Card information={numberToHumanFriendlyString(freshsalesLeadsDataInformation.count)} label="Count" metaQuery={freshsalesLeadsDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(freshsalesLeadsDataInformation.minDate)} label="Data Start" metaQuery={freshsalesLeadsDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumNoneEnFormat(freshsalesLeadsDataInformation.minDate)} label="Data Start" metaQuery={freshsalesLeadsDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(freshsalesLeadsDataInformation.maxDate)} label="Data End" metaQuery={freshsalesLeadsDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumNoneEnFormat(freshsalesLeadsDataInformation.maxDate)} label="Data End" metaQuery={freshsalesLeadsDataInformation.metaQuery} className="tw-col-span-4" />
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">
                 Google Ads
@@ -60,9 +60,9 @@ export default function () {
 
             <Card information={numberToHumanFriendlyString(googleAdsDataInformation.count)} label="Count" metaQuery={googleAdsDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(googleAdsDataInformation.minDate)} label="Data Start" metaQuery={googleAdsDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumNoneEnFormat(googleAdsDataInformation.minDate)} label="Data Start" metaQuery={googleAdsDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(googleAdsDataInformation.maxDate)} label="Data End" metaQuery={googleAdsDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumNoneEnFormat(googleAdsDataInformation.maxDate)} label="Data End" metaQuery={googleAdsDataInformation.metaQuery} className="tw-col-span-4" />
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">
                 Facebook Ads
@@ -70,9 +70,9 @@ export default function () {
 
             <Card information={numberToHumanFriendlyString(facebookAdsDataInformation.count)} label="Count" metaQuery={facebookAdsDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(facebookAdsDataInformation.minDate)} label="Data Start" metaQuery={facebookAdsDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumNoneEnFormat(facebookAdsDataInformation.minDate)} label="Data Start" metaQuery={facebookAdsDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(facebookAdsDataInformation.maxDate)} label="Data End" metaQuery={facebookAdsDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumNoneEnFormat(facebookAdsDataInformation.maxDate)} label="Data End" metaQuery={facebookAdsDataInformation.metaQuery} className="tw-col-span-4" />
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">
                 Website Popup Form Responses
@@ -80,9 +80,9 @@ export default function () {
 
             <Card information={numberToHumanFriendlyString(websitePopupFormResponsesDataInformation.count)} label="Count" metaQuery={websitePopupFormResponsesDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(websitePopupFormResponsesDataInformation.minDate)} label="Data Start" metaQuery={websitePopupFormResponsesDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumNoneEnFormat(websitePopupFormResponsesDataInformation.minDate)} label="Data Start" metaQuery={websitePopupFormResponsesDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(websitePopupFormResponsesDataInformation.maxDate)} label="Data End" metaQuery={websitePopupFormResponsesDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumNoneEnFormat(websitePopupFormResponsesDataInformation.maxDate)} label="Data End" metaQuery={websitePopupFormResponsesDataInformation.metaQuery} className="tw-col-span-4" />
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">
                 Typeform Responses
@@ -90,9 +90,9 @@ export default function () {
 
             <Card information={numberToHumanFriendlyString(typeformResponsesDataInformation.count)} label="Count" metaQuery={typeformResponsesDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(typeformResponsesDataInformation.minDate)} label="Data Start" metaQuery={typeformResponsesDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumNoneEnFormat(typeformResponsesDataInformation.minDate)} label="Data Start" metaQuery={typeformResponsesDataInformation.metaQuery} className="tw-col-span-4" />
 
-            <Card information={dateToMediumEnFormat(typeformResponsesDataInformation.maxDate)} label="Data End" metaQuery={typeformResponsesDataInformation.metaQuery} className="tw-col-span-4" />
+            <Card information={dateToMediumNoneEnFormat(typeformResponsesDataInformation.maxDate)} label="Data End" metaQuery={typeformResponsesDataInformation.metaQuery} className="tw-col-span-4" />
         </div>
     );
 }

@@ -1,5 +1,5 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
-import {dateToMediumEnFormat} from "~/utilities/utilities";
+import {dateToMediumNoneEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
 import {get_r4_facebookAdsSpends } from "~/backend/business-insights";
 

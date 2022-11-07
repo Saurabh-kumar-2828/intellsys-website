@@ -11,7 +11,7 @@ import {LineGraphComponent} from "~/components/reusableComponents/lineGraphCompo
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
 import {QueryFilterType} from "~/utilities/typeDefinitions";
 import {get_freshSalesData} from "~/backend/business-insights";
-import {concatenateNonNullStringsWithAmpersand, dateToMediumEnFormat, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
+import {concatenateNonNullStringsWithAmpersand, dateToMediumNoneEnFormat, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -358,7 +358,7 @@ export default function () {
                         content={
                             <LineGraphComponent
                                 data={{
-                                    x: distinct(campaignTrends.rows.map((row) => dateToMediumEnFormat(row.date))),
+                                    x: distinct(campaignTrends.rows.map((row) => dateToMediumNoneEnFormat(row.date))),
                                     y: yImpressions,
                                 }}
                                 barWidth={100}
@@ -375,7 +375,7 @@ export default function () {
                         content={
                             <LineGraphComponent
                                 data={{
-                                    x: distinct(campaignTrends.rows.map((row) => dateToMediumEnFormat(row.date))),
+                                    x: distinct(campaignTrends.rows.map((row) => dateToMediumNoneEnFormat(row.date))),
                                     y: yClicks,
                                     // y: Object.entries(y).map(([key, value]) => [key, value]).reduce((dict, [key, value]) => dict[key] = value, {}),
                                 }}
@@ -393,7 +393,7 @@ export default function () {
                         content={
                             <LineGraphComponent
                                 data={{
-                                    x: distinct(campaignTrends.rows.map((row) => dateToMediumEnFormat(row.date))),
+                                    x: distinct(campaignTrends.rows.map((row) => dateToMediumNoneEnFormat(row.date))),
                                     y: yAmountSpent,
                                 }}
                                 barWidth={100}

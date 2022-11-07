@@ -102,12 +102,40 @@ export function distinct(arr) {
     return arr.filter(onlyUnique);
 };
 
-export function dateToMediumEnFormat(date: string) {
+export function dateToMediumNoneEnFormat(date: string) {
     if (date == null) {
-        return "?";
+        return null;
     }
 
-    return new Intl.DateTimeFormat("en", {dateStyle: "medium"}).format(new Date(date));
+    return new Intl.DateTimeFormat("en", {timeZone: "Asia/Kolkata", dateStyle: "medium"}).format(new Date(date));
+}
+
+export function dateToMediumMediumEnFormat(date: string) {
+    if (date == null) {
+        return null;
+    }
+
+    return new Intl.DateTimeFormat("en", {timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short", hour12: true}).format(new Date(date));
+}
+
+export function dateToNoneMediumEnFormat(date: string) {
+    if (date == null) {
+        return null;
+    }
+
+    return new Intl.DateTimeFormat("en", {timeZone: "Asia/Kolkata", timeStyle: "short", hour12: true}).format(new Date(date));
+}
+
+export function agGridDateComparator(a: string, b: string) {
+    const aa = new Date(a);
+    const bb = new Date(b);
+    if (aa > bb) {
+        return 1;
+    } else if (aa < bb) {
+        return -1;
+    } else {
+        return 0;
+    }
 }
 
 export function numberToHumanFriendlyString(n, isFloat = false, shorten = true, isPercentage = false) {

@@ -14,7 +14,7 @@ import {
     get_websitePopupFormResponsesRawDataInformation,
 } from "~/backend/data-source-information";
 import {Card} from "~/components/scratchpad";
-import {dateToMediumEnFormat, numberToHumanFriendlyString} from "~/utilities/utilities";
+import {dateToMediumNoneEnFormat, numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -100,9 +100,9 @@ export default function () {
 
                 <Card information={numberToHumanFriendlyString(facebookAdsRawDataInformation.count)} label="Count" metaQuery={facebookAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
 
-                <Card information={dateToMediumEnFormat(facebookAdsRawDataInformation.minDate)} label="Data Start" metaQuery={facebookAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
+                <Card information={dateToMediumNoneEnFormat(facebookAdsRawDataInformation.minDate)} label="Data Start" metaQuery={facebookAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
 
-                <Card information={dateToMediumEnFormat(facebookAdsRawDataInformation.maxDate)} label="Data End" metaQuery={facebookAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
+                <Card information={dateToMediumNoneEnFormat(facebookAdsRawDataInformation.maxDate)} label="Data End" metaQuery={facebookAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
 
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                     <input type="text" name="table" value={Table.facebookAdsRaw} readOnly className="tw-hidden" />
@@ -158,14 +158,14 @@ export default function () {
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(freshsalesLeadsMattressRawDataInformation.minDate)}
+                    information={dateToMediumNoneEnFormat(freshsalesLeadsMattressRawDataInformation.minDate)}
                     label="Data Start"
                     metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery}
                     className="tw-col-span-4"
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(freshsalesLeadsMattressRawDataInformation.maxDate)}
+                    information={dateToMediumNoneEnFormat(freshsalesLeadsMattressRawDataInformation.maxDate)}
                     label="Data End"
                     metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery}
                     className="tw-col-span-4"
@@ -225,14 +225,14 @@ export default function () {
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(freshsalesLeadsNonMattressRawDataInformation.minDate)}
+                    information={dateToMediumNoneEnFormat(freshsalesLeadsNonMattressRawDataInformation.minDate)}
                     label="Data Start"
                     metaQuery={freshsalesLeadsNonMattressRawDataInformation.metaQuery}
                     className="tw-col-span-4"
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(freshsalesLeadsNonMattressRawDataInformation.maxDate)}
+                    information={dateToMediumNoneEnFormat(freshsalesLeadsNonMattressRawDataInformation.maxDate)}
                     label="Data End"
                     metaQuery={freshsalesLeadsNonMattressRawDataInformation.metaQuery}
                     className="tw-col-span-4"
@@ -292,14 +292,14 @@ export default function () {
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(freshsalesLeadsWaterPurifierRawDataInformation.minDate)}
+                    information={dateToMediumNoneEnFormat(freshsalesLeadsWaterPurifierRawDataInformation.minDate)}
                     label="Data Start"
                     metaQuery={freshsalesLeadsWaterPurifierRawDataInformation.metaQuery}
                     className="tw-col-span-4"
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(freshsalesLeadsWaterPurifierRawDataInformation.maxDate)}
+                    information={dateToMediumNoneEnFormat(freshsalesLeadsWaterPurifierRawDataInformation.maxDate)}
                     label="Data End"
                     metaQuery={freshsalesLeadsWaterPurifierRawDataInformation.metaQuery}
                     className="tw-col-span-4"
@@ -360,14 +360,14 @@ export default function () {
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(freshsalesLeadsRawDataInformation.minDate)}
+                    information={dateToMediumNoneEnFormat(freshsalesLeadsRawDataInformation.minDate)}
                     label="Data Start"
                     metaQuery={freshsalesLeadsRawDataInformation.metaQuery}
                     className="tw-col-span-4"
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(freshsalesLeadsRawDataInformation.maxDate)}
+                    information={dateToMediumNoneEnFormat(freshsalesLeadsRawDataInformation.maxDate)}
                     label="Data End"
                     metaQuery={freshsalesLeadsRawDataInformation.metaQuery}
                     className="tw-col-span-4"
@@ -421,9 +421,9 @@ export default function () {
 
                 <Card information={numberToHumanFriendlyString(googleAdsRawDataInformation.count)} label="Count" metaQuery={googleAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
 
-                <Card information={dateToMediumEnFormat(googleAdsRawDataInformation.minDate)} label="Data Start" metaQuery={googleAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
+                <Card information={dateToMediumNoneEnFormat(googleAdsRawDataInformation.minDate)} label="Data Start" metaQuery={googleAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
 
-                <Card information={dateToMediumEnFormat(googleAdsRawDataInformation.maxDate)} label="Data End" metaQuery={googleAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
+                <Card information={dateToMediumNoneEnFormat(googleAdsRawDataInformation.maxDate)} label="Data End" metaQuery={googleAdsRawDataInformation.metaQuery} className="tw-col-span-4" />
 
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                     <input type="text" name="table" value={Table.googleAdsRaw} readOnly className="tw-hidden" />
@@ -472,9 +472,9 @@ export default function () {
 
                 <Card information={numberToHumanFriendlyString(shopifySalesRawDataInformation.count)} label="Count" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
 
-                <Card information={dateToMediumEnFormat(shopifySalesRawDataInformation.minDate)} label="Data Start" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
+                <Card information={dateToMediumNoneEnFormat(shopifySalesRawDataInformation.minDate)} label="Data Start" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
 
-                <Card information={dateToMediumEnFormat(shopifySalesRawDataInformation.maxDate)} label="Data End" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
+                <Card information={dateToMediumNoneEnFormat(shopifySalesRawDataInformation.maxDate)} label="Data End" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
 
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                     <input type="text" name="table" value={Table.shopifySalesRaw} readOnly className="tw-hidden" />
@@ -529,14 +529,14 @@ export default function () {
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(typeformResponsesMattressDataInformation.minDate)}
+                    information={dateToMediumNoneEnFormat(typeformResponsesMattressDataInformation.minDate)}
                     label="Data Start"
                     metaQuery={typeformResponsesMattressDataInformation.metaQuery}
                     className="tw-col-span-4"
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(typeformResponsesMattressDataInformation.maxDate)}
+                    information={dateToMediumNoneEnFormat(typeformResponsesMattressDataInformation.maxDate)}
                     label="Data End"
                     metaQuery={typeformResponsesMattressDataInformation.metaQuery}
                     className="tw-col-span-4"
@@ -593,14 +593,14 @@ export default function () {
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(typeformResponsesWaterPurifierDataInformation.minDate)}
+                    information={dateToMediumNoneEnFormat(typeformResponsesWaterPurifierDataInformation.minDate)}
                     label="Data Start"
                     metaQuery={typeformResponsesWaterPurifierDataInformation.metaQuery}
                     className="tw-col-span-4"
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(typeformResponsesWaterPurifierDataInformation.maxDate)}
+                    information={dateToMediumNoneEnFormat(typeformResponsesWaterPurifierDataInformation.maxDate)}
                     label="Data End"
                     metaQuery={typeformResponsesWaterPurifierDataInformation.metaQuery}
                     className="tw-col-span-4"
@@ -657,14 +657,14 @@ export default function () {
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(websitePopupFormResponsesRawDataInformation.minDate)}
+                    information={dateToMediumNoneEnFormat(websitePopupFormResponsesRawDataInformation.minDate)}
                     label="Data Start"
                     metaQuery={websitePopupFormResponsesRawDataInformation.metaQuery}
                     className="tw-col-span-4"
                 />
 
                 <Card
-                    information={dateToMediumEnFormat(websitePopupFormResponsesRawDataInformation.maxDate)}
+                    information={dateToMediumNoneEnFormat(websitePopupFormResponsesRawDataInformation.maxDate)}
                     label="Data End"
                     metaQuery={websitePopupFormResponsesRawDataInformation.metaQuery}
                     className="tw-col-span-4"

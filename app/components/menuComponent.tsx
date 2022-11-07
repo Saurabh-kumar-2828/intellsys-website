@@ -47,6 +47,10 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
             displayName: "Campaigns Funnel View",
         },
         {
+            url: "/sales-report",
+            displayName: "Sales Report",
+        },
+        {
             url: "#",
             displayName: "",
         },

@@ -9,7 +9,7 @@ import {getAllProductInformation, getAllSourceToInformation} from "~/backend/com
 import {BarGraphComponent} from "~/components/reusableComponents/barGraphComponent";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
 import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
-import {concatenateNonNullStringsWithAmpersand, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
+import {concatenateNonNullStringsWithAmpersand, distinct, getDates, numberToHumanFriendlyString} from "~/utilities/utilities";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {LineGraphComponent} from "~/components/reusableComponents/lineGraphComponent";
 
@@ -138,18 +138,6 @@ export default function () {
         "tw-stroke-Fuchsia-600",
         "tw-stroke-Fuchsia-800",
     ];
-
-    function getDates(minDate: any, maxDate: any) {
-        const dates = [];
-        dates.push(minDate);
-
-        let tempDate = minDate;
-        while (tempDate <= maxDate) {
-            tempDate = DateTime.fromISO(tempDate).plus({days: 1}).toISODate();
-            dates.push(tempDate);
-        }
-        return dates;
-    }
 
     function helperAggregate(array: Array<object>, groupBy: string) {
         let arrayAggregate: any = array.reduce((result, item) => {

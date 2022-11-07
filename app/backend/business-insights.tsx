@@ -157,7 +157,8 @@ export async function get_freshsalesData(
         return {
             metaQuery: query,
             rows: result.rows.map((row) => ({
-                date: dateToMediumNoneEnFormat(row.date),
+                // TODO: WILL NOT WORK FOR OTHER GRANULARITIES!
+                date: row.date.toISOString().slice(0, 10),
                 count: parseInt(row.count),
                 source: row.source,
             })),

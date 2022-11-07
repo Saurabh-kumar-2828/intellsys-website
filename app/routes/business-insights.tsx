@@ -9,7 +9,15 @@ import {getAllProductInformation, getAllSourceToInformation} from "~/backend/com
 import {BarGraphComponent} from "~/components/reusableComponents/barGraphComponent";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
 import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, concatenateNonNullStringsWithAmpersand, dateToMediumMediumEnFormat, dateToMediumNoneEnFormat, distinct, numberToHumanFriendlyString} from "~/utilities/utilities";
+import {
+    agGridDateComparator,
+    concatenateNonNullStringsWithAmpersand,
+    dateToMediumMediumEnFormat,
+    dateToMediumNoneEnFormat,
+    distinct,
+    getDates,
+    numberToHumanFriendlyString,
+} from "~/utilities/utilities";
 import {AgGridReact} from "ag-grid-react";
 import "ag-grid-enterprise";
 
@@ -349,11 +357,7 @@ export default function () {
                 setSelectedMaxDate={setSelectedMaxDate}
             />
 
-            <LeadsSection
-                adsData={adsData}
-                freshsalesLeadsData={freshsalesLeadsData}
-                shopifyData={shopifyData}
-            />
+            <LeadsSection adsData={adsData} freshsalesLeadsData={freshsalesLeadsData} shopifyData={shopifyData} minDate={appliedMinDate} maxDate={appliedMaxDate} />
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Orders</div>
 
@@ -655,20 +659,20 @@ function FilterSection(props: {
     );
 }
 
-function LeadsSection({freshsalesLeadsData, adsData, shopifyData}) {
+function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDate}) {
     const defaultColumnDefinitions = {
         sortable: true,
         filter: true,
     };
 
     const performanceLeadsCount = {
-        count: freshsalesLeadsData.rows.filter((row) => isSourcePerformanceLead(row.source)).reduce((sum, item) => sum + item.count, 0),
-        metaInformation: "performance leads",
+        metaInformation: "Performance Leads",
+        count: freshsalesLeadsData.rows.filter((row) => doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)).reduce((sum, item) => sum + item.count, 0),
     };
 
     const facebookLeadsCount = {
-        count: freshsalesLeadsData.rows.filter((row) => row.source == "Facebook Ads").reduce((sum, item) => sum + item.count, 0),
-        metaInformation: "facebook leads",
+        metaInformation: "Facebook Leads",
+        count: freshsalesLeadsData.rows.filter((row) => !doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)).reduce((sum, item) => sum + item.count, 0),
     };
 
     const totalLeadsCount = {
@@ -677,11 +681,11 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData}) {
     };
 
     const performanceLeadsAmountSpent = {
-        amountSpent: adsData.rows.filter((row) => row.campaignName != "GJ_LeadGen_18May" && row.campaignName != "GJ_LeadGen_Mattress_10 May").reduce((sum, item) => sum + item.amountSpent, 0),
+        amountSpent: adsData.rows.filter((row) => doesAdsCampaignNameCorrespondToPerformanceLead(row.campaignName)).reduce((sum, item) => sum + item.amountSpent, 0),
     };
 
     const facebookLeadsAmountSpent = {
-        amountSpent: adsData.rows.filter((row) => row.campaignName == "GJ_LeadGen_18May" || row.campaignName == "GJ_LeadGen_Mattress_10 May").reduce((sum, item) => sum + item.amountSpent, 0),
+        amountSpent: adsData.rows.filter((row) => !doesAdsCampaignNameCorrespondToPerformanceLead(row.campaignName)).reduce((sum, item) => sum + item.amountSpent, 0),
     };
 
     const performanceLeadsCpl = {
@@ -699,18 +703,14 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData}) {
     };
 
     const performanceLeadsSales = {
-        netSales: shopifyData.rows
-            .filter((row) => row.source != "GJ_LeadGen_18May" && row.source != "GJ_LeadGen_Mattress_10 May" && row.source.match("^Freshsales - .* - Facebook Ads$") == null)
-            .reduce((sum, item) => sum + item.netSales, 0),
+        netSales: shopifyData.rows.filter((row) => doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)).reduce((sum, item) => sum + item.netSales, 0),
     };
 
     const facebookLeadsSales = {
-        netSales: shopifyData.rows
-            .filter((row) => row.source == "GJ_LeadGen_18May" || row.source == "GJ_LeadGen_Mattress_10 May" || row.source.match("^Freshsales - .* - Facebook Ads$") != null)
-            .reduce((sum, item) => sum + item.netSales, 0),
+        netSales: shopifyData.rows.filter((row) => !doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)).reduce((sum, item) => sum + item.netSales, 0),
     };
 
-     const performanceLeadsSpl = {
+    const performanceLeadsSpl = {
         metaInformation: `Leads Sales / Leads Count | Performance = ${numberToHumanFriendlyString(performanceLeadsSales.netSales)} / ${numberToHumanFriendlyString(performanceLeadsCount.count)}`,
         spl: performanceLeadsSales.netSales / performanceLeadsCount.count,
     };
@@ -728,13 +728,25 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData}) {
     };
 
     const facebookLeadsAcos = {
-        metaInformation: `Amount Spent / Net Sales | Facebook = ${numberToHumanFriendlyString(facebookLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
-            facebookLeadsSales.netSales
-        )}`,
+        metaInformation: `Amount Spent / Net Sales | Facebook = ${numberToHumanFriendlyString(facebookLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(facebookLeadsSales.netSales)}`,
         acos: facebookLeadsAmountSpent.amountSpent / facebookLeadsSales.netSales,
     };
 
-   return (
+    const dates = getDates(minDate, maxDate);
+
+    const performanceLeadsCountDayWise = aggregateByDate2(
+        freshsalesLeadsData.rows.filter((row) => doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)),
+        "count",
+        dates
+    );
+
+    const facebookLeadsCountDayWise = aggregateByDate2(
+        freshsalesLeadsData.rows.filter((row) => !doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)),
+        "count",
+        dates
+    );
+
+    return (
         <>
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Leads</div>
 
@@ -788,19 +800,10 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData}) {
                 content={
                     <BarGraphComponent
                         data={{
-                            x: aggregateByDate(
-                                freshsalesLeadsData.rows.filter((row) => row.source != "Facebook Ads"),
-                                "count"
-                            ).map((item) => item.date),
+                            x: dates,
                             y: {
-                                "Performance Leads": aggregateByDate(
-                                    freshsalesLeadsData.rows.filter((row) => row.source != "Facebook Ads"),
-                                    "count"
-                                ).map((item) => item.param),
-                                "Facebook Leads": aggregateByDate(
-                                    freshsalesLeadsData.rows.filter((row) => row.source == "Facebook Ads"),
-                                    "count"
-                                ).map((item) => item.param),
+                                "Performance Leads": performanceLeadsCountDayWise,
+                                "Facebook Leads": facebookLeadsCountDayWise,
                             },
                         }}
                         yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
@@ -816,11 +819,15 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData}) {
                 content={
                     <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
                         <AgGridReact
-                            rowData={freshsalesLeadsData.rows}
+                            rowData={dates.map((date, dateIndex) => ({
+                                date: date,
+                                performanceLeads: performanceLeadsCountDayWise[dateIndex],
+                                facebookLeads: facebookLeadsCountDayWise[dateIndex],
+                            }))}
                             columnDefs={[
                                 {headerName: "Lead Created At", valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date), filter: "agDateColumnFilter", comparator: agGridDateComparator},
-                                {headerName: "Performance Leads", field: "count"},
-                                {headerName: "Is Performance Lead?", valueGetter: (params) => (isSourcePerformanceLead(params.data.source) ? "Yes" : "No")},
+                                {headerName: "Performance Leads", field: "performanceLeads"},
+                                {headerName: "Facebook Leads", field: "facebookLeads"},
                             ]}
                             defaultColDef={defaultColumnDefinitions}
                             animateRows={true}
@@ -834,15 +841,19 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData}) {
     );
 }
 
-function isSourcePerformanceLead(source: string) {
+// TODO: Rename to something sensible
+function doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(source: string) {
     return source != "Facebook Ads";
 }
 
-function helperAggregateByDate(result, item) {
-    let date = result[item.date] || [];
-    date.push(item);
-    result[item.date] = date;
-    return result;
+// TODO: Rename to something sensible
+function doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead(source: string) {
+    return source != "GJ_LeadGen_18May" && source != "GJ_LeadGen_Mattress_10 May" && source.match("^Freshsales - .* - Facebook Ads$") == null;
+}
+
+// TODO: Rename to something sensible
+function doesAdsCampaignNameCorrespondToPerformanceLead(campaignName: string) {
+    return campaignName != "GJ_LeadGen_18May" && campaignName != "GJ_LeadGen_Mattress_10 May";
 }
 
 function helperAggregateByCategory(result, item) {
@@ -852,6 +863,12 @@ function helperAggregateByCategory(result, item) {
     return result;
 }
 
+function helperAggregateByDate(result, item) {
+    let date = result[item.date] || [];
+    date.push(item);
+    result[item.date] = date;
+    return result;
+}
 function aggregateByDate(array: Array<object>, param: string) {
     const result = [];
     let arrayAggregateByDate: any = array.reduce(helperAggregateByDate, {});
@@ -865,4 +882,18 @@ function aggregateByDate(array: Array<object>, param: string) {
         });
     }
     return result;
+}
+
+function aggregateByDate2(arr: Array<object>, param: string, dates: Array<string>) {
+    // return dates.map((date) => arr.filter((x) => x.date == date).reduce((total, x) => total + x[param], 0));
+
+    const counts = dates.map((date) => arr.filter((x) => x.date == date).reduce((total, x) => total + x[param], 0));
+
+    const sum1 = arr.reduce((total, x) => total + x[param], 0);
+    const sum2 = counts.reduce((total, x) => total + x, 0);
+    if (sum1 != sum2) {
+        console.log("SUMS DON'T ADD UP!", sum1, sum2);
+    }
+
+    return counts;
 }

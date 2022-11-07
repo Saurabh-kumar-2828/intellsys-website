@@ -187,4 +187,18 @@ export async function delay(ms: number) {
     await new Promise(_ => setTimeout(_, ms));
 }
 
+// TODO: Only works for "Daily" granularity, extend to support other granularities as well
+// TODO: Rename to something more descriptive
+export function getDates(minDate: any, maxDate: any) {
+    const dates = [];
+
+    let date = minDate;
+    while (date <= maxDate) {
+        dates.push(date);
+        date = DateTime.fromISO(date).plus({days: 1}).toISODate();
+    }
+
+    return dates;
+}
+
 const cloudflareImagesAccountHash = "QSJTsX8HH4EtEhHrJthznA";

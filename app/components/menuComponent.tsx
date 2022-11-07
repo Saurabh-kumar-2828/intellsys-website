@@ -43,13 +43,9 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
             displayName: "Business Insights",
         },
         {
-            url: "/facebook-campaigns",
-            displayName: "Facebook Campaigns Funnel",
+            url: "/campaigns-funnel-view",
+            displayName: "Campaigns Funnel View",
         },
-        // {
-        //     url: "/google-campaigns",
-        //     displayName: "Google Campaigns",
-        // },
         {
             url: "#",
             displayName: "",

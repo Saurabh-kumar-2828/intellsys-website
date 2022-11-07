@@ -1,4 +1,4 @@
-import * as Tabs from "@radix-ui/react-tabs";
+// import * as Tabs from "@radix-ui/react-tabs";
 import type {LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";

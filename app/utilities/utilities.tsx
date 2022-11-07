@@ -30,15 +30,28 @@ export async function postJson(url, data) {
     });
 }
 
-export function concatenateNonNullStringsWithSpaces(...strs) {
+export function concatenateNonNullStringsWithSpaces(...strs: Array<string | null>): string {
     // TODO: Do this properly
     return strs.join(" ");
 }
 
-export function concatenateNonNullStringsWithAmpersand(...strs) {
-    // TODO: Do this properly
-    // TODO: Centralize implementation
-    return strs.join("&");
+export function concatenateNonNullStringsWithAmpersand(...strs: Array<string | null>): string {
+    // TODO: Merge implementations
+    let concatenatedString = null;
+
+    for (const str of strs) {
+        if (str == null) {
+            continue;
+        }
+
+        if (concatenatedString == null) {
+            concatenatedString = str;
+        } else {
+            concatenatedString = concatenatedString + "&" + str;
+        }
+    }
+
+    return concatenatedString;
 }
 
 export function getHumanReadableMonth(month: number): string {

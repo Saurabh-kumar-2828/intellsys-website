@@ -3,8 +3,8 @@ import * as Tabs from "@radix-ui/react-tabs";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";
 import {DateTime} from "luxon";
-import {useEffect, useState} from "react";
-import {get_shopifyData, get_freshSalesData, get_adsData} from "~/backend/business-insights";
+import React, {useEffect, useState} from "react";
+import {get_shopifyData, get_freshsalesData, get_adsData} from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
 import {BarGraphComponent} from "~/components/reusableComponents/barGraphComponent";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
@@ -97,7 +97,7 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedMaxDate: maxDate,
         allProductInformation: await getAllProductInformation(),
         allSourceInformation: await getAllSourceToInformation(),
-        freshSalesLeadsData: await get_freshSalesData(selectedCategories, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        freshsalesLeadsData: await get_freshsalesData(selectedCategories, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         adsData: await get_adsData(selectedCategories, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
         shopifyData: await get_shopifyData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
     });
@@ -114,39 +114,10 @@ export default function () {
         appliedMaxDate,
         allProductInformation,
         allSourceInformation,
-        freshSalesLeadsData,
+        freshsalesLeadsData,
         adsData,
         shopifyData,
     } = useLoaderData();
-
-    function helperAggregateByDate(result, item) {
-        let date = result[item.date] || [];
-        date.push(item);
-        result[item.date] = date;
-        return result;
-    }
-
-    function helperAggregateByCategory(result, item) {
-        let category = result[item.category] || 0;
-        category = category + parseInt(item.netSales);
-        result[item.category] = category;
-        return result;
-    }
-
-    function aggregateByDate(array: Array<object>, param: string) {
-        const result = [];
-        let arrayAggregateByDate: any = array.reduce(helperAggregateByDate, {});
-        for (const item in arrayAggregateByDate) {
-            let paramValue = arrayAggregateByDate[item].reduce((total, sum) => total + sum[`${param}`], 0);
-            let date = item;
-
-            result.push({
-                param: paramValue,
-                date: date,
-            });
-        }
-        return result;
-    }
 
     function get_r3_ordersRevenue(array: Array<object>) {
         let aggregateByDate = array.reduce(helperAggregateByDate, {});
@@ -178,24 +149,10 @@ export default function () {
     );
 
     const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
-    const performanceLeadsCount = {
-        count: freshSalesLeadsData.rows.filter((row) => isSourcePerformanceLead(row.source)).reduce((sum, item) => sum + item.count, 0),
-        metaInformation: "performance leads",
-    };
 
     const directOrdersRevenue = get_r3_ordersRevenue(shopifyData.rows.filter((row) => row.isAssisted == false));
 
     const assistedOrdersRevenue = get_r3_ordersRevenue(shopifyData.rows.filter((row) => row.isAssisted == true));
-
-    const facebookLeadsCount = {
-        count: freshSalesLeadsData.rows.filter((row) => row.source == "Facebook Ads").reduce((sum, item) => sum + item.count, 0),
-        metaInformation: "facebook leads",
-    };
-
-    const totalLeadsCount = {
-        metaInformation: `Performance Leads + Facebook Leads = ${numberToHumanFriendlyString(performanceLeadsCount.count)} + ${numberToHumanFriendlyString(facebookLeadsCount.count)}`,
-        count: performanceLeadsCount.count + facebookLeadsCount.count,
-    };
 
     const directOrders = aggregateByDate(
         shopifyData.rows.filter((row) => row.isAssisted == false),
@@ -221,32 +178,12 @@ export default function () {
         netSales: shopifyData.rows.filter((row) => row.sourcePlatform == "Google" && row.netSales > 0).reduce((sum, item) => sum + item.netSales, 0),
     };
 
-    const r1_performanceLeadsSales = {
-        netSales: shopifyData.rows
-            .filter((row) => row.source != "GJ_LeadGen_18May" && row.source != "GJ_LeadGen_Mattress_10 May" && row.source.match("^Freshsales - .* - Facebook Ads$") == null)
-            .reduce((sum, item) => sum + item.netSales, 0),
-    };
-
-    const r1_facebookLeadsSales = {
-        netSales: shopifyData.rows
-            .filter((row) => row.source == "GJ_LeadGen_18May" || row.source == "GJ_LeadGen_Mattress_10 May" || row.source.match("^Freshsales - .* - Facebook Ads$") != null)
-            .reduce((sum, item) => sum + item.netSales, 0),
-    };
-
     const googleAdsSpends = {
         amountSpent: adsDataGoogleSpends.reduce((sum, item) => sum + item.param, 0),
     };
 
     const facebookAdsSpends = {
         amountSpent: adsDataFacebookSpends.reduce((sum, item) => sum + item.param, 0),
-    };
-
-    const r1_performanceLeadsAmountSpent = {
-        amountSpent: adsData.rows.filter((row) => row.campaignName != "GJ_LeadGen_18May" && row.campaignName != "GJ_LeadGen_Mattress_10 May").reduce((sum, item) => sum + item.amountSpent, 0),
-    };
-
-    const r1_facebookLeadsAmountSpent = {
-        amountSpent: adsData.rows.filter((row) => row.campaignName == "GJ_LeadGen_18May" || row.campaignName == "GJ_LeadGen_Mattress_10 May").reduce((sum, item) => sum + item.amountSpent, 0),
     };
 
     const r4_facebookAdsLiveCampaignsCount = {
@@ -263,39 +200,6 @@ export default function () {
 
     const assistedOrdersGrossRevenue = {
         netSales: assistedOrdersRevenue.reduce((sum, item) => sum + item.netSales, 0),
-    };
-
-    const r1_performanceLeadsCpl = {
-        metaInformation: `Amount Spent / Leads Count | Performance = ${numberToHumanFriendlyString(r1_performanceLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
-            performanceLeadsCount.count
-        )}`,
-        metaQuery: adsData.metaQuery,
-        cpl: r1_performanceLeadsAmountSpent.amountSpent / performanceLeadsCount.count,
-    };
-    const r1_facebookLeadsCpl = {
-        metaInformation: `Amount Spent / Leads Count | Facebook = ${numberToHumanFriendlyString(r1_facebookLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(facebookLeadsCount.count)}`,
-        metaQuery: adsData.metaQuery,
-        cpl: r1_facebookLeadsAmountSpent.amountSpent / facebookLeadsCount.count,
-    };
-    const r1_performanceLeadsSpl = {
-        metaInformation: `Leads Sales / Leads Count | Performance = ${numberToHumanFriendlyString(r1_performanceLeadsSales.netSales)} / ${numberToHumanFriendlyString(performanceLeadsCount.count)}`,
-        spl: r1_performanceLeadsSales.netSales / performanceLeadsCount.count,
-    };
-    const r1_facebookLeadsSpl = {
-        metaInformation: `Leads Sales / Leads Count | Facebook = ${numberToHumanFriendlyString(r1_facebookLeadsSales.netSales)} / ${numberToHumanFriendlyString(facebookLeadsCount.count)}`,
-        spl: r1_facebookLeadsSales.netSales / facebookLeadsCount.count,
-    };
-    const r1_performanceLeadsAcos = {
-        metaInformation: `Amount Spent / Net Sales | Performance = ${numberToHumanFriendlyString(r1_performanceLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
-            r1_performanceLeadsSales.netSales
-        )}`,
-        acos: r1_performanceLeadsAmountSpent.amountSpent / r1_performanceLeadsSales.netSales,
-    };
-    const r1_facebookLeadsAcos = {
-        metaInformation: `Amount Spent / Net Sales | Facebook = ${numberToHumanFriendlyString(r1_facebookLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
-            r1_facebookLeadsSales.netSales
-        )}`,
-        acos: r1_facebookLeadsAmountSpent.amountSpent / r1_facebookLeadsSales.netSales,
     };
 
     const r2_totalOrdersCount = {
@@ -421,141 +325,34 @@ export default function () {
         setSelectedCampaigns([]);
     }, [selectedProducts]);
 
-    const defaultColumnDefinitions = {
-        sortable: true,
-        filter: true,
-    };
-
-    const freshsalesColumnDefinitions = [
-        {headerName: "Lead Created At", valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date), filter: "agDateColumnFilter", comparator: agGridDateComparator},
-        {headerName: "Source", field: "source"},
-        {headerName: "Count", field: "count"},
-    ];
-
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
-            <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
-                <FancySearchableMultiSelect
-                    label="Business"
-                    options={businesses}
-                    selectedOptions={selectedCategories}
-                    setSelectedOptions={setSelectedCategories}
-                    filterType={QueryFilterType.category}
-                />
-
-                <FancySearchableMultiSelect label="Product" options={products} selectedOptions={selectedProducts} setSelectedOptions={setSelectedProducts} filterType={QueryFilterType.product} />
-
-                <FancySearchableMultiSelect label="Platform" options={platforms} selectedOptions={selectedPlatforms} setSelectedOptions={setSelectedPlatforms} filterType={QueryFilterType.platform} />
-
-                <FancySearchableMultiSelect label="Campaign" options={campaigns} selectedOptions={selectedCampaigns} setSelectedOptions={setSelectedCampaigns} filterType={QueryFilterType.campaign} />
-
-                <FancySearchableSelect label="Granularity" options={granularities} selectedOption={selectedGranularity} setSelectedOption={setSelectedGranularity} />
-
-                <FancyCalendar label="Start Date" value={selectedMinDate} setValue={setSelectedMinDate} />
-
-                <FancyCalendar label="End Date" value={selectedMaxDate} setValue={setSelectedMaxDate} />
-
-                <div />
-
-                <Link
-                    to={concatenateNonNullStringsWithAmpersand(
-                        `/business-insights?selected_granularity=${selectedGranularity}`,
-                        `min_date=${selectedMinDate}`,
-                        `max_date=${selectedMaxDate}`,
-                        selectedCampaigns.length == 0 ? null : `selected_campaigns=${JSON.stringify(selectedCampaigns)}`,
-                        selectedCategories.length == 0 ? null : `selected_categories=${JSON.stringify(selectedCategories)}`,
-                        selectedProducts.length == 0 ? null : `selected_products=${JSON.stringify(selectedProducts)}`,
-                        selectedPlatforms.length == 0 ? null : `selected_platforms=${JSON.stringify(selectedPlatforms)}`
-                    )}
-                    className="-tw-col-end-1 tw-bg-lp tw-p-2 tw-rounded-md"
-                >
-                    Update Filters
-                </Link>
-            </div>
-
-            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Leads</div>
-
-            <Card information={numberToHumanFriendlyString(totalLeadsCount.count)} label="Total Leads" metaInformation={totalLeadsCount.metaInformation} className="tw-row-span-2 tw-col-span-4" />
-
-            <Card information={numberToHumanFriendlyString(performanceLeadsCount.count)} label="Performance Leads" metaInformation={performanceLeadsCount.metaInformation} className="tw-col-span-2" />
-
-            <Card
-                information={numberToHumanFriendlyString(r1_performanceLeadsCpl.cpl, true)}
-                label="Performance Leads CPL"
-                metaInformation={r1_performanceLeadsCpl.metaInformation}
-                metaQuery={r1_performanceLeadsCpl.metaQuery}
-                className="tw-col-span-2"
+            <FilterSection
+                businesses={businesses}
+                selectedCategories={selectedCategories}
+                setSelectedCategories={setSelectedCategories}
+                products={products}
+                selectedProducts={selectedProducts}
+                setSelectedProducts={setSelectedProducts}
+                platforms={platforms}
+                selectedPlatforms={selectedPlatforms}
+                setSelectedPlatforms={setSelectedPlatforms}
+                campaigns={campaigns}
+                selectedCampaigns={selectedCampaigns}
+                setSelectedCampaigns={setSelectedCampaigns}
+                granularities={granularities}
+                selectedGranularity={selectedGranularity}
+                setSelectedGranularity={setSelectedGranularity}
+                selectedMinDate={selectedMinDate}
+                setSelectedMinDate={setSelectedMinDate}
+                selectedMaxDate={selectedMaxDate}
+                setSelectedMaxDate={setSelectedMaxDate}
             />
 
-            <Card
-                information={numberToHumanFriendlyString(r1_performanceLeadsSpl.spl, true)}
-                label="Performance Leads SPL"
-                metaInformation={r1_performanceLeadsSpl.metaInformation}
-                className="tw-col-span-2"
-            />
-
-            <Card
-                information={numberToHumanFriendlyString(r1_performanceLeadsAcos.acos, true, true, true)}
-                label="Performance Leads ACoS"
-                metaInformation={r1_performanceLeadsAcos.metaInformation}
-                className="tw-col-span-2"
-            />
-
-            <Card information={numberToHumanFriendlyString(facebookLeadsCount.count)} label="Facebook Leads" metaInformation={facebookLeadsCount.metaInformation} className="tw-col-span-2" />
-
-            <Card
-                information={numberToHumanFriendlyString(r1_facebookLeadsCpl.cpl, true)}
-                label="Facebook Leads CPL"
-                metaInformation={r1_facebookLeadsCpl.metaInformation}
-                metaQuery={r1_facebookLeadsCpl.metaQuery}
-                className="tw-col-span-2"
-            />
-
-            <Card information={numberToHumanFriendlyString(r1_facebookLeadsSpl.spl, true)} label="Facebook Leads SPL" metaInformation={r1_facebookLeadsSpl.metaInformation} className="tw-col-span-2" />
-
-            <Card
-                information={numberToHumanFriendlyString(r1_facebookLeadsAcos.acos, true, true, true)}
-                label="Facebook Leads ACoS"
-                metaInformation={r1_facebookLeadsAcos.metaInformation}
-                className="tw-col-span-2"
-            />
-
-            <GenericCard
-                className="tw-col-span-12"
-                content={
-                    <BarGraphComponent
-                        data={{
-                            x: aggregateByDate(
-                                freshSalesLeadsData.rows.filter((row) => row.source != "Facebook Ads"),
-                                "count"
-                            ).map((item) => item.date),
-                            y: {
-                                "Performance Leads": aggregateByDate(
-                                    freshSalesLeadsData.rows.filter((row) => row.source != "Facebook Ads"),
-                                    "count"
-                                ).map((item) => item.param),
-                                "Facebook Leads": aggregateByDate(
-                                    freshSalesLeadsData.rows.filter((row) => row.source == "Facebook Ads"),
-                                    "count"
-                                ).map((item) => item.param),
-                            },
-                        }}
-                        yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
-                        barWidth={20}
-                        height={640}
-                    />
-                }
-                metaQuery={freshSalesLeadsData.metaQuery}
-            />
-
-            <GenericCard
-                className="tw-col-span-12"
-                content={
-                    <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
-                        <AgGridReact rowData={freshSalesLeadsData.rows} columnDefs={[...freshsalesColumnDefinitions, {headerName: "Is Performance Lead?", valueGetter: (params) => isSourcePerformanceLead(params.data.source) ? "Yes" : "No"}]} defaultColDef={defaultColumnDefinitions} animateRows={true} enableRangeSelection={true} />
-                    </div>
-                }
-                metaQuery={freshSalesLeadsData.metaQuery}
+            <LeadsSection
+                adsData={adsData}
+                freshsalesLeadsData={freshsalesLeadsData}
+                shopifyData={shopifyData}
             />
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Orders</div>
@@ -777,6 +574,295 @@ export default function () {
     );
 }
 
+function FilterSection(props: {
+    businesses: Array<string>;
+    selectedCategories: Array<string>;
+    setSelectedCategories: React.Dispatch<React.SetStateAction<Array<string>>>;
+    products: Array<string>;
+    selectedProducts: Array<string>;
+    setSelectedProducts: React.Dispatch<React.SetStateAction<Array<string>>>;
+    platforms: Array<string>;
+    selectedPlatforms: Array<string>;
+    setSelectedPlatforms: React.Dispatch<React.SetStateAction<Array<string>>>;
+    campaigns: Array<string>;
+    selectedCampaigns: Array<string>;
+    setSelectedCampaigns: React.Dispatch<React.SetStateAction<Array<string>>>;
+    granularities: Array<string>;
+    selectedGranularity: string;
+    setSelectedGranularity: React.Dispatch<React.SetStateAction<string>>;
+    selectedMinDate: string;
+    setSelectedMinDate: React.Dispatch<React.SetStateAction<string>>;
+    selectedMaxDate: string;
+    setSelectedMaxDate: React.Dispatch<React.SetStateAction<string>>;
+}) {
+    return (
+        <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
+            <FancySearchableMultiSelect
+                label="Business"
+                options={props.businesses}
+                selectedOptions={props.selectedCategories}
+                setSelectedOptions={props.setSelectedCategories}
+                filterType={QueryFilterType.category}
+            />
+
+            <FancySearchableMultiSelect
+                label="Product"
+                options={props.products}
+                selectedOptions={props.selectedProducts}
+                setSelectedOptions={props.setSelectedProducts}
+                filterType={QueryFilterType.product}
+            />
+
+            <FancySearchableMultiSelect
+                label="Platform"
+                options={props.platforms}
+                selectedOptions={props.selectedPlatforms}
+                setSelectedOptions={props.setSelectedPlatforms}
+                filterType={QueryFilterType.platform}
+            />
+
+            <FancySearchableMultiSelect
+                label="Campaign"
+                options={props.campaigns}
+                selectedOptions={props.selectedCampaigns}
+                setSelectedOptions={props.setSelectedCampaigns}
+                filterType={QueryFilterType.campaign}
+            />
+
+            <FancySearchableSelect label="Granularity" options={props.granularities} selectedOption={props.selectedGranularity} setSelectedOption={props.setSelectedGranularity} />
+
+            <FancyCalendar label="Start Date" value={props.selectedMinDate} setValue={props.setSelectedMinDate} />
+
+            <FancyCalendar label="End Date" value={props.selectedMaxDate} setValue={props.setSelectedMaxDate} />
+
+            <div />
+
+            <Link
+                to={concatenateNonNullStringsWithAmpersand(
+                    `/business-insights?selected_granularity=${props.selectedGranularity}`,
+                    `min_date=${props.selectedMinDate}`,
+                    `max_date=${props.selectedMaxDate}`,
+                    props.selectedCampaigns.length == 0 ? null : `selected_campaigns=${JSON.stringify(props.selectedCampaigns)}`,
+                    props.selectedCategories.length == 0 ? null : `selected_categories=${JSON.stringify(props.selectedCategories)}`,
+                    props.selectedProducts.length == 0 ? null : `selected_products=${JSON.stringify(props.selectedProducts)}`,
+                    props.selectedPlatforms.length == 0 ? null : `selected_platforms=${JSON.stringify(props.selectedPlatforms)}`
+                )}
+                className="-tw-col-end-1 tw-bg-lp tw-p-2 tw-rounded-md"
+            >
+                Update Filters
+            </Link>
+        </div>
+    );
+}
+
+function LeadsSection({freshsalesLeadsData, adsData, shopifyData}) {
+    const defaultColumnDefinitions = {
+        sortable: true,
+        filter: true,
+    };
+
+    const performanceLeadsCount = {
+        count: freshsalesLeadsData.rows.filter((row) => isSourcePerformanceLead(row.source)).reduce((sum, item) => sum + item.count, 0),
+        metaInformation: "performance leads",
+    };
+
+    const facebookLeadsCount = {
+        count: freshsalesLeadsData.rows.filter((row) => row.source == "Facebook Ads").reduce((sum, item) => sum + item.count, 0),
+        metaInformation: "facebook leads",
+    };
+
+    const totalLeadsCount = {
+        metaInformation: `Performance Leads + Facebook Leads = ${numberToHumanFriendlyString(performanceLeadsCount.count)} + ${numberToHumanFriendlyString(facebookLeadsCount.count)}`,
+        count: performanceLeadsCount.count + facebookLeadsCount.count,
+    };
+
+    const performanceLeadsAmountSpent = {
+        amountSpent: adsData.rows.filter((row) => row.campaignName != "GJ_LeadGen_18May" && row.campaignName != "GJ_LeadGen_Mattress_10 May").reduce((sum, item) => sum + item.amountSpent, 0),
+    };
+
+    const facebookLeadsAmountSpent = {
+        amountSpent: adsData.rows.filter((row) => row.campaignName == "GJ_LeadGen_18May" || row.campaignName == "GJ_LeadGen_Mattress_10 May").reduce((sum, item) => sum + item.amountSpent, 0),
+    };
+
+    const performanceLeadsCpl = {
+        metaInformation: `Amount Spent / Leads Count | Performance = ${numberToHumanFriendlyString(performanceLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
+            performanceLeadsCount.count
+        )}`,
+        metaQuery: adsData.metaQuery,
+        cpl: performanceLeadsAmountSpent.amountSpent / performanceLeadsCount.count,
+    };
+
+    const facebookLeadsCpl = {
+        metaInformation: `Amount Spent / Leads Count | Facebook = ${numberToHumanFriendlyString(facebookLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(facebookLeadsCount.count)}`,
+        metaQuery: adsData.metaQuery,
+        cpl: facebookLeadsAmountSpent.amountSpent / facebookLeadsCount.count,
+    };
+
+    const performanceLeadsSales = {
+        netSales: shopifyData.rows
+            .filter((row) => row.source != "GJ_LeadGen_18May" && row.source != "GJ_LeadGen_Mattress_10 May" && row.source.match("^Freshsales - .* - Facebook Ads$") == null)
+            .reduce((sum, item) => sum + item.netSales, 0),
+    };
+
+    const facebookLeadsSales = {
+        netSales: shopifyData.rows
+            .filter((row) => row.source == "GJ_LeadGen_18May" || row.source == "GJ_LeadGen_Mattress_10 May" || row.source.match("^Freshsales - .* - Facebook Ads$") != null)
+            .reduce((sum, item) => sum + item.netSales, 0),
+    };
+
+     const performanceLeadsSpl = {
+        metaInformation: `Leads Sales / Leads Count | Performance = ${numberToHumanFriendlyString(performanceLeadsSales.netSales)} / ${numberToHumanFriendlyString(performanceLeadsCount.count)}`,
+        spl: performanceLeadsSales.netSales / performanceLeadsCount.count,
+    };
+
+    const facebookLeadsSpl = {
+        metaInformation: `Leads Sales / Leads Count | Facebook = ${numberToHumanFriendlyString(facebookLeadsSales.netSales)} / ${numberToHumanFriendlyString(facebookLeadsCount.count)}`,
+        spl: facebookLeadsSales.netSales / facebookLeadsCount.count,
+    };
+
+    const performanceLeadsAcos = {
+        metaInformation: `Amount Spent / Net Sales | Performance = ${numberToHumanFriendlyString(performanceLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
+            performanceLeadsSales.netSales
+        )}`,
+        acos: performanceLeadsAmountSpent.amountSpent / performanceLeadsSales.netSales,
+    };
+
+    const facebookLeadsAcos = {
+        metaInformation: `Amount Spent / Net Sales | Facebook = ${numberToHumanFriendlyString(facebookLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
+            facebookLeadsSales.netSales
+        )}`,
+        acos: facebookLeadsAmountSpent.amountSpent / facebookLeadsSales.netSales,
+    };
+
+   return (
+        <>
+            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Leads</div>
+
+            <Card information={numberToHumanFriendlyString(totalLeadsCount.count)} label="Total Leads" metaInformation={totalLeadsCount.metaInformation} className="tw-row-span-2 tw-col-span-4" />
+
+            <Card information={numberToHumanFriendlyString(performanceLeadsCount.count)} label="Performance Leads" metaInformation={performanceLeadsCount.metaInformation} className="tw-col-span-2" />
+
+            <Card
+                information={numberToHumanFriendlyString(performanceLeadsCpl.cpl, true)}
+                label="Performance Leads CPL"
+                metaInformation={performanceLeadsCpl.metaInformation}
+                metaQuery={performanceLeadsCpl.metaQuery}
+                className="tw-col-span-2"
+            />
+
+            <Card
+                information={numberToHumanFriendlyString(performanceLeadsSpl.spl, true)}
+                label="Performance Leads SPL"
+                metaInformation={performanceLeadsSpl.metaInformation}
+                className="tw-col-span-2"
+            />
+
+            <Card
+                information={numberToHumanFriendlyString(performanceLeadsAcos.acos, true, true, true)}
+                label="Performance Leads ACoS"
+                metaInformation={performanceLeadsAcos.metaInformation}
+                className="tw-col-span-2"
+            />
+
+            <Card information={numberToHumanFriendlyString(facebookLeadsCount.count)} label="Facebook Leads" metaInformation={facebookLeadsCount.metaInformation} className="tw-col-span-2" />
+
+            <Card
+                information={numberToHumanFriendlyString(facebookLeadsCpl.cpl, true)}
+                label="Facebook Leads CPL"
+                metaInformation={facebookLeadsCpl.metaInformation}
+                metaQuery={facebookLeadsCpl.metaQuery}
+                className="tw-col-span-2"
+            />
+
+            <Card information={numberToHumanFriendlyString(facebookLeadsSpl.spl, true)} label="Facebook Leads SPL" metaInformation={facebookLeadsSpl.metaInformation} className="tw-col-span-2" />
+
+            <Card
+                information={numberToHumanFriendlyString(facebookLeadsAcos.acos, true, true, true)}
+                label="Facebook Leads ACoS"
+                metaInformation={facebookLeadsAcos.metaInformation}
+                className="tw-col-span-2"
+            />
+
+            <GenericCard
+                className="tw-col-span-12"
+                content={
+                    <BarGraphComponent
+                        data={{
+                            x: aggregateByDate(
+                                freshsalesLeadsData.rows.filter((row) => row.source != "Facebook Ads"),
+                                "count"
+                            ).map((item) => item.date),
+                            y: {
+                                "Performance Leads": aggregateByDate(
+                                    freshsalesLeadsData.rows.filter((row) => row.source != "Facebook Ads"),
+                                    "count"
+                                ).map((item) => item.param),
+                                "Facebook Leads": aggregateByDate(
+                                    freshsalesLeadsData.rows.filter((row) => row.source == "Facebook Ads"),
+                                    "count"
+                                ).map((item) => item.param),
+                            },
+                        }}
+                        yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
+                        barWidth={20}
+                        height={640}
+                    />
+                }
+                metaQuery={freshsalesLeadsData.metaQuery}
+            />
+
+            <GenericCard
+                className="tw-col-span-12"
+                content={
+                    <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                        <AgGridReact
+                            rowData={freshsalesLeadsData.rows}
+                            columnDefs={[
+                                {headerName: "Lead Created At", valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date), filter: "agDateColumnFilter", comparator: agGridDateComparator},
+                                {headerName: "Performance Leads", field: "count"},
+                                {headerName: "Is Performance Lead?", valueGetter: (params) => (isSourcePerformanceLead(params.data.source) ? "Yes" : "No")},
+                            ]}
+                            defaultColDef={defaultColumnDefinitions}
+                            animateRows={true}
+                            enableRangeSelection={true}
+                        />
+                    </div>
+                }
+                metaQuery={freshsalesLeadsData.metaQuery}
+            />
+        </>
+    );
+}
+
 function isSourcePerformanceLead(source: string) {
     return source != "Facebook Ads";
+}
+
+function helperAggregateByDate(result, item) {
+    let date = result[item.date] || [];
+    date.push(item);
+    result[item.date] = date;
+    return result;
+}
+
+function helperAggregateByCategory(result, item) {
+    let category = result[item.category] || 0;
+    category = category + parseInt(item.netSales);
+    result[item.category] = category;
+    return result;
+}
+
+function aggregateByDate(array: Array<object>, param: string) {
+    const result = [];
+    let arrayAggregateByDate: any = array.reduce(helperAggregateByDate, {});
+    for (const item in arrayAggregateByDate) {
+        let paramValue = arrayAggregateByDate[item].reduce((total, sum) => total + sum[`${param}`], 0);
+        let date = item;
+
+        result.push({
+            param: paramValue,
+            date: date,
+        });
+    }
+    return result;
 }

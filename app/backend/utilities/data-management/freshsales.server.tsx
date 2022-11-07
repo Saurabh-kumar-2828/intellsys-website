@@ -1,10 +1,10 @@
 import {ColumnInfo} from "~/backend/data-management";
 import {distinct} from "~/utilities/utilities";
 
-const freshSalesApiBaseUrl = "https://livpuresmart.freshsales.io";
+const freshsalesApiBaseUrl = "https://livpuresmart.freshsales.io";
 
 async function getLeadInformation(leadId: number) {
-    const url = `${freshSalesApiBaseUrl}/api/leads/${leadId}?include=owner,creater,updater,source,lead_stage,lead_reason,territory,campaign,tasks,appointments,notes`;
+    const url = `${freshsalesApiBaseUrl}/api/leads/${leadId}?include=owner,creater,updater,source,lead_stage,lead_reason,territory,campaign,tasks,appointments,notes`;
     const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -34,7 +34,7 @@ async function getLeadsInformation(leadIds: Array<number>) {
 async function getLeadsOfCurrentPage(sortBy: string, sortType: string, pageNumber: Number) {
     try {
         const allLeadsViewId = "15000010043";
-        const urlToFetchLeads = `${freshSalesApiBaseUrl}/api/leads/view/${allLeadsViewId}?sort=${sortBy}&sort_type=${sortType}&page=${pageNumber}`;
+        const urlToFetchLeads = `${freshsalesApiBaseUrl}/api/leads/view/${allLeadsViewId}?sort=${sortBy}&sort_type=${sortType}&page=${pageNumber}`;
         const response = await fetch(urlToFetchLeads, {
             method: "GET",
             headers: {

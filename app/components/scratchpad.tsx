@@ -4,7 +4,7 @@ import {concatenateNonNullStringsWithSpaces, numberToHumanFriendlyString} from "
 import {Listbox} from "@headlessui/react";
 import { filterToHumanReadableString, filterToTextColor, ValueDisplayingCardInformationType } from "~/utilities/typeDefinitions";
 
-export function FancySearchableSelect(props: {id: string; className?: string; placeholder: string; options: Array<string>; label: string, selectedOption; setSelectedOption}) {
+export function FancySearchableSelect(props: {className?: string; options: Array<string>; label: string, selectedOption; setSelectedOption}) {
     return (
         <div className={props.className}>
             <Listbox value={props.selectedOption} onChange={props.setSelectedOption}>
@@ -26,7 +26,7 @@ export function FancySearchableSelect(props: {id: string; className?: string; pl
     );
 }
 
-export function FancySearchableMultiSelect(props: {id: string; className?: string; placeholder: string; options: Array<string>; label: string, selectedOptions; setSelectedOptions, filterType: QueryFilterType}) {
+export function FancySearchableMultiSelect(props: {className?: string; options: Array<string>; label: string, selectedOptions; setSelectedOptions, filterType: QueryFilterType}) {
     return (
         <div className={props.className}>
             <Listbox value={props.selectedOptions} onChange={props.setSelectedOptions} multiple>

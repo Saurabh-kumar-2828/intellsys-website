@@ -95,7 +95,7 @@ export async function get_shopifyData(
     }
 }
 
-export async function get_freshSalesData(
+export async function get_freshsalesData(
     selectedCategories: Array<string>,
     // selectedProducts: Array<string>,
     selectedPlatforms: Array<string>,

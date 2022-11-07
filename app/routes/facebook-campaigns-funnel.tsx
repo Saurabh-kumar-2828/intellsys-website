@@ -342,13 +342,13 @@ export default function () {
 
             <Tabs.Root defaultValue="1" className="tw-col-span-6">
                 <Tabs.List className="">
-                    <Tabs.Trigger value="1" className="tw-p-4 tw-bg-bg+1 radix-tab-active:tw-bg-lp zzz">
+                    <Tabs.Trigger value="1" className="lp-tab">
                         Impressions
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="2" className="tw-p-4 tw-bg-bg+1 radix-tab-active:tw-bg-lp zzz">
+                    <Tabs.Trigger value="2" className="lp-tab">
                         Clicks
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="3" className="tw-p-4 tw-bg-bg+1 radix-tab-active:tw-bg-lp zzz">
+                    <Tabs.Trigger value="3" className="lp-tab">
                         Amount Spent
                     </Tabs.Trigger>
                 </Tabs.List>

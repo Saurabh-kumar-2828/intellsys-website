@@ -14,4 +14,8 @@
     .tw-lp-button {
         @apply tw-bg-lp tw-text-fg hover:tw-brightness-125 disabled:tw-brightness-50 tw-p-4 disabled:tw-cursor-not-allowed;
     }
+
+    .lp-tab {
+        @apply tw-p-4 tw-bg-bg+1 radix-tab-active:tw-font-bold radix-tab-active:tw-text-white radix-tab-active:tw-shadow-[0_-2px_0_#ffffff_inset];
+    }
 }

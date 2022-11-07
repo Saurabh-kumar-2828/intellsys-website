@@ -436,10 +436,10 @@ export default function () {
 
             <Tabs.Root defaultValue="1" className="tw-col-span-12">
                 <Tabs.List className="">
-                    <Tabs.Trigger value="1" className="tw-p-4 tw-bg-bg+1 radix-tab-active:tw-bg-lp zzz">
+                    <Tabs.Trigger value="1" className="lp-tab">
                         Gross Revenue
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="2" className="tw-p-4 tw-bg-bg+1 radix-tab-active:tw-bg-lp zzz">
+                    <Tabs.Trigger value="2" className="lp-tab">
                         Net Revenue
                     </Tabs.Trigger>
                 </Tabs.List>

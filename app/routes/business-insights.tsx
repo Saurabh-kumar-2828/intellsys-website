@@ -1,28 +1,14 @@
 import type {LoaderFunction, MetaFunction} from "@remix-run/node";
+import * as Tabs from "@radix-ui/react-tabs";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";
 import {DateTime} from "luxon";
 import {useState} from "react";
 import {
-    get_r1_facebookLeadsAmountSpent,
-    get_r1_facebookLeadsCount,
-    get_r1_facebookLeadsCountTrend,
-    get_r1_facebookLeadsSales,
-    get_r1_performanceLeadsAmountSpent,
-    get_r1_performanceLeadsCount,
-    get_r1_performanceLeadsCountTrend,
-    get_r1_performanceLeadsSales,
-    get_r2_assistedOrdersCount,
-    get_r2_directOrdersCount,
-    get_r2_r3_assistedOrdersGrossRevenue,
-    get_r2_r3_directOrdersGrossRevenue,
-    get_r4_facebookAdsLiveCampaignsCount,
-    get_r4_facebookAdsRevenue,
-    get_r4_facebookAdsSpends,
-    get_r4_googleAdsLiveCampaignsCount,
-    get_r4_googleAdsRevenue,
-    get_r4_googleAdsSpends,
-    r3_ordersRevenuePivotedByAssistAndBusiness,
+    get_shopifyData,
+    get_freshSalesData,
+    get_adsData,
+    getOrdersRevenue,
 } from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
 import {BarGraphComponent} from "~/components/reusableComponents/barGraphComponent";
@@ -107,33 +93,10 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedMaxDate: maxDate,
         allProductInformation: await getAllProductInformation(),
         allSourceInformation: await getAllSourceToInformation(),
-        r1_performanceLeadsCount: await get_r1_performanceLeadsCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r1_facebookLeadsCount: await get_r1_facebookLeadsCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r1_performanceLeadsAmountSpent: await get_r1_performanceLeadsAmountSpent(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r1_facebookLeadsAmountSpent: await get_r1_facebookLeadsAmountSpent(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r1_performanceLeadsSales: await get_r1_performanceLeadsSales(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r1_facebookLeadsSales: await get_r1_facebookLeadsSales(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r1_performanceLeadsCountTrend: await get_r1_performanceLeadsCountTrend(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r1_facebookLeadsCountTrend: await get_r1_facebookLeadsCountTrend(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r2_directOrdersCount: await get_r2_directOrdersCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r2_assistedOrdersCount: await get_r2_assistedOrdersCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r2_r3_directOrdersGrossRevenue: await get_r2_r3_directOrdersGrossRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r2_r3_assistedOrdersGrossRevenue: await get_r2_r3_assistedOrdersGrossRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r3_ordersRevenuePivotedByAssistAndBusiness: await r3_ordersRevenuePivotedByAssistAndBusiness(
-            selectedCategories,
-            selectedProducts,
-            selectedPlatforms,
-            selectedCampaigns,
-            selectedGranularity,
-            minDate,
-            maxDate
-        ),
-        r4_facebookAdsSpends: await get_r4_facebookAdsSpends(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r4_googleAdsSpends: await get_r4_googleAdsSpends(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r4_facebookAdsLiveCampaignsCount: await get_r4_facebookAdsLiveCampaignsCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r4_googleAdsLiveCampaignsCount: await get_r4_googleAdsLiveCampaignsCount(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r4_facebookAdsRevenue: await get_r4_facebookAdsRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        r4_googleAdsRevenue: await get_r4_googleAdsRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        freshSalesLeadsData: await get_freshSalesData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        r3_ordersRevenue: await getOrdersRevenue(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        adsData: await get_adsData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        shopifyData: await get_shopifyData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
     });
 };
 
@@ -148,57 +111,141 @@ export default function () {
         appliedMaxDate,
         allProductInformation,
         allSourceInformation,
-        r1_performanceLeadsCount,
-        r1_facebookLeadsCount,
-        r1_performanceLeadsAmountSpent,
-        r1_facebookLeadsAmountSpent,
-        r1_performanceLeadsSales,
-        r1_facebookLeadsSales,
-        r1_performanceLeadsCountTrend,
-        r1_facebookLeadsCountTrend,
-        r2_directOrdersCount,
-        r2_assistedOrdersCount,
-        r2_r3_directOrdersGrossRevenue,
-        r2_r3_assistedOrdersGrossRevenue,
-        r3_ordersRevenuePivotedByAssistAndBusiness,
-        r4_facebookAdsSpends,
-        r4_googleAdsSpends,
-        r4_facebookAdsLiveCampaignsCount,
-        r4_googleAdsLiveCampaignsCount,
-        r4_facebookAdsRevenue,
-        r4_googleAdsRevenue,
+        freshSalesLeadsData,
+        r3_ordersRevenue,
+        adsData,
+        shopifyData,
     } = useLoaderData();
 
-    const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
+    function helperAggregateByDate(result, item){
+        let date= (result[item.date] || []);
+        date.push(item);
+        result[item.date] = date;
+        return result;
+    }
 
-    const r1_totalLeadsCount = {
-        metaInformation: `Performance Leads + Facebook Leads = ${numberToHumanFriendlyString(r1_performanceLeadsCount.count)} + ${numberToHumanFriendlyString(r1_facebookLeadsCount.count)}`,
-        count: r1_performanceLeadsCount.count + r1_facebookLeadsCount.count,
+    function aggregateByDate(array: Array<object>, param:string){
+        const result=[]
+        let arrayAggregateByDate : any = array.reduce(helperAggregateByDate,{});
+        for(const item in arrayAggregateByDate){
+            let paramValue = arrayAggregateByDate[item].reduce((total, sum) => total+ sum[`${param}`], 0);
+            let date = item;
+
+            result.push({
+                param: paramValue,
+                "date": date
+            });
+        }
+        return result;
+    }
+
+    //TO DO: correct its implementation
+    function match2(input: string, pattern: string){
+        return input.match(pattern)? null: pattern;
+    }
+
+    const adsDataGoogleSpends= aggregateByDate(adsData.rows.filter((row) => row.platform=='Google'), "amountSpent");
+    const adsDataFacebookSpends= aggregateByDate(adsData.rows.filter((row) => row.platform=='Facebook'), "amountSpent");
+
+    const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
+    const performanceLeadsCount = {
+        count: aggregateByDate(freshSalesLeadsData.rows.filter((row) => row.source!='Facebook Ads'), "count").reduce((sum, item) => sum + item.param, 0),
+        metaInformation: "performance leads",
     };
+
+
+
+    const facebookLeadsCount = {
+        count: freshSalesLeadsData.rows.filter((row) => row.source=='Facebook Ads').reduce((sum, item) => sum + item.count, 0),
+        metaInformation: "facebook leads",
+    };
+
+    const totalLeadsCount = {
+        metaInformation: `Performance Leads + Facebook Leads = ${numberToHumanFriendlyString(performanceLeadsCount.count)} + ${numberToHumanFriendlyString(facebookLeadsCount.count)}`,
+        count: performanceLeadsCount.count + facebookLeadsCount.count,
+    };
+
+    const directOrders = aggregateByDate(shopifyData.rows.filter((row) => row.isAssisted == false), "count");
+    const assistedOrders = aggregateByDate(shopifyData.rows.filter((row) => row.isAssisted == true), "count");
+    const directOrdersTotalCount = {
+        count: directOrders.reduce((sum, item) => sum + item.param, 0),
+    };
+
+    const assistedOrdersTotalCount = {
+        count: assistedOrders.reduce((sum, item) => sum + item.param, 0),
+    };
+
+    const r4_facebookAdsRevenue = {
+        netSales: shopifyData.rows.filter((row) => row.sourcePlatform=='Facebook' && row.netSales>0).reduce((sum, item) => sum + item.netSales, 0),
+    };
+
+    const r4_googleAdsRevenue = {
+        netSales: shopifyData.rows.filter((row) => row.sourcePlatform=='Google' && row.netSales>0).reduce((sum, item) => sum + item.netSales, 0),
+    };
+
+    const r1_performanceLeadsSales = {
+        netSales: shopifyData.rows.filter((row) => row.source !='GJ_LeadGen_18May' && row.source != 'GJ_LeadGen_Mattress_10 May' && row.source != match2(row.source, "/^Freshsales - .* - Facebook Ads$/")).reduce((sum, item) => sum + item.netSales, 0),
+
+    };
+
+    const r1_facebookLeadsSales = {
+        netSales: shopifyData.rows.filter((row) => row.source =='GJ_LeadGen_18May' || row.source == 'GJ_LeadGen_Mattress_10 May' || row.source == match2(row.source, "/^Freshsales - .* - Facebook Ads$/")).reduce((sum, item) => sum + item.netSales, 0),
+    };
+
+    const googleAdsSpends = {
+        amountSpent: adsDataGoogleSpends.reduce((sum, item) => sum + item.param, 0),
+    };
+
+    const facebookAdsSpends = {
+        amountSpent: adsDataFacebookSpends.reduce((sum, item) => sum + item.param, 0),
+    };
+
+    const r1_performanceLeadsAmountSpent = {
+        amountSpent: adsData.rows.filter((row) => row.campaignName != 'GJ_LeadGen_18May' && row.campaignName != 'GJ_LeadGen_Mattress_10 May').reduce((sum, item) => sum + item.amountSpent, 0),
+    }
+
+    const r1_facebookLeadsAmountSpent = {
+        amountSpent: adsData.rows.filter((row) => row.campaignName == 'GJ_LeadGen_18May' || row.campaignName == 'GJ_LeadGen_Mattress_10 May').reduce((sum, item) => sum + item.amountSpent, 0),
+    }
+
+    const r4_facebookAdsLiveCampaignsCount = {
+        count: distinct(adsData.rows.filter((row) => row.platform == 'Facebook' && row.amountSpent>0).map((row) => row.campaignName)).length,
+    }
+
+    const r4_googleAdsLiveCampaignsCount = {
+        count: distinct(adsData.rows.filter((row) => row.platform == 'Google' && row.amountSpent>0).map((row) => row.campaignName)).length,
+    }
+
+    const directOrdersGrossRevenue = {
+        netSales: r3_ordersRevenue.rows.filter((row) => row.isAssisted == false).reduce((sum, item) => sum + item.netSales, 0),
+    };
+
+    const assistedOrdersGrossRevenue = {
+        netSales: r3_ordersRevenue.rows.filter((row) => row.isAssisted == true).reduce((sum, item) => sum + item.netSales, 0),
+    };
+
     const r1_performanceLeadsCpl = {
         metaInformation: `Amount Spent / Leads Count | Performance = ${numberToHumanFriendlyString(r1_performanceLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
-            r1_performanceLeadsCount.count
+            performanceLeadsCount.count
         )}`,
-        metaQuery: r1_performanceLeadsAmountSpent.metaQuery,
-        cpl: r1_performanceLeadsAmountSpent.amountSpent / r1_performanceLeadsCount.count,
+        metaQuery: adsData.metaQuery,
+        cpl: r1_performanceLeadsAmountSpent.amountSpent / performanceLeadsCount.count,
     };
     const r1_facebookLeadsCpl = {
-        metaInformation: `Amount Spent / Leads Count | Facebook = ${numberToHumanFriendlyString(r1_facebookLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
-            r1_facebookLeadsCount.count
-        )}`,
-        metaQuery: r1_facebookLeadsAmountSpent.metaQuery,
-        cpl: r1_facebookLeadsAmountSpent.amountSpent / r1_facebookLeadsCount.count,
+        metaInformation: `Amount Spent / Leads Count | Facebook = ${numberToHumanFriendlyString(r1_facebookLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(facebookLeadsCount.count)}`,
+        metaQuery: adsData.metaQuery,
+        cpl: r1_facebookLeadsAmountSpent.amountSpent / facebookLeadsCount.count,
     };
     const r1_performanceLeadsSpl = {
-        metaInformation: `Leads Sales / Leads Count | Performance = ${numberToHumanFriendlyString(r1_performanceLeadsSales.netSales)} / ${numberToHumanFriendlyString(r1_performanceLeadsCount.count)}`,
-        spl: r1_performanceLeadsSales.netSales / r1_performanceLeadsCount.count,
+        metaInformation: `Leads Sales / Leads Count | Performance = ${numberToHumanFriendlyString(r1_performanceLeadsSales.netSales)} / ${numberToHumanFriendlyString(performanceLeadsCount.count)}`,
+        spl: r1_performanceLeadsSales.netSales / performanceLeadsCount.count,
     };
     const r1_facebookLeadsSpl = {
-        metaInformation: `Leads Sales / Leads Count | Facebook = ${numberToHumanFriendlyString(r1_facebookLeadsSales.netSales)} / ${numberToHumanFriendlyString(r1_facebookLeadsCount.count)}`,
-        spl: r1_facebookLeadsSales.netSales / r1_facebookLeadsCount.count,
+        metaInformation: `Leads Sales / Leads Count | Facebook = ${numberToHumanFriendlyString(r1_facebookLeadsSales.netSales)} / ${numberToHumanFriendlyString(facebookLeadsCount.count)}`,
+        spl: r1_facebookLeadsSales.netSales / facebookLeadsCount.count,
     };
     const r1_performanceLeadsAcos = {
-        metaInformation: `Amount Spent / Net Sales | Facebook = ${numberToHumanFriendlyString(r1_performanceLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
+        metaInformation: `Amount Spent / Net Sales | Performance = ${numberToHumanFriendlyString(r1_performanceLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
             r1_performanceLeadsSales.netSales
         )}`,
         acos: r1_performanceLeadsAmountSpent.amountSpent / r1_performanceLeadsSales.netSales,
@@ -211,30 +258,24 @@ export default function () {
     };
 
     const r2_totalOrdersCount = {
-        metaInformation: `Direct Orders + Assisted Orders = ${numberToHumanFriendlyString(r2_directOrdersCount.count)} + ${numberToHumanFriendlyString(r2_assistedOrdersCount.count)}`,
-        count: r2_directOrdersCount.count + r2_assistedOrdersCount.count,
+        metaInformation: `Direct Orders + Assisted Orders = ${numberToHumanFriendlyString(directOrdersTotalCount.count)} + ${numberToHumanFriendlyString(assistedOrdersTotalCount.count)}`,
+        count: directOrdersTotalCount.count + assistedOrdersTotalCount.count,
     };
     const r2_directOrdersAov = {
-        metaInformation: `Orders Revenue / Orders Count | Direct = ${numberToHumanFriendlyString(r2_r3_directOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(
-            r2_directOrdersCount.count
-        )}`,
-        aov: r2_r3_directOrdersGrossRevenue.netSales / r2_directOrdersCount.count,
+        metaInformation: `Orders Revenue / Orders Count | Direct = ${numberToHumanFriendlyString(directOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(directOrdersTotalCount.count)}`,
+        aov: directOrdersGrossRevenue.netSales / directOrdersTotalCount.count,
     };
     const r2_assistedOrdersAov = {
-        metaInformation: `Orders Revenue / Orders Count | Assisted = ${numberToHumanFriendlyString(r2_r3_assistedOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(
-            r2_assistedOrdersCount.count
-        )}`,
-        aov: r2_r3_assistedOrdersGrossRevenue.netSales / r2_assistedOrdersCount.count,
+        metaInformation: `Orders Revenue / Orders Count | Assisted = ${numberToHumanFriendlyString(assistedOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(assistedOrdersTotalCount.count)}`,
+        aov: assistedOrdersGrossRevenue.netSales / assistedOrdersTotalCount.count,
     };
     const r2_directOrdersDrr = {
-        metaInformation: `Orders Revenue / Number of Days | Direct = ${numberToHumanFriendlyString(r2_r3_directOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`,
-        drr: r2_r3_directOrdersGrossRevenue.netSales / numberOfSelectedDays,
+        metaInformation: `Orders Revenue / Number of Days | Direct = ${numberToHumanFriendlyString(directOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`,
+        drr: directOrdersGrossRevenue.netSales / numberOfSelectedDays,
     };
     const r2_assistedOrdersDrr = {
-        metaInformation: `Orders Revenue / Number of Days | Assisted = ${numberToHumanFriendlyString(r2_r3_assistedOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(
-            numberOfSelectedDays
-        )}`,
-        drr: r2_r3_assistedOrdersGrossRevenue.netSales / numberOfSelectedDays,
+        metaInformation: `Orders Revenue / Number of Days | Assisted = ${numberToHumanFriendlyString(assistedOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`,
+        drr: assistedOrdersGrossRevenue.netSales / numberOfSelectedDays,
     };
 
     function getNetRevenue(row): number {
@@ -261,11 +302,11 @@ export default function () {
     // const r3_assistedOrdersNetRevenue = r2_r3_assistedOrdersGrossRevenue / r2_assistedOrdersCount;
     const r3_directOrdersNetRevenue = {
         metaInformation: "",
-        netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter((row) => row.isAssisted == false).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
+        netRevenue: r3_ordersRevenue.rows.filter((row) => row.isAssisted == false).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
     };
     const r3_assistedOrdersNetRevenue = {
         metaInformation: "",
-        netRevenue: r3_ordersRevenuePivotedByAssistAndBusiness.rows.filter((row) => row.isAssisted == true).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
+        netRevenue: r3_ordersRevenue.rows.filter((row) => row.isAssisted == true).reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
     };
     const r3_totalNetRevenue = {
         metaInformation: "",
@@ -273,24 +314,24 @@ export default function () {
     };
 
     const r4_netSpends = {
-        metaInformation: `Facebook Ads Spends + Google Ads Spends = ${r4_facebookAdsSpends.amountSpent} + ${r4_googleAdsSpends.amountSpent}`,
-        amountSpent: r4_facebookAdsSpends.amountSpent + r4_googleAdsSpends.amountSpent,
+        metaInformation: `Facebook Ads Spends + Google Ads Spends = ${facebookAdsSpends.amountSpent} + ${googleAdsSpends.amountSpent}`,
+        amountSpent: facebookAdsSpends.amountSpent + googleAdsSpends.amountSpent,
     };
     const r4_facebookAdsDailySpend = {
-        metaInformation: `Total Spend / Number of Days | Facebook = ${r4_facebookAdsSpends.amountSpent} / ${numberOfSelectedDays}`,
-        amountSpent: r4_facebookAdsSpends.amountSpent / numberOfSelectedDays,
+        metaInformation: `Total Spend / Number of Days | Facebook = ${facebookAdsSpends.amountSpent} / ${numberOfSelectedDays}`,
+        amountSpent: facebookAdsSpends.amountSpent / numberOfSelectedDays,
     };
     const r4_googleAdsDailySpend = {
-        metaInformation: `Total Spend / Number of Days | Google = ${r4_googleAdsSpends.amountSpent} / ${numberOfSelectedDays}`,
-        amountSpent: r4_googleAdsSpends.amountSpent / numberOfSelectedDays,
+        metaInformation: `Total Spend / Number of Days | Google = ${googleAdsSpends.amountSpent} / ${numberOfSelectedDays}`,
+        amountSpent: googleAdsSpends.amountSpent / numberOfSelectedDays,
     };
     const r4_facebookAdsAcos = {
-        metaInformation: `Total Spend / Revenue | Facebook = ${r4_facebookAdsSpends.amountSpent} / ${r4_facebookAdsRevenue.netSales}`,
-        acos: r4_facebookAdsSpends.amountSpent / r4_facebookAdsRevenue.netSales,
+        metaInformation: `Total Spend / Revenue | Facebook = ${facebookAdsSpends.amountSpent} / ${r4_facebookAdsRevenue.netSales}`,
+        acos: facebookAdsSpends.amountSpent / r4_facebookAdsRevenue.netSales,
     };
     const r4_googleAdsAcos = {
-        metaInformation: `Total Spend / Revenue | Google = ${r4_googleAdsSpends.amountSpent} / ${r4_googleAdsRevenue.netSales}`,
-        acos: r4_googleAdsSpends.amountSpent / r4_googleAdsRevenue.netSales,
+        metaInformation: `Total Spend / Revenue | Google = ${googleAdsSpends.amountSpent} / ${r4_googleAdsRevenue.netSales}`,
+        acos: googleAdsSpends.amountSpent / r4_googleAdsRevenue.netSales,
     };
 
     const r5_marketingAcos = "?";
@@ -367,20 +408,9 @@ export default function () {
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Leads</div>
 
-            <Card
-                information={numberToHumanFriendlyString(r1_totalLeadsCount.count)}
-                label="Total Leads"
-                metaInformation={r1_totalLeadsCount.metaInformation}
-                className="tw-row-span-2 tw-col-span-4"
-            />
+            <Card information={numberToHumanFriendlyString(totalLeadsCount.count)} label="Total Leads" metaInformation={totalLeadsCount.metaInformation} className="tw-row-span-2 tw-col-span-4" />
 
-            <ValueDisplayingCard
-                queryInformation={r1_performanceLeadsCount}
-                contentExtractor={(queryInformation) => queryInformation.count}
-                type={ValueDisplayingCardInformationType.integer}
-                label="Performance Leads"
-                className="tw-col-span-2"
-            />
+            <Card information={numberToHumanFriendlyString(performanceLeadsCount.count)} label="Performance Leads" metaInformation={performanceLeadsCount.metaInformation} className="tw-col-span-2" />
 
             <Card
                 information={numberToHumanFriendlyString(r1_performanceLeadsCpl.cpl, true)}
@@ -404,7 +434,7 @@ export default function () {
                 className="tw-col-span-2"
             />
 
-            <Card information={numberToHumanFriendlyString(r1_facebookLeadsCount.count)} label="Facebook Leads" metaQuery={r1_facebookLeadsCount.metaQuery} className="tw-col-span-2" />
+            <Card information={numberToHumanFriendlyString(facebookLeadsCount.count)} label="Facebook Leads" metaInformation={facebookLeadsCount.metaInformation} className="tw-col-span-2" />
 
             <Card
                 information={numberToHumanFriendlyString(r1_facebookLeadsCpl.cpl, true)}
@@ -423,30 +453,15 @@ export default function () {
                 className="tw-col-span-2"
             />
 
-            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg+1 tw-grid tw-items-center tw-h-[40rem]">
-                <BarGraphComponent
-                    data={{
-                        x: r1_performanceLeadsCountTrend.rows.map(row => item.date),
-                        y: {
-                            "Performance Leads": r1_performanceLeadsCountTrend.rows.map(row => row.count),
-                            "Facebook Leads": r1_facebookLeadsCountTrend.rows.map(row => row.count),
-                        },
-                    }}
-                    yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
-                    barWidth={20}
-                    height={640}
-                />
-            </div> */}
-
             <GenericCard
                 className="tw-col-span-12"
                 content={
                     <BarGraphComponent
                         data={{
-                            x: r1_performanceLeadsCountTrend.rows.map((item) => item.date),
+                            x: freshSalesLeadsData.rows.filter((row) => row.source=='Facebook Ads').map((item) => item.date),
                             y: {
-                                "Performance Leads": r1_performanceLeadsCountTrend.rows.map((item) => item.count),
-                                "Facebook Leads": r1_facebookLeadsCountTrend.rows.map((item) => item.count),
+                                "Performance Leads": aggregateByDate(freshSalesLeadsData.rows.filter((row) => row.source!='Facebook Ads'), "count").map((item) => item.param),
+                                "Facebook Leads": freshSalesLeadsData.rows.filter((row) => row.source=='Facebook Ads').map((item) => item.count),
                             },
                         }}
                         yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
@@ -454,7 +469,7 @@ export default function () {
                         height={640}
                     />
                 }
-                metaQuery={r1_performanceLeadsCountTrend.metaQuery}
+                metaQuery={freshSalesLeadsData.metaQuery}
             />
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Orders</div>
@@ -466,7 +481,7 @@ export default function () {
                 className="tw-row-span-2 tw-col-span-4"
             />
 
-            <Card information={numberToHumanFriendlyString(r2_directOrdersCount.count)} label="Direct Orders" metaQuery={r2_directOrdersCount.metaQuery} className="tw-col-span-2" />
+            <Card information={numberToHumanFriendlyString(directOrdersTotalCount.count)} label="Direct Orders" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />
 
             <Card information={numberToHumanFriendlyString(r2_directOrdersAov.aov, true)} label="AOV" metaInformation={r2_directOrdersAov.metaInformation} className="tw-col-span-2" />
 
@@ -474,7 +489,7 @@ export default function () {
 
             <div className="tw-col-span-2" />
 
-            <Card information={numberToHumanFriendlyString(r2_assistedOrdersCount.count)} label="Assisted Orders" metaQuery={r2_assistedOrdersCount.metaQuery} className="tw-col-span-2" />
+            <Card information={numberToHumanFriendlyString(assistedOrdersTotalCount.count)} label="Assisted Orders" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />
 
             <Card information={numberToHumanFriendlyString(r2_assistedOrdersAov.aov, true)} label="AOV" metaInformation={r2_assistedOrdersAov.metaInformation} className="tw-col-span-2" />
 
@@ -482,20 +497,24 @@ export default function () {
 
             <div className="tw-col-span-2" />
 
-            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg+1 tw-grid tw-items-center tw-h-[40rem]">
-                <BarGraphComponent
-                    data={{
-                        x: r1_performanceLeadsCountTrend.map(row => row.date),
-                        y: {
-                            "Dummy 1": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(rowIndex * 2 * 3.141 / 20)),
-                            "Dummy 2": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(0.5 + rowIndex * 2 * 3.141 / 20)),
-                        },
-                    }}
-                    yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
-                    barWidth={40}
-                    height={640}
-                />
-            </div> */}
+            <GenericCard
+                className="tw-col-span-12"
+                content={
+                    <BarGraphComponent
+                        data={{
+                            x: directOrders.map((item) => item.date, 0),
+                            y: {
+                                "Direct Orders": directOrders.map((item) => item.param),
+                                "Assisted Orders": assistedOrders.map((item) => item.param),
+                            },
+                        }}
+                        yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
+                        barWidth={20}
+                        height={640}
+                    />
+                }
+                metaQuery={shopifyData.metaQuery}
+            />
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Revenue</div>
 
@@ -506,12 +525,7 @@ export default function () {
                 className="tw-row-span-2 tw-col-span-4"
             />
 
-            <Card
-                information={numberToHumanFriendlyString(r2_r3_directOrdersGrossRevenue.netSales, true)}
-                label="Direct Gross Revenue"
-                metaQuery={r2_r3_directOrdersGrossRevenue.metaQuery}
-                className="tw-col-span-2"
-            />
+            <Card information={numberToHumanFriendlyString(directOrdersGrossRevenue.netSales, true)} label="Direct Gross Revenue" metaQuery={r3_ordersRevenue.metaQuery} className="tw-col-span-2" />
 
             <Card
                 information={numberToHumanFriendlyString(r3_directOrdersNetRevenue.netRevenue, true)}
@@ -525,9 +539,9 @@ export default function () {
             <div className="tw-col-span-2" />
 
             <Card
-                information={numberToHumanFriendlyString(r2_r3_assistedOrdersGrossRevenue.netSales, true)}
+                information={numberToHumanFriendlyString(assistedOrdersGrossRevenue.netSales, true)}
                 label="Assisted Gross Revenue"
-                metaQuery={r2_r3_assistedOrdersGrossRevenue.metaQuery}
+                metaQuery={r3_ordersRevenue.metaQuery}
                 className="tw-col-span-2"
             />
 
@@ -542,31 +556,69 @@ export default function () {
 
             <div className="tw-col-span-2" />
 
-            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg+1 tw-grid tw-items-center tw-h-[40rem]">
-                <BarGraphComponent
-                    data={{
-                        x: r1_performanceLeadsCountTrend.map(row => row.date),
-                        y: {
-                            "Dummy 1": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(rowIndex * 2 * 3.141 / 20)),
-                            "Dummy 2": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(0.5 + rowIndex * 2 * 3.141 / 20)),
-                       },
-                    }}
-                    yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
-                    barWidth={40}
-                    height={640}
-                />
-            </div> */}
+            <Tabs.Root defaultValue="1" className="tw-col-span-6">
+                <Tabs.List className="">
+                    <Tabs.Trigger value="1" className="tw-p-4 tw-bg-bg+1 radix-tab-active:tw-bg-lp zzz">
+                        Gross Revenue
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="2" className="tw-p-4 tw-bg-bg+1 radix-tab-active:tw-bg-lp zzz">
+                        Net Revenue
+                    </Tabs.Trigger>
+                </Tabs.List>
+                <Tabs.Content value="1">
+                    <GenericCard
+                        className="tw-col-span-12"
+                        content={
+                            <BarGraphComponent
+                                data={{
+                                    x: r3_ordersRevenue.rows.filter((row) => row.isAssisted == false).map((item) => item.date),
+
+                                    y: {
+                                        "Direct Revenue": r3_ordersRevenue.rows.filter((row) => row.isAssisted == false).map((item) => item.netSales),
+                                        "Assisted Revenue": r3_ordersRevenue.rows.filter((row) => row.isAssisted == true).map((item) => item.netSales),
+                                    },
+                                }}
+                                yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
+                                barWidth={20}
+                                height={640}
+                            />
+                        }
+                        metaQuery={adsData.metaQuery}
+                    />
+                </Tabs.Content>
+                <Tabs.Content value="2">
+                    <GenericCard
+                        className="tw-col-span-6"
+                        content={
+                            <BarGraphComponent
+                                data={{
+                                    x: r3_ordersRevenue.rows.filter((row) => row.isAssisted == true).map((item) => item.date),
+                                    y: {
+                                        "Direct Revenue": r3_ordersRevenue.rows.filter((row) => row.isAssisted == false).map((item) => getNetRevenue(item)),
+                                        "Assisted Revenue": r3_ordersRevenue.rows.filter((row) => row.isAssisted == true).map((item) => getNetRevenue(item)),
+                                    },
+                                }}
+                                yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
+                                barWidth={20}
+                                height={640}
+                            />
+                        }
+                        metaQuery={r3_ordersRevenue.metaQuery}
+                        label="Clicks per Campaign"
+                    />
+                </Tabs.Content>
+            </Tabs.Root>
 
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Spend</div>
 
             <Card information={numberToHumanFriendlyString(r4_netSpends.amountSpent)} label="Net Spend" metaInformation={r4_netSpends.metaInformation} className="tw-row-span-2 tw-col-span-4" />
 
-            <Card information={numberToHumanFriendlyString(r4_facebookAdsSpends.amountSpent)} label="Facebook Ads" metaQuery={r4_facebookAdsSpends.metaQuery} className="tw-col-span-2" />
+            <Card information={numberToHumanFriendlyString(facebookAdsSpends.amountSpent)} label="Facebook Ads" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
 
             <Card
                 information={numberToHumanFriendlyString(r4_facebookAdsLiveCampaignsCount.count)}
                 label="Live Campaigns"
-                metaQuery={r4_facebookAdsLiveCampaignsCount.metaQuery}
+                metaQuery={adsData.metaQuery}
                 className="tw-col-span-2"
             />
 
@@ -579,12 +631,12 @@ export default function () {
 
             <Card information={numberToHumanFriendlyString(r4_facebookAdsAcos.acos, true, true, true)} label="ACoS" metaInformation={r4_facebookAdsAcos.metaInformation} className="tw-col-span-2" />
 
-            <Card information={numberToHumanFriendlyString(r4_googleAdsSpends.amountSpent)} label="Google Ads" metaQuery={r4_googleAdsSpends.metaQuery} className="tw-col-span-2" />
+            <Card information={numberToHumanFriendlyString(googleAdsSpends.amountSpent)} label="Google Ads" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
 
             <Card
                 information={numberToHumanFriendlyString(r4_googleAdsLiveCampaignsCount.count)}
                 label="Live Campaigns"
-                metaQuery={r4_googleAdsLiveCampaignsCount.metaQuery}
+                metaQuery={adsData.metaQuery}
                 className="tw-col-span-2"
             />
 
@@ -597,20 +649,24 @@ export default function () {
 
             <Card information={numberToHumanFriendlyString(r4_googleAdsAcos.acos, true, true, true)} label="ACoS" metaInformation={r4_googleAdsAcos.metaInformation} className="tw-col-span-2" />
 
-            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg+1 tw-grid tw-items-center tw-h-[40rem]">
-                <BarGraphComponent
-                    data={{
-                        x: r1_performanceLeadsCountTrend.map(row => row.date),
-                        y: {
-                            "Dummy 1": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(rowIndex * 2 * 3.141 / 20)),
-                            "Dummy 2": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(0.5 + rowIndex * 2 * 3.141 / 20)),
-                        },
-                    }}
-                    yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
-                    barWidth={40}
-                    height={640}
-                />
-            </div> */}
+            <GenericCard
+                className="tw-col-span-12"
+                content={
+                    <BarGraphComponent
+                        data={{
+                            x: adsDataGoogleSpends.map((item) => item.date),
+                            y: {
+                                "GoogleAds Spends": adsDataGoogleSpends.map((item) => item.param,),
+                                "FacebookAds Spends": adsDataFacebookSpends.map((item) => item.param),
+                            },
+                        }}
+                        yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
+                        barWidth={20}
+                        height={640}
+                    />
+                }
+                metaQuery={adsData.metaQuery}
+            />
 
             {/* <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">ACoS</div>
 
@@ -649,3 +705,7 @@ export default function () {
         </div>
     );
 }
+
+
+
+

@@ -7,8 +7,7 @@ import {googleAdsRawColumnInfos} from "~/backend/utilities/data-management/googl
 import {shopifyTableColumnInfos} from "~/backend/utilities/data-management/shopify.server";
 import {websitePopupFormResponsesRawColumnInfos} from "~/backend/utilities/data-management/websitePopupFormResponses.server";
 import {freshsalesColumnInfos, ingestDataFromFreshsalesApi} from "~/backend/utilities/data-management/freshsales.server";
-import {facebookAdsRawColumnInfos} from "~/backend/utilities/data-management/facebookAds.server";
-import {ingestDataFromFacebookOnFormsApi} from "~/backend/utilities/data-management/facebookOnFormAds.server";
+import {facebookAdsRawColumnInfos, ingestDataFromFacebookApi} from "~/backend/utilities/data-management/facebookAds.server";
 
 export async function fullRefresh(): Promise<void> {
     try {
@@ -246,16 +245,8 @@ export async function processTruncate(table: Table): Promise<void> {
 }
 
 export async function processIngestDataFromApi(table: Table, date: string): Promise<void> {
-    // if (table == Table.facebookAdsRaw) {
-    //     await truncateTable("facebook_ads_raw");
     if (table == Table.facebookAdsRaw) {
-        await ingestDataFromFacebookOnFormsApi(date);
-    } else if (table == Table.freshsalesLeadsMattressRaw) {
-        await truncateTable("freshsales_leads_mattress_raw");
-    } else if (table == Table.freshsalesLeadsNonMattressRaw) {
-        await truncateTable("freshsales_leads_non_mattress_raw");
-    } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
-        await truncateTable("freshsales_leads_water_purifier_raw");
+        await ingestDataFromFacebookApi(date);
     // TODO: Un-deprecate
     // if (table == Table.freshsalesLeadsRaw) {
     //     await ingestDataFromFreshsalesApi(date);

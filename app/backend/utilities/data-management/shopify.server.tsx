@@ -1,10 +1,8 @@
-import { ColumnInfo } from "~/backend/data-management";
-import { shopifyQuery } from "../api-integration-utilities/shopifyQuery";
-import { delay } from "~/utilities/utilities";
-
+import {ColumnInfo} from "~/backend/data-management";
+import {delay} from "~/utilities/utilities";
+import {shopifyQuery} from "../api-integration-utilities/shopifyQuery";
 
 const shopifyApiBaseUrl = "https://livpuresleep.myshopify.com/admin/api/2022-10/graphql.json";
-
 
 async function getShopifyData(minDate: string, maxDate: string = "2030-10-2", numProducts: number, endCursor: string | null): Promise<Array<object>> {
     const response = await fetch(shopifyApiBaseUrl, {
@@ -17,7 +15,7 @@ async function getShopifyData(minDate: string, maxDate: string = "2030-10-2", nu
         body: JSON.stringify({
             query: shopifyQuery,
             variables: {
-                updated_at: "updated_at:>" + minDate + " " + "updated_at:<" + maxDate,
+                updated_at: `updated_at:>${minDate} updated_at:<${maxDate}`,
                 numProducts: numProducts,
                 cursor: endCursor ?? null,
             },
@@ -43,8 +41,8 @@ export async function ingestDataFromShopifyApi(minDate: string, maxDate: string 
     try {
         const orders: Array<object> = [];
         let orderInfo = await getShopifyData(minDate, maxDate, 1, null);
-        if(orderInfo.data.orders.edges[0].node.lineItems.pageInfo.hasNextPage){
-            throw "Lineitems exceeded!"
+        if (orderInfo.data.orders.edges[0].node.lineItems.pageInfo.hasNextPage) {
+            throw "Lineitems exceeded!";
         }
         orders.push(...orderInfo.data.orders.edges!);
         let pageNo = 1;
@@ -54,8 +52,8 @@ export async function ingestDataFromShopifyApi(minDate: string, maxDate: string 
             }
             orderInfo = await getShopifyData(minDate, maxDate, 1, orderInfo.data.orders.pageInfo.endCursor);
             delay(1000);
-            if(orderInfo.data.orders.edges[0].node.lineItems.pageInfo.hasNextPage){
-                throw "Lineitems exceeded!"
+            if (orderInfo.data.orders.edges[0].node.lineItems.pageInfo.hasNextPage) {
+                throw "Lineitems exceeded!";
             }
             orders.push(...orderInfo.data.orders.edges!);
             pageNo++;
@@ -68,7 +66,6 @@ export async function ingestDataFromShopifyApi(minDate: string, maxDate: string 
         throw e;
     }
 }
-
 
 export const shopifyTableColumnInfos: Array<ColumnInfo> = [
     {tableColumn: "hour", csvColumn: "hour"},

@@ -2,7 +2,6 @@ import {ColumnInfo} from "~/backend/data-management";
 const facebookApiBaseUrl = "https://graph.facebook.com/";
 
 function filterFbResponseOnDate(dataFromFacebookApi: any, date: string) {
-
     const data = dataFromFacebookApi.filter((campaign) => campaign.created_time >= date);
 
     const dates = dataFromFacebookApi.map((campaign) => campaign.created_time);

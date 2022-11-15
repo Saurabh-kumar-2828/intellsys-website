@@ -511,7 +511,7 @@ export default function () {
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                     <input type="text" name="table" value={Table.shopifySalesRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
-                    <button className="tw-lp-button" disabled>
+                    <button className="tw-lp-button" >
                         Fetch Data From API
                     </button>
                 </Form>

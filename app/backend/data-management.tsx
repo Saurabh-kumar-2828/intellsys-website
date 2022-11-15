@@ -4,7 +4,7 @@ import {execute} from "~/backend/utilities/databaseManager.server";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 import {ingestDataFromTypeformMattressApi, ingestDataFromTypeformWaterPurifierApi} from "~/backend/utilities/data-management/typeform.server";
 import {googleAdsRawColumnInfos} from "~/backend/utilities/data-management/googleAds.server";
-import {shopifyTableColumnInfos} from "~/backend/utilities/data-management/shopify.server";
+import {ingestDataFromShopifyApi, shopifyTableColumnInfos} from "~/backend/utilities/data-management/shopify.server";
 import {websitePopupFormResponsesRawColumnInfos} from "~/backend/utilities/data-management/websitePopupFormResponses.server";
 import {freshsalesColumnInfos, ingestDataFromFreshsalesApi} from "~/backend/utilities/data-management/freshsales.server";
 import {facebookAdsRawColumnInfos, ingestDataFromFacebookApi} from "~/backend/utilities/data-management/facebookAds.server";
@@ -252,8 +252,8 @@ export async function processIngestDataFromApi(table: Table, date: string): Prom
     //     await ingestDataFromFreshsalesApi(date);
     // } else if (table == Table.googleAdsRaw) {
     //     await truncateTable("google_ads_raw");
-    // } else if (table == Table.shopifySalesRaw) {
-    //     await truncateTable("shopify_sales_raw");
+    } else if (table == Table.shopifySalesRaw) {
+        await ingestDataFromShopifyApi(date);
     } else if (table == Table.typeformResponsesMattressRaw) {
         await ingestDataFromTypeformMattressApi(date);
     } else if (table == Table.typeformResponsesWaterPurifierRaw) {

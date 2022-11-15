@@ -34,7 +34,7 @@ export async function ingestDataFromFacebookApi(date: string):Promise<Array<obje
 
     try {
         let campaignInfo = await getFacebookData(5, null);
-        let filteredResponse = await filterFbResponseOnDate(campaignInfo.data, date);
+        let filteredResponse = filterFbResponseOnDate(campaignInfo.data, date);
 
         allCampaigns.push(...filteredResponse.filterData!);
         while ("next" in campaignInfo.paging) {

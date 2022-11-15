@@ -227,6 +227,7 @@ export async function processTruncate(table: Table): Promise<void> {
         await truncateTable("freshsales_leads_non_mattress_raw");
     } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
         await truncateTable("freshsales_leads_water_purifier_raw");
+    // TODO: Un-deprecate
     // } else if (table == Table.freshsalesLeadsRaw) {
     //     await truncateTable("freshsales_leads_raw");
     } else if (table == Table.googleAdsRaw) {

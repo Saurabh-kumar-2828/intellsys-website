@@ -2,24 +2,33 @@ import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node"
 import * as Tabs from "@radix-ui/react-tabs";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";
-import {DateTime} from "luxon";
+import {DateTime, Info} from "luxon";
+import csvDownload from "json-to-csv-export";
+import {Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement} from "chart.js";
+import {Bar, Line} from "react-chartjs-2";
 import React, {useEffect, useState} from "react";
-import {get_shopifyData, get_freshsalesData, get_adsData} from "~/backend/business-insights";
+import {getShopifyData, getFreshsalesData, getAdsData} from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
-import {BarGraphComponent} from "~/components/reusableComponents/barGraphComponent";
 import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
 import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
     agGridDateComparator,
     concatenateNonNullStringsWithAmpersand,
-    dateToMediumMediumEnFormat,
+    DateFilterSection,
+    dateToMediumEnFormat,
+    getColor,
     dateToMediumNoneEnFormat,
     distinct,
     getDates,
     numberToHumanFriendlyString,
+    roundOffToTwoDigits,
 } from "~/utilities/utilities";
 import {AgGridReact} from "ag-grid-react";
 import "ag-grid-enterprise";
+import {ConditionPosition} from "ag-grid-community/dist/lib/filter/provided/simpleFilter";
+import {createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead, doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities";
+import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
+import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 
 export const meta: MetaFunction = () => {
     return {
@@ -37,46 +46,6 @@ export const links: LinksFunction = () => {
 export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;
 
-    const selectedCategoriesRaw = urlSearchParams.get("selected_categories");
-    let selectedCategories;
-    if (selectedCategoriesRaw == null || selectedCategoriesRaw.length == 0) {
-        selectedCategories = [];
-    } else {
-        selectedCategories = JSON.parse(selectedCategoriesRaw);
-    }
-
-    const selectedProductsRaw = urlSearchParams.get("selected_products");
-    let selectedProducts;
-    if (selectedProductsRaw == null || selectedProductsRaw.length == 0) {
-        selectedProducts = [];
-    } else {
-        selectedProducts = JSON.parse(selectedProductsRaw);
-    }
-
-    const selectedPlatformsRaw = urlSearchParams.get("selected_platforms");
-    let selectedPlatforms;
-    if (selectedPlatformsRaw == null || selectedPlatformsRaw.length == 0) {
-        selectedPlatforms = [];
-    } else {
-        selectedPlatforms = JSON.parse(selectedPlatformsRaw);
-    }
-
-    const selectedCampaignsRaw = urlSearchParams.get("selected_campaigns");
-    let selectedCampaigns;
-    if (selectedCampaignsRaw == null || selectedCampaignsRaw.length == 0) {
-        selectedCampaigns = [];
-    } else {
-        selectedCampaigns = JSON.parse(selectedCampaignsRaw);
-    }
-
-    const selectedGranularityRaw = urlSearchParams.get("selected_granularity");
-    let selectedGranularity;
-    if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
-        selectedGranularity = "Daily";
-    } else {
-        selectedGranularity = selectedGranularityRaw;
-    }
-
     const minDateRaw = urlSearchParams.get("min_date");
     let minDate;
     if (minDateRaw == null || minDateRaw.length == 0) {
@@ -93,229 +62,47 @@ export const loader: LoaderFunction = async ({request}) => {
         maxDate = maxDateRaw;
     }
 
-    // TODO: Add filters
+    const selectedGranularityRaw = urlSearchParams.get("selected_granularity");
+    let selectedGranularity;
+    if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
+        selectedGranularity = "Daily";
+    } else {
+        selectedGranularity = selectedGranularityRaw;
+    }
 
     return json({
-        appliedSelectedCategories: selectedCategories,
-        appliedSelectedProducts: selectedProducts,
-        appliedSelectedPlatforms: selectedPlatforms,
-        appliedSelectedCampaigns: selectedCampaigns,
-        appliedSelectedGranularity: selectedGranularity,
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
+        appliedSelectedGranularity: selectedGranularity,
         allProductInformation: await getAllProductInformation(),
         allSourceInformation: await getAllSourceToInformation(),
-        freshsalesLeadsData: await get_freshsalesData(selectedCategories, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        adsData: await get_adsData(selectedCategories, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
-        shopifyData: await get_shopifyData(selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, selectedGranularity, minDate, maxDate),
+        freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity),
+        adsData: await getAdsData(minDate, maxDate, selectedGranularity),
+        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity),
     });
 };
 
 export default function () {
-    const {
-        appliedSelectedCategories,
-        appliedSelectedProducts,
-        appliedSelectedPlatforms,
-        appliedSelectedCampaigns,
-        appliedSelectedGranularity,
-        appliedMinDate,
-        appliedMaxDate,
-        allProductInformation,
-        allSourceInformation,
-        freshsalesLeadsData,
-        adsData,
-        shopifyData,
-    } = useLoaderData();
+    const {appliedMinDate, appliedMaxDate, allProductInformation, allSourceInformation, freshsalesLeadsData, adsData, shopifyData} = useLoaderData();
 
-    function get_r3_ordersRevenue(array: Array<object>) {
-        let aggregateByDate = array.reduce(helperAggregateByDate, {});
-        for (const item in aggregateByDate) {
-            let result = aggregateByDate[item].reduce(helperAggregateByCategory, {});
-            aggregateByDate[item] = result;
-        }
+    // Default values of filters
+    const businesses = distinct(allProductInformation.map((productInformation) => productInformation.category));
+    let products = distinct(allProductInformation.map((productInformation) => productInformation.productName));
+    let campaigns = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.productName));
+    const platforms = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.platform));
 
-        let result = [];
-        for (const date in aggregateByDate) {
-            for (const category in aggregateByDate[date]) {
-                result.push({
-                    date: date,
-                    category: category,
-                    netSales: aggregateByDate[date][category],
-                });
-            }
-        }
-        return result;
-    }
-
-    const adsDataGoogleSpends = aggregateByDate(
-        adsData.rows.filter((row) => row.platform == "Google"),
-        "amountSpent"
-    );
-    const adsDataFacebookSpends = aggregateByDate(
-        adsData.rows.filter((row) => row.platform == "Facebook"),
-        "amountSpent"
-    );
-
-    const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
-
-    const directOrdersRevenue = get_r3_ordersRevenue(shopifyData.rows.filter((row) => row.isAssisted == false));
-
-    const assistedOrdersRevenue = get_r3_ordersRevenue(shopifyData.rows.filter((row) => row.isAssisted == true));
-
-    const directOrders = aggregateByDate(
-        shopifyData.rows.filter((row) => row.isAssisted == false),
-        "count"
-    );
-    const assistedOrders = aggregateByDate(
-        shopifyData.rows.filter((row) => row.isAssisted == true),
-        "count"
-    );
-    const directOrdersTotalCount = {
-        count: directOrders.reduce((sum, item) => sum + item.param, 0),
-    };
-
-    const assistedOrdersTotalCount = {
-        count: assistedOrders.reduce((sum, item) => sum + item.param, 0),
-    };
-
-    const r4_facebookAdsRevenue = {
-        netSales: shopifyData.rows.filter((row) => row.sourcePlatform == "Facebook" && row.netSales > 0).reduce((sum, item) => sum + item.netSales, 0),
-    };
-
-    const r4_googleAdsRevenue = {
-        netSales: shopifyData.rows.filter((row) => row.sourcePlatform == "Google" && row.netSales > 0).reduce((sum, item) => sum + item.netSales, 0),
-    };
-
-    const googleAdsSpends = {
-        amountSpent: adsDataGoogleSpends.reduce((sum, item) => sum + item.param, 0),
-    };
-
-    const facebookAdsSpends = {
-        amountSpent: adsDataFacebookSpends.reduce((sum, item) => sum + item.param, 0),
-    };
-
-    const r4_facebookAdsLiveCampaignsCount = {
-        count: distinct(adsData.rows.filter((row) => row.platform == "Facebook" && row.amountSpent > 0).map((row) => row.campaignName)).length,
-    };
-
-    const r4_googleAdsLiveCampaignsCount = {
-        count: distinct(adsData.rows.filter((row) => row.platform == "Google" && row.amountSpent > 0).map((row) => row.campaignName)).length,
-    };
-
-    const directOrdersGrossRevenue = {
-        netSales: directOrdersRevenue.reduce((sum, item) => sum + item.netSales, 0),
-    };
-
-    const assistedOrdersGrossRevenue = {
-        netSales: assistedOrdersRevenue.reduce((sum, item) => sum + item.netSales, 0),
-    };
-
-    const r2_totalOrdersCount = {
-        metaInformation: `Direct Orders + Assisted Orders = ${numberToHumanFriendlyString(directOrdersTotalCount.count)} + ${numberToHumanFriendlyString(assistedOrdersTotalCount.count)}`,
-        count: directOrdersTotalCount.count + assistedOrdersTotalCount.count,
-    };
-    const r2_directOrdersAov = {
-        metaInformation: `Orders Revenue / Orders Count | Direct = ${numberToHumanFriendlyString(directOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(directOrdersTotalCount.count)}`,
-        aov: directOrdersGrossRevenue.netSales / directOrdersTotalCount.count,
-    };
-    const r2_assistedOrdersAov = {
-        metaInformation: `Orders Revenue / Orders Count | Assisted = ${numberToHumanFriendlyString(assistedOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(
-            assistedOrdersTotalCount.count
-        )}`,
-        aov: assistedOrdersGrossRevenue.netSales / assistedOrdersTotalCount.count,
-    };
-    const r2_directOrdersDrr = {
-        metaInformation: `Orders Revenue / Number of Days | Direct = ${numberToHumanFriendlyString(directOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`,
-        drr: directOrdersGrossRevenue.netSales / numberOfSelectedDays,
-    };
-    const r2_assistedOrdersDrr = {
-        metaInformation: `Orders Revenue / Number of Days | Assisted = ${numberToHumanFriendlyString(assistedOrdersGrossRevenue.netSales)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`,
-        drr: assistedOrdersGrossRevenue.netSales / numberOfSelectedDays,
-    };
-
-    function getNetRevenue(row): number {
-        let multiplier;
-
-        if (row.category == "Mattress" || row.category == "Non Mattress") {
-            multiplier = 8.5;
-        } else if (row.category == "Water Purifier") {
-            multiplier = 5;
-        } else if (row.category == "Appliances") {
-            // TODO: Replace with correct value
-            multiplier = 0;
-        } else if (row.category == null) {
-            // TODO: Remove
-            multiplier = 0;
-        } else if (row.category == "null") {
-            // TODO: Remove
-            multiplier = 0;
-        } else {
-            throw new Error(`Multiplier for category ${row.category} not specified!`);
-        }
-
-        return (row.netSales / 1.18) * (1 - multiplier / 100);
-    }
-
-    // const r3_directOrdersNetRevenue = r2_r3_directOrdersGrossRevenue / r2_directOrdersCount.count;
-    // const r3_assistedOrdersNetRevenue = r2_r3_assistedOrdersGrossRevenue / r2_assistedOrdersCount;
-    const r3_directOrdersNetRevenue = {
-        metaInformation: "",
-        netRevenue: directOrdersRevenue.reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
-    };
-    const r3_assistedOrdersNetRevenue = {
-        metaInformation: "",
-        netRevenue: assistedOrdersRevenue.reduce((partialSum: number, row) => partialSum + getNetRevenue(row), 0),
-    };
-    const r3_totalNetRevenue = {
-        metaInformation: "",
-        netRevenue: r3_directOrdersNetRevenue.netRevenue + r3_assistedOrdersNetRevenue.netRevenue,
-    };
-
-    const r4_netSpends = {
-        metaInformation: `Facebook Ads Spends + Google Ads Spends = ${facebookAdsSpends.amountSpent} + ${googleAdsSpends.amountSpent}`,
-        amountSpent: facebookAdsSpends.amountSpent + googleAdsSpends.amountSpent,
-    };
-    const r4_facebookAdsDailySpend = {
-        metaInformation: `Total Spend / Number of Days | Facebook = ${facebookAdsSpends.amountSpent} / ${numberOfSelectedDays}`,
-        amountSpent: facebookAdsSpends.amountSpent / numberOfSelectedDays,
-    };
-    const r4_googleAdsDailySpend = {
-        metaInformation: `Total Spend / Number of Days | Google = ${googleAdsSpends.amountSpent} / ${numberOfSelectedDays}`,
-        amountSpent: googleAdsSpends.amountSpent / numberOfSelectedDays,
-    };
-    const r4_facebookAdsAcos = {
-        metaInformation: `Total Spend / Revenue | Facebook = ${facebookAdsSpends.amountSpent} / ${r4_facebookAdsRevenue.netSales}`,
-        acos: facebookAdsSpends.amountSpent / r4_facebookAdsRevenue.netSales,
-    };
-    const r4_googleAdsAcos = {
-        metaInformation: `Total Spend / Revenue | Google = ${googleAdsSpends.amountSpent} / ${r4_googleAdsRevenue.netSales}`,
-        acos: googleAdsSpends.amountSpent / r4_googleAdsRevenue.netSales,
-    };
-
-    const r5_marketingAcos = "?";
-    const r5_facebookAcos = "?";
-    const r5_agentAcos = "?";
-    const r5_googleAcos = "?";
-    const r5_highestAcos = "?";
-    const r5_lowestAcos = "?";
-    const r5_netAcos = "?";
-
-    const [selectedCategories, setSelectedCategories] = useState(appliedSelectedCategories);
-    const [selectedProducts, setSelectedProducts] = useState(appliedSelectedProducts);
-    const [selectedPlatforms, setSelectedPlatforms] = useState(appliedSelectedPlatforms);
-    const [selectedCampaigns, setSelectedCampaigns] = useState(appliedSelectedCampaigns);
-    const [selectedGranularity, setSelectedGranularity] = useState(appliedSelectedGranularity);
+    const [selectedCategories, setSelectedCategories] = useState([]);
+    const [selectedProducts, setSelectedProducts] = useState([]);
+    const [selectedPlatforms, setSelectedPlatforms] = useState([]);
+    const [selectedCampaigns, setSelectedCampaigns] = useState([]);
+    const [selectedGranularity, setSelectedGranularity] = useState("Daily");
     const [selectedMinDate, setSelectedMinDate] = useState(appliedMinDate ?? "");
     const [selectedMaxDate, setSelectedMaxDate] = useState(appliedMaxDate ?? "");
 
-    // TODO: Update filters when changing another one
-
-    const businesses = distinct(allProductInformation.map((productInformation) => productInformation.category));
-    const products = allProductInformation
+    products = allProductInformation
         .filter((productInformation) => selectedCategories.length == 0 || selectedCategories.includes(productInformation.category))
         .map((productInformation) => productInformation.productName);
-    const platforms = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.platform));
-    const campaigns = distinct(
+    campaigns = distinct(
         allSourceInformation
             .filter((sourceInformation) => selectedCategories.length == 0 || selectedCategories.includes(sourceInformation.category))
             .filter((sourceInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(sourceInformation.platform))
@@ -333,21 +120,38 @@ export default function () {
         setSelectedCampaigns([]);
     }, [selectedProducts]);
 
+    const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
+
+    const r5_marketingAcos = "?";
+    const r5_facebookAcos = "?";
+    const r5_agentAcos = "?";
+    const r5_googleAcos = "?";
+    const r5_highestAcos = "?";
+    const r5_lowestAcos = "?";
+    const r5_netAcos = "?";
+
+    // TODO: remove before push
+    // const shopifyDataToExportAsCsv = {
+    //     data: shopifyData.rows || [],
+    //     filename: "shopifyData",
+    //     delimiter: ",",
+    // };
+
+    // const adsDataToExportAsCsv = {
+    //     data: adsData.rows || [],
+    //     filename: "adsData",
+    //     delimiter: ",",
+    // };
+
+    // const leadsDataToExportAsCsv = {
+    //     data: freshsalesLeadsData.rows || [],
+    //     filename: "leadsData",
+    //     delimiter: ",",
+    // };
+
     return (
-        <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
-            <FilterSection
-                businesses={businesses}
-                selectedCategories={selectedCategories}
-                setSelectedCategories={setSelectedCategories}
-                products={products}
-                selectedProducts={selectedProducts}
-                setSelectedProducts={setSelectedProducts}
-                platforms={platforms}
-                selectedPlatforms={selectedPlatforms}
-                setSelectedPlatforms={setSelectedPlatforms}
-                campaigns={campaigns}
-                selectedCampaigns={selectedCampaigns}
-                setSelectedCampaigns={setSelectedCampaigns}
+        <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8 tw-sticky">
+            <DateFilterSection
                 granularities={granularities}
                 selectedGranularity={selectedGranularity}
                 setSelectedGranularity={setSelectedGranularity}
@@ -355,324 +159,233 @@ export default function () {
                 setSelectedMinDate={setSelectedMinDate}
                 selectedMaxDate={selectedMaxDate}
                 setSelectedMaxDate={setSelectedMaxDate}
+                page={"business-insights"}
             />
 
-            <LeadsSection adsData={adsData} freshsalesLeadsData={freshsalesLeadsData} shopifyData={shopifyData} minDate={appliedMinDate} maxDate={appliedMaxDate} />
-
-            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Orders</div>
-
-            <Card
-                information={numberToHumanFriendlyString(r2_totalOrdersCount.count)}
-                label="Total Orders"
-                metaInformation={r2_totalOrdersCount.metaInformation}
-                className="tw-row-span-2 tw-col-span-4"
-            />
-
-            <Card information={numberToHumanFriendlyString(directOrdersTotalCount.count)} label="Direct Orders" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r2_directOrdersAov.aov, true)} label="AOV" metaInformation={r2_directOrdersAov.metaInformation} className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r2_directOrdersDrr.drr, true)} label="DRR" metaInformation={r2_directOrdersDrr.metaInformation} className="tw-col-span-2" />
-
-            <div className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(assistedOrdersTotalCount.count)} label="Assisted Orders" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r2_assistedOrdersAov.aov, true)} label="AOV" metaInformation={r2_assistedOrdersAov.metaInformation} className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r2_assistedOrdersDrr.drr, true)} label="DRR" metaInformation={r2_assistedOrdersDrr.metaInformation} className="tw-col-span-2" />
-
-            <div className="tw-col-span-2" />
-
-            <GenericCard
-                className="tw-col-span-12"
-                content={
-                    <BarGraphComponent
-                        data={{
-                            x: directOrders.map((item) => item.date, 0),
-                            y: {
-                                "Direct Orders": directOrders.map((item) => item.param),
-                                "Assisted Orders": assistedOrders.map((item) => item.param),
-                            },
-                        }}
-                        yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
-                        barWidth={20}
-                        height={640}
-                    />
-                }
-                metaQuery={shopifyData.metaQuery}
-            />
-
-            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Revenue</div>
-
-            <Card
-                information={numberToHumanFriendlyString(r3_totalNetRevenue.netRevenue)}
-                label="Total Net Revenue"
-                metaInformation={r3_totalNetRevenue.metaInformation}
-                className="tw-row-span-2 tw-col-span-4"
-            />
-
-            <Card information={numberToHumanFriendlyString(directOrdersGrossRevenue.netSales, true)} label="Direct Gross Revenue" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />
-
-            <Card
-                information={numberToHumanFriendlyString(r3_directOrdersNetRevenue.netRevenue, true)}
-                label="Net Direct Revenue"
-                metaInformation={r3_directOrdersNetRevenue.metaInformation}
-                className="tw-col-span-2"
-            />
-
-            <div className="tw-col-span-2" />
-
-            <div className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(assistedOrdersGrossRevenue.netSales, true)} label="Assisted Gross Revenue" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />
-
-            <Card
-                information={numberToHumanFriendlyString(r3_assistedOrdersNetRevenue.netRevenue, true)}
-                label="Net Assisted Revenue"
-                metaInformation={r3_assistedOrdersNetRevenue.metaInformation}
-                className="tw-col-span-2"
-            />
-
-            <div className="tw-col-span-2" />
-
-            <div className="tw-col-span-2" />
-
-            <Tabs.Root defaultValue="1" className="tw-col-span-12">
-                <Tabs.List className="">
-                    <Tabs.Trigger value="1" className="lp-tab">
-                        Gross Revenue
-                    </Tabs.Trigger>
-                    <Tabs.Trigger value="2" className="lp-tab">
-                        Net Revenue
-                    </Tabs.Trigger>
-                </Tabs.List>
-                <Tabs.Content value="1">
-                    <GenericCard
-                        className="tw-col-span-12"
-                        content={
-                            <BarGraphComponent
-                                data={{
-                                    x: directOrdersRevenue.map((item) => item.date),
-
-                                    y: {
-                                        "Direct Revenue": directOrdersRevenue.map((item) => item.netSales),
-                                        "Assisted Revenue": assistedOrdersRevenue.map((item) => item.netSales),
-                                    },
-                                }}
-                                yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
-                                barWidth={20}
-                                height={640}
-                            />
-                        }
-                        metaQuery={adsData.metaQuery}
-                    />
-                </Tabs.Content>
-                <Tabs.Content value="2">
-                    <GenericCard
-                        className="tw-col-span-6"
-                        content={
-                            <BarGraphComponent
-                                data={{
-                                    x: directOrdersRevenue.map((item) => item.date),
-                                    y: {
-                                        "Direct Revenue": directOrdersRevenue.map((item) => getNetRevenue(item)),
-                                        "Assisted Revenue": assistedOrdersRevenue.map((item) => getNetRevenue(item)),
-                                    },
-                                }}
-                                yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
-                                barWidth={20}
-                                height={640}
-                            />
-                        }
-                        metaQuery={shopifyData.metaQuery}
-                        label="Clicks per Campaign"
-                    />
-                </Tabs.Content>
-            </Tabs.Root>
-
-            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Spend</div>
-
-            <Card information={numberToHumanFriendlyString(r4_netSpends.amountSpent)} label="Net Spend" metaInformation={r4_netSpends.metaInformation} className="tw-row-span-2 tw-col-span-4" />
-
-            <Card information={numberToHumanFriendlyString(facebookAdsSpends.amountSpent)} label="Facebook Ads" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r4_facebookAdsLiveCampaignsCount.count)} label="Live Campaigns" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
-
-            <Card
-                information={numberToHumanFriendlyString(r4_facebookAdsDailySpend.amountSpent, true)}
-                label="Daily Spend"
-                metaInformation={r4_facebookAdsDailySpend.metaInformation}
-                className="tw-col-span-2"
-            />
-
-            <Card information={numberToHumanFriendlyString(r4_facebookAdsAcos.acos, true, true, true)} label="ACoS" metaInformation={r4_facebookAdsAcos.metaInformation} className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(googleAdsSpends.amountSpent)} label="Google Ads" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r4_googleAdsLiveCampaignsCount.count)} label="Live Campaigns" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
-
-            <Card
-                information={numberToHumanFriendlyString(r4_googleAdsDailySpend.amountSpent, true)}
-                label="Daily Spend"
-                metaInformation={r4_googleAdsDailySpend.metaInformation}
-                className="tw-col-span-2"
-            />
-
-            <Card information={numberToHumanFriendlyString(r4_googleAdsAcos.acos, true, true, true)} label="ACoS" metaInformation={r4_googleAdsAcos.metaInformation} className="tw-col-span-2" />
-
-            <GenericCard
-                className="tw-col-span-12"
-                content={
-                    <BarGraphComponent
-                        data={{
-                            x: adsDataGoogleSpends.map((item) => item.date),
-                            y: {
-                                "GoogleAds Spends": adsDataGoogleSpends.map((item) => item.param),
-                                "FacebookAds Spends": adsDataFacebookSpends.map((item) => item.param),
-                            },
-                        }}
-                        yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
-                        barWidth={20}
-                        height={640}
-                    />
-                }
-                metaQuery={adsData.metaQuery}
-            />
-
-            {/* <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">ACoS</div>
-
-            <Card information={numberToHumanFriendlyString(r5_netAcos)} label="Net ACoS" className="tw-row-span-2 tw-col-span-4" />
-
-            <Card information={numberToHumanFriendlyString(r5_marketingAcos)} label="Marketing ACoS" className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r5_agentAcos, true)} label="Agent ACoS" className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r5_highestAcos, true)} label="Highest ACoS" className="tw-col-span-2" />
-
-            <div className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r5_facebookAcos)} label="Facebook ACoS" className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r5_googleAcos, true)} label="Google ACoS" className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r5_lowestAcos, true)} label="Lowest ACoS" className="tw-col-span-2" />
-
-            <div className="tw-col-span-2" /> */}
-
-            {/* <div className="tw-col-start-1 tw-col-span-12 tw-overflow-auto tw-bg-bg+1 tw-grid tw-items-center tw-h-[40rem]">
-                <BarGraphComponent
-                    data={{
-                        x: r1_performanceLeadsCountTrend.map(row => item.date),
-                        y: {
-                            "Dummy 1": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(rowIndex * 2 * 3.141 / 20)),
-                            "Dummy 2": r1_performanceLeadsCountTrend.map((row, rowIndex) => 0.5 + 0.25 * Math.sin(0.5 + rowIndex * 2 * 3.141 / 20)),
-                        },
-                    }}
-                    yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
-                    barWidth={40}
-                    height={640}
+            <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
+                <FancySearchableMultiSelect
+                    label="Choose Category"
+                    options={businesses}
+                    selectedOptions={selectedCategories}
+                    setSelectedOptions={setSelectedCategories}
+                    filterType={QueryFilterType.category}
                 />
-            </div> */}
+                <FancySearchableMultiSelect
+                    label="Choose Products"
+                    options={products}
+                    selectedOptions={selectedProducts}
+                    setSelectedOptions={setSelectedProducts}
+                    filterType={QueryFilterType.product}
+                />
+                <FancySearchableMultiSelect
+                    label="Choose Platforms"
+                    options={platforms}
+                    selectedOptions={selectedPlatforms}
+                    setSelectedOptions={setSelectedPlatforms}
+                    filterType={QueryFilterType.platform}
+                />
+                <FancySearchableMultiSelect
+                    label="Choose Campaigns"
+                    options={campaigns}
+                    selectedOptions={selectedCampaigns}
+                    setSelectedOptions={setSelectedCampaigns}
+                    filterType={QueryFilterType.campaign}
+                />
+            </div>
+
+            {/* <button type="button" onClick={() => csvDownload(shopifyDataToExportAsCsv)} className="tw-lp-button">
+                Export shopify as CSV
+            </button>
+
+            <button type="button" onClick={() => csvDownload(adsDataToExportAsCsv)} className="tw-lp-button">
+                Export ads as CSV
+            </button>
+
+            <button type="button" onClick={() => csvDownload(leadsDataToExportAsCsv)} className="tw-lp-button">
+                Export freshsales leads as CSV
+            </button> */}
+
+            <LeadsSection
+                adsData={adsData}
+                freshsalesLeadsData={freshsalesLeadsData}
+                shopifyData={shopifyData}
+                minDate={appliedMinDate}
+                maxDate={appliedMaxDate}
+                selectedCategories={selectedCategories}
+                selectedProducts={selectedProducts}
+                selectedPlatforms={selectedPlatforms}
+                selectedCampaigns={selectedCampaigns}
+                numberOfSelectedDays={numberOfSelectedDays}
+            />
+
+            <OrdersSection
+                adsData={adsData}
+                freshsalesLeadsData={freshsalesLeadsData}
+                shopifyData={shopifyData}
+                minDate={appliedMinDate}
+                maxDate={appliedMaxDate}
+                selectedCategories={selectedCategories}
+                selectedProducts={selectedProducts}
+                selectedPlatforms={selectedPlatforms}
+                selectedCampaigns={selectedCampaigns}
+                numberOfSelectedDays={numberOfSelectedDays}
+            />
+
+            <RevenueSection
+                adsData={adsData}
+                freshsalesLeadsData={freshsalesLeadsData}
+                shopifyData={shopifyData}
+                minDate={appliedMinDate}
+                maxDate={appliedMaxDate}
+                selectedCategories={selectedCategories}
+                selectedProducts={selectedProducts}
+                selectedPlatforms={selectedPlatforms}
+                selectedCampaigns={selectedCampaigns}
+                numberOfSelectedDays={numberOfSelectedDays}
+            />
+
+            <SpendSection
+                adsData={adsData}
+                freshsalesLeadsData={freshsalesLeadsData}
+                shopifyData={shopifyData}
+                minDate={appliedMinDate}
+                maxDate={appliedMaxDate}
+                selectedCategories={selectedCategories}
+                selectedProducts={selectedProducts}
+                selectedPlatforms={selectedPlatforms}
+                selectedCampaigns={selectedCampaigns}
+                numberOfSelectedDays={numberOfSelectedDays}
+            />
         </div>
     );
 }
 
-function FilterSection(props: {
-    businesses: Array<string>;
-    selectedCategories: Array<string>;
-    setSelectedCategories: React.Dispatch<React.SetStateAction<Array<string>>>;
-    products: Array<string>;
-    selectedProducts: Array<string>;
-    setSelectedProducts: React.Dispatch<React.SetStateAction<Array<string>>>;
-    platforms: Array<string>;
-    selectedPlatforms: Array<string>;
-    setSelectedPlatforms: React.Dispatch<React.SetStateAction<Array<string>>>;
-    campaigns: Array<string>;
-    selectedCampaigns: Array<string>;
-    setSelectedCampaigns: React.Dispatch<React.SetStateAction<Array<string>>>;
-    granularities: Array<string>;
-    selectedGranularity: string;
-    setSelectedGranularity: React.Dispatch<React.SetStateAction<string>>;
-    selectedMinDate: string;
-    setSelectedMinDate: React.Dispatch<React.SetStateAction<string>>;
-    selectedMaxDate: string;
-    setSelectedMaxDate: React.Dispatch<React.SetStateAction<string>>;
-}) {
-    return (
-        <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
-            <FancySearchableMultiSelect
-                label="Business"
-                options={props.businesses}
-                selectedOptions={props.selectedCategories}
-                setSelectedOptions={props.setSelectedCategories}
-                filterType={QueryFilterType.category}
-            />
 
-            <FancySearchableMultiSelect
-                label="Product"
-                options={props.products}
-                selectedOptions={props.selectedProducts}
-                setSelectedOptions={props.setSelectedProducts}
-                filterType={QueryFilterType.product}
-            />
 
-            <FancySearchableMultiSelect
-                label="Platform"
-                options={props.platforms}
-                selectedOptions={props.selectedPlatforms}
-                setSelectedOptions={props.setSelectedPlatforms}
-                filterType={QueryFilterType.platform}
-            />
+function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDate, selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, numberOfSelectedDays}) {
+    // Metrics
+    const [showAcos, setShowAcos] = useState(true);
+    const [showCpl, setShowCpl] = useState(false);
+    const [showSpl, setShowSpl] = useState(false);
 
-            <FancySearchableMultiSelect
-                label="Campaign"
-                options={props.campaigns}
-                selectedOptions={props.selectedCampaigns}
-                setSelectedOptions={props.setSelectedCampaigns}
-                filterType={QueryFilterType.campaign}
-            />
+    const filterFreshsalesData = freshsalesLeadsData.rows
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform))
+        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.campaign));
 
-            <FancySearchableSelect label="Granularity" options={props.granularities} selectedOption={props.selectedGranularity} setSelectedOption={props.setSelectedGranularity} />
+    const filterShopifyData = shopifyData.rows
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.sourcePlatform))
+        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.sourceCampaignName))
+        .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
 
-            <FancyCalendar label="Start Date" value={props.selectedMinDate} setValue={props.setSelectedMinDate} />
+    const filterAdsData = adsData.rows
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform))
+        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.campaignName));
 
-            <FancyCalendar label="End Date" value={props.selectedMaxDate} setValue={props.setSelectedMaxDate} />
-
-            <div />
-
-            <Link
-                to={concatenateNonNullStringsWithAmpersand(
-                    `/business-insights?selected_granularity=${props.selectedGranularity}`,
-                    `min_date=${props.selectedMinDate}`,
-                    `max_date=${props.selectedMaxDate}`,
-                    props.selectedCampaigns.length == 0 ? null : `selected_campaigns=${JSON.stringify(props.selectedCampaigns)}`,
-                    props.selectedCategories.length == 0 ? null : `selected_categories=${JSON.stringify(props.selectedCategories)}`,
-                    props.selectedProducts.length == 0 ? null : `selected_products=${JSON.stringify(props.selectedProducts)}`,
-                    props.selectedPlatforms.length == 0 ? null : `selected_platforms=${JSON.stringify(props.selectedPlatforms)}`
-                )}
-                className="-tw-col-end-1 tw-bg-lp tw-p-2 tw-rounded-md"
-            >
-                Update Filters
-            </Link>
-        </div>
-    );
-}
-
-function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDate}) {
     const defaultColumnDefinitions = {
         sortable: true,
         filter: true,
     };
 
+    const dates = getDates(minDate, maxDate);
+
+    // Performance Leads
+    const performanceLeads = {
+        countDayWise: aggregateByDate(
+            filterFreshsalesData.filter((row) => doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)),
+            "count",
+            dates
+        ),
+        amountSpentDayWise: aggregateByDate(
+            filterAdsData.filter((row) => doesAdsCampaignNameCorrespondToPerformanceLead(row.campaignName)),
+            "amountSpent",
+            dates
+        ),
+        netSalesDayWise: aggregateByDate(
+            filterShopifyData.filter((row) => doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)),
+            "netSales",
+            dates
+        ),
+    };
+
     const performanceLeadsCount = {
         metaInformation: "Performance Leads",
-        count: freshsalesLeadsData.rows.filter((row) => doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)).reduce((sum, item) => sum + item.count, 0),
+        count: performanceLeads.countDayWise.reduce((sum, item) => sum + item, 0),
+    };
+
+    const performanceLeadsCpl = {
+        metaInformation: `Amount Spent / Leads Count | Performance = ${numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
+            performanceLeadsCount.count
+        )}`,
+        metaQuery: adsData.metaQuery,
+        cpl: numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer, 0) / performanceLeadsCount.count),
+        dayWiseCPL: performanceLeads.amountSpentDayWise.map((value, index) => (performanceLeads.countDayWise[index] == 0 ? 0 : value / performanceLeads.countDayWise[index])),
+    };
+
+    const performanceLeadsSpl = {
+        metaInformation: `Leads Sales / Leads Count | Performance = ${numberToHumanFriendlyString(performanceLeads.netSalesDayWise.reduce(sumReducer))} / ${numberToHumanFriendlyString(
+            performanceLeadsCount.count
+        )}`,
+        spl: performanceLeads.netSalesDayWise.reduce(sumReducer) / performanceLeadsCount.count,
+        dayWiseSPL: performanceLeads.netSalesDayWise.map((value, index) => (performanceLeads.countDayWise[index] == 0 ? 0 : value / performanceLeads.countDayWise[index])),
+    };
+
+    const performanceLeadsAcos = {
+        metaInformation: `Amount Spent / Net Sales | Performance = ${numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer))} / ${numberToHumanFriendlyString(
+            performanceLeads.netSalesDayWise.reduce(sumReducer)
+        )}`,
+        acos: performanceLeads.amountSpentDayWise.reduce(sumReducer) / performanceLeads.netSalesDayWise.reduce(sumReducer),
+        dayWiseAcos: performanceLeads.amountSpentDayWise.map((value, index) => (performanceLeads.netSalesDayWise[index] == 0 ? 0 : value / performanceLeads.netSalesDayWise[index])),
+    };
+
+    const facebookLeads = {
+        countDayWise: aggregateByDate(
+            filterFreshsalesData.filter((row) => !doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)),
+            "count",
+            dates
+        ),
+        amountSpentDayWise: aggregateByDate(
+            filterAdsData.filter((row) => !doesAdsCampaignNameCorrespondToPerformanceLead(row.campaignName)),
+            "amountSpent",
+            dates
+        ),
+        netSalesDayWise: aggregateByDate(
+            filterShopifyData.filter((row) => !doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)),
+            "netSales",
+            dates
+        ),
     };
 
     const facebookLeadsCount = {
         metaInformation: "Facebook Leads",
-        count: freshsalesLeadsData.rows.filter((row) => !doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)).reduce((sum, item) => sum + item.count, 0),
+        count: facebookLeads.countDayWise.reduce(sumReducer, 0),
+    };
+
+    const facebookLeadsCpl = {
+        metaInformation: `Amount Spent / Leads Count | Facebook = ${numberToHumanFriendlyString(facebookLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
+            facebookLeadsCount.count
+        )}`,
+        metaQuery: adsData.metaQuery,
+        cpl: facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
+        dayWiseCPL: facebookLeads.amountSpentDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
+    };
+
+    const facebookLeadsSpl = {
+        metaInformation: `Leads Sales / Leads Count | Facebook = ${numberToHumanFriendlyString(facebookLeads.netSalesDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
+            facebookLeadsCount.count
+        )}`,
+        spl: facebookLeads.netSalesDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
+        dayWiseSPL: facebookLeads.netSalesDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
+    };
+
+    const facebookLeadsAcos = {
+        metaInformation: `Amount Spent / Net Sales | Facebook = ${numberToHumanFriendlyString(facebookLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
+            facebookLeads.netSalesDayWise.reduce(sumReducer, 0)
+        )}`,
+        acos: facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeads.netSalesDayWise.reduce(sumReducer, 0),
+        dayWiseAcos: facebookLeads.amountSpentDayWise.map((value, index) => (facebookLeads.netSalesDayWise[index] == 0 ? 0 : value / facebookLeads.netSalesDayWise[index])),
     };
 
     const totalLeadsCount = {
@@ -680,71 +393,121 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
         count: performanceLeadsCount.count + facebookLeadsCount.count,
     };
 
-    const performanceLeadsAmountSpent = {
-        amountSpent: adsData.rows.filter((row) => doesAdsCampaignNameCorrespondToPerformanceLead(row.campaignName)).reduce((sum, item) => sum + item.amountSpent, 0),
+    const dataTableForLeadsDayWise = dates.reduce((result, curDate, index) => {
+        result[curDate] = {
+            performanceLeadsCount: roundOffToTwoDigits(performanceLeads.countDayWise[index]),
+            performanceLeadsCpl: roundOffToTwoDigits(performanceLeadsCpl.dayWiseCPL[index]),
+            performanceLeadsSpl: roundOffToTwoDigits(performanceLeadsSpl.dayWiseSPL[index]),
+            performanceLeadsAcos: roundOffToTwoDigits(performanceLeadsAcos.dayWiseAcos[index]),
+            performanceLeadsnetSales: roundOffToTwoDigits(performanceLeads.netSalesDayWise[index]),
+            facebookLeadsCount: roundOffToTwoDigits(facebookLeads.countDayWise[index]),
+            facebookLeadsCpl: roundOffToTwoDigits(facebookLeadsCpl.dayWiseCPL[index]),
+            facebookLeadsSpl: roundOffToTwoDigits(facebookLeadsSpl.dayWiseSPL[index]),
+            facebookLeadsAcos: roundOffToTwoDigits(facebookLeadsAcos.dayWiseAcos[index]),
+        };
+        return result;
+    }, {});
+
+    //chartjs graphs
+    ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement);
+
+    const options = {
+        responsive: true,
+        // maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: "top" as const,
+            },
+            title: {
+                display: true,
+                text: "Day-wise distribution of total leads",
+            },
+        },
     };
 
-    const facebookLeadsAmountSpent = {
-        amountSpent: adsData.rows.filter((row) => !doesAdsCampaignNameCorrespondToPerformanceLead(row.campaignName)).reduce((sum, item) => sum + item.amountSpent, 0),
+    const labels = dates;
+    const data = {
+        labels,
+        datasets: [
+            {
+                label: "Performance Leads",
+                data: labels.map((date, index) => dataTableForLeadsDayWise[date].performanceLeadsCount),
+                backgroundColor: "rgba(255, 99, 132, 0.5)",
+            },
+            {
+                label: "Facebook Leads",
+                data: labels.map((date, index) => dataTableForLeadsDayWise[date].facebookLeadsCount),
+                backgroundColor: "rgba(53, 162, 235, 0.5)",
+            },
+        ],
     };
 
-    const performanceLeadsCpl = {
-        metaInformation: `Amount Spent / Leads Count | Performance = ${numberToHumanFriendlyString(performanceLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
-            performanceLeadsCount.count
-        )}`,
-        metaQuery: adsData.metaQuery,
-        cpl: performanceLeadsAmountSpent.amountSpent / performanceLeadsCount.count,
+    const acosDayWiseOptions = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: "top" as const,
+            },
+            title: {
+                display: true,
+                text: "Day-wise distribution",
+            },
+        },
     };
 
-    const facebookLeadsCpl = {
-        metaInformation: `Amount Spent / Leads Count | Facebook = ${numberToHumanFriendlyString(facebookLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(facebookLeadsCount.count)}`,
-        metaQuery: adsData.metaQuery,
-        cpl: facebookLeadsAmountSpent.amountSpent / facebookLeadsCount.count,
+    const dayWiseAcos = {
+        labels,
+        datasets: [
+            {
+                label: "Performance Leads Acos",
+                data: performanceLeadsAcos.dayWiseAcos,
+                borderColor: "rgb(212, 172, 13)",
+                backgroundColor: "rgb(212, 172, 13)",
+            },
+            {
+                label: "Facebook Leads Acos",
+                data: facebookLeadsAcos.dayWiseAcos,
+                borderColor: "rgb(211, 84, 0)",
+                backgroundColor: "rgb(211, 84, 0)",
+            },
+        ],
     };
 
-    const performanceLeadsSales = {
-        netSales: shopifyData.rows.filter((row) => doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)).reduce((sum, item) => sum + item.netSales, 0),
+    const cplDayWise = {
+        labels,
+        datasets: [
+            {
+                label: "Performance Leads Cpl",
+                data: performanceLeadsCpl.dayWiseCPL,
+                borderColor: "rgb(0, 102, 204)",
+                backgroundColor: "rgb(0, 102, 204)",
+            },
+            {
+                label: "Facebook Leads Cpl",
+                data: facebookLeadsCpl.dayWiseCPL,
+                borderColor: "rgb(211, 84, 100)",
+                backgroundColor: "rgb(211, 84, 100)",
+            },
+        ],
     };
 
-    const facebookLeadsSales = {
-        netSales: shopifyData.rows.filter((row) => !doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)).reduce((sum, item) => sum + item.netSales, 0),
+    const splDayWise = {
+        labels,
+        datasets: [
+            {
+                label: "Performance Leads Spl",
+                data: performanceLeadsSpl.dayWiseSPL,
+                borderColor: "rgb(179, 0, 179)",
+                backgroundColor: "rgb(179, 0, 179)",
+            },
+            {
+                label: "Facebook Leads Spl",
+                data: facebookLeadsSpl.dayWiseSPL,
+                borderColor: "rgb(51, 153, 102)",
+                backgroundColor: "rgb(51, 153, 102)",
+            },
+        ],
     };
-
-    const performanceLeadsSpl = {
-        metaInformation: `Leads Sales / Leads Count | Performance = ${numberToHumanFriendlyString(performanceLeadsSales.netSales)} / ${numberToHumanFriendlyString(performanceLeadsCount.count)}`,
-        spl: performanceLeadsSales.netSales / performanceLeadsCount.count,
-    };
-
-    const facebookLeadsSpl = {
-        metaInformation: `Leads Sales / Leads Count | Facebook = ${numberToHumanFriendlyString(facebookLeadsSales.netSales)} / ${numberToHumanFriendlyString(facebookLeadsCount.count)}`,
-        spl: facebookLeadsSales.netSales / facebookLeadsCount.count,
-    };
-
-    const performanceLeadsAcos = {
-        metaInformation: `Amount Spent / Net Sales | Performance = ${numberToHumanFriendlyString(performanceLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(
-            performanceLeadsSales.netSales
-        )}`,
-        acos: performanceLeadsAmountSpent.amountSpent / performanceLeadsSales.netSales,
-    };
-
-    const facebookLeadsAcos = {
-        metaInformation: `Amount Spent / Net Sales | Facebook = ${numberToHumanFriendlyString(facebookLeadsAmountSpent.amountSpent)} / ${numberToHumanFriendlyString(facebookLeadsSales.netSales)}`,
-        acos: facebookLeadsAmountSpent.amountSpent / facebookLeadsSales.netSales,
-    };
-
-    const dates = getDates(minDate, maxDate);
-
-    const performanceLeadsCountDayWise = aggregateByDate2(
-        freshsalesLeadsData.rows.filter((row) => doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)),
-        "count",
-        dates
-    );
-
-    const facebookLeadsCountDayWise = aggregateByDate2(
-        freshsalesLeadsData.rows.filter((row) => !doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)),
-        "count",
-        dates
-    );
 
     return (
         <>
@@ -795,105 +558,831 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
                 className="tw-col-span-2"
             />
 
-            <GenericCard
-                className="tw-col-span-12"
-                content={
-                    <BarGraphComponent
-                        data={{
-                            x: dates,
-                            y: {
-                                "Performance Leads": performanceLeadsCountDayWise,
-                                "Facebook Leads": facebookLeadsCountDayWise,
-                            },
-                        }}
-                        yClasses={["tw-fill-blue-500", "tw-fill-red-500"]}
-                        barWidth={20}
-                        height={640}
-                    />
-                }
-                metaQuery={freshsalesLeadsData.metaQuery}
-            />
+            <Tabs.Root defaultValue="1" className="tw-col-span-12">
+                <Tabs.List className="">
+                    <Tabs.Trigger value="1" className="lp-tab">
+                        Distribution
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="2" className="lp-tab">
+                        Raw Data
+                    </Tabs.Trigger>
+                </Tabs.List>
+                <Tabs.Content value="1">
+                    <div className="tw-grid">
+                        <GenericCard
+                            content={
+                                <div className="tw-grid tw-grid-cols-4">
+                                    <div className="tw-row-start-1 tw-col-start-2 tw-col-span-2 tw-grid">
+                                        {showAcos && <Line options={options} data={dayWiseAcos} className="tw-row-start-1 tw-col-start-1" />}
+                                        {showCpl && <Line options={acosDayWiseOptions} data={cplDayWise} className="tw-row-start-1 tw-col-start-1" />}
+                                        {showSpl && <Line options={acosDayWiseOptions} data={splDayWise} className="tw-row-start-1 tw-col-start-1" />}
 
-            <GenericCard
-                className="tw-col-span-12"
-                content={
-                    <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
-                        <AgGridReact
-                            rowData={dates.map((date, dateIndex) => ({
-                                date: date,
-                                performanceLeads: performanceLeadsCountDayWise[dateIndex],
-                                facebookLeads: facebookLeadsCountDayWise[dateIndex],
-                            }))}
-                            columnDefs={[
-                                {headerName: "Lead Created At", valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date), filter: "agDateColumnFilter", comparator: agGridDateComparator},
-                                {headerName: "Performance Leads", field: "performanceLeads"},
-                                {headerName: "Facebook Leads", field: "facebookLeads"},
-                            ]}
-                            defaultColDef={defaultColumnDefinitions}
-                            animateRows={true}
-                            enableRangeSelection={true}
-                        />
+                                        <Bar options={options} data={data} className="tw-row-start-1 tw-col-start-1" />
+                                    </div>
+
+                                    <div className="tw-row-start-2 tw-col-start-1 tw-col-span-4 tw-flex tw-flex-row tw-justify-center">
+                                        <input type="checkbox" id="acos" checked={showAcos} onChange={(e) => setShowAcos(e.target.checked)} />
+                                        <label htmlFor="acos" className="tw-pl-2">
+                                            ACoS
+                                        </label>
+
+                                        <HorizontalSpacer className="tw-w-8" />
+
+                                        <input type="checkbox" id="cpl" checked={showCpl} onChange={(e) => setShowCpl(e.target.checked)} />
+                                        <label htmlFor="cpl" className="tw-pl-2">
+                                            CPL
+                                        </label>
+
+                                        <HorizontalSpacer className="tw-w-8" />
+
+                                        <input type="checkbox" id="spl" checked={showSpl} onChange={(e) => setShowSpl(e.target.checked)} />
+                                        <label htmlFor="spl" className="tw-pl-2">
+                                            SPL
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                            metaQuery={freshsalesLeadsData.metaQuery}
+                        ></GenericCard>
                     </div>
-                }
-                metaQuery={freshsalesLeadsData.metaQuery}
-            />
+                </Tabs.Content>
+                <Tabs.Content value="2">
+                    <GenericCard
+                        className="tw-col-span-12"
+                        content={
+                            <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                                <AgGridReact
+                                    rowData={dates.map((date, dateIndex) => ({
+                                        date: date,
+                                        performanceLeads: dataTableForLeadsDayWise[date].performanceLeadsCount,
+                                        performanceLeadsCpl: dataTableForLeadsDayWise[date].performanceLeadsCpl,
+                                        performanceLeadsSpl: dataTableForLeadsDayWise[date].performanceLeadsSpl,
+                                        performanceLeadsAcos: dataTableForLeadsDayWise[date].performanceLeadsAcos,
+                                        performanceLeadsnetSales: dataTableForLeadsDayWise[date].performanceLeadsnetSales,
+                                        facebookLeads: dataTableForLeadsDayWise[date].facebookLeadsCount,
+                                        facebookLeadsCpl: dataTableForLeadsDayWise[date].facebookLeadsCpl,
+                                        facebookLeadsSpl: dataTableForLeadsDayWise[date].facebookLeadsSpl,
+                                        facebookLeadsAcos: dataTableForLeadsDayWise[date].facebookLeadsAcos,
+                                    }))}
+                                    columnDefs={[
+                                        {
+                                            headerName: "Lead Created At",
+                                            valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date),
+                                            filter: "agDateColumnFilter",
+                                            comparator: agGridDateComparator,
+                                        },
+                                        {headerName: "Performance Leads Count", field: "performanceLeads"},
+                                        {headerName: "Performance Leads CPL", field: "performanceLeadsCpl"},
+                                        {headerName: "Performance Leads SPL", field: "performanceLeadsSpl"},
+                                        {headerName: "Performance Leads ACOS", field: "performanceLeadsAcos"},
+                                        {headerName: "Performance Leads NetSales", field: "performanceLeadsnetSales"},
+                                        {headerName: "Facebook Leads Count", field: "facebookLeads"},
+                                        {headerName: "Facebook Leads CPL", field: "facebookLeadsCpl"},
+                                        {headerName: "Facebook Leads SPL", field: "facebookLeadsSpl"},
+                                        {headerName: "Facebook Leads ACOS", field: "facebookLeadsAcos"},
+                                    ]}
+                                    defaultColDef={defaultColumnDefinitions}
+                                    animateRows={true}
+                                    enableRangeSelection={true}
+                                />
+                            </div>
+                        }
+                        metaQuery={freshsalesLeadsData.metaQuery}
+                    />
+                </Tabs.Content>
+            </Tabs.Root>
         </>
     );
 }
 
-// TODO: Rename to something sensible
-function doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(source: string) {
-    return source != "Facebook Ads";
+function OrdersSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDate, selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, numberOfSelectedDays}) {
+    const filterShopifyData = shopifyData.rows
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.sourcePlatform))
+        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.sourceCampaignName))
+        .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
+
+    const defaultColumnDefinitions = {
+        sortable: true,
+        filter: true,
+    };
+    const dates = getDates(minDate, maxDate);
+
+    // Direct Orders calculations
+    const directOrdersRevenueGroupByDateAndCategory = get_r3_ordersRevenue(filterShopifyData.filter((row) => row.isAssisted == false));
+    const directOrders = {
+        dayWiseCount: aggregateByDate(
+            filterShopifyData.filter((row) => row.isAssisted == false),
+            "netQuantity",
+            dates
+        ),
+        dayWiseNetSales: aggregateByDate(directOrdersRevenueGroupByDateAndCategory, "netSales", dates),
+    };
+
+    const directOrdersTotalCount = directOrders.dayWiseCount.reduce(sumReducer, 0);
+    const directOrdersNetSales = directOrders.dayWiseNetSales.reduce(sumReducer, 0);
+
+    const r2_directOrdersAov = {
+        metaInformation: `Orders Revenue / Orders Count | Direct = ${numberToHumanFriendlyString(directOrdersNetSales)} / ${numberToHumanFriendlyString(directOrdersTotalCount)}`,
+        aov: directOrdersNetSales / directOrdersTotalCount,
+        dayWiseAov: directOrders.dayWiseNetSales.map((value, index) => (directOrders.dayWiseCount[index] == 0 ? 0 : value / directOrders.dayWiseCount[index])),
+    };
+
+    const r2_directOrdersDrr = {
+        metaInformation: `Total Direct Orders / Number of Days | Direct = ${numberToHumanFriendlyString(directOrdersTotalCount)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`,
+        drr: directOrdersTotalCount / numberOfSelectedDays,
+    };
+
+    // Assisted Orders calculations
+    const assistedOrdersRevenueGroupByDateAndCategory = get_r3_ordersRevenue(filterShopifyData.filter((row) => row.isAssisted == true));
+
+    const assistedOrders = {
+        dayWiseCount: aggregateByDate(
+            filterShopifyData.filter((row) => row.isAssisted == true),
+            "netQuantity",
+            dates
+        ),
+        dayWiseNetSales: aggregateByDate(assistedOrdersRevenueGroupByDateAndCategory, "netSales", dates),
+    };
+
+    const assistedOrdersTotalCount = assistedOrders.dayWiseCount.reduce(sumReducer, 0);
+    const assistedOrdersNetSales = assistedOrders.dayWiseNetSales.reduce(sumReducer, 0);
+
+    const r2_assistedOrdersAov = {
+        metaInformation: `Orders Revenue / Orders Count | Assisted = ${numberToHumanFriendlyString(assistedOrdersNetSales)} / ${numberToHumanFriendlyString(assistedOrdersTotalCount)}`,
+        aov: assistedOrdersNetSales / assistedOrdersTotalCount,
+        dayWiseAov: assistedOrders.dayWiseNetSales.map((value, index) => (assistedOrders.dayWiseCount[index] == 0 ? 0 : value / assistedOrders.dayWiseCount[index])),
+    };
+
+    const r2_assistedOrdersDrr = {
+        metaInformation: `Total Assisted Orders / Number of Days | Assisted = ${numberToHumanFriendlyString(assistedOrdersTotalCount)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`,
+        drr: assistedOrdersTotalCount / numberOfSelectedDays,
+    };
+
+    const dataTableForOrdersDayWise = dates.reduce((result, curDate, index) => {
+        result[curDate] = {
+            directOrdersCount: roundOffToTwoDigits(directOrders.dayWiseCount[index]),
+            directOrdersNetSales: roundOffToTwoDigits(directOrders.dayWiseNetSales[index]),
+            directOrdersAov: roundOffToTwoDigits(r2_directOrdersAov.dayWiseAov[index]),
+            assistedOrdersCount: roundOffToTwoDigits(assistedOrders.dayWiseCount[index]),
+            assistedOrdersNetSales: roundOffToTwoDigits(directOrders.dayWiseNetSales[index]),
+            assistedOrdersAov: roundOffToTwoDigits(r2_assistedOrdersAov.dayWiseAov[index]),
+        };
+        return result;
+    }, {});
+
+    // Total Orders
+    const r2_totalOrdersCount = {
+        metaInformation: `Direct Orders + Assisted Orders = ${numberToHumanFriendlyString(directOrders.dayWiseCount.reduce(sumReducer, 0))} + ${numberToHumanFriendlyString(assistedOrders.count)}`,
+        count: directOrdersTotalCount + assistedOrders.dayWiseCount.reduce(sumReducer, 0),
+    };
+
+    ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+    const options = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: "top" as const,
+            },
+            title: {
+                display: true,
+                text: "Daywise distribution of Orders Count",
+            },
+        },
+    };
+
+    const labels = dates;
+    const data = {
+        labels,
+        datasets: [
+            {
+                label: "Direct Orders",
+                data: labels.map((date) => dataTableForOrdersDayWise[date].directOrdersCount),
+                backgroundColor: "rgba(255, 99, 132, 0.5)",
+                borderColor: "rgba(255, 99, 132, 0.5)",
+            },
+            {
+                label: "Assisted Orders",
+                data: labels.map((date) => dataTableForOrdersDayWise[date].assistedOrdersCount),
+                backgroundColor: "rgba(53, 162, 235, 0.5)",
+                borderColor: "rgba(53, 162, 235, 0.5)",
+            },
+        ],
+    };
+
+    return (
+        <>
+            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Orders</div>
+
+            <Card
+                information={numberToHumanFriendlyString(r2_totalOrdersCount.count)}
+                label="Total Orders"
+                metaInformation={r2_totalOrdersCount.metaInformation}
+                className="tw-row-span-2 tw-col-span-4"
+            />
+
+            <Card information={numberToHumanFriendlyString(directOrdersTotalCount)} label="Direct Orders" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />
+
+            <Card information={numberToHumanFriendlyString(r2_directOrdersAov.aov, true)} label="AOV" metaInformation={r2_directOrdersAov.metaInformation} className="tw-col-span-2" />
+
+            <Card information={numberToHumanFriendlyString(r2_directOrdersDrr.drr, true)} label="DRR" metaInformation={r2_directOrdersDrr.metaInformation} className="tw-col-span-2" />
+
+            <div className="tw-col-span-2" />
+
+            <Card information={numberToHumanFriendlyString(assistedOrdersTotalCount)} label="Assisted Orders" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />
+
+            <Card information={numberToHumanFriendlyString(r2_assistedOrdersAov.aov, true)} label="AOV" metaInformation={r2_assistedOrdersAov.metaInformation} className="tw-col-span-2" />
+
+            <Card information={numberToHumanFriendlyString(r2_assistedOrdersDrr.drr, true)} label="DRR" metaInformation={r2_assistedOrdersDrr.metaInformation} className="tw-col-span-2" />
+
+            <div className="tw-col-span-2" />
+
+            <Tabs.Root defaultValue="1" className="tw-col-span-12">
+                <Tabs.List>
+                    <Tabs.Trigger value="1" className="lp-tab">
+                        Distribution
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="2" className="lp-tab">
+                        Raw Data
+                    </Tabs.Trigger>
+                </Tabs.List>
+                <Tabs.Content value="1">
+                    <GenericCard
+                        content={
+                            <div className="tw-grid tw-grid-cols-4">
+                                <div className="tw-col-start-2 tw-col-span-2">
+                                    <Line options={options} data={data} />
+                                </div>
+                            </div>
+                        }
+                        metaQuery={shopifyData.metaQuery}
+                    />
+                </Tabs.Content>
+                <Tabs.Content value="2">
+                    <GenericCard
+                        content={
+                            <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                                <AgGridReact
+                                    rowData={dates.map((date, dateIndex) => ({
+                                        date: date,
+                                        directOrdersCount: dataTableForOrdersDayWise[date].directOrdersCount,
+                                        directOrdersAov: dataTableForOrdersDayWise[date].directOrdersAov,
+                                        assistedOrdersCount: dataTableForOrdersDayWise[date].assistedOrdersCount,
+                                        assistedOrdersAov: dataTableForOrdersDayWise[date].assistedOrdersAov,
+                                        directOrdersNetSales: dataTableForOrdersDayWise[date].directOrdersNetSales,
+                                        assistedOrdersNetSales: dataTableForOrdersDayWise[date].assistedOrdersNetSales,
+                                    }))}
+                                    columnDefs={[
+                                        {headerName: "Date", valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date), filter: "agDateColumnFilter", comparator: agGridDateComparator},
+                                        {headerName: "Direct Orders Count", field: "directOrdersCount"},
+                                        {headerName: "Direct Orders AOV", field: "directOrdersAov"},
+                                        {headerName: "Direct Orders NetSales", field: "directOrdersNetSales"},
+                                        {headerName: "Assisted Orders Count", field: "assistedOrdersCount"},
+                                        {headerName: "Assisted Orders AOV", field: "assistedOrdersAov"},
+                                        {headerName: "Assisted Orders NetSales", field: "assistedOrdersNetSales"},
+                                    ]}
+                                    defaultColDef={defaultColumnDefinitions}
+                                    animateRows={true}
+                                    enableRangeSelection={true}
+                                />
+                            </div>
+                        }
+                        metaQuery={shopifyData.metaQuery}
+                    />
+                </Tabs.Content>
+            </Tabs.Root>
+        </>
+    );
 }
 
-// TODO: Rename to something sensible
-function doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead(source: string) {
-    return source != "GJ_LeadGen_18May" && source != "GJ_LeadGen_Mattress_10 May" && source.match("^Freshsales - .* - Facebook Ads$") == null;
+function RevenueSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDate, selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, numberOfSelectedDays}) {
+    const filterShopifyData = shopifyData.rows
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.sourcePlatform))
+        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.sourceCampaignName))
+        .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
+
+    const defaultColumnDefinitions = {
+        sortable: true,
+        filter: true,
+    };
+
+    const directOrdersRevenue = get_r3_ordersRevenue(filterShopifyData.filter((row) => row.isAssisted == false));
+
+    const assistedOrdersRevenueGroupByDateAndCategory = get_r3_ordersRevenue(filterShopifyData.filter((row) => row.isAssisted == true));
+
+    const dates = getDates(minDate, maxDate);
+
+    const directOrdersGrossRevenue = {
+        grossRevenueDayWise: aggregateByDate(directOrdersRevenue, "netSales", dates),
+    };
+
+    const assistedOrdersGrossRevenue = {
+        grossRevenueDayWise: aggregateByDate(assistedOrdersRevenueGroupByDateAndCategory, "netSales", dates),
+    };
+
+    const r3_directOrdersNetRevenue = {
+        metaInformation: "",
+        netRevenueDayWise: aggregateByDate(
+            directOrdersRevenue.map((row) => ({...row, netRevenue: getNetRevenue(row)})),
+            "netRevenue",
+            dates
+        ),
+    };
+
+    const r3_assistedOrdersNetRevenue = {
+        metaInformation: "",
+        netRevenueDayWise: aggregateByDate(
+            assistedOrdersRevenueGroupByDateAndCategory.map((row) => ({...row, netRevenue: getNetRevenue(row)})),
+            "netRevenue",
+            dates
+        ),
+    };
+    const r3_totalNetRevenue = {
+        metaInformation: "",
+        netRevenue: r3_directOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0) + r3_assistedOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0),
+    };
+
+    const dataTableForRevenueDayWise = dates.reduce((result, curDate, index) => {
+        result[curDate] = {
+            directOrdersGrossRevenue: roundOffToTwoDigits(directOrdersGrossRevenue.grossRevenueDayWise[index]),
+            directOrdersNetRevenue: roundOffToTwoDigits(r3_directOrdersNetRevenue.netRevenueDayWise[index]),
+            assistedOrdersGrossRevenue: roundOffToTwoDigits(assistedOrdersGrossRevenue.grossRevenueDayWise[index]),
+            assistedOrdersNetRevenue: roundOffToTwoDigits(r3_assistedOrdersNetRevenue.netRevenueDayWise[index]),
+        };
+        return result;
+    }, {});
+
+    ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+    const ordersGrossRevenueOptions = {
+        responsive: true,
+        // maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: "top" as const,
+            },
+            title: {
+                display: true,
+                text: "Orders vs Gross Revenue Bar Graph",
+            },
+        },
+    };
+
+    const ordersNetRevenueOptions = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: "top" as const,
+            },
+            title: {
+                display: true,
+                text: "Orders vs Net Revenue Bar Graph",
+            },
+        },
+    };
+
+    const labels = Object.keys(dataTableForRevenueDayWise);
+    const ordersGrossRevenueData = {
+        labels,
+        datasets: [
+            {
+                label: "Direct Orders",
+                data: labels.map((date) => dataTableForRevenueDayWise[date].directOrdersGrossRevenue),
+                backgroundColor: "rgba(255, 99, 132, 0.5)",
+            },
+            {
+                label: "Assisted Orders",
+                data: labels.map((date) => dataTableForRevenueDayWise[date].assistedOrdersGrossRevenue),
+                backgroundColor: "rgba(53, 162, 235, 0.5)",
+            },
+        ],
+    };
+
+    const ordersNetRevenueData = {
+        labels,
+        datasets: [
+            {
+                label: "Direct Orders",
+                data: labels.map((date) => dataTableForRevenueDayWise[date].directOrdersNetRevenue),
+                backgroundColor: "rgba(255, 99, 132, 0.5)",
+            },
+            {
+                label: "Assisted Orders",
+                data: labels.map((date) => dataTableForRevenueDayWise[date].assistedOrdersNetRevenue),
+                backgroundColor: "rgba(53, 162, 235, 0.5)",
+            },
+        ],
+    };
+
+    return (
+        <>
+            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Revenue</div>
+
+            <Card
+                information={numberToHumanFriendlyString(r3_totalNetRevenue.netRevenue)}
+                label="Net Revenue"
+                metaInformation={r3_totalNetRevenue.metaInformation}
+                className="tw-row-span-2 tw-col-span-4"
+            />
+
+            <Card
+                information={numberToHumanFriendlyString(directOrdersGrossRevenue.grossRevenueDayWise.reduce(sumReducer, 0), true)}
+                label="Direct Gross Revenue"
+                metaQuery={shopifyData.metaQuery}
+                className="tw-col-span-2"
+            />
+
+            <Card
+                information={numberToHumanFriendlyString(r3_directOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0), true)}
+                label="Net Direct Revenue"
+                metaInformation={r3_directOrdersNetRevenue.metaInformation}
+                className="tw-col-span-2"
+            />
+
+            <div className="tw-col-span-2" />
+
+            <div className="tw-col-span-2" />
+
+            <Card
+                information={numberToHumanFriendlyString(assistedOrdersGrossRevenue.grossRevenueDayWise.reduce(sumReducer, 0), true)}
+                label="Assisted Gross Revenue"
+                metaQuery={shopifyData.metaQuery}
+                className="tw-col-span-2"
+            />
+
+            <Card
+                information={numberToHumanFriendlyString(r3_assistedOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0), true)}
+                label="Net Assisted Revenue"
+                metaInformation={r3_assistedOrdersNetRevenue.metaInformation}
+                className="tw-col-span-2"
+            />
+
+            <div className="tw-col-span-2" />
+
+            <div className="tw-col-span-2" />
+
+            <Tabs.Root defaultValue="1" className="tw-col-span-12">
+                <Tabs.List className="">
+                    <Tabs.Trigger value="1" className="lp-tab">
+                        Gross Revenue
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="2" className="lp-tab">
+                        Net Revenue
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="3" className="lp-tab">
+                        Raw Data
+                    </Tabs.Trigger>
+                </Tabs.List>
+                <Tabs.Content value="1">
+                    <GenericCard
+                        content={
+                            <div className="tw-grid tw-grid-cols-4">
+                                <div className="tw-col-start-2 tw-col-span-2">
+                                    <Bar options={ordersGrossRevenueOptions} data={ordersGrossRevenueData} />
+                                </div>
+                            </div>
+                        }
+                        metaQuery={adsData.metaQuery}
+                        label="Daywise distribution of Gross Revenue"
+                    />
+                </Tabs.Content>
+                <Tabs.Content value="2">
+                    <GenericCard
+                        content={
+                            <div className="tw-grid tw-grid-cols-4">
+                                <div className="tw-col-start-2 tw-col-span-2">
+                                    <Bar options={ordersNetRevenueOptions} data={ordersNetRevenueData} />
+                                </div>
+                            </div>
+                        }
+                        metaQuery={shopifyData.metaQuery}
+                        label="Daywise distribution of Net Revenue"
+                    />
+                </Tabs.Content>
+                <Tabs.Content value="3">
+                    <GenericCard
+                        content={
+                            <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                                <AgGridReact
+                                    rowData={dates.map((date, dateIndex) => ({
+                                        date: date,
+                                        directOrdersGrossRevenue: dataTableForRevenueDayWise[date].directOrdersGrossRevenue,
+                                        directOrdersNetRevenue: dataTableForRevenueDayWise[date].directOrdersNetRevenue,
+                                        assistedOrdersGrossRevenue: dataTableForRevenueDayWise[date].assistedOrdersGrossRevenue,
+                                        assistedOrdersNetRevenue: dataTableForRevenueDayWise[date].assistedOrdersNetRevenue,
+                                    }))}
+                                    columnDefs={[
+                                        {headerName: "Date", valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date), filter: "agDateColumnFilter", comparator: agGridDateComparator},
+                                        {headerName: "Direct Orders Gross Revenue", field: "directOrdersGrossRevenue"},
+                                        {headerName: "Direct Orders Net Revenue", field: "directOrdersNetRevenue"},
+                                        {headerName: "Assisted Orders Gross Revenue", field: "assistedOrdersGrossRevenue"},
+                                        {headerName: "Direct Orders Net Revenue", field: "assistedOrdersNetRevenue"},
+                                    ]}
+                                    defaultColDef={defaultColumnDefinitions}
+                                    animateRows={true}
+                                    enableRangeSelection={true}
+                                />
+                            </div>
+                        }
+                        metaQuery={shopifyData.metaQuery}
+                    />
+                </Tabs.Content>
+            </Tabs.Root>
+        </>
+    );
 }
 
-// TODO: Rename to something sensible
-function doesAdsCampaignNameCorrespondToPerformanceLead(campaignName: string) {
-    return campaignName != "GJ_LeadGen_18May" && campaignName != "GJ_LeadGen_Mattress_10 May";
+function SpendSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDate, selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, numberOfSelectedDays}) {
+    const filterShopifyData = shopifyData.rows
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.sourcePlatform))
+        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.sourceCampaignName))
+        .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
+
+    const filterAdsData = adsData.rows
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform))
+        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.campaignName));
+
+    const defaultColumnDefinitions = {
+        sortable: true,
+        filter: true,
+    };
+
+    const dates = getDates(minDate, maxDate);
+
+    // Google Ads
+    const googleAds = {
+        amountSpentDayWise: aggregateByDate(
+            filterAdsData.filter((row) => row.platform == "Google"),
+            "amountSpent",
+            dates
+        ),
+        netSalesDayWise: aggregateByDate(
+            filterShopifyData.filter((row) => row.sourcePlatform == "Google" && row.netSales > 0),
+            "netSales",
+            dates
+        ),
+    };
+
+    const r4_googleAdsRevenue = {
+        netSales: googleAds.netSalesDayWise.reduce(sumReducer, 0),
+    };
+
+    const googleAdsSpends = {
+        amountSpent: googleAds.amountSpentDayWise.reduce(sumReducer, 0),
+    };
+
+    const r4_googleAdsLiveCampaignsCount = {
+        count: distinct(filterAdsData.filter((row) => row.platform == "Google" && row.amountSpent > 0).map((row) => row.campaignName)).length,
+    };
+
+    const r4_googleAdsDailySpend = {
+        metaInformation: `Total Spend / Number of Days | Google = ${googleAdsSpends.amountSpent} / ${numberOfSelectedDays}`,
+        amountSpent: googleAdsSpends.amountSpent / numberOfSelectedDays,
+    };
+
+    const r4_googleAdsAcos = {
+        metaInformation: `Total Spend / Revenue | Google = ${googleAdsSpends.amountSpent} / ${r4_googleAdsRevenue.netSales}`,
+        acos: r4_googleAdsRevenue.netSales == 0 ? 0 : googleAdsSpends.amountSpent / r4_googleAdsRevenue.netSales,
+        dayWiseAcos: googleAds.amountSpentDayWise.map((value, index) => (googleAds.netSalesDayWise[index] == 0 ? 0 : value / googleAds.netSalesDayWise[index])),
+    };
+
+    // Facebook Spends
+    const facebookAds = {
+        amountSpentDayWise: aggregateByDate(
+            filterAdsData.filter((row) => row.platform == "Facebook"),
+            "amountSpent",
+            dates
+        ),
+        netSalesDayWise: aggregateByDate(
+            filterShopifyData.filter((row) => row.sourcePlatform == "Facebook" && row.netSales > 0),
+            "netSales",
+            dates
+        ),
+    };
+
+    const r4_facebookAdsRevenue = {
+        netSales: facebookAds.netSalesDayWise.reduce(sumReducer, 0),
+    };
+
+    const facebookAdsSpends = {
+        amountSpent: facebookAds.amountSpentDayWise.reduce(sumReducer, 0),
+    };
+
+    const r4_facebookAdsLiveCampaignsCount = {
+        count: distinct(filterAdsData.filter((row) => row.platform == "Facebook" && row.amountSpent > 0).map((row) => row.campaignName)).length,
+    };
+
+    const r4_facebookAdsAcos = {
+        metaInformation: `Total Spend / Revenue | Facebook = ${facebookAdsSpends.amountSpent} / ${r4_facebookAdsRevenue.netSales}`,
+        acos: facebookAdsSpends.amountSpent / r4_facebookAdsRevenue.netSales,
+        dayWiseAcos: facebookAds.amountSpentDayWise.map((value, index) => (facebookAds.netSalesDayWise[index] == 0 ? 0 : value / facebookAds.netSalesDayWise[index])),
+    };
+
+    const r4_facebookAdsDailySpend = {
+        metaInformation: `Total Spend / Number of Days | Facebook = ${facebookAdsSpends.amountSpent} / ${numberOfSelectedDays}`,
+        amountSpent: facebookAdsSpends.amountSpent / numberOfSelectedDays,
+    };
+
+    // Data Table for daywise distribution
+    const dataTableForSpendsDayWise = dates.reduce((result, curDate, index) => {
+        result[curDate] = {
+            googleAdsAmountSpent: roundOffToTwoDigits(googleAds.amountSpentDayWise[index]),
+            googleAdsNetSales: roundOffToTwoDigits(googleAds.netSalesDayWise[index]),
+            googleAdsAcos: roundOffToTwoDigits(r4_googleAdsAcos.dayWiseAcos[index]),
+            facebookAdsAmountSpent: roundOffToTwoDigits(facebookAds.amountSpentDayWise[index]),
+            facebookAdsNetSales: roundOffToTwoDigits(facebookAds.netSalesDayWise[index]),
+            facebookAdsAcos: roundOffToTwoDigits(r4_facebookAdsAcos.dayWiseAcos[index]),
+        };
+        return result;
+    }, {});
+
+    const r4_netSpends = {
+        metaInformation: `Facebook Ads Spends + Google Ads Spends = ${facebookAdsSpends.amountSpent} + ${googleAdsSpends.amountSpent}`,
+        amountSpent: facebookAdsSpends.amountSpent + googleAdsSpends.amountSpent,
+    };
+
+    ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+    const adsDataSpendsOptions = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: "top" as const,
+            },
+            title: {
+                display: true,
+                text: "Daywise distribution of Amount Spent on advertisements",
+            },
+        },
+    };
+
+    const labels = dates;
+    const adsDataSpendsData = {
+        labels,
+        datasets: [
+            {
+                label: "Google Ads Spend",
+                data: labels.map((item, index) => googleAds.amountSpentDayWise[index]),
+                backgroundColor: "rgba(255, 99, 132, 0.5)",
+            },
+            {
+                label: "Facebook Ads Spend",
+                data: labels.map((item, index) => facebookAds.amountSpentDayWise[index]),
+                backgroundColor: "rgba(53, 162, 235, 0.5)",
+            },
+        ],
+    };
+
+    return (
+        <>
+            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Spend</div>
+
+            <Card information={numberToHumanFriendlyString(r4_netSpends.amountSpent)} label="Net Spend" metaInformation={r4_netSpends.metaInformation} className="tw-row-span-2 tw-col-span-4" />
+
+            <Card information={numberToHumanFriendlyString(facebookAdsSpends.amountSpent)} label="Facebook Ads" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
+
+            <Card information={numberToHumanFriendlyString(r4_facebookAdsLiveCampaignsCount.count)} label="Live Campaigns" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
+
+            <Card
+                information={numberToHumanFriendlyString(r4_facebookAdsDailySpend.amountSpent, true)}
+                label="Daily Spend"
+                metaInformation={r4_facebookAdsDailySpend.metaInformation}
+                className="tw-col-span-2"
+            />
+
+            <Card information={numberToHumanFriendlyString(r4_facebookAdsAcos.acos, true, true, true)} label="ACoS" metaInformation={r4_facebookAdsAcos.metaInformation} className="tw-col-span-2" />
+
+            <Card information={numberToHumanFriendlyString(googleAdsSpends.amountSpent)} label="Google Ads" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
+
+            <Card information={numberToHumanFriendlyString(r4_googleAdsLiveCampaignsCount.count)} label="Live Campaigns" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
+
+            <Card
+                information={numberToHumanFriendlyString(r4_googleAdsDailySpend.amountSpent, true)}
+                label="Daily Spend"
+                metaInformation={r4_googleAdsDailySpend.metaInformation}
+                className="tw-col-span-2"
+            />
+
+            <Card information={numberToHumanFriendlyString(r4_googleAdsAcos.acos, true, true, true)} label="ACoS" metaInformation={r4_googleAdsAcos.metaInformation} className="tw-col-span-2" />
+
+            <Tabs.Root defaultValue="1" className="tw-col-span-12">
+                <Tabs.List className="">
+                    <Tabs.Trigger value="1" className="lp-tab">
+                        Distribution
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="2" className="lp-tab">
+                        Raw Data
+                    </Tabs.Trigger>
+                </Tabs.List>
+                <Tabs.Content value="1">
+                    <GenericCard
+                        content={
+                            <div className="tw-grid tw-grid-cols-4">
+                                <div className="tw-col-start-2 tw-col-span-2">
+                                    <Bar options={adsDataSpendsOptions} data={adsDataSpendsData} />
+                                </div>
+                            </div>
+                        }
+                        metaQuery={adsData.metaQuery}
+                    />
+                </Tabs.Content>
+                <Tabs.Content value="2">
+                    <GenericCard
+                        content={
+                            <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                                <AgGridReact
+                                    rowData={dates.map((date, dateIndex) => ({
+                                        date: date,
+                                        googleAdsAmountSpent: dataTableForSpendsDayWise[date].googleAdsAmountSpent,
+                                        googleAdsNetSales: dataTableForSpendsDayWise[date].googleAdsNetSales,
+                                        googleAdsAcos: dataTableForSpendsDayWise[date].googleAdsAcos,
+                                        facebookAdsAmountSpent: dataTableForSpendsDayWise[date].facebookAdsAmountSpent,
+                                        facebookAdsNetSales: dataTableForSpendsDayWise[date].facebookAdsNetSales,
+                                        facebookAdsAcos: dataTableForSpendsDayWise[date].facebookAdsAcos,
+                                    }))}
+                                    columnDefs={[
+                                        {headerName: "Date", valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date), filter: "agDateColumnFilter", comparator: agGridDateComparator},
+                                        {headerName: "Google-Ads Amount Spent", field: "googleAdsAmountSpent"},
+                                        {headerName: "Google-Ads Net Sales", field: "googleAdsNetSales"},
+                                        {headerName: "Google-Ads ACoS", field: "googleAdsAcos"},
+                                        {headerName: "Facebook-Ads Amount Spent", field: "facebookAdsAmountSpent"},
+                                        {headerName: "Facebook-Ads Net Sales", field: "facebookAdsNetSales"},
+                                        {headerName: "Facebook-Ads ACoS", field: "facebookAdsAcos"},
+                                    ]}
+                                    defaultColDef={defaultColumnDefinitions}
+                                    animateRows={true}
+                                    enableRangeSelection={true}
+                                />
+                            </div>
+                        }
+                        metaQuery={shopifyData.metaQuery}
+                    />
+                </Tabs.Content>
+            </Tabs.Root>
+        </>
+    );
 }
 
-function helperAggregateByCategory(result, item) {
-    let category = result[item.category] || 0;
-    category = category + parseInt(item.netSales);
-    result[item.category] = category;
-    return result;
-}
+function get_r3_ordersRevenue(shopifyData: Array<object>) {
+    let aggregateByDate = shopifyData.reduce(createGroupByReducer("date"), {});
 
-function helperAggregateByDate(result, item) {
-    let date = result[item.date] || [];
-    date.push(item);
-    result[item.date] = date;
-    return result;
-}
-function aggregateByDate(array: Array<object>, param: string) {
-    const result = [];
-    let arrayAggregateByDate: any = array.reduce(helperAggregateByDate, {});
-    for (const item in arrayAggregateByDate) {
-        let paramValue = arrayAggregateByDate[item].reduce((total, sum) => total + sum[`${param}`], 0);
-        let date = item;
+    for (const date in aggregateByDate) {
+        let result = aggregateByDate[date].reduce(createGroupByReducer("category"), {});
+        aggregateByDate[date] = result;
+    }
 
-        result.push({
-            param: paramValue,
-            date: date,
-        });
+    let result = [];
+    for (const date in aggregateByDate) {
+        for (const category in aggregateByDate[date]) {
+            const totalNetSales = aggregateByDate[date][category].reduce((total, item) => total + item.netSales, 0);
+            result.push({
+                date: date,
+                category: category,
+                netSales: totalNetSales,
+            });
+        }
     }
     return result;
 }
 
-function aggregateByDate2(arr: Array<object>, param: string, dates: Array<string>) {
-    // return dates.map((date) => arr.filter((x) => x.date == date).reduce((total, x) => total + x[param], 0));
-
+function aggregateByDate(arr: Array<object>, param: string, dates: Array<string>) {
     const counts = dates.map((date) => arr.filter((x) => x.date == date).reduce((total, x) => total + x[param], 0));
 
     const sum1 = arr.reduce((total, x) => total + x[param], 0);
     const sum2 = counts.reduce((total, x) => total + x, 0);
-    if (sum1 != sum2) {
+    if (Math.abs(sum1 - sum2) > 0.1) {
         console.log("SUMS DON'T ADD UP!", sum1, sum2);
     }
 
     return counts;
+}
+
+function getNetRevenue(row): number {
+    let returnProvision;
+
+    if (row.category == "Mattress" || row.category == "Non Mattress") {
+        returnProvision = 8.5;
+    } else if (row.category == "Water Purifier") {
+        returnProvision = 10;
+    } else if (row.category == "Appliances") {
+        returnProvision = 1.18;
+    } else if (row.category == null) {
+        // TODO: Remove
+        returnProvision = 0;
+    } else if (row.category == "null") {
+        // TODO: Remove
+        returnProvision = 0;
+    } else {
+        throw new Error(`returnProvision for category ${row.category} not specified!`);
+    }
+
+    return (row.netSales / 1.18) * (1 - returnProvision / 100);
+}
+
+function sumReducer(total: number, sum: number) {
+    return total + sum;
 }

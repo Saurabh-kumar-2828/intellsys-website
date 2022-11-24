@@ -57,7 +57,7 @@ export function FancyCalendar(props: {label, value, setValue}) {
             <div>
                 {props.label}:
             </div>
-            <input type="date" value={props.value} onChange={e => props.setValue(e.target.value)} className="tw-bg-lp" />
+            <input type="date" value={props.value} onChange={e => props.setValue(e.target.value)} className="tw-bg-lp tw-h-6" />
         </div>
     );
 }

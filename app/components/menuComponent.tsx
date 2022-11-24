@@ -30,14 +30,7 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
             url: "/",
             displayName: "Home",
         },
-        {
-            url: "#",
-            displayName: "",
-        },
-        {
-            url: "#",
-            displayName: "",
-        },
+        null,
         {
             url: "/business-insights",
             displayName: "Business Insights",
@@ -50,14 +43,7 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
             url: "/sales-report",
             displayName: "Sales Report",
         },
-        {
-            url: "#",
-            displayName: "",
-        },
-        {
-            url: "#",
-            displayName: "",
-        },
+        null,
         {
             url: "/data-management",
             displayName: "Data Management",
@@ -116,19 +102,32 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
 
                         <ItemBuilder
                             items={pages}
-                            itemBuilder={(item, itemIndex) => (
-                                <MenuClosingLink
-                                    to={item.url}
-                                    className={concatenateNonNullStringsWithSpaces(
-                                        "tw-py-2 hover:tw-underline",
-                                        currentUrl == item.url || currentUrl.startsWith(`${item.url}?`) ? "tw-font-bold" : null
-                                    )}
-                                    toggleMenu={toggleMenu}
-                                    key={itemIndex}
-                                >
-                                    {item.displayName}
-                                </MenuClosingLink>
-                            )}
+                            itemBuilder={(item, itemIndex) => {
+                                if (item == null) {
+                                    return (
+                                        <>
+                                            <VerticalSpacer className="tw-h-4" />
+
+                                            <Divider />
+
+                                            <VerticalSpacer className="tw-h-4" />
+                                        </>
+                                    );
+                                }
+                                return (
+                                    <MenuClosingLink
+                                        to={item.url}
+                                        className={concatenateNonNullStringsWithSpaces(
+                                            "tw-py-2 hover:tw-underline",
+                                            currentUrl == item.url || currentUrl.startsWith(`${item.url}?`) ? "tw-font-bold" : null
+                                        )}
+                                        toggleMenu={toggleMenu}
+                                        key={itemIndex}
+                                    >
+                                        {item.displayName}
+                                    </MenuClosingLink>
+                                );
+                            }}
                         />
 
                         <VerticalSpacer className="tw-h-6" />

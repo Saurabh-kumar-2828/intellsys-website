@@ -1,38 +1,29 @@
-import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import * as Tabs from "@radix-ui/react-tabs";
+import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
-import {Link, useLoaderData} from "@remix-run/react";
-import {DateTime, Info} from "luxon";
-import csvDownload from "json-to-csv-export";
-import {Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement} from "chart.js";
-import {Bar, Line} from "react-chartjs-2";
-import React, {useEffect, useState} from "react";
-import {getShopifyData, getFreshsalesData, getAdsData} from "~/backend/business-insights";
-import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
-import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
-import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
-import {
-    agGridDateComparator,
-    concatenateNonNullStringsWithAmpersand,
-    DateFilterSection,
-    dateToMediumEnFormat,
-    getColor,
-    dateToMediumNoneEnFormat,
-    distinct,
-    getDates,
-    numberToHumanFriendlyString,
-    roundOffToTwoDigits,
-} from "~/utilities/utilities";
-import {AgGridReact} from "ag-grid-react";
+import {useLoaderData} from "@remix-run/react";
 import "ag-grid-enterprise";
-import {ConditionPosition} from "ag-grid-community/dist/lib/filter/provided/simpleFilter";
-import {createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead, doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities";
-import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
+import {AgGridReact} from "ag-grid-react";
+import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
+import {DateTime} from "luxon";
+import {useEffect, useState} from "react";
+import {Bar, Line} from "react-chartjs-2";
+import {getAdsData, getFreshsalesData, getShopifyData} from "~/backend/business-insights";
+import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
+import {
+    createGroupByReducer,
+    doesAdsCampaignNameCorrespondToPerformanceLead,
+    doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead,
+    doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead
+} from "~/backend/utilities/utilities";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
+import {Card, DateFilterSection, FancySearchableMultiSelect, GenericCard} from "~/components/scratchpad";
+import {QueryFilterType} from "~/utilities/typeDefinitions";
+import {agGridDateComparator, dateToMediumNoneEnFormat, distinct, getDates, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
-        title: "Business Insights - Livpure Data Management",
+        title: "Business Insights - Intellsys",
     };
 };
 
@@ -162,7 +153,7 @@ export default function () {
                 page={"business-insights"}
             />
 
-            <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
+            <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
                 <FancySearchableMultiSelect
                     label="Choose Category"
                     options={businesses}
@@ -259,8 +250,6 @@ export default function () {
         </div>
     );
 }
-
-
 
 function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDate, selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, numberOfSelectedDays}) {
     // Metrics

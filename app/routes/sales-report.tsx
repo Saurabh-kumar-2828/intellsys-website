@@ -6,14 +6,13 @@ import {DateTime} from "luxon";
 import {Profiler, useCallback, useEffect, useState} from "react";
 import {getShopifyData, getAdsData} from "~/backend/business-insights";
 import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
-import {Card, FancyCalendar, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
+import {Card, DateFilterSection, FancyCalendar, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
 import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
     agGridDateComparator,
     agGridFloatComparator,
     colorPalette,
     concatenateNonNullStringsWithAmpersand,
-    DateFilterSection,
     distinct,
     fillColors,
     getColor,
@@ -32,7 +31,7 @@ import {aggregateByDate, createGroupByReducer,  sumReducer} from "~/backend/util
 
 export const meta: MetaFunction = () => {
     return {
-        title: "Sales Report - Livpure Data Management",
+        title: "Sales Report - Intellsys",
     };
 };
 
@@ -126,7 +125,7 @@ export default function () {
                 page={"sales-report"}
             />
 
-            <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
+            <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
                 <FancySearchableSelect label="Choose Category" options={businesses} selectedOption={selectedCategory} setSelectedOption={setSelectedCategory} />
                 <FancySearchableSelect label="Insights On" options={insights} selectedOption={selectedInsight} setSelectedOption={setSelectedInsight} />
             </div>

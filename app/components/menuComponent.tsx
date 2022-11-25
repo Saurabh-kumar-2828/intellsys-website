@@ -91,7 +91,7 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
                 <div className="tw-flex tw-flex-row tw-w-full tw-h-full">
                     <div className="tw-flex-grow tw-backdrop-blur-md tw-backdrop-brightness-75" onClick={toggleMenu} />
 
-                    <div className="tw-flex tw-flex-col tw-p-4 tw-min-w-[66%] xl:tw-min-w-[20rem] tw-bg-lp tw-overflow-y-auto">
+                    <div className="tw-flex tw-flex-col tw-p-4 tw-min-w-[66%] xl:tw-min-w-[20rem] tw-bg-dark-bg-500 tw-overflow-y-auto">
                         <div className="tw-flex tw-flex-row tw-justify-end tw-items-center tw-h-10">
                             <button onClick={toggleMenu}>
                                 <XLg className="tw-w-8 tw-h-8" />
@@ -140,7 +140,7 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
 
                         <VerticalSpacer className="tw-h-6" />
 
-                        <MenuClosingLink to="/clear-session" className="hover:tw-underline" toggleMenu={toggleMenu}>
+                        <MenuClosingLink to="/sign-out" className="hover:tw-underline" toggleMenu={toggleMenu}>
                             Sign Out
                         </MenuClosingLink>
 

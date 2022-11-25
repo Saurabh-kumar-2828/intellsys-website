@@ -1,26 +1,28 @@
-import * as Tabs from "@radix-ui/react-tabs";
 import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
-import {Link, useLoaderData} from "@remix-run/react";
+import {useLoaderData} from "@remix-run/react";
+import {AgGridReact} from "ag-grid-react";
+import {CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
 import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
-import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
-import {LineGraphComponent} from "~/components/reusableComponents/lineGraphComponent";
-import {Card, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
-import {QueryFilterType} from "~/utilities/typeDefinitions";
-import {getFreshsalesData, getAdsData, getShopifyData} from "~/backend/business-insights";
-import {concatenateNonNullStringsWithAmpersand, DateFilterSection, dateToMediumNoneEnFormat, distinct, getDates, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
-import {aggregateByDate, columnWiseSummationOfMatrix, createGroupByReducer, doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead, sumReducer} from "~/backend/utilities/utilities";
-import {Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend} from "chart.js";
 import {Line} from "react-chartjs-2";
-import {AgGridReact} from "ag-grid-react";
-import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
+import {getAdsData, getFreshsalesData, getShopifyData} from "~/backend/business-insights";
+import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
+import {
+    aggregateByDate,
+    columnWiseSummationOfMatrix,
+    createGroupByReducer,
+    doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead,
+    sumReducer,
+} from "~/backend/utilities/utilities";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
-import { AnyObject } from "chart.js/types/basic";
+import {Card, DateFilterSection, DateFilterSection, FancySearchableMultiSelect, GenericCard} from "~/components/scratchpad";
+import {QueryFilterType} from "~/utilities/typeDefinitions";
+import {distinct, getDates, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
-        title: "Facebook Campaigns Funnel - Livpure Data Management",
+        title: "Facebook Campaigns Funnel - Intellsys",
     };
 };
 
@@ -169,7 +171,7 @@ export default function () {
                 page={"campaigns-funnel-view"}
             />
 
-            <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
+            <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
                 <FancySearchableMultiSelect
                     label="Choose Category"
                     options={businesses}
@@ -445,5 +447,3 @@ function CampaignsSection(props: {shopifyData: any; adsData: any; freshsalesData
         </>
     );
 }
-
-

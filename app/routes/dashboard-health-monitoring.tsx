@@ -10,7 +10,7 @@ import {fullRefresh, Operation, processFileUpload, processTruncate, Table} from 
 
 export const meta: MetaFunction = () => {
     return {
-        title: "Dashboard Health Monitoring - Livpure Data Management",
+        title: "Dashboard Health Monitoring - Intellsys",
     };
 };
 

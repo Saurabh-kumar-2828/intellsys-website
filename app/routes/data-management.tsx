@@ -18,7 +18,7 @@ import {dateToMediumNoneEnFormat, numberToHumanFriendlyString} from "~/utilities
 
 export const meta: MetaFunction = () => {
     return {
-        title: "Data Management - Livpure Data Management",
+        title: "Data Management - Intellsys",
     };
 };
 

@@ -5,7 +5,7 @@ import {createFreshsalesLeadsRaw, doesTableExist, TablesAndViews} from "~/backen
 
 export const meta: MetaFunction = () => {
     return {
-        title: "Table Management - Livpure Data Management",
+        title: "Table Management - Intellsys",
     };
 };
 

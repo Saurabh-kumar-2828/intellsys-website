@@ -1,7 +1,4 @@
-import { Link } from "@remix-run/react";
-import {DateTime, Info} from "luxon";
-import { useEffect, useState } from "react";
-import { FancyCalendar, FancySearchableSelect } from "~/components/scratchpad";
+import {DateTime} from "luxon";
 
 // export function getUrlForResource(resourceRelativePath) {
 //     return `${process.env.NEXT_PUBLIC_FRONTEND_URL}/resources/${resourceRelativePath}`;
@@ -116,7 +113,7 @@ export function distinct(arr) {
     }
 
     return arr.filter(onlyUnique);
-};
+}
 
 export function dateToMediumNoneEnFormat(date: string) {
     if (date == null) {
@@ -154,7 +151,7 @@ export function agGridDateComparator(a: string, b: string) {
     }
 }
 
-export function agGridFloatComparator(aa: number, bb : number) {
+export function agGridFloatComparator(aa: number, bb: number) {
     aa = parseFloat(aa);
     bb = parseFloat(bb);
     if (aa > bb) {
@@ -179,18 +176,18 @@ export function numberToHumanFriendlyString(n, isFloat = false, shorten = true, 
         }
     }
 
-    if (!shorten || n < 10**3) {
+    if (!shorten || n < 10 ** 3) {
         if (isFloat) {
             return n.toFixed(2);
         } else {
             return n;
         }
-    } else if (n < 10**5) {
-        return `${(n / 10**3).toFixed(2)}K`;
-    } else if (n < 10**7) {
-        return `${(n / 10**5).toFixed(2)}L`;
+    } else if (n < 10 ** 5) {
+        return `${(n / 10 ** 3).toFixed(2)}K`;
+    } else if (n < 10 ** 7) {
+        return `${(n / 10 ** 5).toFixed(2)}L`;
     } else {
-        return `${(n / 10**7).toFixed(2)}Cr`;
+        return `${(n / 10 ** 7).toFixed(2)}Cr`;
     }
 }
 
@@ -203,7 +200,7 @@ export function getIntegerArrayOfLength(n: number) {
 }
 
 export async function delay(ms: number) {
-    await new Promise(_ => setTimeout(_, ms));
+    await new Promise((_) => setTimeout(_, ms));
 }
 
 // TODO: Only works for "Daily" granularity, extend to support other granularities as well
@@ -225,7 +222,7 @@ export const colorPalette = {
     "Non Mattress": "rgb(255,139,34)",
     Appliances: "rgb(200,10,0)",
     "Water Purifier": "rgb(255,251,55)",
-}
+};
 
 export const fillColors = [
     "rgb(255,0,222)",
@@ -249,7 +246,6 @@ export const fillColors = [
     "rgb(255, 20, 212)",
     "rgb(255, 240, 22)",
     "rgb(198, 250, 222)",
-
 ];
 
 export function getColor(key: string) {
@@ -261,104 +257,4 @@ export function getColor(key: string) {
     }
 }
 
-
 const cloudflareImagesAccountHash = "QSJTsX8HH4EtEhHrJthznA";
-
-
-export function DateFilterSection(props: {
-    granularities: Array<string>;
-    selectedGranularity: string;
-    setSelectedGranularity: React.Dispatch<React.SetStateAction<string>>;
-    selectedMinDate: string;
-    setSelectedMinDate: React.Dispatch<React.SetStateAction<string>>;
-    selectedMaxDate: string;
-    setSelectedMaxDate: React.Dispatch<React.SetStateAction<string>>;
-    page: string
-}) {
-    const months = Info.months("long", {locale: "en-GB"});
-    const [selectedMonth, setSelectedMonth] = useState(months[DateTime.now().get("month")-1]);
-
-    useEffect(() => {
-        const dt = DateTime.now();
-        if (months.indexOf(selectedMonth) + 1 <= dt.get("month")) {
-            props.setSelectedMinDate(
-                DateTime.now()
-                    .startOf("month")
-                    .set({month: months.indexOf(selectedMonth) + 1})
-                    .toISODate()
-            );
-            props.setSelectedMaxDate(
-                DateTime.now()
-                    .set({month: months.indexOf(selectedMonth) + 1})
-                    .endOf("month")
-                    .toISODate()
-            );
-        } else if (months.indexOf(selectedMonth) + 1 > dt.get("month")) {
-            const year = DateTime.now().plus({months: -12}).get("year");
-            props.setSelectedMinDate(
-                DateTime.now()
-                    .startOf("month")
-                    .set({year: year, month: months.indexOf(selectedMonth) + 1})
-                    .toISODate()
-            );
-            props.setSelectedMaxDate(
-                DateTime.now()
-                    .set({year: year, month: months.indexOf(selectedMonth) + 1})
-                    .endOf("month")
-                    .toISODate()
-            );
-        }
-    }, [selectedMonth]);
-
-    return (
-        <div className="tw-col-span-12 tw-bg-[#2c1f54] tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-flex tw-flex-row tw-items-start tw-gap-x-4">
-            <div className="tw-flex-1 tw-flex tw-flex-row tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
-                {/* <FancySearchableSelect label="Granularity" options={props.granularities} selectedOption={props.selectedGranularity} setSelectedOption={props.setSelectedGranularity} /> */}
-
-                <button
-                    type="button"
-                    onClick={() => {
-                        const minDate = DateTime.now().startOf("month").toISODate();
-                        const maxDate = DateTime.now().toISODate();
-                        props.setSelectedMinDate(minDate);
-                        props.setSelectedMaxDate(maxDate);
-                    }}
-                    className="tw-lp-button tw-px-6 tw-py-2 tw-rounded-md"
-                >
-                    MTD
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => {
-                        const minDate = DateTime.now().plus({days: -28}).toISODate();
-                        const maxDate = DateTime.now().toISODate();
-                        props.setSelectedMinDate(minDate);
-                        props.setSelectedMaxDate(maxDate);
-                    }}
-                    className="tw-lp-button tw-px-6 tw-py-2 tw-rounded-md"
-                >
-                    Past 28 Days
-                </button>
-                <FancySearchableSelect label="Choose Month" options={months} selectedOption={selectedMonth} setSelectedOption={setSelectedMonth} />
-            </div>
-
-            <div className="tw-flex tw-flex-row tw-gap-x-4">
-                <FancyCalendar label="Start Date" value={props.selectedMinDate} setValue={props.setSelectedMinDate} />
-
-                <FancyCalendar label="End Date" value={props.selectedMaxDate} setValue={props.setSelectedMaxDate} />
-
-                <Link
-                    to={concatenateNonNullStringsWithAmpersand(
-                        `/${props.page}?selected_granularity=${props.selectedGranularity}`,
-                        `min_date=${props.selectedMinDate}`,
-                        `max_date=${props.selectedMaxDate}`
-                    )}
-                    className="-tw-col-end-1 tw-bg-lp tw-p-2 tw-rounded-md"
-                >
-                    Update Filters
-                </Link>
-            </div>
-        </div>
-    );
-}

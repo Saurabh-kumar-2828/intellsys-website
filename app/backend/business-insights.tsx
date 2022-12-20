@@ -11,93 +11,93 @@ export enum TimeGranularity {
     yearly = "Yearly",
 }
 
+export type ShopifyData = {
+    metaQuery: string;
+    rows: Array<ShopifyDataAggregatedRow>;
+};
+
 export type ShopifyDataAggregatedRow = {
-    date: Iso8601Date,
+    date: Iso8601Date;
     productCategory: string;
     productSubCategory: string;
     productTitle: string;
-    productPrice: string;
+    productPrice: number;
     variantTitle: string;
     leadGenerationSource: string;
     leadGenerationSourceCampaignPlatform: string;
     leadGenerationSourceCampaignCategory: string;
     isAssisted: boolean;
     netSales: number;
-    netQuantit: number;
+    netQuantity: number;
 };
 
-export async function getShopifyData(
-    minDate: Iso8601Date,
-    maxDate: Iso8601Date,
-    granularity: TimeGranularity
-): Promise<{
-    metaQuery: string;
-    rows: Array<ShopifyDataAggregatedRow>;
-}> {
-    try {
-        const query = `
-            SELECT
-                ${getGranularityQuery(granularity, "date")} AS date,
-                product_category,
-                product_sub_category,
-                product_title,
-                product_price,
-                variant_title,
-                lead_generation_source,
-                lead_generation_source_campaign_platform,
-                lead_generation_source_campaign_category,
-                is_assisted,
-                SUM(net_sales) AS net_sales,
-                SUM(net_quantity) AS net_quantity
-            FROM
-                shopify_sales_to_source_with_information
-            WHERE
-                date >= '${minDate}' AND
-                date <= '${maxDate}' AND
-                cancelled = 'No'
-            GROUP BY
-                ${getGranularityQuery(granularity, "date")},
-                product_category,
-                product_sub_category,
-                product_title,
-                product_price,
-                variant_title,
-                lead_generation_source,
-                lead_generation_source_campaign_platform,
-                lead_generation_source_campaign_category,
-                is_assisted,
-            ORDER BY
-                date
-        `;
+export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity): Promise<ShopifyData> {
+    const query = `
+        SELECT
+            ${getGranularityQuery(granularity, "date")} AS date,
+            product_category,
+            product_sub_category,
+            product_title,
+            product_price,
+            variant_title,
+            lead_generation_source,
+            lead_generation_source_campaign_platform,
+            lead_generation_source_campaign_category,
+            is_assisted,
+            SUM(net_sales) AS net_sales,
+            SUM(net_quantity) AS net_quantity
+        FROM
+            shopify_sales_to_source_with_information
+        WHERE
+            date >= '${minDate}' AND
+            date <= '${maxDate}' AND
+            cancelled = 'No'
+        GROUP BY
+            ${getGranularityQuery(granularity, "date")},
+            product_category,
+            product_sub_category,
+            product_title,
+            product_price,
+            variant_title,
+            lead_generation_source,
+            lead_generation_source_campaign_platform,
+            lead_generation_source_campaign_category,
+            is_assisted
+        ORDER BY
+            date
+    `;
 
-        const result = await execute(query);
+    const result = await execute(query);
 
-        return {
-            metaQuery: query,
-            rows: result
-                ? result.rows.map((row: any) => ({
-                      date: row.date.toISOString().slice(0, 10),
-                      category: row.product_category,
-                      productTitle: row.product_title,
-                      productPrice: parseInt(row.product_title),
-                      sourcePlatform: row.source_information_platform,
-                      sourceCampaignName: row.source_information_campaign_name,
-                      isAssisted: row.is_assisted,
-                      source: row.source,
-                      cancelled: row.cancelled == "Yes",
-                      netSales: parseFloat(row.net_sales),
-                      netQuantity: parseInt(row.net_quantity),
-                      subCategory: row.product_sub_category,
-                      variantTitle: row.variant_title,
-                  }))
-                : [],
-        };
-    } catch (e) {
-        console.log("Error executing function");
-        console.trace();
-        return null;
-    }
+    return {
+        metaQuery: query,
+        rows: result.rows.map((row) => getRowToShopifyDataAggregatedRow(row)),
+    };
 }
+
+function getRowToShopifyDataAggregatedRow(row: any): ShopifyDataAggregatedRow {
+    const shopifyDataAggregatedRow: ShopifyDataAggregatedRow = {
+        date: row.date.toISOString().slice(0, 10),
+        productCategory: row.product_category,
+        productSubCategory: row.product_sub_category,
+        productTitle: row.product_title,
+        productPrice: parseInt(row.product_price),
+        variantTitle: row.variant_title,
+        leadGenerationSource: row.lead_generation_source,
+        leadGenerationSourceCampaignPlatform: row.lead_generation_source_campaign_platform,
+        leadGenerationSourceCampaignCategory: row.lead_generation_source_campaign_category,
+        isAssisted: row.is_assisted,
+        netSales: parseFloat(row.net_sales),
+        netQuantity: parseInt(row.net_quantity),
+    };
+
+    return shopifyDataAggregatedRow;
+}
+
+export type FreshsalesData = {
+    metaQuery: string;
+    rows: Array<FreshsalesDataAggregatedRow>;
+};
 
 export type FreshsalesDataAggregatedRow = {
     date: Iso8601Date;
@@ -109,14 +109,7 @@ export type FreshsalesDataAggregatedRow = {
     leadGenerationSourceCampaignCategory: string;
 };
 
-export async function getFreshsalesData(
-    minDate: Iso8601Date,
-    maxDate: Iso8601Date,
-    granularity: TimeGranularity
-): Promise<{
-    metaQuery: string;
-    rows: Array<FreshsalesDataAggregatedRow>;
-}> {
+export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity): Promise<FreshsalesData> {
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "lead_created_at")} AS date,
@@ -164,24 +157,22 @@ function rowToFreshsalesDataAggregatedRow(row: any): FreshsalesDataAggregatedRow
     return freshsalesDataAggregatedRow;
 }
 
+export type AdsData = {
+    metaQuery: string;
+    rows: Array<AdsDataAggregatedRow>;
+};
+
 export type AdsDataAggregatedRow = {
     date: Iso8601Date;
     amountSpent: number;
     impressions: number;
-    clicks: string;
+    clicks: number;
     campaignName: string;
     platform: string;
     category: string;
 };
 
-export async function getAdsData(
-    minDate: Iso8601Date,
-    maxDate: Iso8601Date,
-    granularity: TimeGranularity,
-): Promise<{
-    metaQuery: string;
-    rows: Array<AdsDataAggregatedRow>;
-}> {
+export async function getAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity): Promise<AdsData> {
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "date")} AS date,
@@ -189,8 +180,8 @@ export async function getAdsData(
             SUM(impressions) AS impressions,
             SUM(clicks) AS clicks,
             campaign_name,
-            platform
-            category,
+            platform,
+            category
         FROM
             ads_with_information
         WHERE

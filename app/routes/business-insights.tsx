@@ -8,13 +8,9 @@ import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineEl
 import {DateTime} from "luxon";
 import {useEffect, useState} from "react";
 import {Bar, Line} from "react-chartjs-2";
-import {AdsDataAggregatedRow, FreshsalesDataAggregatedRow, getAdsData, getFreshsalesData, getShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
+import {AdsDataAggregatedRow, FreshsalesData, FreshsalesDataAggregatedRow, getAdsData, getFreshsalesData, getShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
 import {getProductLibrary, getCapturedUtmCampaignLibrary, ProductInformation, SourceInformation} from "~/backend/common";
-import {
-    createGroupByReducer,
-    doesAdsCampaignNameCorrespondToPerformanceLead,
-    doesLeadCaptureSourceCorrespondToPerformanceLead,
-} from "~/backend/utilities/utilities";
+import {createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import {Card, DateFilterSection, FancySearchableMultiSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
 import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
@@ -39,10 +35,7 @@ type LoaderData = {
     appliedSelectedGranularity: string;
     allProductInformation: Array<ProductInformation>;
     allSourceInformation: Array<SourceInformation>;
-    freshsalesLeadsData: {
-        metaQuery: string;
-        rows: Array<FreshsalesDataAggregatedRow>;
-    };
+    freshsalesLeadsData: FreshsalesData;
     adsData: {
         metaQuery: string;
         rows: Array<AdsDataAggregatedRow>;
@@ -273,7 +266,29 @@ export default function () {
     );
 }
 
-function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDate, selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, numberOfSelectedDays}) {
+function LeadsSection({
+    freshsalesLeadsData,
+    adsData,
+    shopifyData,
+    minDate,
+    maxDate,
+    selectedCategories,
+    selectedProducts,
+    selectedPlatforms,
+    selectedCampaigns,
+    numberOfSelectedDays,
+}: {
+    freshsalesLeadsData: FreshsalesData;
+    adsData;
+    shopifyData;
+    minDate;
+    maxDate;
+    selectedCategories;
+    selectedProducts;
+    selectedPlatforms;
+    selectedCampaigns;
+    numberOfSelectedDays;
+}) {
     // Metrics
     const [showAcos, setShowAcos] = useState(true);
     const [showCpl, setShowCpl] = useState(false);

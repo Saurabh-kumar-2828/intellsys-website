@@ -24,6 +24,7 @@ export type ShopifyDataAggregatedRow = {
     productPrice: number;
     variantTitle: string;
     leadGenerationSource: string;
+    leadCaptureSource: string;
     leadGenerationSourceCampaignPlatform: string;
     leadGenerationSourceCampaignCategory: string;
     isAssisted: boolean;
@@ -41,6 +42,7 @@ export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date,
             product_price,
             variant_title,
             lead_generation_source,
+            lead_capture_source,
             lead_generation_source_campaign_platform,
             lead_generation_source_campaign_category,
             is_assisted,
@@ -60,6 +62,7 @@ export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date,
             product_price,
             variant_title,
             lead_generation_source,
+            lead_capture_source,
             lead_generation_source_campaign_platform,
             lead_generation_source_campaign_category,
             is_assisted
@@ -84,6 +87,7 @@ function getRowToShopifyDataAggregatedRow(row: any): ShopifyDataAggregatedRow {
         productPrice: parseInt(row.product_price),
         variantTitle: row.variant_title,
         leadGenerationSource: row.lead_generation_source,
+        leadCaptureSource: row.lead_capture_source,
         leadGenerationSourceCampaignPlatform: row.lead_generation_source_campaign_platform,
         leadGenerationSourceCampaignCategory: row.lead_generation_source_campaign_category,
         isAssisted: row.is_assisted,

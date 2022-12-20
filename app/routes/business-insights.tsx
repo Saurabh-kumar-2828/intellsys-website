@@ -8,7 +8,7 @@ import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineEl
 import {DateTime} from "luxon";
 import {useEffect, useState} from "react";
 import {Bar, Line} from "react-chartjs-2";
-import {AdsDataAggregatedRow, FreshsalesData, FreshsalesDataAggregatedRow, getAdsData, getFreshsalesData, getShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
+import {AdsData, AdsDataAggregatedRow, FreshsalesData, FreshsalesDataAggregatedRow, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
 import {getProductLibrary, getCapturedUtmCampaignLibrary, ProductInformation, SourceInformation} from "~/backend/common";
 import {createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
@@ -276,18 +276,16 @@ function LeadsSection({
     selectedProducts,
     selectedPlatforms,
     selectedCampaigns,
-    numberOfSelectedDays,
 }: {
     freshsalesLeadsData: FreshsalesData;
-    adsData;
-    shopifyData;
-    minDate;
-    maxDate;
-    selectedCategories;
-    selectedProducts;
-    selectedPlatforms;
-    selectedCampaigns;
-    numberOfSelectedDays;
+    adsData: AdsData;
+    shopifyData: ShopifyData;
+    minDate: Iso8601Date;
+    maxDate: Iso8601Date;
+    selectedCategories:string;
+    selectedProducts: string;
+    selectedPlatforms: string;
+    selectedCampaigns: string;
 }) {
     // Metrics
     const [showAcos, setShowAcos] = useState(true);

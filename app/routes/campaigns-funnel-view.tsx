@@ -6,7 +6,7 @@ import {CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, Point
 import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {Line} from "react-chartjs-2";
-import {getAdsData, getFreshsalesData, getShopifyData} from "~/backend/business-insights";
+import {AdsData, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, TimeGranularity} from "~/backend/business-insights";
 import {getProductLibrary, getCapturedUtmCampaignLibrary} from "~/backend/common";
 import {
     aggregateByDate,
@@ -16,8 +16,8 @@ import {
     sumReducer,
 } from "~/backend/utilities/utilities";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
-import {Card, DateFilterSection, DateFilterSection, FancySearchableMultiSelect, GenericCard} from "~/components/scratchpad";
-import {QueryFilterType} from "~/utilities/typeDefinitions";
+import {Card, DateFilterSection, FancySearchableMultiSelect, GenericCard} from "~/components/scratchpad";
+import {Iso8601Date, QueryFilterType} from "~/utilities/typeDefinitions";
 import {distinct, getDates, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
@@ -39,7 +39,7 @@ export const loader: LoaderFunction = async ({request}) => {
     const selectedGranularityRaw = urlSearchParams.get("selected_granularity");
     let selectedGranularity;
     if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
-        selectedGranularity = "Daily";
+        selectedGranularity = TimeGranularity.daily;
     } else {
         selectedGranularity = selectedGranularityRaw;
     }
@@ -68,20 +68,24 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedMaxDate: maxDate,
         allProductInformation: await getProductLibrary(),
         allSourceInformation: await getCapturedUtmCampaignLibrary(),
-        CampaignsInformation: await getAdsData(minDate, maxDate, selectedGranularity),
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity),
     });
 };
 
-function getDayWiseCampaignsTrends(adsData: Array<object>, freshSalesData: Array<object>, shopifyData: Array<object>, minDate: Date, maxDate: Date) {
+function getDayWiseCampaignsTrends(freshsalesLeadsData: FreshsalesData,
+    adsData: AdsData,
+    shopifyData: ShopifyData,
+    minDate: Iso8601Date,
+    maxDate: Iso8601Date,
+) {
     const dates = getDates(minDate, maxDate);
 
-    const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
+    const adsDataGroupByCampaign = adsData.rows.reduce(createGroupByReducer("campaignName"), {});
     // TODO: Is this correct?
-    const freshSalesDataGroupByCampaign = freshSalesData.filter((row) => doesLeadCaptureSourceCorrespondToPerformanceLead(row)).reduce(createGroupByReducer("campaign"), {});
-    const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("sourceCampaignName"), {});
+    const freshSalesDataGroupByCampaign = freshsalesLeadsData.rows.filter((row) => doesLeadCaptureSourceCorrespondToPerformanceLead(row)).reduce(createGroupByReducer("campaign"), {});
+    const shopifyDataGroupByCampaign = shopifyData.rows.reduce(createGroupByReducer("sourceCampaignName"), {});
 
     const dayWiseDistributionPerCampaign = {};
     for (const campaign in adsDataGroupByCampaign) {
@@ -132,22 +136,22 @@ export default function () {
 
     products = allProductInformation
         .filter((productInformation) => selectedCategories.length == 0 || selectedCategories.includes(productInformation.category))
-        .map((productInformation) => productInformation.productName);
+        .map((productInformation: { productName: string; }) => productInformation.productName);
     campaigns = distinct(
         allSourceInformation
             .filter((sourceInformation) => selectedCategories.length == 0 || selectedCategories.includes(sourceInformation.category))
             .filter((sourceInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(sourceInformation.platform))
             .map((sourceInformation) => sourceInformation.campaignName)
     );
-    const granularities = ["Daily", "Monthly", "Yearly"];
+    const granularities = [TimeGranularity.daily, TimeGranularity.monthly, TimeGranularity.yearly];
 
     const filterFreshsalesData = freshsalesLeadsData.rows
         .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
-        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform));
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
 
     const filterShopifyData = shopifyData.rows
-        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
-        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.sourcePlatform))
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.productCategory))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
         .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
 
     const filterAdsData = adsData.rows
@@ -196,13 +200,25 @@ export default function () {
                 />
             </div>
 
-            <CampaignsSection shopifyData={filterShopifyData} adsData={filterAdsData} freshsalesData={filterFreshsalesData} minDate={appliedMinDate} maxDate={appliedMaxDate} />
-            <CampaignsSection shopifyData={filterShopifyData} adsData={filterAdsData} freshsalesData={filterFreshsalesData} minDate={appliedMinDate} maxDate={appliedMaxDate} />
+            <CampaignsSection shopifyData={filterShopifyData} adsData={filterAdsData} freshsalesLeadsData={filterFreshsalesData} minDate={appliedMinDate} maxDate={appliedMaxDate} />
+            <CampaignsSection shopifyData={filterShopifyData} adsData={filterAdsData} freshsalesLeadsData={filterFreshsalesData} minDate={appliedMinDate} maxDate={appliedMaxDate} />
         </div>
     );
 }
 
-function CampaignsSection(props: {shopifyData: any; adsData: any; freshsalesData: any; minDate: Date; maxDate: Date}) {
+function CampaignsSection({
+    freshsalesLeadsData,
+    adsData,
+    shopifyData,
+    minDate,
+    maxDate
+}: {
+    freshsalesLeadsData: FreshsalesData;
+    adsData: AdsData;
+    shopifyData: ShopifyData;
+    minDate: Iso8601Date;
+    maxDate: Iso8601Date;
+}) {
     const gridRef = useRef();
 
     const [selectedCampaigns, setSelectedCampaigns] = useState([]);
@@ -221,7 +237,8 @@ function CampaignsSection(props: {shopifyData: any; adsData: any; freshsalesData
         filter: true,
     };
 
-    const dayWiseCampaignsTrends = getDayWiseCampaignsTrends(props.adsData, props.freshsalesData, props.shopifyData, props.minDate, props.maxDate);
+    const dayWiseCampaignsTrends = getDayWiseCampaignsTrends(freshsalesLeadsData, adsData, shopifyData, minDate, maxDate);
+
     const campaigns = Object.keys(dayWiseCampaignsTrends);
 
     const performanceleadscount = {
@@ -242,7 +259,7 @@ function CampaignsSection(props: {shopifyData: any; adsData: any; freshsalesData
     };
 
     // graphs
-    const labels = getDates(props.minDate, props.maxDate);
+    const labels = getDates(minDate, maxDate);
     ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
     const options = {
@@ -361,9 +378,9 @@ function CampaignsSection(props: {shopifyData: any; adsData: any; freshsalesData
             </div>
 
             <div className="tw-col-span-6 tw-grid tw-grid-cols-[1fr_2fr] tw-items-stretch tw-gap-x-4">
-                <Card information={numberToHumanFriendlyString(campaignsInformation.amountSpent)} label="Spends" metaInformation={props.adsData.metaQuery} className="tw-row-start-1" />
-                <Card information={numberToHumanFriendlyString(campaignsInformation.impressions)} label="Impressions" metaInformation={props.adsData.metaQuery} className="tw-row-start-2" />
-                <Card information={numberToHumanFriendlyString(campaignsInformation.clicks)} label="Clicks" metaInformation={props.adsData.metaQuery} className="tw-row-start-3" />
+                <Card information={numberToHumanFriendlyString(campaignsInformation.amountSpent)} label="Spends" metaInformation={adsData.metaQuery} className="tw-row-start-1" />
+                <Card information={numberToHumanFriendlyString(campaignsInformation.impressions)} label="Impressions" metaInformation={adsData.metaQuery} className="tw-row-start-2" />
+                <Card information={numberToHumanFriendlyString(campaignsInformation.clicks)} label="Clicks" metaInformation={adsData.metaQuery} className="tw-row-start-3" />
                 <Card information={numberToHumanFriendlyString(performanceleadscount.count)} label="Leads" metaInformation={performanceleadscount.metaInformation} className="tw-row-start-4" />
                 <Card information={numberToHumanFriendlyString(sales.count)} label="Orders" metaInformation={sales.metaInformation} className="tw-row-start-5" />
 
@@ -442,7 +459,7 @@ function CampaignsSection(props: {shopifyData: any; adsData: any; freshsalesData
                             </div>
                         </div>
                     }
-                    metaQuery={props.shopifyData.metaQuery}
+                    metaQuery={shopifyData.metaQuery}
                 />
             </div>
         </>

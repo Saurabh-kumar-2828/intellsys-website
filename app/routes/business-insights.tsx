@@ -114,7 +114,7 @@ export default function () {
             .filter((sourceInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(sourceInformation.platform))
             .map((sourceInformation) => sourceInformation.campaignName)
     );
-    const granularities = ["Daily", "Weekly", "Monthly", "Yearly"];
+    const granularities = [TimeGranularity.daily, TimeGranularity.monthly, TimeGranularity.yearly];
 
     useEffect(() => {
         setSelectedProducts([]);
@@ -236,7 +236,7 @@ export default function () {
                 numberOfSelectedDays={numberOfSelectedDays}
             />
 
-            {/* <RevenueSection
+            <RevenueSection
                 adsData={adsData}
                 freshsalesLeadsData={freshsalesLeadsData}
                 shopifyData={shopifyData}
@@ -246,8 +246,7 @@ export default function () {
                 selectedProducts={selectedProducts}
                 selectedPlatforms={selectedPlatforms}
                 selectedCampaigns={selectedCampaigns}
-                numberOfSelectedDays={numberOfSelectedDays}
-            /> */}
+            />
 
             <SpendSection
                 adsData={adsData}
@@ -1471,23 +1470,23 @@ function aggregateByDate(arr: Array<object>, param: string, dates: Array<string>
     return counts;
 }
 
-function getNetRevenue(row): number {
+function getNetRevenue(row: ShopifyDataAggregatedRow): number {
     let returnProvision;
 
-    if (row.category == "Mattress" || row.category == "Non Mattress") {
+    if (row.productCategory == "Mattress" || row.productCategory == "Non Mattress") {
         returnProvision = 8.5;
-    } else if (row.category == "Water Purifier") {
+    } else if (row.productCategory == "Water Purifier") {
         returnProvision = 10;
-    } else if (row.category == "Appliances") {
+    } else if (row.productCategory == "Appliances") {
         returnProvision = 1.18;
-    } else if (row.category == null) {
+    } else if (row.productCategory == null) {
         // TODO: Remove
         returnProvision = 0;
-    } else if (row.category == "null") {
+    } else if (row.productCategory == "null") {
         // TODO: Remove
         returnProvision = 0;
     } else {
-        throw new Error(`returnProvision for category ${row.category} not specified!`);
+        throw new Error(`returnProvision for category ${row.productCategory} not specified!`);
     }
 
     return (row.netSales / 1.18) * (1 - returnProvision / 100);

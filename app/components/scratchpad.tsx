@@ -3,6 +3,7 @@ import {Link} from "@remix-run/react";
 import {DateTime, Info} from "luxon";
 import {useEffect, useId, useState} from "react";
 import {Clipboard, Funnel, FunnelFill, InfoCircle} from "react-bootstrap-icons";
+import { TimeGranularity } from "~/backend/business-insights";
 import {filterToHumanReadableString, filterToTextColor, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithAmpersand, concatenateNonNullStringsWithSpaces, numberToHumanFriendlyString} from "~/utilities/utilities";
 

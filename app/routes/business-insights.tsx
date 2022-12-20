@@ -237,7 +237,7 @@ export default function () {
                 numberOfSelectedDays={numberOfSelectedDays}
             />
 
-            <RevenueSection
+            {/* <RevenueSection
                 adsData={adsData}
                 freshsalesLeadsData={freshsalesLeadsData}
                 shopifyData={shopifyData}
@@ -248,7 +248,7 @@ export default function () {
                 selectedPlatforms={selectedPlatforms}
                 selectedCampaigns={selectedCampaigns}
                 numberOfSelectedDays={numberOfSelectedDays}
-            />
+            /> */}
 
             <SpendSection
                 adsData={adsData}

@@ -25,6 +25,7 @@ export type ShopifyDataAggregatedRow = {
     variantTitle: string;
     leadGenerationSource: string;
     leadCaptureSource: string;
+    leadGenerationSourceCampaignName: string;
     leadGenerationSourceCampaignPlatform: string;
     leadGenerationSourceCampaignCategory: string;
     isAssisted: boolean;
@@ -43,6 +44,7 @@ export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date,
             variant_title,
             lead_generation_source,
             lead_capture_source,
+            lead_generation_source_campaign_name,
             lead_generation_source_campaign_platform,
             lead_generation_source_campaign_category,
             is_assisted,
@@ -63,6 +65,7 @@ export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date,
             variant_title,
             lead_generation_source,
             lead_capture_source,
+            lead_generation_source_campaign_name,
             lead_generation_source_campaign_platform,
             lead_generation_source_campaign_category,
             is_assisted
@@ -88,6 +91,7 @@ function getRowToShopifyDataAggregatedRow(row: any): ShopifyDataAggregatedRow {
         variantTitle: row.variant_title,
         leadGenerationSource: row.lead_generation_source,
         leadCaptureSource: row.lead_capture_source,
+        leadGenerationSourceCampaignName: row.lead_generation_source_campaign_name,
         leadGenerationSourceCampaignPlatform: row.lead_generation_source_campaign_platform,
         leadGenerationSourceCampaignCategory: row.lead_generation_source_campaign_category,
         isAssisted: row.is_assisted,
@@ -109,6 +113,7 @@ export type FreshsalesDataAggregatedRow = {
     category: string;
     leadCaptureSource: string;
     leadGenerationSource: string;
+    leadGenerationSourceCampaignName: string;
     leadGenerationSourceCampaignPlatform: string;
     leadGenerationSourceCampaignCategory: string;
 };
@@ -120,6 +125,7 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
             category,
             lead_capture_source,
             lead_generation_source,
+            lead_generation_source_campaign_name,
             lead_generation_source_campaign_platform,
             lead_generation_source_campaign_category,
             COUNT(*) AS count
@@ -133,6 +139,7 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
             category,
             lead_capture_source,
             lead_generation_source,
+            lead_generation_source_campaign_name,
             lead_generation_source_campaign_platform,
             lead_generation_source_campaign_category
         ORDER BY
@@ -154,6 +161,7 @@ function rowToFreshsalesDataAggregatedRow(row: any): FreshsalesDataAggregatedRow
         category: row.category,
         leadCaptureSource: row.lead_capture_source,
         leadGenerationSource: row.lead_generation_source,
+        leadGenerationSourceCampaignName: row.lead_generation_source_campaign_name,
         leadGenerationSourceCampaignPlatform: row.lead_generation_source_campaign_platform,
         leadGenerationSourceCampaignCategory: row.lead_generation_source_campaign_category,
     };

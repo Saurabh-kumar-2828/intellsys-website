@@ -94,7 +94,7 @@ export default function () {
     // Default values of filters
     const businesses = distinct(allProductInformation.map((productInformation) => productInformation.category));
     let products = distinct(allProductInformation.map((productInformation) => productInformation.productName));
-    let campaigns = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.productName));
+    let campaigns = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.campaignName));
     const platforms = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.platform));
 
     const [selectedCategories, setSelectedCategories] = useState([]);
@@ -221,7 +221,6 @@ export default function () {
                 selectedProducts={selectedProducts}
                 selectedPlatforms={selectedPlatforms}
                 selectedCampaigns={selectedCampaigns}
-                numberOfSelectedDays={numberOfSelectedDays}
             />
 
             <OrdersSection
@@ -282,11 +281,12 @@ function LeadsSection({
     shopifyData: ShopifyData;
     minDate: Iso8601Date;
     maxDate: Iso8601Date;
-    selectedCategories:string;
-    selectedProducts: string;
-    selectedPlatforms: string;
-    selectedCampaigns: string;
+    selectedCategories: Array<string>;
+    selectedProducts: Array<string>;
+    selectedPlatforms: Array<string>;
+    selectedCampaigns: Array<string>;
 }) {
+
     // Metrics
     const [showAcos, setShowAcos] = useState(true);
     const [showCpl, setShowCpl] = useState(false);
@@ -294,14 +294,15 @@ function LeadsSection({
 
     const filterFreshsalesData = freshsalesLeadsData.rows
         .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
-        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform))
-        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.campaign));
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
+        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.leadGenerationSourceCampaignName));
 
     const filterShopifyData = shopifyData.rows
-        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
-        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.sourcePlatform))
-        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.sourceCampaignName))
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.productCategory))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
+        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.leadGenerationSourceCampaignName))
         .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
+
 
     const filterAdsData = adsData.rows
         .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
@@ -392,7 +393,7 @@ function LeadsSection({
             facebookLeadsCount.count
         )}`,
         metaQuery: adsData.metaQuery,
-        cpl: facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
+        cpl: facebookLeadsCount.count==0 ? 0 : facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
         dayWiseCpl: facebookLeads.amountSpentDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
     };
 
@@ -400,7 +401,7 @@ function LeadsSection({
         metaInformation: `Leads Sales / Leads Count | Facebook = ${numberToHumanFriendlyString(facebookLeads.netSalesDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
             facebookLeadsCount.count
         )}`,
-        spl: facebookLeads.netSalesDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
+        spl: facebookLeadsCount.count==0 ? 0 : facebookLeads.netSalesDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
         dayWiseSpl: facebookLeads.netSalesDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
     };
 
@@ -697,12 +698,35 @@ function LeadsSection({
     );
 }
 
-function OrdersSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDate, selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, numberOfSelectedDays}) {
+function OrdersSection({
+    freshsalesLeadsData,
+    adsData,
+    shopifyData,
+    minDate,
+    maxDate,
+    selectedCategories,
+    selectedProducts,
+    selectedPlatforms,
+    selectedCampaigns,
+    numberOfSelectedDays,
+}: {
+    freshsalesLeadsData: FreshsalesData;
+    adsData: AdsData;
+    shopifyData: ShopifyData;
+    minDate: Iso8601Date;
+    maxDate: Iso8601Date;
+    selectedCategories: Array<string>;
+    selectedProducts: Array<string>;
+    selectedPlatforms: Array<string>;
+    selectedCampaigns: Array<string>;
+    numberOfSelectedDays: number;
+}) {
     const filterShopifyData = shopifyData.rows
-        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
-        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.sourcePlatform))
-        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.sourceCampaignName))
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.productCategory))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
+        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.leadGenerationSourceCampaignName))
         .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
+
 
     const defaultColumnDefinitions = {
         sortable: true,
@@ -775,7 +799,7 @@ function OrdersSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxD
 
     // Total Orders
     const r2_totalOrdersCount = {
-        metaInformation: `Direct Orders + Assisted Orders = ${numberToHumanFriendlyString(directOrders.dayWiseCount.reduce(sumReducer, 0))} + ${numberToHumanFriendlyString(assistedOrders.count)}`,
+        metaInformation: `Direct Orders + Assisted Orders = ${numberToHumanFriendlyString(directOrders.dayWiseCount.reduce(sumReducer, 0))} + ${numberToHumanFriendlyString(assistedOrders.dayWiseCount.reduce(sumReducer, 0))}`,
         count: directOrdersTotalCount + assistedOrders.dayWiseCount.reduce(sumReducer, 0),
     };
 
@@ -899,11 +923,31 @@ function OrdersSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxD
     );
 }
 
-function RevenueSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDate, selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, numberOfSelectedDays}) {
+function RevenueSection({
+    freshsalesLeadsData,
+    adsData,
+    shopifyData,
+    minDate,
+    maxDate,
+    selectedCategories,
+    selectedProducts,
+    selectedPlatforms,
+    selectedCampaigns,
+}: {
+    freshsalesLeadsData: FreshsalesData;
+    adsData: AdsData;
+    shopifyData: ShopifyData;
+    minDate: Iso8601Date;
+    maxDate: Iso8601Date;
+    selectedCategories: Array<string>;
+    selectedProducts: Array<string>;
+    selectedPlatforms: Array<string>;
+    selectedCampaigns: Array<string>;
+}) {
     const filterShopifyData = shopifyData.rows
-        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
-        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.sourcePlatform))
-        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.sourceCampaignName))
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.productCategory))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
+        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.leadGenerationSourceCampaignName))
         .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
 
     const defaultColumnDefinitions = {
@@ -1137,12 +1181,35 @@ function RevenueSection({freshsalesLeadsData, adsData, shopifyData, minDate, max
     );
 }
 
-function SpendSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDate, selectedCategories, selectedProducts, selectedPlatforms, selectedCampaigns, numberOfSelectedDays}) {
+function SpendSection({
+    freshsalesLeadsData,
+    adsData,
+    shopifyData,
+    minDate,
+    maxDate,
+    selectedCategories,
+    selectedProducts,
+    selectedPlatforms,
+    selectedCampaigns,
+    numberOfSelectedDays
+}: {
+    freshsalesLeadsData: FreshsalesData;
+    adsData: AdsData;
+    shopifyData: ShopifyData;
+    minDate: Iso8601Date;
+    maxDate: Iso8601Date;
+    selectedCategories: Array<string>;
+    selectedProducts: Array<string>;
+    selectedPlatforms: Array<string>;
+    selectedCampaigns: Array<string>;
+    numberOfSelectedDays: number;
+}) {
     const filterShopifyData = shopifyData.rows
-        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
-        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.sourcePlatform))
-        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.sourceCampaignName))
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.productCategory))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
+        .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.leadGenerationSourceCampaignName))
         .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
+
 
     const filterAdsData = adsData.rows
         .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
@@ -1164,7 +1231,7 @@ function SpendSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
             dates
         ),
         netSalesDayWise: aggregateByDate(
-            filterShopifyData.filter((row) => row.sourcePlatform == "Google" && row.netSales > 0),
+            filterShopifyData.filter((row) => row.leadGenerationSourceCampaignPlatform == "Google" && row.netSales > 0),
             "netSales",
             dates
         ),
@@ -1201,7 +1268,7 @@ function SpendSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
             dates
         ),
         netSalesDayWise: aggregateByDate(
-            filterShopifyData.filter((row) => row.sourcePlatform == "Facebook" && row.netSales > 0),
+            filterShopifyData.filter((row) => row.leadGenerationSourceCampaignPlatform == "Facebook" && row.netSales > 0),
             "netSales",
             dates
         ),
@@ -1370,7 +1437,7 @@ function SpendSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
     );
 }
 
-function get_r3_ordersRevenue(shopifyData: Array<object>) {
+function get_r3_ordersRevenue(shopifyData: any){
     let aggregateByDate = shopifyData.reduce(createGroupByReducer("date"), {});
 
     for (const date in aggregateByDate) {
@@ -1381,7 +1448,7 @@ function get_r3_ordersRevenue(shopifyData: Array<object>) {
     let result = [];
     for (const date in aggregateByDate) {
         for (const category in aggregateByDate[date]) {
-            const totalNetSales = aggregateByDate[date][category].reduce((total, item) => total + item.netSales, 0);
+            const totalNetSales = aggregateByDate[date][category].reduce((total: number, item: ShopifyDataAggregatedRow) => total + item.netSales, 0);
             result.push({
                 date: date,
                 category: category,

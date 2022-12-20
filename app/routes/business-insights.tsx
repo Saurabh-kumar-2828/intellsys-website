@@ -8,18 +8,17 @@ import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineEl
 import {DateTime} from "luxon";
 import {useEffect, useState} from "react";
 import {Bar, Line} from "react-chartjs-2";
-import {getAdsData, getFreshsalesData, getShopifyData} from "~/backend/business-insights";
-import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
+import {AdsDataAggregatedRow, FreshsalesDataAggregatedRow, getAdsData, getFreshsalesData, getShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
+import {getProductLibrary, getCapturedUtmCampaignLibrary, ProductInformation, SourceInformation} from "~/backend/common";
 import {
     createGroupByReducer,
     doesAdsCampaignNameCorrespondToPerformanceLead,
-    doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead,
-    doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead
+    doesLeadCaptureSourceCorrespondToPerformanceLead,
 } from "~/backend/utilities/utilities";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
-import {Card, DateFilterSection, FancySearchableMultiSelect, GenericCard} from "~/components/scratchpad";
-import {QueryFilterType} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, dateToMediumNoneEnFormat, distinct, getDates, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
+import {Card, DateFilterSection, FancySearchableMultiSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
+import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
+import {agGridDateComparator, dateToMediumNoneEnFormat, distinct, getDates, getNonEmptyStringOrNull, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -32,6 +31,26 @@ export const links: LinksFunction = () => {
         {rel: "stylesheet", href: "https://unpkg.com/ag-grid-community/styles/ag-grid.css"},
         {rel: "stylesheet", href: "https://unpkg.com/ag-grid-community/styles/ag-theme-alpine.css"},
     ];
+};
+
+type LoaderData = {
+    appliedMinDate: Iso8601Date;
+    appliedMaxDate: Iso8601Date;
+    appliedSelectedGranularity: string;
+    allProductInformation: Array<ProductInformation>;
+    allSourceInformation: Array<SourceInformation>;
+    freshsalesLeadsData: {
+        metaQuery: string;
+        rows: Array<FreshsalesDataAggregatedRow>;
+    };
+    adsData: {
+        metaQuery: string;
+        rows: Array<AdsDataAggregatedRow>;
+    };
+    shopifyData: {
+        metaQuery: string;
+        rows: Array<ShopifyDataAggregatedRow>;
+    };
 };
 
 export const loader: LoaderFunction = async ({request}) => {
@@ -53,28 +72,31 @@ export const loader: LoaderFunction = async ({request}) => {
         maxDate = maxDateRaw;
     }
 
-    const selectedGranularityRaw = urlSearchParams.get("selected_granularity");
-    let selectedGranularity;
+    // TODO: Make a function for parsing this
+    const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
+    let selectedGranularity: TimeGranularity;
     if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
-        selectedGranularity = "Daily";
+        selectedGranularity = TimeGranularity.daily;
     } else {
         selectedGranularity = selectedGranularityRaw;
     }
 
-    return json({
+    const loaderData: LoaderData = {
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
         appliedSelectedGranularity: selectedGranularity,
-        allProductInformation: await getAllProductInformation(),
-        allSourceInformation: await getAllSourceToInformation(),
+        allProductInformation: await getProductLibrary(),
+        allSourceInformation: await getCapturedUtmCampaignLibrary(),
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity),
-    });
+    };
+
+    return json(loaderData);
 };
 
 export default function () {
-    const {appliedMinDate, appliedMaxDate, allProductInformation, allSourceInformation, freshsalesLeadsData, adsData, shopifyData} = useLoaderData();
+    const {appliedMinDate, appliedMaxDate, allProductInformation, allSourceInformation, freshsalesLeadsData, adsData, shopifyData} = useLoaderData() as LoaderData;
 
     // Default values of filters
     const businesses = distinct(allProductInformation.map((productInformation) => productInformation.category));
@@ -283,7 +305,7 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
     // Performance Leads
     const performanceLeads = {
         countDayWise: aggregateByDate(
-            filterFreshsalesData.filter((row) => doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)),
+            filterFreshsalesData.filter((row) => doesLeadCaptureSourceCorrespondToPerformanceLead(row.leadCaptureSource)),
             "count",
             dates
         ),
@@ -293,7 +315,7 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
             dates
         ),
         netSalesDayWise: aggregateByDate(
-            filterShopifyData.filter((row) => doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)),
+            filterShopifyData.filter((row) => doesLeadCaptureSourceCorrespondToPerformanceLead(row.leadCaptureSource)),
             "netSales",
             dates
         ),
@@ -310,7 +332,7 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
         )}`,
         metaQuery: adsData.metaQuery,
         cpl: numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer, 0) / performanceLeadsCount.count),
-        dayWiseCPL: performanceLeads.amountSpentDayWise.map((value, index) => (performanceLeads.countDayWise[index] == 0 ? 0 : value / performanceLeads.countDayWise[index])),
+        dayWiseCpl: performanceLeads.amountSpentDayWise.map((value, index) => (performanceLeads.countDayWise[index] == 0 ? 0 : value / performanceLeads.countDayWise[index])),
     };
 
     const performanceLeadsSpl = {
@@ -318,7 +340,7 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
             performanceLeadsCount.count
         )}`,
         spl: performanceLeads.netSalesDayWise.reduce(sumReducer) / performanceLeadsCount.count,
-        dayWiseSPL: performanceLeads.netSalesDayWise.map((value, index) => (performanceLeads.countDayWise[index] == 0 ? 0 : value / performanceLeads.countDayWise[index])),
+        dayWiseSpl: performanceLeads.netSalesDayWise.map((value, index) => (performanceLeads.countDayWise[index] == 0 ? 0 : value / performanceLeads.countDayWise[index])),
     };
 
     const performanceLeadsAcos = {
@@ -331,7 +353,7 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
 
     const facebookLeads = {
         countDayWise: aggregateByDate(
-            filterFreshsalesData.filter((row) => !doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)),
+            filterFreshsalesData.filter((row) => !doesLeadCaptureSourceCorrespondToPerformanceLead(row.leadCaptureSource)),
             "count",
             dates
         ),
@@ -341,7 +363,7 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
             dates
         ),
         netSalesDayWise: aggregateByDate(
-            filterShopifyData.filter((row) => !doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead(row.source)),
+            filterShopifyData.filter((row) => !doesLeadCaptureSourceCorrespondToPerformanceLead(row.leadCaptureSource)),
             "netSales",
             dates
         ),
@@ -358,7 +380,7 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
         )}`,
         metaQuery: adsData.metaQuery,
         cpl: facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
-        dayWiseCPL: facebookLeads.amountSpentDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
+        dayWiseCpl: facebookLeads.amountSpentDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
     };
 
     const facebookLeadsSpl = {
@@ -366,7 +388,7 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
             facebookLeadsCount.count
         )}`,
         spl: facebookLeads.netSalesDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
-        dayWiseSPL: facebookLeads.netSalesDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
+        dayWiseSpl: facebookLeads.netSalesDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
     };
 
     const facebookLeadsAcos = {
@@ -385,13 +407,13 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
     const dataTableForLeadsDayWise = dates.reduce((result, curDate, index) => {
         result[curDate] = {
             performanceLeadsCount: roundOffToTwoDigits(performanceLeads.countDayWise[index]),
-            performanceLeadsCpl: roundOffToTwoDigits(performanceLeadsCpl.dayWiseCPL[index]),
-            performanceLeadsSpl: roundOffToTwoDigits(performanceLeadsSpl.dayWiseSPL[index]),
+            performanceLeadsCpl: roundOffToTwoDigits(performanceLeadsCpl.dayWiseCpl[index]),
+            performanceLeadsSpl: roundOffToTwoDigits(performanceLeadsSpl.dayWiseSpl[index]),
             performanceLeadsAcos: roundOffToTwoDigits(performanceLeadsAcos.dayWiseAcos[index]),
             performanceLeadsnetSales: roundOffToTwoDigits(performanceLeads.netSalesDayWise[index]),
             facebookLeadsCount: roundOffToTwoDigits(facebookLeads.countDayWise[index]),
-            facebookLeadsCpl: roundOffToTwoDigits(facebookLeadsCpl.dayWiseCPL[index]),
-            facebookLeadsSpl: roundOffToTwoDigits(facebookLeadsSpl.dayWiseSPL[index]),
+            facebookLeadsCpl: roundOffToTwoDigits(facebookLeadsCpl.dayWiseCpl[index]),
+            facebookLeadsSpl: roundOffToTwoDigits(facebookLeadsSpl.dayWiseSpl[index]),
             facebookLeadsAcos: roundOffToTwoDigits(facebookLeadsAcos.dayWiseAcos[index]),
         };
         return result;
@@ -467,13 +489,13 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
         datasets: [
             {
                 label: "Performance Leads Cpl",
-                data: performanceLeadsCpl.dayWiseCPL,
+                data: performanceLeadsCpl.dayWiseCpl,
                 borderColor: "rgb(0, 102, 204)",
                 backgroundColor: "rgb(0, 102, 204)",
             },
             {
                 label: "Facebook Leads Cpl",
-                data: facebookLeadsCpl.dayWiseCPL,
+                data: facebookLeadsCpl.dayWiseCpl,
                 borderColor: "rgb(211, 84, 100)",
                 backgroundColor: "rgb(211, 84, 100)",
             },
@@ -485,13 +507,13 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
         datasets: [
             {
                 label: "Performance Leads Spl",
-                data: performanceLeadsSpl.dayWiseSPL,
+                data: performanceLeadsSpl.dayWiseSpl,
                 borderColor: "rgb(179, 0, 179)",
                 backgroundColor: "rgb(179, 0, 179)",
             },
             {
                 label: "Facebook Leads Spl",
-                data: facebookLeadsSpl.dayWiseSPL,
+                data: facebookLeadsSpl.dayWiseSpl,
                 borderColor: "rgb(51, 153, 102)",
                 backgroundColor: "rgb(51, 153, 102)",
             },
@@ -502,9 +524,21 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
         <>
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Leads</div>
 
-            <Card information={numberToHumanFriendlyString(totalLeadsCount.count)} label="Total Leads" metaInformation={totalLeadsCount.metaInformation} className="tw-row-span-2 tw-col-span-4" />
+            <ValueDisplayingCard
+                queryInformation={totalLeadsCount}
+                contentExtractor={(totalLeadsCount: any) => totalLeadsCount.count}
+                label="Total Leads"
+                className="tw-row-span-2 tw-col-span-4"
+                type={ValueDisplayingCardInformationType.integer}
+            />
 
-            <Card information={numberToHumanFriendlyString(performanceLeadsCount.count)} label="Performance Leads" metaInformation={performanceLeadsCount.metaInformation} className="tw-col-span-2" />
+            <ValueDisplayingCard
+                queryInformation={performanceLeadsCount}
+                contentExtractor={(performanceLeadsCount: any) => performanceLeadsCount.count}
+                label="Performance Leads"
+                className="tw-col-span-2"
+                type={ValueDisplayingCardInformationType.integer}
+            />
 
             <Card
                 information={numberToHumanFriendlyString(performanceLeadsCpl.cpl, true)}
@@ -528,7 +562,13 @@ function LeadsSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxDa
                 className="tw-col-span-2"
             />
 
-            <Card information={numberToHumanFriendlyString(facebookLeadsCount.count)} label="Facebook Leads" metaInformation={facebookLeadsCount.metaInformation} className="tw-col-span-2" />
+            <ValueDisplayingCard
+                queryInformation={facebookLeadsCount}
+                contentExtractor={(facebookLeadsCount: any) => facebookLeadsCount.count}
+                label="Facebook Leads"
+                className="tw-col-span-2"
+                type={ValueDisplayingCardInformationType.integer}
+            />
 
             <Card
                 information={numberToHumanFriendlyString(facebookLeadsCpl.cpl, true)}
@@ -764,11 +804,12 @@ function OrdersSection({freshsalesLeadsData, adsData, shopifyData, minDate, maxD
         <>
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Orders</div>
 
-            <Card
-                information={numberToHumanFriendlyString(r2_totalOrdersCount.count)}
+            <ValueDisplayingCard
+                queryInformation={r2_totalOrdersCount}
+                contentExtractor={(r2_totalOrdersCount: any) => r2_totalOrdersCount.count}
                 label="Total Orders"
-                metaInformation={r2_totalOrdersCount.metaInformation}
                 className="tw-row-span-2 tw-col-span-4"
+                type={ValueDisplayingCardInformationType.integer}
             />
 
             <Card information={numberToHumanFriendlyString(directOrdersTotalCount)} label="Direct Orders" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />

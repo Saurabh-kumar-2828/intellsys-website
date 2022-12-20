@@ -3,6 +3,13 @@ export type User = {
     id: string;
 }
 
+export type Iso8601Time = string;
+export type Iso8601Date = string;
+export type Iso8601DateTime = string;
+
+export type PhoneNumberWithCountryCode = string;
+export type PhoneNumberWithoutCountryCode = string;
+
 export enum ValueDisplayingCardInformationType {
     integer,
     float,

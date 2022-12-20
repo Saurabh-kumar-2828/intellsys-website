@@ -7,12 +7,12 @@ import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {Line} from "react-chartjs-2";
 import {getAdsData, getFreshsalesData, getShopifyData} from "~/backend/business-insights";
-import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
+import {getProductLibrary, getCapturedUtmCampaignLibrary} from "~/backend/common";
 import {
     aggregateByDate,
     columnWiseSummationOfMatrix,
     createGroupByReducer,
-    doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead,
+    doesLeadCaptureSourceCorrespondToPerformanceLead,
     sumReducer,
 } from "~/backend/utilities/utilities";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
@@ -66,8 +66,8 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedSelectedGranularity: selectedGranularity,
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
-        allProductInformation: await getAllProductInformation(),
-        allSourceInformation: await getAllSourceToInformation(),
+        allProductInformation: await getProductLibrary(),
+        allSourceInformation: await getCapturedUtmCampaignLibrary(),
         CampaignsInformation: await getAdsData(minDate, maxDate, selectedGranularity),
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity),
@@ -79,7 +79,8 @@ function getDayWiseCampaignsTrends(adsData: Array<object>, freshSalesData: Array
     const dates = getDates(minDate, maxDate);
 
     const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
-    const freshSalesDataGroupByCampaign = freshSalesData.filter((row) => doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(row)).reduce(createGroupByReducer("campaign"), {});
+    // TODO: Is this correct?
+    const freshSalesDataGroupByCampaign = freshSalesData.filter((row) => doesLeadCaptureSourceCorrespondToPerformanceLead(row)).reduce(createGroupByReducer("campaign"), {});
     const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("sourceCampaignName"), {});
 
     const dayWiseDistributionPerCampaign = {};

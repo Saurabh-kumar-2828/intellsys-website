@@ -1,4 +1,5 @@
 import {DateTime} from "luxon";
+import {Iso8601Date} from "./typeDefinitions";
 
 // export function getUrlForResource(resourceRelativePath) {
 //     return `${process.env.NEXT_PUBLIC_FRONTEND_URL}/resources/${resourceRelativePath}`;
@@ -137,6 +138,10 @@ export function dateToNoneMediumEnFormat(date: string) {
     }
 
     return new Intl.DateTimeFormat("en", {timeZone: "Asia/Kolkata", timeStyle: "short", hour12: true}).format(new Date(date));
+}
+
+export function dateToIso8601Date(a: any): Iso8601Date {
+    return a.toISOString().slice(0, 10);
 }
 
 export function agGridDateComparator(a: string, b: string) {

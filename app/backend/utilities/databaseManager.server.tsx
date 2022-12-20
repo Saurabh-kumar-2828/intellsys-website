@@ -1,4 +1,4 @@
-import {Pool} from "pg";
+import {Pool, QueryResult} from "pg";
 
 declare global {
     var _databaseConnectionPool;
@@ -6,7 +6,7 @@ declare global {
 
 // TODO: Proper error handling
 // TODO: Rename to something better
-export async function execute(query: string, queryArguments?: Array<any>) {
+export async function execute(query: string, queryArguments?: Array<any>): Promise<QueryResult<any>> {
     const databaseConnectionPool = await getDatabaseConnectionPool();
 
     // TODO: Confirm success, or log error

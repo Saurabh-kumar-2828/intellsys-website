@@ -1,38 +1,66 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
 
-export async function getAllProductInformation() {
+export type ProductInformation = {
+    productName: string;
+    category: string;
+    subCategory: string;
+};
+
+export async function getProductLibrary(): Promise<Array<ProductInformation>> {
     // TODO: Authentication
     const result = await execute(
         `
             SELECT
                 *
             FROM
-                product_information
-        `,
+                product_library
+        `
     );
 
-    return result.rows.map(row => ({
-        productName: row.product_name,
-        category: row.category,
-        subCategory: row.sub_category,
-    }));
+    return result.rows.map((row) => rowToProductInformation(row));
 }
 
-export async function getAllSourceToInformation() {
+function rowToProductInformation(row: any): ProductInformation {
+    // TODO: Change row naming
+    const productInformation = {
+        productName: row.product_name,
+        category: row.product_category,
+        subCategory: row.product_sub_category,
+    };
+
+    return productInformation;
+}
+
+// TODO: Rename
+export type SourceInformation = {
+    source: string;
+    campaignName: string;
+    category: string;
+    platform: string;
+};
+
+export async function getCapturedUtmCampaignLibrary() {
     // TODO: Authentication
     const result = await execute(
         `
             SELECT
                 *
             FROM
-                source_to_information
-        `,
+                captured_utm_campaign_library
+        `
     );
 
-    return result.rows.map(row => ({
+    return result.rows.map((row) => rowToSourceInformation(row));
+}
+
+function rowToSourceInformation(row: any): SourceInformation {
+    // TODO: Change row naming
+    const sourceInformation = {
         source: row.source,
         campaignName: row.campaign_name,
-        category: row.category,
-        platform: row.platform,
-    }));
+        category: row.campaign_category,
+        platform: row.campaign_platform,
+    };
+
+    return sourceInformation;
 }

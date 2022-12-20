@@ -5,7 +5,7 @@ import {Link, useLoaderData} from "@remix-run/react";
 import {DateTime} from "luxon";
 import {Profiler, useCallback, useEffect, useState} from "react";
 import {getShopifyData, getAdsData} from "~/backend/business-insights";
-import {getAllProductInformation, getAllSourceToInformation} from "~/backend/common";
+import {getProductLibrary, getCapturedUtmCampaignLibrary} from "~/backend/common";
 import {Card, DateFilterSection, FancyCalendar, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
 import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
@@ -75,8 +75,8 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedSelectedGranularity: selectedGranularity,
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
-        allProductInformation: await getAllProductInformation(),
-        allSourceInformation: await getAllSourceToInformation(),
+        allProductInformation: await getProductLibrary(),
+        allSourceInformation: await getCapturedUtmCampaignLibrary(),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity),
     });

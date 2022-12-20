@@ -1,3 +1,4 @@
+import {TimeGranularity} from "../business-insights";
 
 
 export function joinValues(values: Array<string>, separator: string, surroundWith: string = ""): string {
@@ -11,17 +12,27 @@ export function joinValues(values: Array<string>, separator: string, surroundWit
 //     return values.filter(value => value != null).join(`${separator} `);
 // }
 
-export function getGranularityQuery(selectedGranularity: string, columnName: string): string {
-    return selectedGranularity == "Daily"
-        ? `DATE_TRUNC('DAY', ${columnName})`
-        : selectedGranularity == "Weekly"
-        ? `DATE_TRUNC('WEEK', ${columnName})`
-        : selectedGranularity == "Monthly"
-        ? `DATE_TRUNC('MONTH', ${columnName})`
-        : `DATE_TRUNC('YEAR', ${columnName})`;
+export function getGranularityQuery(granularity: TimeGranularity, columnName: string): string {
+    switch (granularity) {
+        case TimeGranularity.daily: {
+            return `DATE_TRUNC('DAY', ${columnName})`;
+        }
+        case TimeGranularity.weekly: {
+            return `DATE_TRUNC('WEEK', ${columnName})`;
+        }
+        case TimeGranularity.monthly: {
+            return `DATE_TRUNC('MONTH', ${columnName})`;
+        }
+        case TimeGranularity.yearly: {
+            return `DATE_TRUNC('YEAR', ${columnName})`;
+        }
+        default: {
+            throw "";
+        }
+    }
 }
 
-export function createGroupByReducer(attribute) {
+export function createGroupByReducer(attribute: string) {
     return (result, item) => {
         let itemsForAttribute = result[item[attribute]] || [];
         itemsForAttribute.push(item);
@@ -31,13 +42,8 @@ export function createGroupByReducer(attribute) {
 }
 
 // TODO: Rename to something sensible
-export function doesFreshsalesLeadsToSourceWithInformationSourceCorrespondToPerformanceLead(source: string) {
-    return source != "Facebook Ads";
-}
-
-// TODO: Rename to something sensible
-export function doesShopifySalesToSourceWithInformationSourceCorrespondToPerformanceLead(source: string) {
-    return source != "GJ_LeadGen_18May" && source != "GJ_LeadGen_Mattress_10 May" && source.match("^Freshsales - .+ - Facebook Ads$");
+export function doesLeadCaptureSourceCorrespondToPerformanceLead(leadCaptureSource: string) {
+    return leadCaptureSource != "Facebook On Form Ads";
 }
 
 // TODO: Rename to something sensible
@@ -63,7 +69,6 @@ export function aggregateByDate(arr: Array<object>, param: string, dates: Array<
 export function sumReducer(total: number, sum: number) {
     return total + sum;
 }
-
 
 
 // Example:

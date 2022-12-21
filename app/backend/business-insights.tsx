@@ -111,6 +111,7 @@ export type FreshsalesDataAggregatedRow = {
     date: Iso8601Date;
     count: number;
     category: string;
+    leadStage: string;
     leadCaptureSource: string;
     leadGenerationSource: string;
     leadGenerationSourceCampaignName: string;
@@ -123,6 +124,7 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
         SELECT
             ${getGranularityQuery(granularity, "lead_created_at")} AS date,
             category,
+            lead_lead_stage,
             lead_capture_source,
             lead_generation_source,
             lead_generation_source_campaign_name,
@@ -137,6 +139,7 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
         GROUP BY
             date,
             category,
+            lead_lead_stage,
             lead_capture_source,
             lead_generation_source,
             lead_generation_source_campaign_name,
@@ -145,7 +148,6 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
         ORDER BY
             date
     `;
-
     const result = await execute(query);
 
     return {
@@ -159,6 +161,7 @@ function rowToFreshsalesDataAggregatedRow(row: any): FreshsalesDataAggregatedRow
         date: dateToIso8601Date(row.date),
         count: parseInt(row.count),
         category: row.category,
+        leadStage: row.lead_lead_stage,
         leadCaptureSource: row.lead_capture_source,
         leadGenerationSource: row.lead_generation_source,
         leadGenerationSourceCampaignName: row.lead_generation_source_campaign_name,

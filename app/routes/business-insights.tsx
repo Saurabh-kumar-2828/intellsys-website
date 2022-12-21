@@ -101,12 +101,12 @@ export default function () {
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [selectedPlatforms, setSelectedPlatforms] = useState([]);
     const [selectedCampaigns, setSelectedCampaigns] = useState([]);
-    const [selectedGranularity, setSelectedGranularity] = useState("Daily");
+    const [selectedGranularity, setSelectedGranularity] = useState(TimeGranularity.daily);
     const [selectedMinDate, setSelectedMinDate] = useState(appliedMinDate ?? "");
     const [selectedMaxDate, setSelectedMaxDate] = useState(appliedMaxDate ?? "");
 
     products = allProductInformation
-        .filter((productInformation) => selectedCategories.length == 0 || selectedCategories.includes(productInformation.category))
+        .filter((productInformation:ProductInformation) => selectedCategories.length == 0 || selectedCategories.includes(productInformation.category))
         .map((productInformation) => productInformation.productName);
     campaigns = distinct(
         allSourceInformation

@@ -6,7 +6,7 @@ import {CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, Point
 import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {Line} from "react-chartjs-2";
-import {AdsData, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, TimeGranularity} from "~/backend/business-insights";
+import {AdsData, AdsDataAggregatedRow, FreshsalesData, FreshsalesDataAggregatedRow, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
 import {getProductLibrary, getCapturedUtmCampaignLibrary} from "~/backend/common";
 import {
     aggregateByDate,
@@ -146,17 +146,17 @@ export default function () {
     const granularities = [TimeGranularity.daily, TimeGranularity.monthly, TimeGranularity.yearly];
 
     const filterFreshsalesData = freshsalesLeadsData.rows
-        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
-        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
+        .filter((row: FreshsalesDataAggregatedRow) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+        .filter((row: FreshsalesDataAggregatedRow) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
 
     const filterShopifyData = shopifyData.rows
-        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.productCategory))
-        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
-        .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
+        .filter((row: ShopifyDataAggregatedRow) => selectedCategories.length == 0 || selectedCategories.includes(row.productCategory))
+        .filter((row: ShopifyDataAggregatedRow) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
+        .filter((row: ShopifyDataAggregatedRow) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
 
     const filterAdsData = adsData.rows
-        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
-        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform));
+        .filter((row: AdsDataAggregatedRow) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+        .filter((row: AdsDataAggregatedRow) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform));
 
     useEffect(() => {
         setSelectedProducts([]);
@@ -228,7 +228,7 @@ function CampaignsSection({
 
     const onSelectionChanged = useCallback(() => {
         var selectedRows = gridRef.current.api.getSelectedRows();
-        const campaigns = selectedRows.map((row, index) => row.campaignName);
+        const campaigns = selectedRows.map((row) => row.campaignName);
         setSelectedCampaigns(campaigns);
     }, []);
 

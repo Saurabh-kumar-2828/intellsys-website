@@ -4,10 +4,10 @@ import {json} from "@remix-run/node";
 import {Link, useLoaderData} from "@remix-run/react";
 import {DateTime} from "luxon";
 import {Profiler, useCallback, useEffect, useState} from "react";
-import {getShopifyData, getAdsData} from "~/backend/business-insights";
-import {getProductLibrary, getCapturedUtmCampaignLibrary} from "~/backend/common";
+import {getShopifyData, getAdsData, ShopifyData, AdsData, ShopifyDataAggregatedRow, AdsDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
+import {getProductLibrary, getCapturedUtmCampaignLibrary, ProductInformation} from "~/backend/common";
 import {Card, DateFilterSection, FancyCalendar, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
-import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
+import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
     agGridDateComparator,
     agGridFloatComparator,
@@ -46,9 +46,9 @@ export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;
 
     const selectedGranularityRaw = urlSearchParams.get("selected_granularity");
-    let selectedGranularity;
+    let selectedGranularity : TimeGranularity;
     if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
-        selectedGranularity = "Daily";
+        selectedGranularity = TimeGranularity.daily;
     } else {
         selectedGranularity = selectedGranularityRaw;
     }
@@ -84,7 +84,6 @@ export const loader: LoaderFunction = async ({request}) => {
 
 export default function () {
     const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, shopifyData, adsData} = useLoaderData();
-
     const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
 
     const r5_marketingAcos = "?";
@@ -101,13 +100,10 @@ export default function () {
     const [selectedMaxDate, setSelectedMaxDate] = useState(appliedMaxDate ?? "");
     const [selectedInsight, setSelectedInsight] = useState("netQuantity");
 
-    const businesses = distinct(allProductInformation.map((productInformation) => productInformation.category));
-    const products = allProductInformation
-        .filter((productInformation) => selectedCategory.length == 0 || selectedCategory.includes(productInformation.category))
-        .map((productInformation) => productInformation.productName);
+    const businesses = distinct(allProductInformation.map((productInformation: ProductInformation) => productInformation.category));
     const insights = ["netQuantity", "netSales"];
 
-    const [selectedProducts, setSelectedProducts] = useState([]);
+    const [selectedProducts, setSelectedProducts] = useState<Array<string>>([]);
 
     const granularities = ["Daily", "Weekly", "Monthly", "Yearly"];
 
@@ -145,6 +141,7 @@ export default function () {
             <ProductsSection
                 shopifyData={shopifyData}
                 selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
                 selectedInsight={selectedInsight}
                 minDate={appliedMinDate}
                 maxDate={appliedMaxDate}
@@ -155,6 +152,7 @@ export default function () {
             <VariantSection
                 shopifyData={shopifyData}
                 selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
                 selectedInsight={selectedInsight}
                 minDate={appliedMinDate}
                 maxDate={appliedMaxDate}
@@ -166,13 +164,13 @@ export default function () {
 }
 
 function CategorySection(props: {
-    shopifyData: any;
-    adsData: any;
+    shopifyData: ShopifyData;
+    adsData: AdsData;
     selectedCategory: string;
     setSelectedCategory: React.Dispatch<React.SetStateAction<string>>;
     selectedInsight: string;
-    minDate: Date;
-    maxDate: Date;
+    minDate: Iso8601Date;
+    maxDate: Iso8601Date;
     selectedProducts: Array<string>;
     setSelectedProducts: React.Dispatch<React.SetStateAction<Array<string>>>;
 }) {
@@ -185,8 +183,8 @@ function CategorySection(props: {
 
     const dates = getDates(props.minDate, props.maxDate);
 
-    const filteredShopifyData = props.shopifyData.rows.filter((row) => row.category == props.selectedCategory);
-    const filteredAdsData = props.adsData.rows.filter((row) => row.category == props.selectedCategory);
+    const filteredShopifyData = props.shopifyData.rows.filter((row: ShopifyDataAggregatedRow) => row.productCategory == props.selectedCategory);
+    const filteredAdsData = props.adsData.rows.filter((row: AdsDataAggregatedRow) => row.category == props.selectedCategory);
 
     ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
@@ -225,9 +223,8 @@ function CategorySection(props: {
     ];
 
     // product categories vs selectedInsight
-    const shopifyDataGroupByCategory = props.shopifyData.rows.filter((row) => row.date <= props.maxDate && row.date >= props.minDate).reduce(createGroupByReducer("category"), {});
-
-    const adsDataGroupByCategory = props.adsData.rows.filter((row) => row.date <= props.maxDate && row.date >= props.minDate).reduce(createGroupByReducer("category"), {});
+    const shopifyDataGroupByCategory = props.shopifyData.rows.filter((row: ShopifyDataAggregatedRow) => row.date <= props.maxDate && row.date >= props.minDate).reduce(createGroupByReducer("productCategory"), {});
+    const adsDataGroupByCategory = props.adsData.rows.filter((row: AdsDataAggregatedRow) => row.date <= props.maxDate && row.date >= props.minDate).reduce(createGroupByReducer("category"), {});
 
     const categoryVsRevenue: Array<number> = [];
     const categoryVsRevenueColor: Array<string> = [];
@@ -237,17 +234,17 @@ function CategorySection(props: {
     const categoryVsSpendColor: Array<string> = [];
 
     Object.keys(shopifyDataGroupByCategory).forEach((category) => {
-        categoryVsRevenue.push(shopifyDataGroupByCategory[category].reduce((total: number, item: object) => total + item.netSales, 0));
+        categoryVsRevenue.push(shopifyDataGroupByCategory[category].reduce((total: number, item: ShopifyDataAggregatedRow) => total + item.netSales, 0));
         categoryVsRevenueColor.push(getColor(category));
     });
 
     Object.keys(shopifyDataGroupByCategory).forEach((category) => {
-        categoryVsOrder.push(shopifyDataGroupByCategory[category].reduce((total: number, item: object) => total + item.netQuantity, 0));
+        categoryVsOrder.push(shopifyDataGroupByCategory[category].reduce((total: number, item: ShopifyDataAggregatedRow) => total + item.netQuantity, 0));
         categoryVsOrderColor.push(getColor(category));
     });
 
     Object.keys(adsDataGroupByCategory).forEach((category) => {
-        categoryVsSpend.push(adsDataGroupByCategory[category].reduce((total: number, item: object) => total + item.amountSpent, 0));
+        categoryVsSpend.push(adsDataGroupByCategory[category].reduce((total: number, item: ShopifyDataAggregatedRow) => total + item.amountSpent, 0));
         categoryVsSpendColor.push(getColor(category));
     });
 
@@ -412,13 +409,14 @@ function CategorySection(props: {
 }
 
 function ProductsSection(props: {
-    shopifyData: any;
+    shopifyData: ShopifyData;
     selectedCategory: string;
+    setSelectedCategory: React.Dispatch<React.SetStateAction<string>>;
     selectedInsight: string;
-    minDate: Date;
-    maxDate: Date;
+    minDate: Iso8601Date;
+    maxDate: Iso8601Date;
     selectedProducts: Array<string>;
-    setSelectedProducts: React.Dispatch<React.SetStateAction<string>>;
+    setSelectedProducts: React.Dispatch<React.SetStateAction<Array<string>>>;
 }) {
     const gridRef = useRef();
 
@@ -427,12 +425,12 @@ function ProductsSection(props: {
 
     const dates = getDates(props.minDate, props.maxDate);
 
-    const filteredShopifyData = props.shopifyData.rows.filter((row) => row.category == props.selectedCategory);
+    const filteredShopifyData = props.shopifyData.rows.filter((row: ShopifyDataAggregatedRow) => row.productCategory == props.selectedCategory);
 
     const filteredShopifyDataGroupByProduct = filteredShopifyData.reduce(createGroupByReducer("productTitle"), {});
 
-    const dayWiseUnitsSoldForEachProduct = {};
-    const dayWiseNetSalesGeneratedByEachProduct = {};
+    const dayWiseUnitsSoldForEachProduct: {[key: string] : Array<number> } = {};
+    const dayWiseNetSalesGeneratedByEachProduct: {[key: string] : Array<number> } = {};
 
     for (const product in filteredShopifyDataGroupByProduct) {
         const dataGroupByDate = aggregateByDate(filteredShopifyDataGroupByProduct[product], "netQuantity", dates);
@@ -450,7 +448,7 @@ function ProductsSection(props: {
 
     const onSelectionChanged = useCallback(() => {
         var selectedRows = gridRef.current.api.getSelectedRows();
-        const products = selectedRows.map((row, index) => row.productName);
+        const products = selectedRows.map((row) => row.productName);
         props.setSelectedProducts(products);
     }, []);
 
@@ -498,7 +496,6 @@ function ProductsSection(props: {
     const noOfUnitsSoldDataset: Array<object> = [];
     props.selectedProducts.map((product) => {
         const lineColor = getColor(product);
-        console.log(lineColor);
         const result = {
             label: product,
             data: dayWiseUnitsSoldForEachProduct[product as keyof typeof dayWiseUnitsSoldForEachProduct],
@@ -583,15 +580,16 @@ function ProductsSection(props: {
 }
 
 function VariantSection(props: {
-    shopifyData: any;
+    shopifyData: ShopifyData;
     selectedCategory: string;
+    setSelectedCategory: React.Dispatch<React.SetStateAction<string>>;
     selectedInsight: string;
-    minDate: Date;
-    maxDate: Date;
+    minDate: Iso8601Date;
+    maxDate: Iso8601Date;
     selectedProducts: Array<string>;
-    setSelectedProducts: React.Dispatch<React.SetStateAction<string>>;
+    setSelectedProducts: React.Dispatch<React.SetStateAction<Array<string>>>;
 }) {
-    const filteredShopifyData = props.shopifyData.rows.filter((row) => row.category == props.selectedCategory);
+    const filteredShopifyData = props.shopifyData.rows.filter((row: ShopifyDataAggregatedRow) => row.productCategory == props.selectedCategory);
 
     return (
         <>
@@ -609,12 +607,17 @@ function VariantSection(props: {
     );
 }
 
-function VariantTable(props: {shopifyData: any; product: string | null; minDate: Date; maxDate: Date}) {
+function VariantTable(props: {
+    shopifyData: Array<ShopifyDataAggregatedRow>;
+    product: string | null;
+    minDate: Iso8601Date;
+    maxDate: Iso8601Date;
+}) {
     const dates = getDates(props.minDate, props.maxDate);
-    const shopifyDataGroupByVariantQuantity = props.shopifyData.filter((row) => props.product != null && row.productTitle == props.product).reduce(createGroupByReducer("variantTitle"), {});
+    const shopifyDataGroupByVariantQuantity = props.shopifyData.filter((row: ShopifyDataAggregatedRow) => props.product != null && row.productTitle == props.product).reduce(createGroupByReducer("variantTitle"), {});
 
-    const dayWiseUnitsSoldForEachVariant = {};
-    const dayWiseNetSalesGeneratedByEachVariant = {};
+    const dayWiseUnitsSoldForEachVariant: {[key: string] : Array<number> }  = {};
+    const dayWiseNetSalesGeneratedByEachVariant: {[key: string] : Array<number> } = {};
 
     for (const variant in shopifyDataGroupByVariantQuantity) {
         const dataGroupByDate = aggregateByDate(shopifyDataGroupByVariantQuantity[variant], "netQuantity", dates);

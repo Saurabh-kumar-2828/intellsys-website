@@ -88,7 +88,7 @@ export function Card(props: {information: string; label: string; className?: str
     );
 }
 
-export function ValueDisplayingCard(props: {queryInformation; contentExtractor; label: string; className?: string; type: ValueDisplayingCardInformationType}) {
+export function ValueDisplayingCard<T>(props: {queryInformation: T; contentExtractor: (queryInformation: T) => any; label: string; className?: string; type: ValueDisplayingCardInformationType}) {
     const content = props.contentExtractor(props.queryInformation);
 
     return (
@@ -195,7 +195,7 @@ export function GenericCard(props: {content: JSX.Element; label?: string; classN
 
 export function DateFilterSection(props: {
     granularities: Array<string>;
-    selectedGranularity: string;
+    selectedGranularity: TimeGranularity;
     setSelectedGranularity: React.Dispatch<React.SetStateAction<string>>;
     selectedMinDate: string;
     setSelectedMinDate: React.Dispatch<React.SetStateAction<string>>;

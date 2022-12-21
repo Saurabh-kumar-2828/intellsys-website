@@ -166,17 +166,13 @@ export default function () {
             <>
                 <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Freshsales Leads Mattress Raw</div>
 
-                <Card
-                    information={freshsalesLeadsMattressRawDataInformation.count}
-                    label="Count"
-                    metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery}
-                    className="tw-col-span-4"
-                />
+                <Card information={freshsalesLeadsMattressRawDataInformation.count} label="Count" metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery} className="tw-col-span-4" />
 
                 <DateDisplayingCard
                     information={freshsalesLeadsMattressRawDataInformation.minDate}
                     label="Data Start"
                     metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery}
+                    metaInformation="Time is in UTC Format"
                     className="tw-col-span-4"
                     timezone={TimeZones.UTC}
                 />
@@ -185,6 +181,7 @@ export default function () {
                     information={freshsalesLeadsMattressRawDataInformation.maxDate}
                     label="Data End"
                     metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery}
+                    metaInformation="Time is in UTC Format"
                     className="tw-col-span-4"
                     timezone={TimeZones.UTC}
                 />
@@ -244,6 +241,7 @@ export default function () {
                     information={freshsalesLeadsNonMattressRawDataInformation.minDate}
                     label="Data Start"
                     metaQuery={freshsalesLeadsNonMattressRawDataInformation.metaQuery}
+                    metaInformation="Time is in UTC Format"
                     className="tw-col-span-4"
                     timezone={TimeZones.UTC}
                 />
@@ -252,6 +250,7 @@ export default function () {
                     information={freshsalesLeadsNonMattressRawDataInformation.maxDate}
                     label="Data End"
                     metaQuery={freshsalesLeadsNonMattressRawDataInformation.metaQuery}
+                    metaInformation="Time is in UTC Format"
                     className="tw-col-span-4"
                     timezone={TimeZones.UTC}
                 />
@@ -311,6 +310,7 @@ export default function () {
                     information={freshsalesLeadsWaterPurifierRawDataInformation.minDate}
                     label="Data Start"
                     metaQuery={freshsalesLeadsWaterPurifierRawDataInformation.metaQuery}
+                    metaInformation="Time is in UTC Format"
                     className="tw-col-span-4"
                     timezone={TimeZones.UTC}
                 />
@@ -319,6 +319,7 @@ export default function () {
                     information={freshsalesLeadsWaterPurifierRawDataInformation.maxDate}
                     label="Data End"
                     metaQuery={freshsalesLeadsWaterPurifierRawDataInformation.metaQuery}
+                    metaInformation="Time is in UTC Format"
                     className="tw-col-span-4"
                     timezone={TimeZones.UTC}
                 />
@@ -556,11 +557,20 @@ export default function () {
                     className="tw-col-span-4"
                 />
 
-                <Card
+                {/* <Card
                     information={dateToMediumNoneEnFormat(typeformResponsesMattressDataInformation.maxDate)}
                     label="Data End"
                     metaQuery={typeformResponsesMattressDataInformation.metaQuery}
                     className="tw-col-span-4"
+                /> */}
+
+                <DateDisplayingCard
+                    information={typeformResponsesMattressDataInformation.maxDate}
+                    label="Data End"
+                    metaQuery={typeformResponsesMattressDataInformation.metaQuery}
+                    metaInformation="Time is in UTC Format"
+                    className="tw-col-span-4"
+                    timezone={TimeZones.UTC}
                 />
 
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
@@ -620,11 +630,20 @@ export default function () {
                     className="tw-col-span-4"
                 />
 
-                <Card
+                {/* <Card
                     information={dateToMediumNoneEnFormat(typeformResponsesWaterPurifierDataInformation.maxDate)}
                     label="Data End"
                     metaQuery={typeformResponsesWaterPurifierDataInformation.metaQuery}
                     className="tw-col-span-4"
+                /> */}
+
+                <DateDisplayingCard
+                    information={typeformResponsesWaterPurifierDataInformation.maxDate}
+                    label="Data End"
+                    metaQuery={typeformResponsesWaterPurifierDataInformation.metaQuery}
+                    metaInformation="Time is in UTC Format"
+                    className="tw-col-span-4"
+                    timezone={TimeZones.UTC}
                 />
 
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">

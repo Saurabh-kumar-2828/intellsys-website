@@ -1,4 +1,4 @@
-const {GoogleSpreadsheet} = require("google-spreadsheet");
+import {GoogleSpreadsheet} from "google-spreadsheet";
 
 // async function getRowsFilteredByTime(rows: any, filterTimestamp: Date) {
 //     return rows.filter(row => {
@@ -18,22 +18,24 @@ const {GoogleSpreadsheet} = require("google-spreadsheet");
 //     });
 // }
 
-async function dataFromGoogleSheet(sheetId: string, sheetTitle: string, timestamp: string) {
+export async function getDataFromGoogleSheet(sheetId: string, sheetTitle: string, timestamp: string) {
     const document = new GoogleSpreadsheet(sheetId);
 
     await document.useServiceAccountAuth({
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
+        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!,
+        private_key: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY!,
     });
 
     await document.loadInfo();
 
     const sheet = document.sheetsByTitle[sheetTitle];
 
-    // get all rows
+    // Get all non-empty rows
     const spreadsheetRows = (await sheet.getRows()).filter((spreadsheetRow) => spreadsheetRow._rawData.some((cellValue) => cellValue != null && cellValue != ""));
 
-    const filteredSpreadsheetRows = await getTypeformRowsFilteredByTime(spreadsheetRows, new Date(timestamp));
-
-    return filteredSpreadsheetRows.map((spreadsheetRow) => typeformRawColumnInfos.map((columnInfo) => getNonEmptyStringOrNull(spreadsheetRow._rawData[columnInfo.sheetColumnIndex])));
+    return spreadsheetRows;
 }
+
+//     const filteredSpreadsheetRows = await getTypeformRowsFilteredByTime(spreadsheetRows, new Date(timestamp));
+
+// return filteredSpreadsheetRows.map((spreadsheetRow) => typeformRawColumnInfos.map((columnInfo) => getNonEmptyStringOrNull(spreadsheetRow._rawData[columnInfo.sheetColumnIndex])));

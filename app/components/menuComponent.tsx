@@ -109,13 +109,13 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
                             itemBuilder={(item, itemIndex) => {
                                 if (item == null) {
                                     return (
-                                        <>
+                                        <React.Fragment key={itemIndex}>
                                             <VerticalSpacer className="tw-h-4" />
 
                                             <Divider />
 
                                             <VerticalSpacer className="tw-h-4" />
-                                        </>
+                                        </React.Fragment>
                                     );
                                 }
                                 return (

@@ -1,7 +1,11 @@
 import {DateTime} from "luxon";
 import {insertIntoTable} from "~/backend/data-management";
+import {GoogleSpreadsheet, GoogleSpreadsheetRow} from "google-spreadsheet";
+import {getNonEmptyStringOrNull} from "~/utilities/utilities";
+import {getDataFromGoogleSheet} from "./googleSheets.server";
+import {get_typeformResponsesWaterPurifierDataInformation} from "~/backend/data-source-information";
 
-async function getTypeformRowsFilteredByTime(rows: any, filterTimestamp: Date) {
+function getTypeformRowsFilteredByTime(rows: any, filterTimestamp: Date) {
     const timestampColumnIndex = typeformRawColumnInfos.filter(columnInfo => columnInfo.tableColumn == "submitted_at")[0].sheetColumnIndex;
 
     const filteredRows = [];
@@ -23,24 +27,37 @@ async function getTypeformRowsFilteredByTime(rows: any, filterTimestamp: Date) {
     return filteredRows;
 }
 
-export async function ingestDataFromTypeformWaterPurifierApi(date: string) {
-    const rows = await dataFromGoogleSheet(process.env.TYPEFORM_WATER_PURIFIER_SPREADSHEET_ID!, process.env.TYPEFORM_WATER_PURIFIER_SHEET_TITLE!, date);
+function convertSpreadsheetRowToIngestionReadyArray(spreadsheetRows: Array<GoogleSpreadsheetRow>) {
+    // TODO: Reuse an existing function for this
+    const rows: Array<any> = spreadsheetRows.map((spreadsheetRow) => typeformRawColumnInfos.map((columnInfo) => getNonEmptyStringOrNull(spreadsheetRow._rawData[columnInfo.sheetColumnIndex])));
+    return rows;
+}
 
-    await insertIntoTable(
-        "typeform_responses_water_purifier_raw",
-        typeformRawColumnInfos.map((columnInfo) => columnInfo.tableColumn),
-        rows
-    );
+export async function ingestDataFromTypeformWaterPurifierApi(date: string) {
+    const rows = await getDataFromGoogleSheet(process.env.TYPEFORM_WATER_PURIFIER_SPREADSHEET_ID!, process.env.TYPEFORM_WATER_PURIFIER_SHEET_TITLE!, date);
+
+
+    const filteredRows = getTypeformRowsFilteredByTime(rows, (await get_typeformResponsesWaterPurifierDataInformation()).maxDate);
+
+    const sqlRows = convertSpreadsheetRowToIngestionReadyArray(filteredRows);
+
+    console.log(sqlRows.length);
+
+    // await insertIntoTable(
+    //     "typeform_responses_water_purifier_raw",
+    //     typeformRawColumnInfos.map((columnInfo) => columnInfo.tableColumn),
+    //     sqlRows,
+    // );
 }
 
 export async function ingestDataFromTypeformMattressApi(date: string) {
-    const rows = await dataFromGoogleSheet(process.env.TYPEFORM_MATTRESS_SPREADSHEET_ID!, process.env.TYPEFORM_MATTRESS_SHEET_TITLE!, date);
+    const rows = await getDataFromGoogleSheet(process.env.TYPEFORM_MATTRESS_SPREADSHEET_ID!, process.env.TYPEFORM_MATTRESS_SHEET_TITLE!, date);
 
-    await insertIntoTable(
-        "typeform_responses_water_purifier_raw",
-        typeformRawColumnInfos.map((columnInfo) => columnInfo.tableColumn),
-        rows
-    );
+    // await insertIntoTable(
+    //     "typeform_responses_water_purifier_raw",
+    //     typeformRawColumnInfos.map((columnInfo) => columnInfo.tableColumn),
+    //     rows
+    // );
 }
 
 const typeformRawColumnInfos = [

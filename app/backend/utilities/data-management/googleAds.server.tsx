@@ -4,7 +4,6 @@ export const googleAdsRawColumnInfos: Array<ColumnInfo> = [
     {tableColumn: "day", csvColumn: "Day"},
     {tableColumn: "campaign", csvColumn: "Campaign"},
     {tableColumn: "campaign_type", csvColumn: "Campaign type"},
-    {tableColumn: "ad_group", csvColumn: "Ad group"},
     {tableColumn: "currency_code", csvColumn: "Currency code"},
     {tableColumn: "clicks", csvColumn: "Clicks"},
     {tableColumn: "impr", csvColumn: "Impr."},

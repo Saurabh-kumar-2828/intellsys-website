@@ -1,8 +1,8 @@
 import type {ActionFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Form, useActionData, useLoaderData} from "@remix-run/react";
-import { useEffect } from "react";
-import { toast } from "react-hot-toast";
+import {useEffect} from "react";
+import {toast} from "react-hot-toast";
 import {fullRefresh, processDelete, processFileUpload, processIngestDataFromApi, processTruncate, Table} from "~/backend/data-management";
 import {
     get_facebookAdsRawDataInformation,
@@ -15,7 +15,8 @@ import {
     get_typeformResponsesWaterPurifierDataInformation,
     get_websitePopupFormResponsesRawDataInformation,
 } from "~/backend/data-source-information";
-import {Card, errorToast} from "~/components/scratchpad";
+import {Card, DateDisplayingCard, errorToast} from "~/components/scratchpad";
+import { TimeZones } from "~/utilities/typeDefinitions";
 import {dateToMediumNoneEnFormat, numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
@@ -27,7 +28,7 @@ export const meta: MetaFunction = () => {
 export const action: ActionFunction = async ({request}) => {
     const body = await request.formData();
 
-    try{
+    try {
         const table = parseInt(body.get("table") as string) as Table;
         const operation = parseInt(body.get("operation") as string) as Operation;
 
@@ -60,11 +61,12 @@ export const action: ActionFunction = async ({request}) => {
         } else {
             throw new Response(null, {status: 400});
         }
-    }catch(error){
-        console.log(error.printStackTrace());
+    } catch (error) {
+        console.log("Error doing tasks");
+        console.log(error);
         return json({
-            error: error.toString()
-        })
+            error: JSON.stringify(error),
+        });
     }
 
     return null;
@@ -104,13 +106,13 @@ export default function () {
     const actionData = useActionData();
 
     useEffect(() => {
-        if(actionData != null){
+        if (actionData != null) {
             errorToast(actionData.error);
         }
-    },[actionData]);
+    }, [actionData]);
 
     return (
-        <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
+        <div className="tw-grid tw-grid-cols-12 tw-gap-x-4 tw-gap-y-6 tw-p-8">
             {/* Facebook Ads Raw */}
             <>
                 <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Facebook Ads Raw</div>
@@ -156,12 +158,9 @@ export default function () {
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                     <input type="text" name="table" value={Table.facebookAdsRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
-                    <button className="tw-lp-button">
-                        Fetch Data From API
-                    </button>
+                    <button className="tw-lp-button">Fetch Data From API</button>
                 </Form>
             </>
-
 
             {/* Freshsales Leads Mattress Raw */}
             <>
@@ -174,18 +173,20 @@ export default function () {
                     className="tw-col-span-4"
                 />
 
-                <Card
+                <DateDisplayingCard
                     information={dateToMediumNoneEnFormat(freshsalesLeadsMattressRawDataInformation.minDate)}
                     label="Data Start"
                     metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery}
                     className="tw-col-span-4"
+                    timezone={TimeZones.UTC}
                 />
 
-                <Card
-                    information={dateToMediumNoneEnFormat(freshsalesLeadsMattressRawDataInformation.maxDate)}
+                <DateDisplayingCard
+                    information={freshsalesLeadsMattressRawDataInformation.maxDate}
                     label="Data End"
                     metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery}
                     className="tw-col-span-4"
+                    timezone={TimeZones.UTC}
                 />
 
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
@@ -224,9 +225,7 @@ export default function () {
                     <input type="text" name="table" value={Table.freshsalesLeadsMattressRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                     <input type="text" name="startDate" value={"2022-10-20T22:00:00Z"} readOnly className="tw-hidden" />
-                    <button className="tw-lp-button">
-                        Fetch Data From API
-                    </button>
+                    <button className="tw-lp-button">Fetch Data From API</button>
                 </Form>
             </>
 
@@ -241,18 +240,20 @@ export default function () {
                     className="tw-col-span-4"
                 />
 
-                <Card
-                    information={new Intl.DateTimeFormat("en", {timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short", hour12: true}).format(new Date(freshsalesLeadsNonMattressRawDataInformation.minDate))}
+                <DateDisplayingCard
+                    information={freshsalesLeadsNonMattressRawDataInformation.minDate}
                     label="Data Start"
                     metaQuery={freshsalesLeadsNonMattressRawDataInformation.metaQuery}
                     className="tw-col-span-4"
+                    timezone={TimeZones.UTC}
                 />
 
-                <Card
-                    information={new Intl.DateTimeFormat("en", {timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short", hour12: true}).format(new Date(freshsalesLeadsNonMattressRawDataInformation.maxDate))}
+                <DateDisplayingCard
+                    information={freshsalesLeadsNonMattressRawDataInformation.maxDate}
                     label="Data End"
                     metaQuery={freshsalesLeadsNonMattressRawDataInformation.metaQuery}
                     className="tw-col-span-4"
+                    timezone={TimeZones.UTC}
                 />
 
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
@@ -291,9 +292,7 @@ export default function () {
                     <input type="text" name="table" value={Table.freshsalesLeadsNonMattressRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                     <input type="text" name="startDate" value={"2022-10-20T22:00:00Z"} readOnly className="tw-hidden" />
-                    <button className="tw-lp-button">
-                        Fetch Data From API
-                    </button>
+                    <button className="tw-lp-button">Fetch Data From API</button>
                 </Form>
             </>
 
@@ -308,18 +307,20 @@ export default function () {
                     className="tw-col-span-4"
                 />
 
-                <Card
+                <DateDisplayingCard
                     information={dateToMediumNoneEnFormat(freshsalesLeadsWaterPurifierRawDataInformation.minDate)}
                     label="Data Start"
                     metaQuery={freshsalesLeadsWaterPurifierRawDataInformation.metaQuery}
                     className="tw-col-span-4"
+                    timezone={TimeZones.UTC}
                 />
 
-                <Card
+                <DateDisplayingCard
                     information={dateToMediumNoneEnFormat(freshsalesLeadsWaterPurifierRawDataInformation.maxDate)}
                     label="Data End"
                     metaQuery={freshsalesLeadsWaterPurifierRawDataInformation.metaQuery}
                     className="tw-col-span-4"
+                    timezone={TimeZones.UTC}
                 />
 
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
@@ -358,9 +359,7 @@ export default function () {
                     <input type="text" name="table" value={Table.freshsalesLeadsWaterPurifierRaw} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                     <input type="text" name="startDate" value={"2022-10-20T22:00:00Z"} readOnly className="tw-hidden" />
-                    <button className="tw-lp-button">
-                        Fetch Data From API
-                    </button>
+                    <button className="tw-lp-button">Fetch Data From API</button>
                 </Form>
             </>
 
@@ -489,7 +488,12 @@ export default function () {
 
                 <Card information={numberToHumanFriendlyString(shopifySalesRawDataInformation.count)} label="Count" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
 
-                <Card information={dateToMediumNoneEnFormat(shopifySalesRawDataInformation.minDate)} label="Data Start" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
+                <Card
+                    information={dateToMediumNoneEnFormat(shopifySalesRawDataInformation.minDate)}
+                    label="Data Start"
+                    metaQuery={shopifySalesRawDataInformation.metaQuery}
+                    className="tw-col-span-4"
+                />
 
                 <Card information={dateToMediumNoneEnFormat(shopifySalesRawDataInformation.maxDate)} label="Data End" metaQuery={shopifySalesRawDataInformation.metaQuery} className="tw-col-span-4" />
 
@@ -530,9 +534,7 @@ export default function () {
                     <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                     <input type="text" name="startDate" value={"2022-09-01"} readOnly className="tw-hidden" />
                     <input type="text" name="endDate" value={"2022-09-02"} readOnly className="tw-hidden" />
-                    <button className="tw-lp-button" >
-                        Fetch Data From API
-                    </button>
+                    <button className="tw-lp-button">Fetch Data From API</button>
                 </Form>
             </>
 

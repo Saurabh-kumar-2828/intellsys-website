@@ -17,6 +17,11 @@ export enum ValueDisplayingCardInformationType {
     text,
 }
 
+export enum TimeZones {
+    UTC = "UTC",
+    IST = "Asia/Kolkata",
+}
+
 export enum QueryFilterType {
     category,
     product,

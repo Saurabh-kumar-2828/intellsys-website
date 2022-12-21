@@ -4,8 +4,8 @@ import {DateTime, Info} from "luxon";
 import {useEffect, useId, useState} from "react";
 import {Clipboard, Funnel, FunnelFill, InfoCircle, XCircleFill} from "react-bootstrap-icons";
 import toast from "react-hot-toast";
-import { TimeGranularity } from "~/backend/business-insights";
-import {filterToHumanReadableString, filterToTextColor, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
+import {TimeGranularity} from "~/backend/business-insights";
+import {filterToHumanReadableString, filterToTextColor, TimeZones, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithAmpersand, concatenateNonNullStringsWithSpaces, numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export function FancySearchableSelect(props: {className?: string; options: Array<string>; label: string; selectedOption; setSelectedOption}) {
@@ -138,6 +138,35 @@ export function ValueDisplayingCard(props: {queryInformation; contentExtractor; 
                     : props.type == ValueDisplayingCardInformationType.percentage
                     ? numberToHumanFriendlyString(content, true, true, true)
                     : content}
+            </div>
+            <div className="tw-font-bold">{props.label}</div>
+        </div>
+    );
+}
+
+export function DateDisplayingCard(props: {information: any; label: string; className?: string; timezone: TimeZones; metaQuery?: string; metaInformation?: string}) {
+    return (
+        <div
+            className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center", props.className)}
+            title={props.information}
+        >
+            {props.metaInformation == null && props.metaQuery == null ? null : (
+                <div className="tw-absolute tw-top-4 tw-right-4 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
+                    {props.metaInformation == null ? null : <InfoCircle title={props.metaInformation} className="tw-w-4 tw-h-4 tw-cursor-help" />}
+
+                    {props.metaQuery == null ? null : (
+                        <button title={props.metaQuery} onClick={async (e) => await navigator.clipboard.writeText(props.metaQuery)}>
+                            <Clipboard className="tw-w-4 tw-h-4" />
+                        </button>
+                    )}
+                </div>
+            )}
+            <div className="tw-text-[3rem]">
+                {props.timezone == TimeZones.IST
+                    ? new Intl.DateTimeFormat("en", {timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short", hour12: true}).format(new Date(props.information))
+                    : props.timezone == TimeZones.UTC
+                    ? new Intl.DateTimeFormat("en", {timeZone: "UTC", dateStyle: "medium", timeStyle: "short", hour12: true}).format(new Date(props.information))
+                    : props.information}
             </div>
             <div className="tw-font-bold">{props.label}</div>
         </div>

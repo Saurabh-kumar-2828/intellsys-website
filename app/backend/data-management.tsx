@@ -248,7 +248,7 @@ function convertObjectArrayIntoArrayArray(rowObjects: Array<{[k: string]: string
     for (const column of columns) {
         if (!headers.includes(column)) {
             console.log(`convertObjectArrayIntoArrayArray: column ${column} not found`);
-            throw new Response(null, {status: 400});
+            throw new Error(`convertObjectArrayIntoArrayArray: column ${column} not found`);
         }
     }
 

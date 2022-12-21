@@ -28,7 +28,7 @@ export async function fullRefresh(): Promise<void> {
 
                 REFRESH MATERIALIZED VIEW google_ads;
 
-                REFRESH MATERIALIZED VIEW source_to_information;
+                REFRESH MATERIALIZED VIEW captured_utm_campaign_library;
 
                 REFRESH MATERIALIZED VIEW facebook_ads_with_information;
 
@@ -36,12 +36,9 @@ export async function fullRefresh(): Promise<void> {
 
                 REFRESH MATERIALIZED VIEW ads_with_information;
 
-                REFRESH MATERIALIZED VIEW shopify_sales_to_possible_sources;
                 REFRESH MATERIALIZED VIEW shopify_sales_to_source;
                 REFRESH MATERIALIZED VIEW shopify_sales_to_source_with_information;
 
-                REFRESH MATERIALIZED VIEW freshsales_leads_to_fb_source;
-                REFRESH MATERIALIZED VIEW freshsales_leads_to_possible_sources;
                 REFRESH MATERIALIZED VIEW freshsales_leads_to_source;
                 REFRESH MATERIALIZED VIEW freshsales_leads_to_source_with_information;
             `;
@@ -235,8 +232,8 @@ export async function processIngestDataFromApi(table: Table, date: string): Prom
         await ingestDataFromTypeformMattressApi(date);
     } else if (table == Table.typeformResponsesWaterPurifierRaw) {
         await ingestDataFromTypeformWaterPurifierApi(date);
-        // } else if (table == Table.websitePopupFormResponsesRaw) {
-        // await truncateTable("website_popup_form_responses_raw");
+    // } else if (table == Table.websitePopupFormResponsesRaw) {
+    //     await truncateTable("website_popup_form_responses_raw");
     } else {
         throw new Response(null, {status: 400});
     }

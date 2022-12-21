@@ -10,8 +10,7 @@ import {freshsalesColumnInfos, ingestDataFromFreshsalesApi} from "~/backend/util
 import {facebookAdsRawColumnInfos, ingestDataFromFacebookApi} from "~/backend/utilities/data-management/facebookAds.server";
 
 export async function fullRefresh(): Promise<void> {
-    try {
-        const query = `
+    const query = `
                 REFRESH MATERIALIZED VIEW shopify_sales;
                 REFRESH MATERIALIZED VIEW shopify_sales_deduped_by_email;
 
@@ -47,62 +46,39 @@ export async function fullRefresh(): Promise<void> {
                 REFRESH MATERIALIZED VIEW freshsales_leads_to_source_with_information;
             `;
 
-        await execute(query);
-    } catch (e) {
-        console.log("Error executing function");
-        console.log(e);
-        console.trace();
-    }
+    await execute(query);
 }
 
 export async function insertIntoTable(tableName: string, tableColumns: Array<string>, rows: Array<Array<string>>): Promise<void> {
-    try {
-        const maxRowsPerQuery = 500;
+    const maxRowsPerQuery = 500;
 
-        for (let i = 0; i < rows.length; i += maxRowsPerQuery) {
-            const rowsSubset = rows.slice(i, i + maxRowsPerQuery);
+    for (let i = 0; i < rows.length; i += maxRowsPerQuery) {
+        const rowsSubset = rows.slice(i, i + maxRowsPerQuery);
 
-            const query = format(
-                `
+        const query = format(
+            `
                     INSERT INTO ${tableName}
                         (${tableColumns.join(", ")})
                     VALUES
                         %L
                 `,
-                rowsSubset
-            );
+            rowsSubset
+        );
 
-            await execute(query);
-        }
-    } catch (e) {
-        console.log("Error executing function");
-        console.log(e);
-        console.trace();
+        await execute(query);
     }
 }
 
 async function deleteDataFromTable(tableName: string, dateColumn: string, startDate: string, endDate: string): Promise<void> {
-    try {
-        const query = `DELETE FROM ${tableName} WHERE ${dateColumn} >= $1 AND ${dateColumn} <= $2`;
+    const query = `DELETE FROM ${tableName} WHERE ${dateColumn} >= $1 AND ${dateColumn} <= $2`;
 
-        await execute(query, [startDate, endDate]);
-    } catch (e) {
-        console.log("Error executing function");
-        console.log(e);
-        console.trace();
-    }
+    await execute(query, [startDate, endDate]);
 }
 
 async function truncateTable(tableName: string): Promise<void> {
-    try {
-        const query = `DELETE FROM ${tableName}`;
+    const query = `DELETE FROM ${tableName}`;
 
-        await execute(query);
-    } catch (e) {
-        console.log("Error executing function");
-        console.log(e);
-        console.trace();
-    }
+    await execute(query);
 }
 
 export enum Table {
@@ -159,17 +135,17 @@ export async function processFileUpload(table: Table, file: File): Promise<void>
         await insertIntoTableWrapper("freshsales_leads_non_mattress_raw", freshsalesColumnInfos, rowObjects);
     } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
         await insertIntoTableWrapper("freshsales_leads_water_purifier_raw", freshsalesColumnInfos, rowObjects);
-    // TODO: Un-deprecate
-    // } else if (table == Table.freshsalesLeadsRaw) {
-    //     await insertIntoTableWrapper("freshsales_leads_raw", freshsalesColumnInfos, rowObjects);
+        // TODO: Un-deprecate
+        // } else if (table == Table.freshsalesLeadsRaw) {
+        //     await insertIntoTableWrapper("freshsales_leads_raw", freshsalesColumnInfos, rowObjects);
     } else if (table == Table.googleAdsRaw) {
         await insertIntoTableWrapper("google_ads_raw", googleAdsRawColumnInfos, rowObjects);
     } else if (table == Table.shopifySalesRaw) {
         await insertIntoTableWrapper("shopify_sales_raw", shopifyTableColumnInfos, rowObjects);
-    // } else if (table == Table.typeformResponsesMattressRaw) {
-    //     await insertIntoTableWrapper("typeform_responses_mattress_raw", typeformRawColumnInfos, rowObjects);
-    // } else if (table == Table.typeformResponsesWaterPurifierRaw) {
-    //     await insertIntoTableWrapper("typeform_responses_water_purifier_raw", typeformRawColumnInfos, rowObjects);
+        // } else if (table == Table.typeformResponsesMattressRaw) {
+        //     await insertIntoTableWrapper("typeform_responses_mattress_raw", typeformRawColumnInfos, rowObjects);
+        // } else if (table == Table.typeformResponsesWaterPurifierRaw) {
+        //     await insertIntoTableWrapper("typeform_responses_water_purifier_raw", typeformRawColumnInfos, rowObjects);
     } else if (table == Table.websitePopupFormResponsesRaw) {
         await insertIntoTableWrapper("website_popup_form_responses_raw", websitePopupFormResponsesRawColumnInfos, rowObjects);
     } else {
@@ -200,9 +176,9 @@ export async function processDelete(table: Table, startDate: string, endDate: st
         await deleteDataFromTable("freshsales_leads_non_mattress_raw", "DATE(lead_created_at)", startDate, endDate);
     } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
         await deleteDataFromTable("freshsales_leads_water_purifier_raw", "DATE(lead_created_at)", startDate, endDate);
-    // TODO: Un-deprecate
-    // } else if (table == Table.freshsalesLeadsRaw) {
-    //     await deleteDataFromTable("freshsales_leads_raw", "DATE(lead_created_at)", startDate, endDate);
+        // TODO: Un-deprecate
+        // } else if (table == Table.freshsalesLeadsRaw) {
+        //     await deleteDataFromTable("freshsales_leads_raw", "DATE(lead_created_at)", startDate, endDate);
     } else if (table == Table.googleAdsRaw) {
         await deleteDataFromTable("google_ads_raw", "day", startDate, endDate);
     } else if (table == Table.shopifySalesRaw) {
@@ -227,9 +203,9 @@ export async function processTruncate(table: Table): Promise<void> {
         await truncateTable("freshsales_leads_non_mattress_raw");
     } else if (table == Table.freshsalesLeadsWaterPurifierRaw) {
         await truncateTable("freshsales_leads_water_purifier_raw");
-    // TODO: Un-deprecate
-    // } else if (table == Table.freshsalesLeadsRaw) {
-    //     await truncateTable("freshsales_leads_raw");
+        // TODO: Un-deprecate
+        // } else if (table == Table.freshsalesLeadsRaw) {
+        //     await truncateTable("freshsales_leads_raw");
     } else if (table == Table.googleAdsRaw) {
         await truncateTable("google_ads_raw");
     } else if (table == Table.shopifySalesRaw) {
@@ -248,11 +224,11 @@ export async function processTruncate(table: Table): Promise<void> {
 export async function processIngestDataFromApi(table: Table, date: string): Promise<void> {
     if (table == Table.facebookAdsRaw) {
         await ingestDataFromFacebookApi(date);
-    // TODO: Un-deprecate
-    // if (table == Table.freshsalesLeadsRaw) {
-    //     await ingestDataFromFreshsalesApi(date);
-    // } else if (table == Table.googleAdsRaw) {
-    //     await truncateTable("google_ads_raw");
+        // TODO: Un-deprecate
+        // if (table == Table.freshsalesLeadsRaw) {
+        //     await ingestDataFromFreshsalesApi(date);
+        // } else if (table == Table.googleAdsRaw) {
+        //     await truncateTable("google_ads_raw");
     } else if (table == Table.shopifySalesRaw) {
         await ingestDataFromShopifyApi(date);
     } else if (table == Table.typeformResponsesMattressRaw) {

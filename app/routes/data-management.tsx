@@ -1,6 +1,8 @@
 import type {ActionFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
-import {Form, useLoaderData} from "@remix-run/react";
+import {Form, useActionData, useLoaderData} from "@remix-run/react";
+import { useEffect } from "react";
+import { toast } from "react-hot-toast";
 import {fullRefresh, processDelete, processFileUpload, processIngestDataFromApi, processTruncate, Table} from "~/backend/data-management";
 import {
     get_facebookAdsRawDataInformation,
@@ -13,7 +15,7 @@ import {
     get_typeformResponsesWaterPurifierDataInformation,
     get_websitePopupFormResponsesRawDataInformation,
 } from "~/backend/data-source-information";
-import {Card} from "~/components/scratchpad";
+import {Card, errorToast} from "~/components/scratchpad";
 import {dateToMediumNoneEnFormat, numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
@@ -25,37 +27,44 @@ export const meta: MetaFunction = () => {
 export const action: ActionFunction = async ({request}) => {
     const body = await request.formData();
 
-    const table = parseInt(body.get("table") as string) as Table;
-    const operation = parseInt(body.get("operation") as string) as Operation;
+    try{
+        const table = parseInt(body.get("table") as string) as Table;
+        const operation = parseInt(body.get("operation") as string) as Operation;
 
-    if (operation == Operation.upload) {
-        const files = body.getAll("file");
+        if (operation == Operation.upload) {
+            const files = body.getAll("file");
 
-        if (files.length == 0 || files.some((file) => !(file instanceof File))) {
+            if (files.length == 0 || files.some((file) => !(file instanceof File))) {
+                throw new Response(null, {status: 400});
+            }
+
+            for (const file_ of files) {
+                const file = file_ as File;
+
+                await processFileUpload(table, file);
+            }
+        } else if (operation == Operation.delete) {
+            const startDate = body.get("startDate") as string;
+            const endDate = body.get("endDate") as string;
+
+            await processDelete(table, startDate, endDate);
+        } else if (operation == Operation.truncate) {
+            await processTruncate(table);
+        } else if (operation == Operation.refresh) {
+            await fullRefresh();
+        } else if (operation == Operation.ingestDataFromApi) {
+            const startDate = body.get("startDate") as string;
+
+            // TODO: Remove null coalesce
+            await processIngestDataFromApi(table, startDate ?? "1990-01-01T00:00:00Z");
+        } else {
             throw new Response(null, {status: 400});
         }
-
-        for (const file_ of files) {
-            const file = file_ as File;
-
-            await processFileUpload(table, file);
-        }
-    } else if (operation == Operation.delete) {
-        const startDate = body.get("startDate") as string;
-        const endDate = body.get("endDate") as string;
-
-        await processDelete(table, startDate, endDate);
-    } else if (operation == Operation.truncate) {
-        await processTruncate(table);
-    } else if (operation == Operation.refresh) {
-        await fullRefresh();
-    } else if (operation == Operation.ingestDataFromApi) {
-        const startDate = body.get("startDate") as string;
-
-        // TODO: Remove null coalesce
-        await processIngestDataFromApi(table, startDate ?? "1990-01-01T00:00:00Z");
-    } else {
-        throw new Response(null, {status: 400});
+    }catch(error){
+        console.log(error.printStackTrace());
+        return json({
+            error: error.toString()
+        })
     }
 
     return null;
@@ -91,6 +100,14 @@ export default function () {
         typeformResponsesMattressDataInformation,
         typeformResponsesWaterPurifierDataInformation,
     } = useLoaderData();
+
+    const actionData = useActionData();
+
+    useEffect(() => {
+        if(actionData != null){
+            errorToast(actionData.error);
+        }
+    },[actionData]);
 
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
@@ -225,14 +242,14 @@ export default function () {
                 />
 
                 <Card
-                    information={dateToMediumNoneEnFormat(freshsalesLeadsNonMattressRawDataInformation.minDate)}
+                    information={new Intl.DateTimeFormat("en", {timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short", hour12: true}).format(new Date(freshsalesLeadsNonMattressRawDataInformation.minDate))}
                     label="Data Start"
                     metaQuery={freshsalesLeadsNonMattressRawDataInformation.metaQuery}
                     className="tw-col-span-4"
                 />
 
                 <Card
-                    information={dateToMediumNoneEnFormat(freshsalesLeadsNonMattressRawDataInformation.maxDate)}
+                    information={new Intl.DateTimeFormat("en", {timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short", hour12: true}).format(new Date(freshsalesLeadsNonMattressRawDataInformation.maxDate))}
                     label="Data End"
                     metaQuery={freshsalesLeadsNonMattressRawDataInformation.metaQuery}
                     className="tw-col-span-4"

@@ -2,7 +2,8 @@ import {Listbox} from "@headlessui/react";
 import {Link} from "@remix-run/react";
 import {DateTime, Info} from "luxon";
 import {useEffect, useId, useState} from "react";
-import {Clipboard, Funnel, FunnelFill, InfoCircle} from "react-bootstrap-icons";
+import {Clipboard, Funnel, FunnelFill, InfoCircle, XCircleFill} from "react-bootstrap-icons";
+import toast from "react-hot-toast";
 import { TimeGranularity } from "~/backend/business-insights";
 import {filterToHumanReadableString, filterToTextColor, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithAmpersand, concatenateNonNullStringsWithSpaces, numberToHumanFriendlyString} from "~/utilities/utilities";
@@ -268,4 +269,13 @@ export function DateFilterSection(props: {
             </div>
         </div>
     );
+}
+
+export function errorToast(content: any) {
+    toast((toast_) => (
+        <div className="tw-bg-bg+1 tw-text-fg tw-flex tw-flex-row tw-items-center tw-gap-x-4">
+            <XCircleFill className="tw-w-4 tw-h-4 tw-text-red-600" />
+            {content}
+        </div>
+    ));
 }

@@ -8,6 +8,7 @@ import {getAccessToken, getAuthenticatedUserDetails} from "~/backend/utilities/s
 import {User} from "~/utilities/typeDefinitions";
 
 import tailwindStylesheet from "../build/tailwind.css";
+import { Toaster } from "react-hot-toast";
 
 type LoaderData = {
     userDetails: User | null;
@@ -57,6 +58,13 @@ export default function App() {
                         <Outlet />
                     </div>
                 </div>
+                <Toaster
+                    position="top-right"
+                    toastOptions={{
+                        duration: 5000,
+                        className: "!tw-bg-bg+1",
+                    }}
+                />
                 <ScrollRestoration />
                 <Scripts />
                 <LiveReload />

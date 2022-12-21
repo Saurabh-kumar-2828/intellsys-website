@@ -3,7 +3,7 @@ import {dateToIso8601Date, dateToMediumEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
 import {Iso8601Date} from "~/utilities/typeDefinitions";
 
-export enum TimeGranularity{
+export enum TimeGranularity {
     daily = "Daily",
     weekly = "Weekly",
     monthly = "Monthly",

@@ -24,6 +24,7 @@ import {
     agGridFloatComparator,
     colorPalette,
     concatenateNonNullStringsWithAmpersand,
+    dateToMediumNoneEnFormat,
     distinct,
     fillColors,
     getColor,
@@ -143,10 +144,12 @@ export default function () {
             </div>
             <div className="tw-p-8">
                 <LeadsSection freshsalesLeadsData={freshsalesLeadsData} minDate={appliedMinDate} maxDate={appliedMaxDate} selectedCategories={selectedCategories} />
+                <DespositionsToCampaignsSection freshsalesLeadsData={freshsalesLeadsData} minDate={appliedMinDate} maxDate={appliedMaxDate} selectedCategories={selectedCategories} />
             </div>
         </>
     );
 }
+
 function LeadsSection({freshsalesLeadsData, minDate, maxDate, selectedCategories}: {freshsalesLeadsData: FreshsalesData; minDate: Iso8601Date; maxDate: Iso8601Date;  selectedCategories: Array<string>;}) {
 
     const filterFreshsalesLeadsData = freshsalesLeadsData.rows
@@ -216,6 +219,7 @@ function LeadsSection({freshsalesLeadsData, minDate, maxDate, selectedCategories
         noOfLeadsGeneratedDataset.push(result);
     });
 
+
     return (
         <div>
             <div className="tw-grid tw-content-center tw-grid-cols-4 tw-gap-4">
@@ -250,6 +254,80 @@ function LeadsSection({freshsalesLeadsData, minDate, maxDate, selectedCategories
                         <div className="tw-col-start-2 tw-col-span-4">
                             <Line options={noOfLeadsGeneratedOptions} data={{labels, datasets: noOfLeadsGeneratedDataset}} />
                         </div>
+                    </div>
+                }
+                metaQuery={freshsalesLeadsData.metaQuery}
+            />
+        </div>
+    );
+}
+
+function kvpArrayToObjectReducer(kvpArray: Array<any>) {
+    return kvpArray.reduce((obj, kvp) => ({...obj, [kvp[0]]: kvp[1]}), {});
+}
+
+function DespositionsToCampaignsSection({freshsalesLeadsData, minDate, maxDate, selectedCategories}: {freshsalesLeadsData: FreshsalesData; minDate: Iso8601Date; maxDate: Iso8601Date;  selectedCategories: Array<string>;}) {
+    const filterFreshsalesLeadsData = freshsalesLeadsData.rows
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+
+    const freshsalesLeadsFiltered2 = filterFreshsalesLeadsData
+        .filter((row: FreshsalesDataAggregatedRow) => row.date <= maxDate && row.date >= minDate);
+
+    const x = kvpArrayToObjectReducer(
+        Object.entries(
+            freshsalesLeadsFiltered2.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {})
+        ).map(
+            ([key, value]) => [
+                key,
+                Object.entries(value.reduce(createGroupByReducer("leadStage"), {})).map(([key2, value2]) => [
+                    key2,
+                    value2.reduce((total:number, current: FreshsalesDataAggregatedRow) => total + current.count, 0)
+                ]),
+            ]
+        ).map(([key, value]) => [key, kvpArrayToObjectReducer(value)])
+    );
+
+    const campaigns = Object.keys(x);
+
+    const defaultColumnDefinitions = {
+        sortable: true,
+        filter: true,
+    };
+
+    return (
+        <div>
+           <GenericCard
+                className="tw-col-span-12"
+                content={
+                    <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                        <AgGridReact
+                            rowData={campaigns.map((campaignName, index) => ({
+                                campaign: campaignName,
+                                appointmentTaken: x[campaignName]["Appointment Taken"],
+                                qualified: x[campaignName]["Qualified"],
+                                new: x[campaignName]["New"],
+                                disqualified: x[campaignName]["Disqualified"],
+                                nonContactable: x[campaignName]["Non Contactable"],
+                                requirementsReceived: x[campaignName]["Requirements Received"],
+                                notResponding: x[campaignName]["Not Responding"],
+                            }))}
+                            columnDefs={[
+                                {
+                                    headerName: "Campaign",
+                                    field:"campaign"
+                                },
+                                {headerName: "Appointment Taken", field: "appointmentTaken"},
+                                {headerName: "Qualified", field: "qualified"},
+                                {headerName: "New", field: "new"},
+                                {headerName: "Disqualified", field: "disqualified"},
+                                {headerName: "Non Contactable", field: "nonContactable"},
+                                {headerName: "Requirements Received", field: "requirementsReceived"},
+                                {headerName: "Not Responding", field: "notResponding"},
+                            ]}
+                            defaultColDef={defaultColumnDefinitions}
+                            animateRows={true}
+                            enableRangeSelection={true}
+                        />
                     </div>
                 }
                 metaQuery={freshsalesLeadsData.metaQuery}

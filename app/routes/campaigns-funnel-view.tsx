@@ -84,7 +84,7 @@ function getDayWiseCampaignsTrends(freshsalesLeadsData: FreshsalesData,
 
     const adsDataGroupByCampaign = adsData.rows.reduce(createGroupByReducer("campaignName"), {});
     // TODO: Is this correct?
-    const freshSalesDataGroupByCampaign = freshsalesLeadsData.rows.filter((row) => doesLeadCaptureSourceCorrespondToPerformanceLead(row)).reduce(createGroupByReducer("campaign"), {});
+    const freshsalesDataGroupByCampaign = freshsalesLeadsData.rows.filter((row) => doesLeadCaptureSourceCorrespondToPerformanceLead(row)).reduce(createGroupByReducer("campaign"), {});
     const shopifyDataGroupByCampaign = shopifyData.rows.reduce(createGroupByReducer("sourceCampaignName"), {});
 
     const dayWiseDistributionPerCampaign = {};
@@ -93,8 +93,8 @@ function getDayWiseCampaignsTrends(freshsalesLeadsData: FreshsalesData,
         const dayWiseClicks = aggregateByDate(adsDataGroupByCampaign[campaign], "clicks", dates);
         const dayWiseAmountSpent = aggregateByDate(adsDataGroupByCampaign[campaign], "amountSpent", dates);
         let dayWiseLeads: Array<number> = [];
-        if (campaign in freshSalesDataGroupByCampaign) {
-            dayWiseLeads = aggregateByDate(freshSalesDataGroupByCampaign[campaign], "count", dates);
+        if (campaign in freshsalesDataGroupByCampaign) {
+            dayWiseLeads = aggregateByDate(freshsalesDataGroupByCampaign[campaign], "count", dates);
         }
 
         let dayWiseOrders: Array<number> = [];

@@ -17,7 +17,7 @@ import {
     FreshsalesDataAggregatedRow,
 } from "~/backend/business-insights";
 import {getProductLibrary, getCapturedUtmCampaignLibrary, ProductInformation} from "~/backend/common";
-import {Card, DateFilterSection, FancyCalendar, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
+import {Card, DateFilterSection, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
 import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
     agGridDateComparator,
@@ -106,14 +106,12 @@ export default function () {
     const r5_lowestAcos = "?";
     const r5_netAcos = "?";
 
-    const [selectedCategory, setSelectedCategory] = useState("Non Mattress");
+    const [selectedCategories, setSelectedCategories] = useState([]);
     const [selectedGranularity, setSelectedGranularity] = useState(appliedSelectedGranularity);
     const [selectedMinDate, setSelectedMinDate] = useState(appliedMinDate ?? "");
     const [selectedMaxDate, setSelectedMaxDate] = useState(appliedMaxDate ?? "");
-    const [selectedInsight, setSelectedInsight] = useState("netQuantity");
 
     const businesses = distinct(allProductInformation.map((productInformation: ProductInformation) => productInformation.category));
-    const insights = ["netQuantity", "netSales"];
 
     const [selectedProducts, setSelectedProducts] = useState<Array<string>>([]);
 
@@ -134,21 +132,30 @@ export default function () {
                 />
 
                 <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
-                    <FancySearchableSelect label="Choose Category" options={businesses} selectedOption={selectedCategory} setSelectedOption={setSelectedCategory} />
-                    <FancySearchableSelect label="Insights On" options={insights} selectedOption={selectedInsight} setSelectedOption={setSelectedInsight} />
+                    <FancySearchableMultiSelect
+                        label="Choose Category"
+                        options={businesses}
+                        selectedOptions={selectedCategories}
+                        setSelectedOptions={setSelectedCategories}
+                        filterType={QueryFilterType.category}
+                    />
                 </div>
             </div>
             <div className="tw-p-8">
-                <LeadsSection freshsalesLeadsData={freshsalesLeadsData} minDate={appliedMinDate} maxDate={appliedMaxDate} />
+                <LeadsSection freshsalesLeadsData={freshsalesLeadsData} minDate={appliedMinDate} maxDate={appliedMaxDate} selectedCategories={selectedCategories} />
             </div>
         </>
     );
 }
-function LeadsSection({freshsalesLeadsData, minDate, maxDate}: {freshsalesLeadsData: FreshsalesData; minDate: Iso8601Date; maxDate: Iso8601Date}) {
+function LeadsSection({freshsalesLeadsData, minDate, maxDate, selectedCategories}: {freshsalesLeadsData: FreshsalesData; minDate: Iso8601Date; maxDate: Iso8601Date;  selectedCategories: Array<string>;}) {
+
+    const filterFreshsalesLeadsData = freshsalesLeadsData.rows
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+
     const totalLeadsCount = {
         //TODO: correct metaInformation
-        metaInformation: `Total Leads = ${numberToHumanFriendlyString(freshsalesLeadsData.rows.length)}`,
-        count: freshsalesLeadsData.rows
+        metaInformation: `Total Leads = ${numberToHumanFriendlyString(filterFreshsalesLeadsData.length)}`,
+        count: filterFreshsalesLeadsData
             .filter((row: FreshsalesDataAggregatedRow) => row.date <= maxDate && row.date >= minDate)
             .reduce((totalLeads, row: FreshsalesDataAggregatedRow) => {
                 return totalLeads + row.count;
@@ -156,7 +163,7 @@ function LeadsSection({freshsalesLeadsData, minDate, maxDate}: {freshsalesLeadsD
     };
 
     const dates = getDates(minDate, maxDate);
-    const FreshSalesLeadsDataGroupByLeadStatus = freshsalesLeadsData.rows
+    const FreshSalesLeadsDataGroupByLeadStatus = filterFreshsalesLeadsData
         .filter((row: FreshsalesDataAggregatedRow) => row.date <= maxDate && row.date >= minDate)
         .reduce(createGroupByReducer("leadStage"), {});
 

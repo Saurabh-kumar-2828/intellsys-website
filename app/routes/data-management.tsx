@@ -65,7 +65,7 @@ export const action: ActionFunction = async ({request}) => {
         console.log("Error doing tasks");
         console.log(error);
         return json({
-            error: JSON.stringify(error),
+            error: error.message,
         });
     }
 
@@ -167,14 +167,14 @@ export default function () {
                 <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Freshsales Leads Mattress Raw</div>
 
                 <Card
-                    information={numberToHumanFriendlyString(freshsalesLeadsMattressRawDataInformation.count)}
+                    information={freshsalesLeadsMattressRawDataInformation.count}
                     label="Count"
                     metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery}
                     className="tw-col-span-4"
                 />
 
                 <DateDisplayingCard
-                    information={dateToMediumNoneEnFormat(freshsalesLeadsMattressRawDataInformation.minDate)}
+                    information={freshsalesLeadsMattressRawDataInformation.minDate}
                     label="Data Start"
                     metaQuery={freshsalesLeadsMattressRawDataInformation.metaQuery}
                     className="tw-col-span-4"
@@ -308,7 +308,7 @@ export default function () {
                 />
 
                 <DateDisplayingCard
-                    information={dateToMediumNoneEnFormat(freshsalesLeadsWaterPurifierRawDataInformation.minDate)}
+                    information={freshsalesLeadsWaterPurifierRawDataInformation.minDate}
                     label="Data Start"
                     metaQuery={freshsalesLeadsWaterPurifierRawDataInformation.metaQuery}
                     className="tw-col-span-4"
@@ -316,7 +316,7 @@ export default function () {
                 />
 
                 <DateDisplayingCard
-                    information={dateToMediumNoneEnFormat(freshsalesLeadsWaterPurifierRawDataInformation.maxDate)}
+                    information={freshsalesLeadsWaterPurifierRawDataInformation.maxDate}
                     label="Data End"
                     metaQuery={freshsalesLeadsWaterPurifierRawDataInformation.metaQuery}
                     className="tw-col-span-4"

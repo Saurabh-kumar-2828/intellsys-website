@@ -114,7 +114,6 @@ function getDayWiseCampaignsTrends(
     const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
     // TODO: Is this correct?
     const freshsalesDataGroupByCampaign = freshsalesLeadsData
-        .filter((row) => doesLeadCaptureSourceCorrespondToPerformanceLead(row.leadCaptureSource))
         .reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
     const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
 
@@ -269,13 +268,13 @@ function CampaignsSection({
 
     const performanceleadscount = {
         count: selectedCampaigns.map((campaign) => dayWiseCampaignsTrends[campaign!].leads.reduce(sumReducer, 0)).reduce(sumReducer, 0),
-        metaInformation: "performance leads",
+        metaInformation: "Number of leads created",
     };
 
     // TODO: net quantity or count?
     const sales = {
         count: selectedCampaigns.map((campaign) => dayWiseCampaignsTrends[campaign!].orders.reduce(sumReducer, 0)).reduce(sumReducer, 0),
-        metaInformation: "sales",
+        metaInformation: "Number of units sold",
     };
 
     const campaignsInformation = {
@@ -404,9 +403,9 @@ function CampaignsSection({
             </div>
 
             <div className="tw-col-span-6 tw-grid tw-grid-cols-[1fr_2fr] tw-items-stretch tw-gap-x-4">
-                <Card information={numberToHumanFriendlyString(campaignsInformation.amountSpent)} label="Spends" metaInformation={adsData.metaQuery} className="tw-row-start-1" />
-                <Card information={numberToHumanFriendlyString(campaignsInformation.impressions)} label="Impressions" metaInformation={adsData.metaQuery} className="tw-row-start-2" />
-                <Card information={numberToHumanFriendlyString(campaignsInformation.clicks)} label="Clicks" metaInformation={adsData.metaQuery} className="tw-row-start-3" />
+                <Card information={numberToHumanFriendlyString(campaignsInformation.amountSpent)} label="Spends" metaInformation={"Spends"} className="tw-row-start-1" />
+                <Card information={numberToHumanFriendlyString(campaignsInformation.impressions)} label="Impressions" metaInformation={"Impressions"} className="tw-row-start-2" />
+                <Card information={numberToHumanFriendlyString(campaignsInformation.clicks)} label="Clicks" metaInformation={"Clicks"} className="tw-row-start-3" />
                 <Card information={numberToHumanFriendlyString(performanceleadscount.count)} label="Leads" metaInformation={performanceleadscount.metaInformation} className="tw-row-start-4" />
                 <Card information={numberToHumanFriendlyString(sales.count)} label="Orders" metaInformation={sales.metaInformation} className="tw-row-start-5" />
 

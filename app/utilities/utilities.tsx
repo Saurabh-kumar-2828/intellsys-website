@@ -144,6 +144,10 @@ export function dateToIso8601Date(a: any): Iso8601Date {
     return a.toISOString().slice(0, 10);
 }
 
+export function kvpArrayToObjectReducer(kvpArray: Array<any>) {
+    return kvpArray.reduce((obj, kvp) => ({...obj, [kvp[0]]: kvp[1]}), {});
+}
+
 export function agGridDateComparator(a: string, b: string) {
     const aa = new Date(a);
     const bb = new Date(b);

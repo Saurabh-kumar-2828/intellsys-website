@@ -29,6 +29,7 @@ import {
     fillColors,
     getColor,
     getDates,
+    kvpArrayToObjectReducer,
     numberToHumanFriendlyString,
     roundOffToTwoDigits,
 } from "~/utilities/utilities";
@@ -144,16 +145,26 @@ export default function () {
             </div>
             <div className="tw-p-8">
                 <LeadsSection freshsalesLeadsData={freshsalesLeadsData} minDate={appliedMinDate} maxDate={appliedMaxDate} selectedCategories={selectedCategories} />
+            </div>
+            <div className="tw-p-8">
                 <DespositionsToCampaignsSection freshsalesLeadsData={freshsalesLeadsData} minDate={appliedMinDate} maxDate={appliedMaxDate} selectedCategories={selectedCategories} />
             </div>
         </>
     );
 }
 
-function LeadsSection({freshsalesLeadsData, minDate, maxDate, selectedCategories}: {freshsalesLeadsData: FreshsalesData; minDate: Iso8601Date; maxDate: Iso8601Date;  selectedCategories: Array<string>;}) {
-
-    const filterFreshsalesLeadsData = freshsalesLeadsData.rows
-        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+function LeadsSection({
+    freshsalesLeadsData,
+    minDate,
+    maxDate,
+    selectedCategories,
+}: {
+    freshsalesLeadsData: FreshsalesData;
+    minDate: Iso8601Date;
+    maxDate: Iso8601Date;
+    selectedCategories: Array<string>;
+}) {
+    const filterFreshsalesLeadsData = freshsalesLeadsData.rows.filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category));
 
     const totalLeadsCount = {
         //TODO: correct metaInformation
@@ -219,7 +230,6 @@ function LeadsSection({freshsalesLeadsData, minDate, maxDate, selectedCategories
         noOfLeadsGeneratedDataset.push(result);
     });
 
-
     return (
         <div>
             <div className="tw-grid tw-content-center tw-grid-cols-4 tw-gap-4">
@@ -262,30 +272,38 @@ function LeadsSection({freshsalesLeadsData, minDate, maxDate, selectedCategories
     );
 }
 
-function kvpArrayToObjectReducer(kvpArray: Array<any>) {
-    return kvpArray.reduce((obj, kvp) => ({...obj, [kvp[0]]: kvp[1]}), {});
-}
+function DespositionsToCampaignsSection({
+    freshsalesLeadsData,
+    minDate,
+    maxDate,
+    selectedCategories,
+}: {
+    freshsalesLeadsData: FreshsalesData;
+    minDate: Iso8601Date;
+    maxDate: Iso8601Date;
+    selectedCategories: Array<string>;
+}) {
+    const filterFreshsalesLeadsData = freshsalesLeadsData.rows.filter((row: FreshsalesDataAggregatedRow) => selectedCategories.length == 0 || selectedCategories.includes(row.category));
 
-function DespositionsToCampaignsSection({freshsalesLeadsData, minDate, maxDate, selectedCategories}: {freshsalesLeadsData: FreshsalesData; minDate: Iso8601Date; maxDate: Iso8601Date;  selectedCategories: Array<string>;}) {
-    const filterFreshsalesLeadsData = freshsalesLeadsData.rows
-        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+    const freshsalesDataGroupByCampaigns = filterFreshsalesLeadsData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
 
-    const freshsalesLeadsFiltered2 = filterFreshsalesLeadsData
-        .filter((row: FreshsalesDataAggregatedRow) => row.date <= maxDate && row.date >= minDate);
-
+    // {"campaign": {"leadStatus1": 12, "leadStatus2": 12}, ....}
     const x = kvpArrayToObjectReducer(
-        Object.entries(
-            freshsalesLeadsFiltered2.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {})
-        ).map(
-            ([key, value]) => [
+        Object.entries(freshsalesDataGroupByCampaigns)
+            .map(([key, value]) => [
                 key,
                 Object.entries(value.reduce(createGroupByReducer("leadStage"), {})).map(([key2, value2]) => [
                     key2,
-                    value2.reduce((total:number, current: FreshsalesDataAggregatedRow) => total + current.count, 0)
+                    value2.reduce((total: number, current: FreshsalesDataAggregatedRow) => total + current.count, 0),
                 ]),
-            ]
-        ).map(([key, value]) => [key, kvpArrayToObjectReducer(value)])
+            ])
+            .map(([key, value]) => [key, kvpArrayToObjectReducer(value)])
     );
+
+    const timeToCloseGroupByCampaign = kvpArrayToObjectReducer(Object.entries(freshsalesDataGroupByCampaigns).map(([key,value]) => [
+        key,
+        value.reduce((total: number, current: FreshsalesDataAggregatedRow) => total + current.timeToClose, 0)
+    ]));
 
     const campaigns = Object.keys(x);
 
@@ -296,7 +314,7 @@ function DespositionsToCampaignsSection({freshsalesLeadsData, minDate, maxDate, 
 
     return (
         <div>
-           <GenericCard
+            <GenericCard
                 className="tw-col-span-12"
                 content={
                     <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
@@ -310,11 +328,12 @@ function DespositionsToCampaignsSection({freshsalesLeadsData, minDate, maxDate, 
                                 nonContactable: x[campaignName]["Non Contactable"],
                                 requirementsReceived: x[campaignName]["Requirements Received"],
                                 notResponding: x[campaignName]["Not Responding"],
+                                timeToClose: roundOffToTwoDigits(timeToCloseGroupByCampaign[campaignName])
                             }))}
                             columnDefs={[
                                 {
                                     headerName: "Campaign",
-                                    field:"campaign"
+                                    field: "campaign",
                                 },
                                 {headerName: "Appointment Taken", field: "appointmentTaken"},
                                 {headerName: "Qualified", field: "qualified"},
@@ -323,6 +342,7 @@ function DespositionsToCampaignsSection({freshsalesLeadsData, minDate, maxDate, 
                                 {headerName: "Non Contactable", field: "nonContactable"},
                                 {headerName: "Requirements Received", field: "requirementsReceived"},
                                 {headerName: "Not Responding", field: "notResponding"},
+                                {headerName: "Time To Close", field: "timeToClose"}
                             ]}
                             defaultColDef={defaultColumnDefinitions}
                             animateRows={true}

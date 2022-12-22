@@ -117,39 +117,47 @@ export type FreshsalesDataAggregatedRow = {
     leadGenerationSourceCampaignName: string;
     leadGenerationSourceCampaignPlatform: string;
     leadGenerationSourceCampaignCategory: string;
+    timeToClose: number;
 };
 
 export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity): Promise<FreshsalesData> {
     const query = `
         SELECT
-            ${getGranularityQuery(granularity, "lead_created_at")} AS date,
-            category,
-            lead_lead_stage,
-            lead_capture_source,
-            lead_generation_source,
-            lead_generation_source_campaign_name,
-            lead_generation_source_campaign_platform,
-            lead_generation_source_campaign_category,
-            COUNT(*) AS count
+            ${getGranularityQuery(granularity, "fs.lead_created_at")} AS date_,
+            fs.category,
+            fs.lead_lead_stage,
+            fs.lead_capture_source,
+            fs.lead_generation_source,
+            fs.lead_generation_source_campaign_name,
+            fs.lead_generation_source_campaign_platform,
+            fs.lead_generation_source_campaign_category,
+            COUNT(*) AS count,
+            coalesce(avg(case
+                when shopify.date is null then null
+                else DATE_PART('day', shopify.date::timestamp - fs.lead_created_at::timestamp)
+            end), 0) as time_to_close
         FROM
-            freshsales_leads_to_source_with_information
+            freshsales_leads_to_source_with_information as fs
+            left join
+            shopify_sales_to_source_with_information as shopify
+            on
+            fs.lead_emails = shopify.customer_email
         WHERE
-            DATE(lead_created_at) >= '${minDate}' AND
-            DATE(lead_created_at) <= '${maxDate}'
+            DATE(fs.lead_created_at) >= '${minDate}' AND
+            DATE(fs.lead_created_at) <= '${maxDate}'
         GROUP BY
-            date,
-            category,
-            lead_lead_stage,
-            lead_capture_source,
-            lead_generation_source,
-            lead_generation_source_campaign_name,
-            lead_generation_source_campaign_platform,
-            lead_generation_source_campaign_category
+            date_,
+            fs.category,
+            fs.lead_lead_stage,
+            fs.lead_capture_source,
+            fs.lead_generation_source,
+            fs.lead_generation_source_campaign_name,
+            fs.lead_generation_source_campaign_platform,
+            fs.lead_generation_source_campaign_category
         ORDER BY
-            date
+            date_
     `;
     const result = await execute(query);
-
     return {
         metaQuery: query,
         rows: result.rows.map((row) => rowToFreshsalesDataAggregatedRow(row)),
@@ -158,7 +166,7 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
 
 function rowToFreshsalesDataAggregatedRow(row: any): FreshsalesDataAggregatedRow {
     const freshsalesDataAggregatedRow: FreshsalesDataAggregatedRow = {
-        date: dateToIso8601Date(row.date),
+        date: dateToIso8601Date(row['date_']),
         count: parseInt(row.count),
         category: row.category,
         leadStage: row.lead_lead_stage,
@@ -167,6 +175,7 @@ function rowToFreshsalesDataAggregatedRow(row: any): FreshsalesDataAggregatedRow
         leadGenerationSourceCampaignName: row.lead_generation_source_campaign_name,
         leadGenerationSourceCampaignPlatform: row.lead_generation_source_campaign_platform,
         leadGenerationSourceCampaignCategory: row.lead_generation_source_campaign_category,
+        timeToClose: row.time_to_close
     };
 
     return freshsalesDataAggregatedRow;

@@ -204,6 +204,11 @@ export function roundOffToTwoDigits(n) {
     return n.toFixed(2);
 }
 
+export const defaultColumnDefinitions = {
+    sortable: true,
+    filter: true,
+};
+
 export function getIntegerArrayOfLength(n: number) {
     return Array(n).map((_, i) => i);
 }

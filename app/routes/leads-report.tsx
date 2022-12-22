@@ -25,6 +25,7 @@ import {
     colorPalette,
     concatenateNonNullStringsWithAmpersand,
     dateToMediumNoneEnFormat,
+    defaultColumnDefinitions,
     distinct,
     fillColors,
     getColor,
@@ -202,6 +203,21 @@ function LeadsSection({
         dayWiseLeadsStatusDistribution[leadStatus] = dataGroupByDate;
     }
 
+    const leadStatusForSelectedDates = Object.keys(dayWiseLeadsStatusDistribution);
+
+    const dataTableForDayWiseLeadsStatusDistribution = dates.reduce((result, curDate, index) => {
+        result[curDate] = {
+            appointmentTaken: leadStatusForSelectedDates.includes("Appointment Taken") ? roundOffToTwoDigits(dayWiseLeadsStatusDistribution["Appointment Taken"][index]) : 0,
+            qualified: leadStatusForSelectedDates.includes("Qualified") ? roundOffToTwoDigits(dayWiseLeadsStatusDistribution["Qualified"][index]) : 0,
+            new: leadStatusForSelectedDates.includes("New") ? roundOffToTwoDigits(dayWiseLeadsStatusDistribution["New"][index]) : 0,
+            disqualified: leadStatusForSelectedDates.includes("Disqualified") ? roundOffToTwoDigits(dayWiseLeadsStatusDistribution["Disqualified"][index]) : 0,
+            nonContactable: leadStatusForSelectedDates.includes("Non Contactable") ? roundOffToTwoDigits(dayWiseLeadsStatusDistribution["Non Contactable"][index]) : 0,
+            requirementReceived: leadStatusForSelectedDates.includes("Requirement Received") ? roundOffToTwoDigits(dayWiseLeadsStatusDistribution["Requirement Received"][index]) : 0,
+            notResponding: leadStatusForSelectedDates.includes("Not Responding") ? roundOffToTwoDigits(dayWiseLeadsStatusDistribution["Not Responding"][index]) : 0,
+        };
+        return result;
+    }, {});
+
     // Line Chart
     ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
     const labels = dates;
@@ -257,17 +273,71 @@ function LeadsSection({
 
             <VerticalSpacer className="tw-h-8" />
 
-            <GenericCard
-                className="tw-col-span-6"
-                content={
-                    <div className="tw-grid tw-grid-cols-6">
-                        <div className="tw-col-start-2 tw-col-span-4">
-                            <Line options={noOfLeadsGeneratedOptions} data={{labels, datasets: noOfLeadsGeneratedDataset}} />
-                        </div>
+            <Tabs.Root defaultValue="1" className="tw-col-span-12">
+                <Tabs.List className="">
+                    <Tabs.Trigger value="1" className="lp-tab">
+                        Daily distribution of lead status
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="2" className="lp-tab">
+                        Raw data
+                    </Tabs.Trigger>
+                </Tabs.List>
+                <Tabs.Content value="1">
+                    <div className="tw-grid">
+                        <GenericCard
+                            className="tw-col-span-6"
+                            content={
+                                <div className="tw-grid tw-grid-cols-6">
+                                    <div className="tw-col-start-2 tw-col-span-4">
+                                        <Line options={noOfLeadsGeneratedOptions} data={{labels, datasets: noOfLeadsGeneratedDataset}} />
+                                    </div>
+                                </div>
+                            }
+                            metaQuery={freshsalesLeadsData.metaQuery}
+                        />
                     </div>
-                }
-                metaQuery={freshsalesLeadsData.metaQuery}
-            />
+                </Tabs.Content>
+                <Tabs.Content value="2">
+                    <GenericCard
+                        className="tw-col-span-12"
+                        content={
+                            <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                                <AgGridReact
+                                    rowData={dates.map((date, dateIndex) => ({
+                                        date: date,
+                                        appointmentTaken: dataTableForDayWiseLeadsStatusDistribution[date].appointmentTaken,
+                                        qualified: dataTableForDayWiseLeadsStatusDistribution[date].qualified,
+                                        new: dataTableForDayWiseLeadsStatusDistribution[date].new,
+                                        disqualified: dataTableForDayWiseLeadsStatusDistribution[date].disqualified,
+                                        nonContactable: dataTableForDayWiseLeadsStatusDistribution[date].nonContactable,
+                                        requirementReceived: dataTableForDayWiseLeadsStatusDistribution[date].requirementReceived,
+                                        notResponding: dataTableForDayWiseLeadsStatusDistribution[date].notResponding,
+                                    }))}
+                                    columnDefs={[
+                                        {
+                                            headerName: "Date",
+                                            valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date),
+                                            filter: "agDateColumnFilter",
+                                            comparator: agGridDateComparator,
+                                        },
+                                        {headerName: "Appointment Taken", field: "appointmentTaken"},
+                                        {headerName: "Qualified", field: "qualified"},
+                                        {headerName: "New", field: "new"},
+                                        {headerName: "Disqualified", field: "disqualified"},
+                                        {headerName: "Non Contactable", field: "nonContactable"},
+                                        {headerName: "Requirement Received", field: "requirementReceived"},
+                                        {headerName: "Not Responding", field: "notResponding"},
+                                    ]}
+                                    defaultColDef={defaultColumnDefinitions}
+                                    animateRows={true}
+                                    enableRangeSelection={true}
+                                />
+                            </div>
+                        }
+                        metaQuery={freshsalesLeadsData.metaQuery}
+                    />
+                </Tabs.Content>
+            </Tabs.Root>
         </div>
     );
 }
@@ -306,11 +376,6 @@ function DespositionsToCampaignsSection({
 
     const campaigns = Object.keys(leadCountGroupByCampaignAndLeadStatus);
 
-    const defaultColumnDefinitions = {
-        sortable: true,
-        filter: true,
-    };
-
     return (
         <div>
             <Tabs.Root defaultValue="1" className="tw-col-span-12">
@@ -338,7 +403,6 @@ function DespositionsToCampaignsSection({
                                             nonContactable: leadCountGroupByCampaignAndLeadStatus[campaignName]["Non Contactable"],
                                             requirementsReceived: leadCountGroupByCampaignAndLeadStatus[campaignName]["Requirements Received"],
                                             notResponding: leadCountGroupByCampaignAndLeadStatus[campaignName]["Not Responding"],
-                                            timeToClose: roundOffToTwoDigits(timeToCloseGroupByCampaign[campaignName]),
                                         }))}
                                         columnDefs={[
                                             {
@@ -352,7 +416,6 @@ function DespositionsToCampaignsSection({
                                             {headerName: "Non Contactable", field: "nonContactable"},
                                             {headerName: "Requirements Received", field: "requirementsReceived"},
                                             {headerName: "Not Responding", field: "notResponding"},
-                                            {headerName: "Time To Close", field: "timeToClose"},
                                         ]}
                                         defaultColDef={defaultColumnDefinitions}
                                         animateRows={true}

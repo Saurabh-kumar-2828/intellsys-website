@@ -288,7 +288,7 @@ function DespositionsToCampaignsSection({
     const freshsalesDataGroupByCampaigns = filterFreshsalesLeadsData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
 
     // {"campaign": {"leadStatus1": 12, "leadStatus2": 12}, ....}
-    const x = kvpArrayToObjectReducer(
+    const leadCountGroupByCampaignAndLeadStatus = kvpArrayToObjectReducer(
         Object.entries(freshsalesDataGroupByCampaigns)
             .map(([key, value]) => [
                 key,
@@ -300,12 +300,11 @@ function DespositionsToCampaignsSection({
             .map(([key, value]) => [key, kvpArrayToObjectReducer(value)])
     );
 
-    const timeToCloseGroupByCampaign = kvpArrayToObjectReducer(Object.entries(freshsalesDataGroupByCampaigns).map(([key,value]) => [
-        key,
-        value.reduce((total: number, current: FreshsalesDataAggregatedRow) => total + current.timeToClose, 0)
-    ]));
+    const timeToCloseGroupByCampaign = kvpArrayToObjectReducer(
+        Object.entries(freshsalesDataGroupByCampaigns).map(([key, value]) => [key, value.reduce((total: number, current: FreshsalesDataAggregatedRow) => total + current.timeToClose, 0)])
+    );
 
-    const campaigns = Object.keys(x);
+    const campaigns = Object.keys(leadCountGroupByCampaignAndLeadStatus);
 
     const defaultColumnDefinitions = {
         sortable: true,
@@ -314,44 +313,84 @@ function DespositionsToCampaignsSection({
 
     return (
         <div>
-            <GenericCard
-                className="tw-col-span-12"
-                content={
-                    <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
-                        <AgGridReact
-                            rowData={campaigns.map((campaignName, index) => ({
-                                campaign: campaignName,
-                                appointmentTaken: x[campaignName]["Appointment Taken"],
-                                qualified: x[campaignName]["Qualified"],
-                                new: x[campaignName]["New"],
-                                disqualified: x[campaignName]["Disqualified"],
-                                nonContactable: x[campaignName]["Non Contactable"],
-                                requirementsReceived: x[campaignName]["Requirements Received"],
-                                notResponding: x[campaignName]["Not Responding"],
-                                timeToClose: roundOffToTwoDigits(timeToCloseGroupByCampaign[campaignName])
-                            }))}
-                            columnDefs={[
-                                {
-                                    headerName: "Campaign",
-                                    field: "campaign",
-                                },
-                                {headerName: "Appointment Taken", field: "appointmentTaken"},
-                                {headerName: "Qualified", field: "qualified"},
-                                {headerName: "New", field: "new"},
-                                {headerName: "Disqualified", field: "disqualified"},
-                                {headerName: "Non Contactable", field: "nonContactable"},
-                                {headerName: "Requirements Received", field: "requirementsReceived"},
-                                {headerName: "Not Responding", field: "notResponding"},
-                                {headerName: "Time To Close", field: "timeToClose"}
-                            ]}
-                            defaultColDef={defaultColumnDefinitions}
-                            animateRows={true}
-                            enableRangeSelection={true}
+            <Tabs.Root defaultValue="1" className="tw-col-span-12">
+                <Tabs.List className="">
+                    <Tabs.Trigger value="1" className="lp-tab">
+                        Campaign wise distribution of lead status
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="2" className="lp-tab">
+                        Time to close lead converstion
+                    </Tabs.Trigger>
+                </Tabs.List>
+                <Tabs.Content value="1">
+                    <div className="tw-grid">
+                        <GenericCard
+                            className="tw-col-span-12"
+                            content={
+                                <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                                    <AgGridReact
+                                        rowData={campaigns.map((campaignName, index) => ({
+                                            campaign: campaignName,
+                                            appointmentTaken: leadCountGroupByCampaignAndLeadStatus[campaignName]["Appointment Taken"],
+                                            qualified: leadCountGroupByCampaignAndLeadStatus[campaignName]["Qualified"],
+                                            new: leadCountGroupByCampaignAndLeadStatus[campaignName]["New"],
+                                            disqualified: leadCountGroupByCampaignAndLeadStatus[campaignName]["Disqualified"],
+                                            nonContactable: leadCountGroupByCampaignAndLeadStatus[campaignName]["Non Contactable"],
+                                            requirementsReceived: leadCountGroupByCampaignAndLeadStatus[campaignName]["Requirements Received"],
+                                            notResponding: leadCountGroupByCampaignAndLeadStatus[campaignName]["Not Responding"],
+                                            timeToClose: roundOffToTwoDigits(timeToCloseGroupByCampaign[campaignName]),
+                                        }))}
+                                        columnDefs={[
+                                            {
+                                                headerName: "Campaign",
+                                                field: "campaign",
+                                            },
+                                            {headerName: "Appointment Taken", field: "appointmentTaken"},
+                                            {headerName: "Qualified", field: "qualified"},
+                                            {headerName: "New", field: "new"},
+                                            {headerName: "Disqualified", field: "disqualified"},
+                                            {headerName: "Non Contactable", field: "nonContactable"},
+                                            {headerName: "Requirements Received", field: "requirementsReceived"},
+                                            {headerName: "Not Responding", field: "notResponding"},
+                                            {headerName: "Time To Close", field: "timeToClose"},
+                                        ]}
+                                        defaultColDef={defaultColumnDefinitions}
+                                        animateRows={true}
+                                        enableRangeSelection={true}
+                                    />
+                                </div>
+                            }
+                            metaQuery={freshsalesLeadsData.metaQuery}
                         />
                     </div>
-                }
-                metaQuery={freshsalesLeadsData.metaQuery}
-            />
+                </Tabs.Content>
+                <Tabs.Content value="2">
+                    <GenericCard
+                        className="tw-col-span-12"
+                        content={
+                            <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                                <AgGridReact
+                                    rowData={campaigns.map((campaignName, index) => ({
+                                        campaign: campaignName,
+                                        timeToClose: roundOffToTwoDigits(timeToCloseGroupByCampaign[campaignName]),
+                                    }))}
+                                    columnDefs={[
+                                        {
+                                            headerName: "Campaign",
+                                            field: "campaign",
+                                        },
+                                        {headerName: "Time To Close", field: "timeToClose"},
+                                    ]}
+                                    defaultColDef={defaultColumnDefinitions}
+                                    animateRows={true}
+                                    enableRangeSelection={true}
+                                />
+                            </div>
+                        }
+                        metaQuery={freshsalesLeadsData.metaQuery}
+                    />
+                </Tabs.Content>
+            </Tabs.Root>
         </div>
     );
 }

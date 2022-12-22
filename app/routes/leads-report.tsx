@@ -360,18 +360,18 @@ function DespositionsToCampaignsSection({
     // {"campaign": {"leadStatus1": 12, "leadStatus2": 12}, ....}
     const leadCountGroupByCampaignAndLeadStatus = kvpArrayToObjectReducer(
         Object.entries(freshsalesDataGroupByCampaigns)
-            .map(([key, value]) => [
-                key,
-                Object.entries(value.reduce(createGroupByReducer("leadStage"), {})).map(([key2, value2]) => [
-                    key2,
-                    value2.reduce((total: number, current: FreshsalesDataAggregatedRow) => total + current.count, 0),
+            .map(([campaignName, rowsGroupByCampaigns]) => [
+                campaignName,
+                Object.entries(rowsGroupByCampaigns.reduce(createGroupByReducer("leadStage"), {})).map(([leadStage, rowsGroupByCampaignsAndLeadStage]) => [
+                    leadStage,
+                    rowsGroupByCampaignsAndLeadStage.reduce((total: number, current: FreshsalesDataAggregatedRow) => total + current.count, 0),
                 ]),
             ])
             .map(([key, value]) => [key, kvpArrayToObjectReducer(value)])
     );
 
     const timeToCloseGroupByCampaign = kvpArrayToObjectReducer(
-        Object.entries(freshsalesDataGroupByCampaigns).map(([key, value]) => [key, value.reduce((total: number, current: FreshsalesDataAggregatedRow) => total + current.timeToClose, 0)])
+        Object.entries(freshsalesDataGroupByCampaigns).map(([campaignName, rowsGroupByCampaigns]) => [campaignName, rowsGroupByCampaigns.reduce((total: number, current: FreshsalesDataAggregatedRow) => total + current.timeToClose, 0)])
     );
 
     const campaigns = Object.keys(leadCountGroupByCampaignAndLeadStatus);

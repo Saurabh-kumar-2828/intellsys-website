@@ -8,7 +8,18 @@ import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineEl
 import {DateTime} from "luxon";
 import {useEffect, useState} from "react";
 import {Bar, Line} from "react-chartjs-2";
-import {AdsData, AdsDataAggregatedRow, FreshsalesData, FreshsalesDataAggregatedRow, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
+import {
+    AdsData,
+    AdsDataAggregatedRow,
+    FreshsalesData,
+    FreshsalesDataAggregatedRow,
+    getAdsData,
+    getFreshsalesData,
+    getShopifyData,
+    ShopifyData,
+    ShopifyDataAggregatedRow,
+    TimeGranularity,
+} from "~/backend/business-insights";
 import {getProductLibrary, getCapturedUtmCampaignLibrary, ProductInformation, SourceInformation} from "~/backend/common";
 import {createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
@@ -106,7 +117,7 @@ export default function () {
     const [selectedMaxDate, setSelectedMaxDate] = useState(appliedMaxDate ?? "");
 
     products = allProductInformation
-        .filter((productInformation:ProductInformation) => selectedCategories.length == 0 || selectedCategories.includes(productInformation.category))
+        .filter((productInformation: ProductInformation) => selectedCategories.length == 0 || selectedCategories.includes(productInformation.category))
         .map((productInformation) => productInformation.productName);
     campaigns = distinct(
         allSourceInformation
@@ -285,7 +296,6 @@ function LeadsSection({
     selectedPlatforms: Array<string>;
     selectedCampaigns: Array<string>;
 }) {
-
     // Metrics
     const [showAcos, setShowAcos] = useState(true);
     const [showCpl, setShowCpl] = useState(false);
@@ -301,7 +311,6 @@ function LeadsSection({
         .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
         .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.leadGenerationSourceCampaignName))
         .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
-
 
     const filterAdsData = adsData.rows
         .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
@@ -392,7 +401,7 @@ function LeadsSection({
             facebookLeadsCount.count
         )}`,
         metaQuery: adsData.metaQuery,
-        cpl: facebookLeadsCount.count==0 ? 0 : facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
+        cpl: facebookLeadsCount.count == 0 ? 0 : facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
         dayWiseCpl: facebookLeads.amountSpentDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
     };
 
@@ -400,7 +409,7 @@ function LeadsSection({
         metaInformation: `Leads Sales / Leads Count | Facebook = ${numberToHumanFriendlyString(facebookLeads.netSalesDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
             facebookLeadsCount.count
         )}`,
-        spl: facebookLeadsCount.count==0 ? 0 : facebookLeads.netSalesDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
+        spl: facebookLeadsCount.count == 0 ? 0 : facebookLeads.netSalesDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
         dayWiseSpl: facebookLeads.netSalesDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
     };
 
@@ -726,7 +735,6 @@ function OrdersSection({
         .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.leadGenerationSourceCampaignName))
         .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
 
-
     const defaultColumnDefinitions = {
         sortable: true,
         filter: true,
@@ -798,7 +806,9 @@ function OrdersSection({
 
     // Total Orders
     const r2_totalOrdersCount = {
-        metaInformation: `Direct Orders + Assisted Orders = ${numberToHumanFriendlyString(directOrders.dayWiseCount.reduce(sumReducer, 0))} + ${numberToHumanFriendlyString(assistedOrders.dayWiseCount.reduce(sumReducer, 0))}`,
+        metaInformation: `Direct Orders + Assisted Orders = ${numberToHumanFriendlyString(directOrders.dayWiseCount.reduce(sumReducer, 0))} + ${numberToHumanFriendlyString(
+            assistedOrders.dayWiseCount.reduce(sumReducer, 0)
+        )}`,
         count: directOrdersTotalCount + assistedOrders.dayWiseCount.reduce(sumReducer, 0),
     };
 
@@ -1190,7 +1200,7 @@ function SpendSection({
     selectedProducts,
     selectedPlatforms,
     selectedCampaigns,
-    numberOfSelectedDays
+    numberOfSelectedDays,
 }: {
     freshsalesLeadsData: FreshsalesData;
     adsData: AdsData;
@@ -1208,7 +1218,6 @@ function SpendSection({
         .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
         .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.leadGenerationSourceCampaignName))
         .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
-
 
     const filterAdsData = adsData.rows
         .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
@@ -1436,7 +1445,7 @@ function SpendSection({
     );
 }
 
-function get_r3_ordersRevenue(shopifyData: any){
+function get_r3_ordersRevenue(shopifyData: any) {
     let aggregateByDate = shopifyData.reduce(createGroupByReducer("date"), {});
 
     for (const date in aggregateByDate) {

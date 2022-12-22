@@ -41,7 +41,7 @@ export const links: LinksFunction = () => {
 type LoaderData = {
     appliedMinDate: Iso8601Date;
     appliedMaxDate: Iso8601Date;
-    appliedSelectedGranularity: string;
+    appliedSelectedGranularity: TimeGranularity;
     allProductInformation: Array<ProductInformation>;
     allSourceInformation: Array<SourceInformation>;
     freshsalesLeadsData: FreshsalesData;
@@ -113,8 +113,7 @@ function getDayWiseCampaignsTrends(
     const dates = getDates(minDate, maxDate);
     const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
     // TODO: Is this correct?
-    const freshsalesDataGroupByCampaign = freshsalesLeadsData
-        .reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
+    const freshsalesDataGroupByCampaign = freshsalesLeadsData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
     const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
 
     // Datatable
@@ -158,7 +157,7 @@ export default function () {
     const [selectedCategories, setSelectedCategories] = useState<Array<string>>([]);
     const [selectedProducts, setSelectedProducts] = useState<Array<string>>([]);
     const [selectedPlatforms, setSelectedPlatforms] = useState<Array<string>>([]);
-    const [selectedGranularity, setSelectedGranularity] = useState(appliedSelectedGranularity);
+    const [selectedGranularity, setSelectedGranularity] = useState<TimeGranularity>(appliedSelectedGranularity);
     const [selectedMinDate, setSelectedMinDate] = useState(appliedMinDate ?? "");
     const [selectedMaxDate, setSelectedMaxDate] = useState(appliedMaxDate ?? "");
 
@@ -180,13 +179,13 @@ export default function () {
         .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform));
 
     const filterShopifyData = shopifyData.rows
-        .filter((row: ShopifyDataAggregatedRow) => selectedCategories.length == 0 || selectedCategories.includes(row.productCategory))
-        .filter((row: ShopifyDataAggregatedRow) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
-        .filter((row: ShopifyDataAggregatedRow) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.productCategory))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
+        .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
 
     const filterAdsData = adsData.rows
-        .filter((row: AdsDataAggregatedRow) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
-        .filter((row: AdsDataAggregatedRow) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform));
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform));
 
     useEffect(() => {
         setSelectedProducts([]);

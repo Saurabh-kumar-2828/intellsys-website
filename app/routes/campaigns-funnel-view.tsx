@@ -6,19 +6,24 @@ import {CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, Point
 import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {Line} from "react-chartjs-2";
-import {AdsData, AdsDataAggregatedRow, FreshsalesData, FreshsalesDataAggregatedRow, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
-import {getProductLibrary, getCapturedUtmCampaignLibrary} from "~/backend/common";
 import {
-    aggregateByDate,
-    columnWiseSummationOfMatrix,
-    createGroupByReducer,
-    doesLeadCaptureSourceCorrespondToPerformanceLead,
-    sumReducer,
-} from "~/backend/utilities/utilities";
+    AdsData,
+    AdsDataAggregatedRow,
+    FreshsalesData,
+    FreshsalesDataAggregatedRow,
+    getAdsData,
+    getFreshsalesData,
+    getShopifyData,
+    ShopifyData,
+    ShopifyDataAggregatedRow,
+    TimeGranularity,
+} from "~/backend/business-insights";
+import {getProductLibrary, getCapturedUtmCampaignLibrary, ProductInformation, SourceInformation} from "~/backend/common";
+import {aggregateByDate, columnWiseSummationOfMatrix, createGroupByReducer, doesLeadCaptureSourceCorrespondToPerformanceLead, sumReducer} from "~/backend/utilities/utilities";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import {Card, DateFilterSection, FancySearchableMultiSelect, GenericCard} from "~/components/scratchpad";
 import {Iso8601Date, QueryFilterType} from "~/utilities/typeDefinitions";
-import {distinct, getDates, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
+import {defaultColumnDefinitions, distinct, getDates, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -33,11 +38,28 @@ export const links: LinksFunction = () => {
     ];
 };
 
+type LoaderData = {
+    appliedMinDate: Iso8601Date;
+    appliedMaxDate: Iso8601Date;
+    appliedSelectedGranularity: string;
+    allProductInformation: Array<ProductInformation>;
+    allSourceInformation: Array<SourceInformation>;
+    freshsalesLeadsData: FreshsalesData;
+    adsData: {
+        metaQuery: string;
+        rows: Array<AdsDataAggregatedRow>;
+    };
+    shopifyData: {
+        metaQuery: string;
+        rows: Array<ShopifyDataAggregatedRow>;
+    };
+};
+
 export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;
 
     const selectedGranularityRaw = urlSearchParams.get("selected_granularity");
-    let selectedGranularity;
+    let selectedGranularity: TimeGranularity;
     if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
         selectedGranularity = TimeGranularity.daily;
     } else {
@@ -61,43 +83,52 @@ export const loader: LoaderFunction = async ({request}) => {
     }
 
     // TODO: Add filters
-
-    return json({
+    const loaderData: LoaderData = {
         appliedSelectedGranularity: selectedGranularity,
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
         allProductInformation: await getProductLibrary(),
         allSourceInformation: await getCapturedUtmCampaignLibrary(),
+        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity),
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity),
-        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity),
-    });
+    };
+    return json(loaderData);
 };
-
-function getDayWiseCampaignsTrends(freshsalesLeadsData: FreshsalesData,
-    adsData: AdsData,
-    shopifyData: ShopifyData,
+function getDayWiseCampaignsTrends(
+    freshsalesLeadsData: Array<FreshsalesDataAggregatedRow>,
+    adsData: Array<AdsDataAggregatedRow>,
+    shopifyData: Array<ShopifyDataAggregatedRow>,
     minDate: Iso8601Date,
-    maxDate: Iso8601Date,
+    maxDate: Iso8601Date
 ) {
+    type dayWiseDistributionPerCampaignObject = {
+        impressions: Array<number>;
+        clicks: Array<number>;
+        amountSpent: Array<number>;
+        leads: Array<number>;
+        orders: Array<number>;
+    };
+
     const dates = getDates(minDate, maxDate);
-
-    const adsDataGroupByCampaign = adsData.rows.reduce(createGroupByReducer("campaignName"), {});
+    const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
     // TODO: Is this correct?
-    const freshsalesDataGroupByCampaign = freshsalesLeadsData.rows.filter((row) => doesLeadCaptureSourceCorrespondToPerformanceLead(row)).reduce(createGroupByReducer("campaign"), {});
-    const shopifyDataGroupByCampaign = shopifyData.rows.reduce(createGroupByReducer("sourceCampaignName"), {});
+    const freshsalesDataGroupByCampaign = freshsalesLeadsData
+        .filter((row) => doesLeadCaptureSourceCorrespondToPerformanceLead(row.leadCaptureSource))
+        .reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
+    const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
 
-    const dayWiseDistributionPerCampaign = {};
+    // Datatable
+    const dayWiseDistributionPerCampaign: {[key: string]: dayWiseDistributionPerCampaignObject} = {};
     for (const campaign in adsDataGroupByCampaign) {
-        const dayWiseImpressions = aggregateByDate(adsDataGroupByCampaign[campaign], "impressions", dates);
-        const dayWiseClicks = aggregateByDate(adsDataGroupByCampaign[campaign], "clicks", dates);
-        const dayWiseAmountSpent = aggregateByDate(adsDataGroupByCampaign[campaign], "amountSpent", dates);
         let dayWiseLeads: Array<number> = [];
+        let dayWiseOrders: Array<number> = [];
+        const dayWiseImpressions: Array<number> = aggregateByDate(adsDataGroupByCampaign[campaign], "impressions", dates);
+        const dayWiseClicks: Array<number> = aggregateByDate(adsDataGroupByCampaign[campaign], "clicks", dates);
+        const dayWiseAmountSpent: Array<number> = aggregateByDate(adsDataGroupByCampaign[campaign], "amountSpent", dates);
         if (campaign in freshsalesDataGroupByCampaign) {
             dayWiseLeads = aggregateByDate(freshsalesDataGroupByCampaign[campaign], "count", dates);
         }
-
-        let dayWiseOrders: Array<number> = [];
         if (campaign in shopifyDataGroupByCampaign) {
             dayWiseOrders = aggregateByDate(shopifyDataGroupByCampaign[campaign], "netQuantity", dates);
         }
@@ -115,19 +146,19 @@ function getDayWiseCampaignsTrends(freshsalesLeadsData: FreshsalesData,
 }
 
 export default function () {
-    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, allSourceInformation, adsData, freshsalesLeadsData, shopifyData} = useLoaderData();
+    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, allSourceInformation, adsData, freshsalesLeadsData, shopifyData} = useLoaderData() as LoaderData;
 
-    const businesses = distinct(allProductInformation.map((productInformation) => productInformation.category));
-    let products = distinct(allProductInformation.map((productInformation) => productInformation.productName));
-    let campaigns = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.productName));
-    const platforms = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.platform));
+    const businesses = distinct(allProductInformation.map((productInformation: ProductInformation) => productInformation.category));
+    let products = distinct(allProductInformation.map((productInformation: ProductInformation) => productInformation.productName));
+    let campaigns = distinct(allSourceInformation.map((sourceInformation: SourceInformation) => sourceInformation.campaignName));
+    const platforms = distinct(allSourceInformation.map((sourceInformation: SourceInformation) => sourceInformation.platform));
 
     // TODO: Add additional filtering to ensure this only shows facebook campaigns
     // TODO: Add additional filtering to remove on form fb leads
 
-    const [selectedCategories, setSelectedCategories] = useState([]);
-    const [selectedProducts, setSelectedProducts] = useState([]);
-    const [selectedPlatforms, setSelectedPlatforms] = useState([]);
+    const [selectedCategories, setSelectedCategories] = useState<Array<string>>([]);
+    const [selectedProducts, setSelectedProducts] = useState<Array<string>>([]);
+    const [selectedPlatforms, setSelectedPlatforms] = useState<Array<string>>([]);
     const [selectedGranularity, setSelectedGranularity] = useState(appliedSelectedGranularity);
     const [selectedMinDate, setSelectedMinDate] = useState(appliedMinDate ?? "");
     const [selectedMaxDate, setSelectedMaxDate] = useState(appliedMaxDate ?? "");
@@ -135,19 +166,19 @@ export default function () {
     // TODO: Update filters when changing another one
 
     products = allProductInformation
-        .filter((productInformation) => selectedCategories.length == 0 || selectedCategories.includes(productInformation.category))
-        .map((productInformation: { productName: string; }) => productInformation.productName);
+        .filter((productInformation: ProductInformation) => selectedCategories.length == 0 || selectedCategories.includes(productInformation.category))
+        .map((productInformation: {productName: string}) => productInformation.productName);
     campaigns = distinct(
         allSourceInformation
-            .filter((sourceInformation) => selectedCategories.length == 0 || selectedCategories.includes(sourceInformation.category))
-            .filter((sourceInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(sourceInformation.platform))
-            .map((sourceInformation) => sourceInformation.campaignName)
+            .filter((sourceInformation: SourceInformation) => selectedCategories.length == 0 || selectedCategories.includes(sourceInformation.category))
+            .filter((sourceInformation: SourceInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(sourceInformation.platform))
+            .map((sourceInformation: SourceInformation) => sourceInformation.campaignName)
     );
     const granularities = [TimeGranularity.daily, TimeGranularity.monthly, TimeGranularity.yearly];
 
     const filterFreshsalesData = freshsalesLeadsData.rows
-        .filter((row: FreshsalesDataAggregatedRow) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
-        .filter((row: FreshsalesDataAggregatedRow) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
+        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform));
 
     const filterShopifyData = shopifyData.rows
         .filter((row: ShopifyDataAggregatedRow) => selectedCategories.length == 0 || selectedCategories.includes(row.productCategory))
@@ -211,11 +242,11 @@ function CampaignsSection({
     adsData,
     shopifyData,
     minDate,
-    maxDate
+    maxDate,
 }: {
-    freshsalesLeadsData: FreshsalesData;
-    adsData: AdsData;
-    shopifyData: ShopifyData;
+    freshsalesLeadsData: Array<FreshsalesDataAggregatedRow>;
+    adsData: Array<AdsDataAggregatedRow>;
+    shopifyData: Array<ShopifyDataAggregatedRow>;
     minDate: Iso8601Date;
     maxDate: Iso8601Date;
 }) {
@@ -231,11 +262,6 @@ function CampaignsSection({
         const campaigns = selectedRows.map((row) => row.campaignName);
         setSelectedCampaigns(campaigns);
     }, []);
-
-    const defaultColumnDefinitions = {
-        sortable: true,
-        filter: true,
-    };
 
     const dayWiseCampaignsTrends = getDayWiseCampaignsTrends(freshsalesLeadsData, adsData, shopifyData, minDate, maxDate);
 
@@ -281,7 +307,7 @@ function CampaignsSection({
         data:
             selectedCampaigns.length > 0
                 ? columnWiseSummationOfMatrix(
-                      selectedCampaigns.reduce((result, campaign) => {
+                      selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
                           result.push(dayWiseCampaignsTrends[campaign].clicks);
                           return result;
                       }, [])
@@ -297,7 +323,7 @@ function CampaignsSection({
         data:
             selectedCampaigns.length > 0
                 ? columnWiseSummationOfMatrix(
-                      selectedCampaigns.reduce((result, campaign) => {
+                      selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
                           result.push(dayWiseCampaignsTrends[campaign].impressions);
                           return result;
                       }, [])
@@ -313,7 +339,7 @@ function CampaignsSection({
         data:
             selectedCampaigns.length > 0
                 ? columnWiseSummationOfMatrix(
-                      selectedCampaigns.reduce((result, campaign) => {
+                      selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
                           result.push(dayWiseCampaignsTrends[campaign].amountSpent);
                           return result;
                       }, [])
@@ -345,7 +371,7 @@ function CampaignsSection({
             <div className="tw-col-span-6 tw-h-[640px] ag-theme-alpine-dark">
                 <AgGridReact
                     ref={gridRef}
-                    rowData={campaigns.map((campaign: string, index) => ({
+                    rowData={campaigns.map((campaign: string) => ({
                         campaignName: campaign,
                         impressions: dayWiseCampaignsTrends[campaign].impressions.reduce(sumReducer, 0),
                         amountSpent: roundOffToTwoDigits(dayWiseCampaignsTrends[campaign].amountSpent.reduce(sumReducer, 0)),

@@ -137,10 +137,14 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
                 else DATE_PART('day', shopify.date::timestamp - fs.lead_created_at::timestamp)
             end), 0) as time_to_close
         FROM
-            freshsales_leads_to_source_with_information as fs
-            left join
-            shopify_sales_to_source_with_information as shopify
-            on
+            freshsales_leads_to_source_with_information AS fs
+            LEFT JOIN
+            (
+                SELECT MAX(date) as date, customer_email
+                FROM shopify_sales_to_source_with_information
+                GROUP BY customer_email
+            ) AS shopify
+            ON
             fs.lead_emails = shopify.customer_email
         WHERE
             DATE(fs.lead_created_at) >= '${minDate}' AND
@@ -166,7 +170,7 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
 
 function rowToFreshsalesDataAggregatedRow(row: any): FreshsalesDataAggregatedRow {
     const freshsalesDataAggregatedRow: FreshsalesDataAggregatedRow = {
-        date: dateToIso8601Date(row['date_']),
+        date: dateToIso8601Date(row["date_"]),
         count: parseInt(row.count),
         category: row.category,
         leadStage: row.lead_lead_stage,
@@ -175,7 +179,7 @@ function rowToFreshsalesDataAggregatedRow(row: any): FreshsalesDataAggregatedRow
         leadGenerationSourceCampaignName: row.lead_generation_source_campaign_name,
         leadGenerationSourceCampaignPlatform: row.lead_generation_source_campaign_platform,
         leadGenerationSourceCampaignCategory: row.lead_generation_source_campaign_category,
-        timeToClose: row.time_to_close
+        timeToClose: row.time_to_close,
     };
 
     return freshsalesDataAggregatedRow;

@@ -47,6 +47,10 @@ export function MenuComponent(props: {userDetails: User | null; className?: stri
             url: "/leads-report",
             displayName: "Leads Report",
         },
+        {
+            url: "/p&l-view",
+            displayName: "P&L View",
+        },
         null,
         {
             url: "/data-management",

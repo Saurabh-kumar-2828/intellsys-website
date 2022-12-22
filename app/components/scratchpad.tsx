@@ -196,13 +196,13 @@ export function GenericCard(props: {content: JSX.Element; label?: string; classN
 export function DateFilterSection(props: {
     granularities: Array<string>;
     selectedGranularity: TimeGranularity;
-    setSelectedGranularity: React.Dispatch<React.SetStateAction<string>>;
+    setSelectedGranularity: React.Dispatch<React.SetStateAction<TimeGranularity>>;
     selectedMinDate: string;
     setSelectedMinDate: React.Dispatch<React.SetStateAction<string>>;
     selectedMaxDate: string;
     setSelectedMaxDate: React.Dispatch<React.SetStateAction<string>>;
     page: string;
-    className: string;
+    className?: string;
 }) {
     const months = Info.months("long", {locale: "en-GB"});
     const [selectedMonth, setSelectedMonth] = useState(months[DateTime.now().get("month") - 1]);

@@ -13,32 +13,76 @@ import { BetaAnalyticsDataClient } from '@google-analytics/data';
 // Using a default constructor instructs the client to use the credentials
 // specified in GOOGLE_APPLICATION_CREDENTIALS environment variable.
 
+// export const loader: LoaderFunction = async () => {
+//     const analyticsDataClient = new BetaAnalyticsDataClient();
+
+//     const [response] = await analyticsDataClient.runReport({
+//         property: `properties/250088453`,
+//         dateRanges: [
+//           {
+//             startDate: 'yesterday',
+//             endDate: 'today',
+//           },
+//         ],
+//         dimensions: [
+//           {
+//             "name": "country"
+//           },
+//           {
+//             "name": "region"
+//           },
+//           {
+//             "name": "city"
+//           }
+//         ],
+//         metrics: [
+//           {
+//             name: 'activeUsers',
+//           },
+//         ],
+//       });
+
+//       console.log('Report result:');
+//       response.rows.forEach(row => {
+//         console.log(JSON.stringify(row.dimensionValues));
+//         console.log(JSON.stringify(row.metricValues));
+//       });
+//       return null;
+// }
+
+
 export const loader: LoaderFunction = async () => {
     const analyticsDataClient = new BetaAnalyticsDataClient();
 
-    const [response] = await analyticsDataClient.runReport({
+    const [response] = await analyticsDataClient.runRealtimeReport({
         property: `properties/250088453`,
-        dateRanges: [
+        "minuteRanges": [
           {
-            startDate: '2020-03-31',
-            endDate: 'today',
+            "name": "0-4 minutes ago",
+            "startMinutesAgo": 4,
           },
-        ],
-        dimensions: [
           {
-            name: 'city',
-          },
+            "name": "25-29 minutes ago",
+            "startMinutesAgo": 29,
+            "endMinutesAgo": 25,
+          }
         ],
-        metrics: [
+        "dimensions": [
           {
-            name: 'activeUsers',
+            "name": "country"
+          }
+        ],
+        "metrics": [
+          {
+            "name": 'activeUsers',
           },
         ],
       });
 
       console.log('Report result:');
       response.rows.forEach(row => {
-        console.log(row.dimensionValues[0], row.metricValues[0]);
+        console.log(JSON.stringify(row.dimensionValues));
+        console.log(JSON.stringify(row.metricValues));
       });
       return null;
 }

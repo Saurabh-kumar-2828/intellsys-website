@@ -344,10 +344,10 @@ function LeadsSection({
     };
 
     const performanceLeadsCpl = {
-        metaInformation: `Amount Spent / Leads Count | Performance = ${numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
-            performanceLeadsCount.count
-        )}`,
-        metaQuery: adsData.metaQuery,
+        // metaInformation: `Amount Spent / Leads Count | Performance = ${numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
+        //     performanceLeadsCount.count
+        // )}`,
+        // metaQuery: adsData.metaQuery,
         cpl: numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer, 0) / performanceLeadsCount.count),
         dayWiseCpl: performanceLeads.amountSpentDayWise.map((value, index) => (performanceLeads.countDayWise[index] == 0 ? 0 : value / performanceLeads.countDayWise[index])),
     };
@@ -571,6 +571,7 @@ function LeadsSection({
                 target={1 + performanceLeadsCount.count * 1.3}
                 explanation="Number of leads recorded through performance campaigns"
                 type={ValueDisplayingCardInformationType.integer}
+                equivalentQuery={`SELECT COUNT(*) FROM freshsales_leads_to_source_with_information WHERE DATE(lead_created_at)>=${minDate} AND DATE(lead_created_at)<=${maxDate} AND lead_capture_source != "Facebook On Form Ads"`}
             />
 
             <SmallValueDisplayingCardWithTarget

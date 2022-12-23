@@ -440,7 +440,7 @@ export function DateFilterSection(props: {
                             <div className="tw-lp-button tw-px-6 tw-p-2 tw-rounded-md tw-text-left">Month</div>
                         </Listbox.Button>
 
-                        <Listbox.Options className="tw-w-fit tw-absolute tw-top-16 tw-bg-dark-bg-500 tw-rounded-md tw-max-h-[calc(100vh-20rem)] tw-border tw-border-fg tw-overflow-auto tw-z-10">
+                        <Listbox.Options className="tw-w-fit tw-absolute tw-top-16 tw-bg-dark-bg-500 tw-rounded-md tw-max-h-[calc(100vh-20rem)] tw-border tw-border-fg tw-overflow-auto tw-z-100">
                             {months.map((option, optionIndex) => (
                                 <Listbox.Option value={option} key={optionIndex} className="tw-p-2 tw-cursor-pointer">
                                     <div>{option}</div>

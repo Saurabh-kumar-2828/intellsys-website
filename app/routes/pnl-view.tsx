@@ -113,6 +113,7 @@ export default function () {
                     page="pnl-view"
                 />
             </div>
+            <VerticalSpacer className="tw-h-32" />
             <div className="tw-p-8">
                 <SleepSummaryAndDodSection
                     adsData={adsData}
@@ -514,7 +515,7 @@ function SleepSummaryAndDodSection({
 
             <VerticalSpacer className="tw-h-8" />
 
-            <Tabs.Root defaultValue="2" className="tw-col-span-12">
+            <Tabs.Root defaultValue="2" className="tw-col-span-12 tw-z-10">
                 <Tabs.List className="">
                     <Tabs.Trigger value="1" className="lp-tab">
                         Sleep Summary

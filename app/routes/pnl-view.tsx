@@ -1,12 +1,12 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import {json, LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
-import { AgGridReact } from "ag-grid-react";
+import {AgGridReact} from "ag-grid-react";
 import {DateTime, DayNumbers, Info} from "luxon";
 import {useState} from "react";
 import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
 import {getCapturedUtmCampaignLibrary, getProductLibrary, ProductInformation, SourceInformation} from "~/backend/common";
-import { aggregateByDate, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead } from "~/backend/utilities/utilities";
+import {aggregateByDate, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import {Iso8601Date} from "~/utilities/typeDefinitions";
@@ -261,7 +261,7 @@ export default function () {
                     setSelectedMinDate={setSelectedMinDate}
                     selectedMaxDate={selectedMaxDate}
                     setSelectedMaxDate={setSelectedMaxDate}
-                    page={"P&l-view"}
+                    page="pnl-view"
                 />
             </div>
             <div className="tw-p-8">
@@ -321,13 +321,13 @@ function SleepSummaryAndDodSection({
     };
 
     const dates = getDates(minDate, maxDate);
-    const weekDay = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-    const months = ["january","February","March","April","May","June","July","August","September","October","November","December"];
+    const weekDay = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const months = ["january", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-    const dodFirstRow = ["","MTD"];
+    const dodFirstRow = ["", "MTD"];
     dates.forEach((date) => dodFirstRow.push(weekDay[new Date(date).getDay()]));
 
-    const dodSecondRow = ["",months[new Date(minDate).getMonth()]];
+    const dodSecondRow = ["", months[new Date(minDate).getMonth()]];
     dates.forEach((date) => dodSecondRow.push(new Intl.DateTimeFormat("en", {timeZone: "UTC", dateStyle: "medium"}).format(new Date(date))));
 
     const leadsDayWise = aggregateByDate(
@@ -335,7 +335,7 @@ function SleepSummaryAndDodSection({
         "count",
         dates
     );
-    const totalLeads = ["Total Leads",leadsDayWise.reduce((sum, item) => sum + item, 0)];
+    const totalLeads = ["Total Leads", leadsDayWise.reduce((sum, item) => sum + item, 0)];
     leadsDayWise.forEach((lead) => totalLeads.push(lead));
 
     const performaceLeadsMattressDayWise = aggregateByDate(
@@ -402,11 +402,8 @@ function SleepSummaryAndDodSection({
     const unitsFacebookAds = ["Units ( facebook Ads)", facebookmattressUnitDayWise.reduce((sum, item) => sum + item, 0)];
     facebookmattressUnitDayWise.forEach((units) => unitsFacebookAds.push(units + ""));
 
-    const conversionRateDayWise = dates.map((date, dateIndex) => (mattressUnitsDayWise[dateIndex]/leadsDayWise[dateIndex])*100 + " %");
-    const conversionRate = [
-        "CR %",
-        (mattressUnitsDayWise.reduce((sum, item) => sum + item, 0) / leadsDayWise.reduce((sum, item) => sum + item, 0))*100 + " %",
-    ];
+    const conversionRateDayWise = dates.map((date, dateIndex) => (mattressUnitsDayWise[dateIndex] / leadsDayWise[dateIndex]) * 100 + " %");
+    const conversionRate = ["CR %", (mattressUnitsDayWise.reduce((sum, item) => sum + item, 0) / leadsDayWise.reduce((sum, item) => sum + item, 0)) * 100 + " %"];
     conversionRateDayWise.forEach((conversion) => conversionRate.push(conversion));
 
     const performaceConversionRateDayWise = dates.map((date, dateIndex) => (performanceMattressUnitDayWise[dateIndex] / performaceLeadsMattressDayWise[dateIndex]) * 100 + " %");
@@ -422,8 +419,6 @@ function SleepSummaryAndDodSection({
 
     const unitsSleep = ["Units (Sleep)", mattressUnitsDayWise.reduce((sum, item) => sum + item, 0) + nonMattressUnitsDayWise.reduce((sum, item) => sum + item, 0) + ""];
     dates.map((date, dateIndex) => unitsSleep.push(mattressUnitsDayWise[dateIndex] + nonMattressUnitsDayWise[dateIndex] + ""));
-
-
 
     const netSalesMattressDayWise = aggregateByDate(
         filterShopifyData.filter((row) => row.productCategory == "Mattress"),
@@ -444,14 +439,14 @@ function SleepSummaryAndDodSection({
     const revenueSleep = ["Revenue (Sleep)", netSalesMattressDayWise.reduce((sum, item) => sum + item, 0) + netSalesNonMattressDayWise.reduce((sum, item) => sum + item, 0) + ""];
     dates.map((date, dateIndex) => revenueSleep.push(netSalesMattressDayWise[dateIndex] + netSalesNonMattressDayWise[dateIndex] + ""));
 
-    const cancellationsMattress = ["Cancellations (Mattress)","0"];
+    const cancellationsMattress = ["Cancellations (Mattress)", "0"];
     dates.map((date, dateIndex) => cancellationsMattress.push("0"));
 
     const revenueMattressAfterCancellations = [
         "Revenue after Cancellations (Mattress)",
-        netSalesMattressDayWise.reduce((sum, item) => sum + item, 0) + netSalesMattressDayWise.reduce((sum, item) => sum + item, 0) - Number(cancellationsMattress[1])
+        netSalesMattressDayWise.reduce((sum, item) => sum + item, 0) + netSalesMattressDayWise.reduce((sum, item) => sum + item, 0) - Number(cancellationsMattress[1]),
     ];
-    dates.map((date, dateIndex) => revenueMattressAfterCancellations.push( netSalesMattressDayWise[dateIndex] - Number(cancellationsMattress[dateIndex+2]))+ "");
+    dates.map((date, dateIndex) => revenueMattressAfterCancellations.push(netSalesMattressDayWise[dateIndex] - Number(cancellationsMattress[dateIndex + 2])) + "");
 
     const cancellationsNonMattress = ["Cancellations (Non Mattress)", "0"];
     dates.map((date, dateIndex) => cancellationsNonMattress.push("0"));
@@ -462,24 +457,18 @@ function SleepSummaryAndDodSection({
     ];
     dates.map((date, dateIndex) => revenueNonMattressAfterCancellations.push(netSalesNonMattressDayWise[dateIndex] - Number(cancellationsNonMattress[dateIndex + 2])) + "");
 
-    const netRevenueAfterTaxMattreess = [
-        "Net Revenue (after tax) Mattress",
-        Number(netSalesMattress[1]) / 1.18 + ""
-    ];
+    const netRevenueAfterTaxMattreess = ["Net Revenue (after tax) Mattress", Number(netSalesMattress[1]) / 1.18 + ""];
     dates.map((date, dateIndex) => netRevenueAfterTaxMattreess.push(Number(netSalesMattress[dateIndex + 2]) / 1.18 + ""));
 
     const netRevenueAfterTaxNonMattreess = ["Net Revenue (after tax) Non Mattress", Number(netSalesNonMattress[1]) / 1.18 + ""];
     dates.map((date, dateIndex) => netRevenueAfterTaxNonMattreess.push(Number(netSalesNonMattress[dateIndex + 2]) / 1.18 + ""));
 
-    const returnOnProvision = ["Return On Provision","8.50%"];
+    const returnOnProvision = ["Return On Provision", "8.50%"];
     dates.map((date, dateIndex) => returnOnProvision.push("8.50%"));
 
-    const netRevenueAfterTaxAndReturnMattreess = [
-        "Net Revenue (after Tax & Retuen) Mattress",
-        Number(netRevenueAfterTaxMattreess[1]) - (Number(netRevenueAfterTaxMattreess[1]) / 8.5 * 100) + ""
-    ];
+    const netRevenueAfterTaxAndReturnMattreess = ["Net Revenue (after Tax & Retuen) Mattress", Number(netRevenueAfterTaxMattreess[1]) - (Number(netRevenueAfterTaxMattreess[1]) / 8.5) * 100 + ""];
     dates.map((date, dateIndex) =>
-        netRevenueAfterTaxAndReturnMattreess.push(Number(netRevenueAfterTaxMattreess[dateIndex + 2]) - (Number(netRevenueAfterTaxMattreess[dateIndex + 2]) / 8.5 * 100) + "")
+        netRevenueAfterTaxAndReturnMattreess.push(Number(netRevenueAfterTaxMattreess[dateIndex + 2]) - (Number(netRevenueAfterTaxMattreess[dateIndex + 2]) / 8.5) * 100 + "")
     );
 
     const netRevenueAfterTaxAndReturnNonMattreess = [
@@ -490,7 +479,7 @@ function SleepSummaryAndDodSection({
         netRevenueAfterTaxAndReturnNonMattreess.push(Number(netRevenueAfterTaxNonMattreess[dateIndex + 2]) - (Number(netRevenueAfterTaxNonMattreess[dateIndex + 2]) / 8.5) * 100 + "")
     );
 
-    const mattressSpend = ["Mattress Spends",""];
+    const mattressSpend = ["Mattress Spends", ""];
     dates.map((date, dateIndex) => mattressSpend.push(""));
 
     const facebookSpendMattressDayWise = aggregateByDate(
@@ -502,7 +491,7 @@ function SleepSummaryAndDodSection({
     facebookSpendMattressDayWise.forEach((spend) => facebookSpendMattress.push(spend));
 
     const googleSpendMattressDayWise = aggregateByDate(
-        filterAdsData.filter((row) => row.platform == "Google" && row.category == "Mattress" ),
+        filterAdsData.filter((row) => row.platform == "Google" && row.category == "Mattress"),
         "amountSpent",
         dates
     );
@@ -510,7 +499,7 @@ function SleepSummaryAndDodSection({
     googleSpendMattressDayWise.forEach((spend) => googleSpendMattress.push(spend));
 
     const totalPerformanceMarketingSpendMattress = ["Total Performance Marketing spend (Mattress)", Number(facebookSpendMattress[1]) + Number(googleSpendMattress[1]) + ""];
-    dates.map((date, dateIndex) => totalPerformanceMarketingSpendMattress.push(Number(facebookSpendMattress[dateIndex+2]) + Number(googleSpendMattress[dateIndex=2]) + ""));
+    dates.map((date, dateIndex) => totalPerformanceMarketingSpendMattress.push(Number(facebookSpendMattress[dateIndex + 2]) + Number(googleSpendMattress[(dateIndex = 2)]) + ""));
 
     const nonMattressSpend = ["Non Mattress Spends", ""];
     dates.map((date, dateIndex) => nonMattressSpend.push(""));
@@ -534,11 +523,11 @@ function SleepSummaryAndDodSection({
     const totalPerformanceMarketingSpendNonMattress = ["Total Performance Marketing spend (Mattress)", Number(facebookSpendNonMattress[1]) + Number(googleSpendNonMattress[1]) + ""];
     dates.map((date, dateIndex) => totalPerformanceMarketingSpendNonMattress.push(Number(facebookSpendNonMattress[dateIndex + 2]) + Number(googleSpendNonMattress[(dateIndex = 2)]) + ""));
 
-    const agentCostDayWise: Array<number> =[];
+    const agentCostDayWise: Array<number> = [];
     dates.map((date, dateIndex) => agentCostDayWise.push(17806));
 
     const agentCost = ["Agent cost", agentCostDayWise.reduce((sum, item) => sum + item, 0)];
-    dates.map((date, dateIndex) => agentCost.push(agentCostDayWise[dateIndex]+""));
+    dates.map((date, dateIndex) => agentCost.push(agentCostDayWise[dateIndex] + ""));
 
     const agencyCostDayWise: Array<number> = [];
     dates.map((date, dateIndex) => agencyCostDayWise.push(2634));
@@ -546,26 +535,30 @@ function SleepSummaryAndDodSection({
     const agencyCost = ["Agency cost", agencyCostDayWise.reduce((sum, item) => sum + item, 0)];
     dates.map((date, dateIndex) => agencyCost.push(agencyCostDayWise[dateIndex] + ""));
 
-    const totalMattressSpendAfterAgentAndAgencyCost = ["Total Mattress Spend (after agent & agency cost)", Number(totalPerformanceMarketingSpendMattress[1]) + Number(agentCost[1]) + Number(agencyCost[1]) + ""];
+    const totalMattressSpendAfterAgentAndAgencyCost = [
+        "Total Mattress Spend (after agent & agency cost)",
+        Number(totalPerformanceMarketingSpendMattress[1]) + Number(agentCost[1]) + Number(agencyCost[1]) + "",
+    ];
     dates.map((date, dateIndex) =>
-        totalMattressSpendAfterAgentAndAgencyCost.push(Number(totalPerformanceMarketingSpendMattress[dateIndex + 2]) + Number(agentCost[dateIndex + 2]) + Number(agencyCost[dateIndex+2]) + "")
+        totalMattressSpendAfterAgentAndAgencyCost.push(Number(totalPerformanceMarketingSpendMattress[dateIndex + 2]) + Number(agentCost[dateIndex + 2]) + Number(agencyCost[dateIndex + 2]) + "")
     );
 
     const acosMarketing = ["Acos (Marketing)", ""];
     dates.map((date, dateIndex) => acosMarketing.push(""));
 
-    const marketingAcosMattress = [
-        "Marketing Acos (Mattress)",
-        Number(totalPerformanceMarketingSpendMattress[1])/Number(netRevenueAfterTaxAndReturnMattreess[1]) + ""
-    ];
+    const marketingAcosMattress = ["Marketing Acos (Mattress)", Number(totalPerformanceMarketingSpendMattress[1]) / Number(netRevenueAfterTaxAndReturnMattreess[1]) + ""];
     dates.map((date, dateIndex) => marketingAcosMattress.push(Number(totalPerformanceMarketingSpendMattress[dateIndex + 2]) / Number(netRevenueAfterTaxAndReturnMattreess[dateIndex + 2]) + ""));
 
     const marketingAcosNonMattress = ["Marketing Acos (Non Mattress)", Number(totalPerformanceMarketingSpendNonMattress[1]) / Number(netRevenueAfterTaxAndReturnNonMattreess[1]) + ""];
-    dates.map((date, dateIndex) => marketingAcosNonMattress.push(Number(totalPerformanceMarketingSpendNonMattress[dateIndex + 2]) / Number(netRevenueAfterTaxAndReturnNonMattreess[dateIndex + 2]) + ""));
+    dates.map((date, dateIndex) =>
+        marketingAcosNonMattress.push(Number(totalPerformanceMarketingSpendNonMattress[dateIndex + 2]) / Number(netRevenueAfterTaxAndReturnNonMattreess[dateIndex + 2]) + "")
+    );
 
     const netAcosSleep = [
         "Net Acos (sleep)",
-        (Number(totalMattressSpendAfterAgentAndAgencyCost[1] + totalPerformanceMarketingSpendNonMattress[1])) / (Number(netRevenueAfterTaxAndReturnMattreess[1] + Number(netRevenueAfterTaxAndReturnNonMattreess[1]))) + ""
+        Number(totalMattressSpendAfterAgentAndAgencyCost[1] + totalPerformanceMarketingSpendNonMattress[1]) /
+            Number(netRevenueAfterTaxAndReturnMattreess[1] + Number(netRevenueAfterTaxAndReturnNonMattreess[1])) +
+            "",
     ];
     dates.map((date, dateIndex) =>
         netAcosSleep.push(
@@ -575,16 +568,13 @@ function SleepSummaryAndDodSection({
         )
     );
 
-    const netAcosMattress = [
-        "Net Acos (Mattress)",
-        Number(totalMattressSpendAfterAgentAndAgencyCost[1]) / Number(netRevenueAfterTaxAndReturnMattreess[1]) + ""
-    ];
+    const netAcosMattress = ["Net Acos (Mattress)", Number(totalMattressSpendAfterAgentAndAgencyCost[1]) / Number(netRevenueAfterTaxAndReturnMattreess[1]) + ""];
     dates.map((date, dateIndex) => netAcosMattress.push(Number(totalMattressSpendAfterAgentAndAgencyCost[dateIndex + 2]) / Number(netRevenueAfterTaxAndReturnMattreess[dateIndex + 2]) + ""));
 
     const netAcosNonMattress = ["Net Acos (Non Mattress)", Number(totalPerformanceMarketingSpendNonMattress[1]) / Number(netRevenueAfterTaxAndReturnNonMattreess[1]) + ""];
     dates.map((date, dateIndex) => netAcosNonMattress.push(Number(totalPerformanceMarketingSpendNonMattress[dateIndex + 2]) / Number(netRevenueAfterTaxAndReturnNonMattreess[dateIndex + 2]) + ""));
 
-    const noOfAgents = ["No. of Agents","17"];
+    const noOfAgents = ["No. of Agents", "17"];
     dates.map((date, dateIndex) => noOfAgents.push("17"));
 
     const costPerLead = ["CPL", Number(totalPerformanceMarketingSpendMattress[1]) / Number(totalLeads[1]) + ""];
@@ -653,61 +643,60 @@ function SleepSummaryAndDodSection({
     fieldsColumnsDefs.map((columnDefField, index) =>
         dodColumnDefs.push({
             headerName: "",
-            field: columnDefField,
+            field: index.toString(),
         })
     );
 
-    const rowData = totalLeads.map((leads, index) => ({
-                                        firstRow: dodFirstRow[index],
-                                        secondRow: dodSecondRow[index],
-                                        totalLeads: totalLeads[index],
-                                        performanceLeadMattress: performaceLeadsMattress[index],
-                                        facebookLeadmattress: facebookLeadsMattress[index],
-                                        conversionRate: conversionRate[index],
-                                        performanceConversionRate: performanceConversionRate[index],
-                                        facebookConversionRate: facebookConversionRate[index],
-                                        unitsPerformanceAds: unitsPerformanceAds[index],
-                                        unitsFacebookAds: unitsFacebookAds[index],
-                                        unitsSleep: unitsSleep[index],
-                                        mattressUnits: mattressUnits[index],
-                                        directMattressUnits: directMattressUnits[index],
-                                        assistedMattressUnits: assistedMattressUnits[index],
-                                        nonMattressUnits: nonMattressUnits[index],
-                                        aovMattress: aovMattress[index],
-                                        aovNonMattress: aovNonMattress[index],
-                                        revenueSleep: revenueSleep[index],
-                                        netSalesMattress: netSalesMattress[index],
-                                        cancellationsMattress: cancellationsMattress[index],
-                                        revenueMattressAfterCancellations: revenueMattressAfterCancellations[index],
-                                        netSalesNonMattress: netSalesNonMattress[index],
-                                        cancellationsNonMattress: cancellationsNonMattress[index],
-                                        revenueNonMattressAfterCancellations: revenueNonMattressAfterCancellations[index],
-                                        netRevenueAfterTaxMattreess: netRevenueAfterTaxMattreess[index],
-                                        netRevenueAfterTaxNonMattreess: netRevenueAfterTaxNonMattreess[index],
-                                        returnOnProvision: returnOnProvision[index],
-                                        netRevenueAfterTaxAndReturnMattreess: netRevenueAfterTaxAndReturnMattreess[index],
-                                        netRevenueAfterTaxAndReturnNonMattreess: netRevenueAfterTaxAndReturnNonMattreess[index],
-                                        mattressSpend: mattressSpend[index],
-                                        facebookSpendMattress: facebookSpendMattress[index],
-                                        googleSpendMattress: googleSpendMattress[index],
-                                        totalPerformanceMarketingSpendMattress: totalPerformanceMarketingSpendMattress[index],
-                                        nonMattressSpend: nonMattressSpend[index],
-                                        facebookSpendNonMattress: facebookSpendNonMattress[index],
-                                        googleSpendNonMattress: googleSpendNonMattress[index],
-                                        totalPerformanceMarketingSpendNonMattress: totalPerformanceMarketingSpendNonMattress[index],
-                                        agentCost: agentCost[index],
-                                        agencyCost: agencyCost[index],
-                                        totalMattressSpendAfterAgentAndAgencyCost: totalMattressSpendAfterAgentAndAgencyCost[index],
-                                        acosMarketing: acosMarketing[index],
-                                        marketingAcosMattress: marketingAcosMattress[index],
-                                        marketingAcosNonMattress: marketingAcosNonMattress[index],
-                                        netAcosSleep: netAcosSleep[index],
-                                        netAcosMattress: netAcosMattress[index],
-                                        netAcosNonMattress: netAcosNonMattress[index],
-                                        noOfAgents: noOfAgents[index],
-                                        costPerLead: costPerLead[index],
-                                    }));
-
+    const rowData = totalLeads.map((leads, index) => [
+        dodFirstRow[index],
+        dodSecondRow[index],
+        totalLeads[index],
+        performaceLeadsMattress[index],
+        facebookLeadsMattress[index],
+        conversionRate[index],
+        performanceConversionRate[index],
+        facebookConversionRate[index],
+        unitsPerformanceAds[index],
+        unitsFacebookAds[index],
+        unitsSleep[index],
+        mattressUnits[index],
+        directMattressUnits[index],
+        assistedMattressUnits[index],
+        nonMattressUnits[index],
+        aovMattress[index],
+        aovNonMattress[index],
+        revenueSleep[index],
+        netSalesMattress[index],
+        cancellationsMattress[index],
+        revenueMattressAfterCancellations[index],
+        netSalesNonMattress[index],
+        cancellationsNonMattress[index],
+        revenueNonMattressAfterCancellations[index],
+        netRevenueAfterTaxMattreess[index],
+        netRevenueAfterTaxNonMattreess[index],
+        returnOnProvision[index],
+        netRevenueAfterTaxAndReturnMattreess[index],
+        netRevenueAfterTaxAndReturnNonMattreess[index],
+        mattressSpend[index],
+        facebookSpendMattress[index],
+        googleSpendMattress[index],
+        totalPerformanceMarketingSpendMattress[index],
+        nonMattressSpend[index],
+        facebookSpendNonMattress[index],
+        googleSpendNonMattress[index],
+        totalPerformanceMarketingSpendNonMattress[index],
+        agentCost[index],
+        agencyCost[index],
+        totalMattressSpendAfterAgentAndAgencyCost[index],
+        acosMarketing[index],
+        marketingAcosMattress[index],
+        marketingAcosNonMattress[index],
+        netAcosSleep[index],
+        netAcosMattress[index],
+        netAcosNonMattress[index],
+        noOfAgents[index],
+        costPerLead[index],
+    ]);
 
     console.log("first row", dodColumnDefs);
     console.log("first row", performanceConversionRate);
@@ -736,11 +725,9 @@ function SleepSummaryAndDodSection({
                             <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
                                 <AgGridReact
                                     rowData={transposeData(rowData)}
+                                    // columnDefs={dodColumnDefs}
                                     columnDefs={dodColumnDefs}
-                                    defaultColDef={defaultColumnDefinitions}
-                                    animateRows={true}
-                                    enableRangeSelection={true}
-                                />
+                                    defaultColDef={defaultColumnDefinitions} animateRows={true} enableRangeSelection={true} />
                             </div>
                         }
                     />

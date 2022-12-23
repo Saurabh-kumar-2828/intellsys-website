@@ -271,4 +271,8 @@ export function getColor(key: string) {
     }
 }
 
+export function transposeData(data : Array<any>){
+    return data[0].map((_, colIndex) => data.map((row) => row[colIndex]));
+}
+
 const cloudflareImagesAccountHash = "QSJTsX8HH4EtEhHrJthznA";

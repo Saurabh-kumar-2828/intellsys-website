@@ -24,7 +24,7 @@ import {
     ValueDisplayingCard,
 } from "~/components/scratchpad";
 import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, dateToMediumNoneEnFormat, distinct, getDates, getNonEmptyStringOrNull, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
+import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, distinct, getDates, getNonEmptyStringOrNull, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -308,10 +308,6 @@ function LeadsSection({
         .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform))
         .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.campaignName));
 
-    const defaultColumnDefinitions = {
-        sortable: true,
-        filter: true,
-    };
 
     const dates = getDates(minDate, maxDate);
 
@@ -335,8 +331,7 @@ function LeadsSection({
     };
 
     const performanceLeadsCount = {
-        metaInformation: "Performance Leads",
-        count: performanceLeads.countDayWise.reduce((sum, item) => sum + item, 0),
+        count: performanceLeads.countDayWise.reduce(sumReducer),
     };
 
     const performanceLeadsCpl = {
@@ -559,6 +554,7 @@ function LeadsSection({
                 target={1 + totalLeadsCount.count * 1.3}
                 explanation="Total number of leads recorded on Freshsales"
                 type={ValueDisplayingCardInformationType.integer}
+                equivalentQuery={`SELECT COUNT(*) FROM freshsales_leads_to_source_with_information WHERE DATE(lead_created_at)>=${minDate} AND DATE(lead_created_at)<=${maxDate}`}
             />
 
             <SmallValueDisplayingCardWithTarget
@@ -769,14 +765,10 @@ function OrdersSection({
         .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.leadGenerationSourceCampaignName))
         .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
 
-    const defaultColumnDefinitions = {
-        sortable: true,
-        filter: true,
-    };
     const dates = getDates(minDate, maxDate);
 
     // Direct Orders calculations
-    const directOrdersRevenueGroupByDateAndCategory = get_r3_ordersRevenue(filterShopifyData.filter((row) => row.isAssisted == false));
+    const directOrdersRevenueGroupByDateAndCategory = getOrdersRevenue(filterShopifyData.filter((row) => row.isAssisted == false));
     const directOrders = {
         dayWiseCount: aggregateByDate(
             filterShopifyData.filter((row) => row.isAssisted == false),
@@ -789,19 +781,19 @@ function OrdersSection({
     const directOrdersTotalCount = directOrders.dayWiseCount.reduce(sumReducer, 0);
     const directOrdersNetSales = directOrders.dayWiseNetSales.reduce(sumReducer, 0);
 
-    const r2_directOrdersAov = {
+    const directOrdersAov = {
         metaInformation: `Orders Revenue / Orders Count | Direct = ${numberToHumanFriendlyString(directOrdersNetSales)} / ${numberToHumanFriendlyString(directOrdersTotalCount)}`,
         aov: directOrdersNetSales / directOrdersTotalCount,
         dayWiseAov: directOrders.dayWiseNetSales.map((value, index) => (directOrders.dayWiseCount[index] == 0 ? 0 : value / directOrders.dayWiseCount[index])),
     };
 
-    const r2_directOrdersDrr = {
+    const directOrdersDrr = {
         metaInformation: `Total Direct Orders / Number of Days | Direct = ${numberToHumanFriendlyString(directOrdersTotalCount)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`,
         drr: directOrdersTotalCount / numberOfSelectedDays,
     };
 
     // Assisted Orders calculations
-    const assistedOrdersRevenueGroupByDateAndCategory = get_r3_ordersRevenue(filterShopifyData.filter((row) => row.isAssisted == true));
+    const assistedOrdersRevenueGroupByDateAndCategory = getOrdersRevenue(filterShopifyData.filter((row) => row.isAssisted == true));
 
     const assistedOrders = {
         dayWiseCount: aggregateByDate(
@@ -815,13 +807,13 @@ function OrdersSection({
     const assistedOrdersTotalCount = assistedOrders.dayWiseCount.reduce(sumReducer, 0);
     const assistedOrdersNetSales = assistedOrders.dayWiseNetSales.reduce(sumReducer, 0);
 
-    const r2_assistedOrdersAov = {
+    const assistedOrdersAov = {
         metaInformation: `Orders Revenue / Orders Count | Assisted = ${numberToHumanFriendlyString(assistedOrdersNetSales)} / ${numberToHumanFriendlyString(assistedOrdersTotalCount)}`,
         aov: assistedOrdersNetSales / assistedOrdersTotalCount,
         dayWiseAov: assistedOrders.dayWiseNetSales.map((value, index) => (assistedOrders.dayWiseCount[index] == 0 ? 0 : value / assistedOrders.dayWiseCount[index])),
     };
 
-    const r2_assistedOrdersDrr = {
+    const assistedOrdersDrr = {
         metaInformation: `Total Assisted Orders / Number of Days | Assisted = ${numberToHumanFriendlyString(assistedOrdersTotalCount)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`,
         drr: assistedOrdersTotalCount / numberOfSelectedDays,
     };
@@ -830,16 +822,16 @@ function OrdersSection({
         result[curDate] = {
             directOrdersCount: roundOffToTwoDigits(directOrders.dayWiseCount[index]),
             directOrdersNetSales: roundOffToTwoDigits(directOrders.dayWiseNetSales[index]),
-            directOrdersAov: roundOffToTwoDigits(r2_directOrdersAov.dayWiseAov[index]),
+            directOrdersAov: roundOffToTwoDigits(directOrdersAov.dayWiseAov[index]),
             assistedOrdersCount: roundOffToTwoDigits(assistedOrders.dayWiseCount[index]),
             assistedOrdersNetSales: roundOffToTwoDigits(directOrders.dayWiseNetSales[index]),
-            assistedOrdersAov: roundOffToTwoDigits(r2_assistedOrdersAov.dayWiseAov[index]),
+            assistedOrdersAov: roundOffToTwoDigits(assistedOrdersAov.dayWiseAov[index]),
         };
         return result;
     }, {});
 
     // Total Orders
-    const r2_totalOrdersCount = {
+    const totalOrdersCount = {
         metaInformation: `Direct Orders + Assisted Orders = ${numberToHumanFriendlyString(directOrders.dayWiseCount.reduce(sumReducer, 0))} + ${numberToHumanFriendlyString(
             assistedOrders.dayWiseCount.reduce(sumReducer, 0)
         )}`,
@@ -886,8 +878,8 @@ function OrdersSection({
 
             <LargeValueDisplayingCardWithTarget
                 label="Total Orders"
-                value={r2_totalOrdersCount.count}
-                target={1 + r2_totalOrdersCount.count * 1.3}
+                value={totalOrdersCount.count}
+                target={1 + totalOrdersCount.count * 1.3}
                 explanation="Total number of units orders recorded on Shopify"
                 type={ValueDisplayingCardInformationType.integer}
             />
@@ -902,16 +894,16 @@ function OrdersSection({
 
             <SmallValueDisplayingCardWithTarget
                 label="AOV"
-                value={r2_directOrdersAov.aov}
-                target={1 + r2_directOrdersAov.aov * 1.3}
+                value={directOrdersAov.aov}
+                target={1 + directOrdersAov.aov * 1.3}
                 explanation={`(Orders Revenue / Orders Count) | Direct = ${numberToHumanFriendlyString(directOrdersNetSales)} / ${numberToHumanFriendlyString(directOrdersTotalCount)}`}
                 type={ValueDisplayingCardInformationType.float}
             />
 
             <SmallValueDisplayingCardWithTarget
                 label="DRR"
-                value={r2_directOrdersDrr.drr}
-                target={1 + r2_directOrdersDrr.drr * 1.3}
+                value={directOrdersDrr.drr}
+                target={1 + directOrdersDrr.drr * 1.3}
                 explanation={`(Total Orders / Number of Days) | Direct = ${numberToHumanFriendlyString(directOrdersTotalCount)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`}
                 type={ValueDisplayingCardInformationType.float}
             />
@@ -928,16 +920,16 @@ function OrdersSection({
 
             <SmallValueDisplayingCardWithTarget
                 label="AOV"
-                value={r2_assistedOrdersAov.aov}
-                target={1 + r2_assistedOrdersAov.aov * 1.3}
+                value={assistedOrdersAov.aov}
+                target={1 + assistedOrdersAov.aov * 1.3}
                 explanation={`(Orders Revenue / Orders Count) | Assisted = ${numberToHumanFriendlyString(assistedOrdersNetSales)} / ${numberToHumanFriendlyString(assistedOrdersTotalCount)}`}
                 type={ValueDisplayingCardInformationType.float}
             />
 
             <SmallValueDisplayingCardWithTarget
                 label="DRR"
-                value={r2_assistedOrdersDrr.drr}
-                target={1 + r2_assistedOrdersDrr.drr * 1.3}
+                value={assistedOrdersDrr.drr}
+                target={1 + assistedOrdersDrr.drr * 1.3}
                 explanation={`(Total Orders / Number of Days) | Assisted = ${numberToHumanFriendlyString(assistedOrdersTotalCount)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`}
                 type={ValueDisplayingCardInformationType.float}
             />
@@ -1031,14 +1023,9 @@ function RevenueSection({
         .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.leadGenerationSourceCampaignName))
         .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
 
-    const defaultColumnDefinitions = {
-        sortable: true,
-        filter: true,
-    };
+    const directOrdersRevenue = getOrdersRevenue(filterShopifyData.filter((row) => row.isAssisted == false));
 
-    const directOrdersRevenue = get_r3_ordersRevenue(filterShopifyData.filter((row) => row.isAssisted == false));
-
-    const assistedOrdersRevenueGroupByDateAndCategory = get_r3_ordersRevenue(filterShopifyData.filter((row) => row.isAssisted == true));
+    const assistedOrdersRevenueGroupByDateAndCategory = getOrdersRevenue(filterShopifyData.filter((row) => row.isAssisted == true));
 
     const dates = getDates(minDate, maxDate);
 
@@ -1050,7 +1037,7 @@ function RevenueSection({
         grossRevenueDayWise: aggregateByDate(assistedOrdersRevenueGroupByDateAndCategory, "netSales", dates),
     };
 
-    const r3_directOrdersNetRevenue = {
+    const directOrdersNetRevenue = {
         metaInformation: "",
         netRevenueDayWise: aggregateByDate(
             directOrdersRevenue.map((row) => ({...row, netRevenue: getNetRevenue(row)})),
@@ -1059,7 +1046,7 @@ function RevenueSection({
         ),
     };
 
-    const r3_assistedOrdersNetRevenue = {
+    const assistedOrdersNetRevenue = {
         metaInformation: "",
         netRevenueDayWise: aggregateByDate(
             assistedOrdersRevenueGroupByDateAndCategory.map((row) => ({...row, netRevenue: getNetRevenue(row)})),
@@ -1067,17 +1054,17 @@ function RevenueSection({
             dates
         ),
     };
-    const r3_totalNetRevenue = {
+    const totalNetRevenue = {
         metaInformation: "",
-        netRevenue: r3_directOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0) + r3_assistedOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0),
+        netRevenue: directOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0) + assistedOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0),
     };
 
     const dataTableForRevenueDayWise = dates.reduce((result, curDate, index) => {
         result[curDate] = {
             directOrdersGrossRevenue: roundOffToTwoDigits(directOrdersGrossRevenue.grossRevenueDayWise[index]),
-            directOrdersNetRevenue: roundOffToTwoDigits(r3_directOrdersNetRevenue.netRevenueDayWise[index]),
+            directOrdersNetRevenue: roundOffToTwoDigits(directOrdersNetRevenue.netRevenueDayWise[index]),
             assistedOrdersGrossRevenue: roundOffToTwoDigits(assistedOrdersGrossRevenue.grossRevenueDayWise[index]),
-            assistedOrdersNetRevenue: roundOffToTwoDigits(r3_assistedOrdersNetRevenue.netRevenueDayWise[index]),
+            assistedOrdersNetRevenue: roundOffToTwoDigits(assistedOrdersNetRevenue.netRevenueDayWise[index]),
         };
         return result;
     }, {});
@@ -1150,8 +1137,8 @@ function RevenueSection({
 
             <LargeValueDisplayingCardWithTarget
                 label="Net Revenue"
-                value={r3_totalNetRevenue.netRevenue}
-                target={1 + r3_totalNetRevenue.netRevenue * 1.3}
+                value={totalNetRevenue.netRevenue}
+                target={1 + totalNetRevenue.netRevenue * 1.3}
                 explanation="Post-taxation revenue"
                 type={ValueDisplayingCardInformationType.float}
             />
@@ -1166,8 +1153,8 @@ function RevenueSection({
 
             <SmallValueDisplayingCardWithTarget
                 label="Net Gross Revenue"
-                value={r3_directOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0)}
-                target={1 + r3_directOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0) * 1.3}
+                value={directOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0)}
+                target={1 + directOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0) * 1.3}
                 explanation="Post-taxation revenue from direct orders"
                 type={ValueDisplayingCardInformationType.float}
             />
@@ -1186,8 +1173,8 @@ function RevenueSection({
 
             <SmallValueDisplayingCardWithTarget
                 label="Net Assisted Revenue"
-                value={r3_assistedOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0)}
-                target={1 + r3_assistedOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0) * 1.3}
+                value={assistedOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0)}
+                target={1 + assistedOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0) * 1.3}
                 explanation="Post-taxation revenue from assisted orders"
                 type={ValueDisplayingCardInformationType.float}
             />
@@ -1304,10 +1291,7 @@ function SpendSection({
         .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform))
         .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.campaignName));
 
-    const defaultColumnDefinitions = {
-        sortable: true,
-        filter: true,
-    };
+
 
     const dates = getDates(minDate, maxDate);
 
@@ -1333,7 +1317,7 @@ function SpendSection({
 
     const googleAdsDailyAmountSpent = googleAdsAmountSpent / numberOfSelectedDays;
 
-    const r4_googleAdsAcos = {
+    const googleAdsAcos = {
         metaInformation: `Total Spend / Revenue | Google = ${googleAdsAmountSpent} / ${googleAdsNetSales}`,
         acos: googleAdsNetSales == 0 ? 0 : googleAdsAmountSpent / googleAdsNetSales,
         dayWiseAcos: googleAds.amountSpentDayWise.map((value, index) => (googleAds.netSalesDayWise[index] == 0 ? 0 : value / googleAds.netSalesDayWise[index])),
@@ -1361,7 +1345,7 @@ function SpendSection({
 
     const facebookAdsDailyAmountSpent = facebookAdsAmountSpent / numberOfSelectedDays;
 
-    const r4_facebookAdsAcos = {
+    const facebookAdsAcos = {
         metaInformation: `Total Spend / Revenue | Facebook = ${facebookAdsAmountSpent} / ${facebookAdsNetSales}`,
         acos: facebookAdsAmountSpent / facebookAdsNetSales,
         dayWiseAcos: facebookAds.amountSpentDayWise.map((value, index) => (facebookAds.netSalesDayWise[index] == 0 ? 0 : value / facebookAds.netSalesDayWise[index])),
@@ -1377,15 +1361,15 @@ function SpendSection({
         result[curDate] = {
             googleAdsAmountSpent: roundOffToTwoDigits(googleAds.amountSpentDayWise[index]),
             googleAdsNetSales: roundOffToTwoDigits(googleAds.netSalesDayWise[index]),
-            googleAdsAcos: roundOffToTwoDigits(r4_googleAdsAcos.dayWiseAcos[index]),
+            googleAdsAcos: roundOffToTwoDigits(googleAdsAcos.dayWiseAcos[index]),
             facebookAdsAmountSpent: roundOffToTwoDigits(facebookAds.amountSpentDayWise[index]),
             facebookAdsNetSales: roundOffToTwoDigits(facebookAds.netSalesDayWise[index]),
-            facebookAdsAcos: roundOffToTwoDigits(r4_facebookAdsAcos.dayWiseAcos[index]),
+            facebookAdsAcos: roundOffToTwoDigits(facebookAdsAcos.dayWiseAcos[index]),
         };
         return result;
     }, {});
 
-    const r4_netSpends = {
+    const netSpends = {
         metaInformation: `Facebook Ads Spends + Google Ads Spends = ${facebookAdsAmountSpent} + ${googleAdsAmountSpent}`,
         amountSpent: facebookAdsAmountSpent + googleAdsAmountSpent,
     };
@@ -1428,8 +1412,8 @@ function SpendSection({
 
             <LargeValueDisplayingCardWithTarget
                 label="Net Spend"
-                value={r4_netSpends.amountSpent}
-                target={1 + r4_netSpends.amountSpent * 1.3}
+                value={netSpends.amountSpent}
+                target={1 + netSpends.amountSpent * 1.3}
                 explanation={`Facebook Ads Spends + Google Ads Spends = ${facebookAdsAmountSpent} + ${googleAdsAmountSpent}`}
                 type={ValueDisplayingCardInformationType.integer}
             />
@@ -1460,8 +1444,8 @@ function SpendSection({
 
             <SmallValueDisplayingCardWithTarget
                 label="ACoS"
-                value={r4_facebookAdsAcos.acos}
-                target={1 + r4_facebookAdsAcos.acos * 1.3}
+                value={facebookAdsAcos.acos}
+                target={1 + facebookAdsAcos.acos * 1.3}
                 explanation={`(Total Spend / Revenue) | Facebook = ${facebookAdsAmountSpent} / ${facebookAdsNetSales}`}
                 type={ValueDisplayingCardInformationType.percentage}
             />
@@ -1492,8 +1476,8 @@ function SpendSection({
 
             <SmallValueDisplayingCardWithTarget
                 label="ACoS"
-                value={r4_googleAdsAcos.acos}
-                target={1 + r4_googleAdsAcos.acos * 1.3}
+                value={googleAdsAcos.acos}
+                target={1 + googleAdsAcos.acos * 1.3}
                 explanation={`(Total Spend / Revenue) | Google = ${googleAdsAmountSpent} / ${googleAdsNetSales}`}
                 type={ValueDisplayingCardInformationType.percentage}
             />
@@ -1558,11 +1542,11 @@ function SpendSection({
     );
 }
 
-function get_r3_ordersRevenue(shopifyData: any) {
+function getOrdersRevenue(shopifyData: Array<ShopifyDataAggregatedRow>) {
     let aggregateByDate = shopifyData.reduce(createGroupByReducer("date"), {});
 
     for (const date in aggregateByDate) {
-        let result = aggregateByDate[date].reduce(createGroupByReducer("category"), {});
+        let result = aggregateByDate[date].reduce(createGroupByReducer("productCategory"), {});
         aggregateByDate[date] = result;
     }
 

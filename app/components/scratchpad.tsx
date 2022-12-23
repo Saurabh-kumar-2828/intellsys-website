@@ -476,8 +476,8 @@ export function DateFilterSection(props: {
 export function errorToast(content: any) {
     toast((toast_) => (
         <div className="tw-bg-bg+1 tw-text-fg tw-flex tw-flex-row tw-items-center tw-gap-x-4">
-            <XCircleFill className="tw-w-4 tw-h-4 tw-text-red-600" />
-            {content}
+            <XCircleFill className="tw-w-4 tw-h-4 tw-flex-0 tw-text-red-600" />
+            <div className="tw-flex-1">{content}</div>
         </div>
     ));
 }

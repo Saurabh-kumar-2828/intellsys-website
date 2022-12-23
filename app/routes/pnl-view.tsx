@@ -99,157 +99,6 @@ export default function () {
         waterPurifier: ["Water Purifier"],
     };
 
-    const summaryRowFormat = {
-        sleep: [
-            "Total Leads",
-            "Performance Lead",
-            "Facebook Ads Lead",
-            "CR%",
-            "Performance CR%",
-            "Facebook Ads CR%",
-            "# Mattress (Units after cancellation)",
-            "Direct Units (Mattress)",
-            "Assisted Units (Mattress)",
-            "Aov Mattress",
-            "",
-            "Net Revenue (Sleep)",
-            "Cancellations",
-            "Revenue after Tax (Sleep)",
-            "Net Revenue after Tax & Return (Mattress)",
-            "Net Revenue after Tax & Return (Non Mattress)",
-            "Net Revenue after Tax & Return (Sleep)",
-            "",
-            "Total Spend",
-            "Total Performance Marketing Spend (Sleep)",
-            "Total Performance Marketing Spend (Mattress)",
-            "Facebook Spend (Mattress)",
-            "Google Spend (Mattress)",
-            "Total Performance Marketing Spend (Non Mattress)",
-            "Facebook Spend (Non Mattress)",
-            "Google Spend (Non Mattress)",
-            "Agent Cost",
-            "Agency Cost",
-            "No.of Agents",
-            "",
-            "Net Acos (Sleep)",
-            "Net Acos (Mattress)",
-            "Net Acos (Non Mattress)",
-            "Acos (Marketing)",
-            "Mattress Acos (Marketing)",
-            "Performance CPL",
-            "On Form CPL",
-        ],
-        waterPurifier: [
-            "Total Leads",
-            "Performance Lead",
-            "Facebook Ads Lead",
-            "CR%",
-            "Performance CR%",
-            "Facebook Ads CR%",
-            "# Units",
-            "Direct Units",
-            "Assisted Units",
-            "AOV",
-            "Net Revenue",
-            "Net Revenue Post Tax",
-            "Net Revenue Post Return & Tax",
-            "Total Spend",
-            "Total Performance Marketing Spend",
-            "Facebook on form Spend",
-            "Performance Spend",
-            "Agent Cost",
-            "Agency Cost",
-            "No.of Agents",
-            "Net Acos",
-            "Acos (Marketing)",
-            "Performance CPL",
-            "On Form CPL",
-        ],
-    };
-
-    const dodRowFormat = {
-        sleep: [
-            "Total Leads",
-            "Performance Leads (Mattress)",
-            "Facebook Lead (Mattress)",
-            "CR %",
-            "Performance CR%",
-            "Facebook CR%",
-            "Units ( Performance Ads)",
-            "Units (Facebook Ads)",
-            "Units (Sleep)",
-            "Mattress Units",
-            "Direct Units (Mattress)",
-            "Assisted Units (Mattress)",
-            "Non Mattress Units",
-            "AOV (Mattress) (excluding gst)",
-            "AOV (Non Mattress) (excluding gst)",
-            "Revenue (Sleep)",
-            "Gross Revenue (Mattress)",
-            "Cancellations (Mattress)",
-            "Gross Revenue after Cancellations (Mattress)",
-            "Gross Revenue (Non Mattress)",
-            "Cancellations (Non Mattress)",
-            "Revenue after Cancellations (Non Mattress)",
-            "Net Revenue (after tax) Mattress",
-            "Net Revenue (after tax) Non Mattress",
-            "Return  Provision",
-            "Net Revenue (after Tax & Return) Mattress",
-            "Net Revenue (after Tax & Return) Non Mattress",
-            "Mattress Spends",
-            "Facebook spend (Matttress)",
-            "Google spend (Mattress)",
-            "Total Performance Marketing spend (Mattress)",
-            "Non Mattress Spends",
-            "Facebook spend (Non Matttress)",
-            "Google spend (Non Mattress)",
-            "Total Performance Marketing spend (Non Mattress)",
-            "Agency cost",
-            "Agent cost",
-            "Total Mattress Spend (after agent & agency cost)",
-            "Acos (Marketing)",
-            "Marketing Acos (Mattress)",
-            "Net Acos (sleep)",
-            "Facebook CPL",
-            "Net Acos (Mattress)",
-            "Net Acos (Non Mattress)",
-            "No. of Agents",
-            "CPL",
-            "Performance CPL",
-        ],
-        waterPurifier: [
-            "Total Leads",
-            "Performance Leads (Water Purifier)",
-            "Facebook Lead (Water Purifier)",
-            "CR %",
-            "Performance CR%",
-            "Facebook CR%",
-            "Units (Performance)",
-            "Units (Facebook ADs)",
-            "Units  (WP)",
-            "Direct Units (WP)",
-            "Assissted Units (WP)",
-            "Aov (WP)",
-            "Net Revenue  (WP)",
-            "Net Revenue (after tax) WP",
-            "Return Provision",
-            "Net Revenue (after tax and return) WP",
-            "WP Spends",
-            "Facebook spend (WP)",
-            "Google spend (WP)",
-            "Total Performance Marketing spend (WP)",
-            "Agency cost",
-            "AgenT Cost",
-            "Total WP Spend (after agent & agency cost)",
-            "Acos (Marketing)",
-            "Net Acos (WP)",
-            "No. of Agents",
-            "CPL",
-            "Performance CPL",
-            "Facebook CPL",
-        ],
-    };
-
     return (
         <>
             <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8 tw-sticky">
@@ -665,7 +514,7 @@ function SleepSummaryAndDodSection({
 
             <VerticalSpacer className="tw-h-8" />
 
-            <Tabs.Root defaultValue="1" className="tw-col-span-12">
+            <Tabs.Root defaultValue="2" className="tw-col-span-12">
                 <Tabs.List className="">
                     <Tabs.Trigger value="1" className="lp-tab">
                         Sleep Summary
@@ -951,12 +800,12 @@ function WpSummaryAndDodSection({
 
             <VerticalSpacer className="tw-h-8" />
 
-            <Tabs.Root defaultValue="1" className="tw-col-span-12">
+            <Tabs.Root defaultValue="2" className="tw-col-span-12">
                 <Tabs.List className="">
                     <Tabs.Trigger value="1" className="lp-tab">
                         WP Summary
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="2" className="lp-tab">
+                    <Tabs.Trigger value="2" className="lp-tab" se>
                         WP DOD
                     </Tabs.Trigger>
                 </Tabs.List>

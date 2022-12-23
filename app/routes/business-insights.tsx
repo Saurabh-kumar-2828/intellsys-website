@@ -24,7 +24,17 @@ import {
     ValueDisplayingCard,
 } from "~/components/scratchpad";
 import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, distinct, getDates, getNonEmptyStringOrNull, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
+import {
+    adsColorPalette,
+    agGridDateComparator,
+    dateToMediumNoneEnFormat,
+    defaultColumnDefinitions,
+    distinct,
+    getDates,
+    getNonEmptyStringOrNull,
+    numberToHumanFriendlyString,
+    roundOffToTwoDigits,
+} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -308,7 +318,6 @@ function LeadsSection({
         .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform))
         .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.campaignName));
 
-
     const dates = getDates(minDate, maxDate);
 
     // Performance Leads
@@ -448,7 +457,6 @@ function LeadsSection({
 
     const options = {
         responsive: true,
-        // maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: "top" as const,
@@ -467,12 +475,12 @@ function LeadsSection({
             {
                 label: "Performance Leads",
                 data: labels.map((date, index) => dataTableForLeadsDayWise[date].performanceLeadsCount),
-                backgroundColor: "rgba(255, 99, 132, 0.5)",
+                backgroundColor: adsColorPalette.performanceCount,
             },
             {
                 label: "Facebook Leads",
                 data: labels.map((date, index) => dataTableForLeadsDayWise[date].facebookLeadsCount),
-                backgroundColor: "rgba(53, 162, 235, 0.5)",
+                backgroundColor: adsColorPalette.facebookCount,
             },
         ],
     };
@@ -708,22 +716,82 @@ function LeadsSection({
                                             filter: "agDateColumnFilter",
                                             comparator: agGridDateComparator,
                                         },
-                                        {headerName: "Performance Leads Count", field: "performanceLeads", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#ffa500"}, cellClass: "!tw-px-0"},
-                                        {headerName: "Performance Leads CPL", field: "performanceLeadsCpl", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#1b671b"}, cellClass: "!tw-px-0"},
-                                        {headerName: "Performance Leads SPL", field: "performanceLeadsSpl", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#67671b"}, cellClass: "!tw-px-0"},
-                                        {headerName: "Performance Leads ACoS", field: "performanceLeadsAcos", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#721919"}, cellClass: "!tw-px-0"},
-                                        {headerName: "Performance Leads Net Sales", field: "performanceLeadsNetSales", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#ffa500"}, cellClass: "!tw-px-0"},
-                                        {headerName: "Facebook Leads Count", field: "facebookLeads", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#00a2ed"}, cellClass: "!tw-px-0"},
-                                        {headerName: "Facebook Leads CPL", field: "facebookLeadsCpl", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#1b671b"}, cellClass: "!tw-px-0"},
-                                        {headerName: "Facebook Leads SPL", field: "facebookLeadsSpl", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#67671b"}, cellClass: "!tw-px-0"},
-                                        {headerName: "Facebook Leads ACoS", field: "facebookLeadsAcos", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#721919"}, cellClass: "!tw-px-0"},
-                                        {headerName: "Facebook Leads Net Sales", field: "facebookLeadsNetSales", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#00a2ed"}, cellClass: "!tw-px-0"},
+                                        {
+                                            headerName: "Performance Leads Count",
+                                            field: "performanceLeads",
+                                            cellRenderer: "progressCellRenderer",
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCount},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Performance Leads CPL",
+                                            field: "performanceLeadsCpl",
+                                            cellRenderer: "progressCellRenderer",
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.cpl},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Performance Leads SPL",
+                                            field: "performanceLeadsSpl",
+                                            cellRenderer: "progressCellRenderer",
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.spl},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Performance Leads ACoS",
+                                            field: "performanceLeadsAcos",
+                                            cellRenderer: "progressCellRenderer",
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.acos},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Performance Leads Net Sales",
+                                            field: "performanceLeadsNetSales",
+                                            cellRenderer: "progressCellRenderer",
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.netSales},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Facebook Leads Count",
+                                            field: "facebookLeads",
+                                            cellRenderer: "progressCellRenderer",
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.facebookCount},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Facebook Leads CPL",
+                                            field: "facebookLeadsCpl",
+                                            cellRenderer: "progressCellRenderer",
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.cpl},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Facebook Leads SPL",
+                                            field: "facebookLeadsSpl",
+                                            cellRenderer: "progressCellRenderer",
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.spl},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Facebook Leads ACoS",
+                                            field: "facebookLeadsAcos",
+                                            cellRenderer: "progressCellRenderer",
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.acos},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Facebook Leads Net Sales",
+                                            field: "facebookLeadsNetSales",
+                                            cellRenderer: "progressCellRenderer",
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.netSales},
+                                            cellClass: "!tw-px-0",
+                                        },
                                     ]}
                                     defaultColDef={defaultColumnDefinitions}
                                     animateRows={true}
                                     enableRangeSelection={true}
                                     frameworkComponents={{
-                                        progressCellRenderer
+                                        progressCellRenderer,
                                     }}
                                 />
                             </div>
@@ -1290,8 +1358,6 @@ function SpendSection({
         .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
         .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform))
         .filter((row) => selectedCampaigns.length == 0 || selectedCampaigns.includes(row.campaignName));
-
-
 
     const dates = getDates(minDate, maxDate);
 

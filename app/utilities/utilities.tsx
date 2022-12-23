@@ -235,6 +235,13 @@ export function getDates(minDate: any, maxDate: any) {
 export const adsColorPalette = {
     performenceAds: "#ffa500",
     facebookAds: "#00a2ed",
+    performanceCount: "rgba(255, 165, 0, 0.4)",
+    facebookCount: "rgba(0, 162, 237, 0.4)",
+    cpl: "#1B671B",
+    spl: "#67671B",
+    acos: "#721919",
+    netSales: "#67671B"
+
 };
 
 export const colorPalette = {

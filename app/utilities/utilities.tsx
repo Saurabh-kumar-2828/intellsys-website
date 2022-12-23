@@ -31,12 +31,12 @@ export async function postJson(url, data) {
     });
 }
 
-export function concatenateNonNullStringsWithSpaces(...strs: Array<string | null>): string {
+export function concatenateNonNullStringsWithSpaces(...strs: Array<string | null | undefined>): string {
     // TODO: Do this properly
     return strs.join(" ");
 }
 
-export function concatenateNonNullStringsWithAmpersand(...strs: Array<string | null>): string {
+export function concatenateNonNullStringsWithAmpersand(...strs: Array<string | null | undefined>): string {
     // TODO: Merge implementations
     let concatenatedString = null;
 
@@ -160,17 +160,18 @@ export function agGridDateComparator(a: string, b: string) {
     }
 }
 
-export function agGridFloatComparator(aa: number, bb: number) {
-    aa = parseFloat(aa);
-    bb = parseFloat(bb);
-    if (aa > bb) {
-        return 1;
-    } else if (aa < bb) {
-        return -1;
-    } else {
-        return 0;
-    }
-}
+// export function agGridFloatComparator(a: string, b: string) {
+//     const aFloat = parseFloat(a);
+//     const bFloat = parseFloat(b);
+
+//     if (a > b) {
+//         return 1;
+//     } else if (a < b) {
+//         return -1;
+//     } else {
+//         return 0;
+//     }
+// }
 
 export function numberToHumanFriendlyString(n, isFloat = false, shorten = true, isPercentage = false) {
     if (n == null || isNaN(n)) {
@@ -230,6 +231,11 @@ export function getDates(minDate: any, maxDate: any) {
 
     return dates;
 }
+
+export const adsColorPalette = {
+    performenceAds: "#ffa500",
+    facebookAds: "#00a2ed",
+};
 
 export const colorPalette = {
     Mattress: "rgb(255,182,193)",

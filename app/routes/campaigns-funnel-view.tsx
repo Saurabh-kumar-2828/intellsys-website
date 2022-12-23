@@ -6,24 +6,13 @@ import {CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, Point
 import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {Line} from "react-chartjs-2";
-import {
-    AdsData,
-    AdsDataAggregatedRow,
-    FreshsalesData,
-    FreshsalesDataAggregatedRow,
-    getAdsData,
-    getFreshsalesData,
-    getShopifyData,
-    ShopifyData,
-    ShopifyDataAggregatedRow,
-    TimeGranularity,
-} from "~/backend/business-insights";
-import {getProductLibrary, getCapturedUtmCampaignLibrary, ProductInformation, SourceInformation} from "~/backend/common";
-import {aggregateByDate, columnWiseSummationOfMatrix, createGroupByReducer, doesLeadCaptureSourceCorrespondToPerformanceLead, sumReducer} from "~/backend/utilities/utilities";
+import {AdsDataAggregatedRow, FreshsalesData, FreshsalesDataAggregatedRow, getAdsData, getFreshsalesData, getShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
+import {getCapturedUtmCampaignLibrary, getProductLibrary, ProductInformation, SourceInformation} from "~/backend/common";
+import {aggregateByDate, columnWiseSummationOfMatrix, createGroupByReducer, sumReducer} from "~/backend/utilities/utilities";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import {Card, DateFilterSection, FancySearchableMultiSelect, GenericCard} from "~/components/scratchpad";
 import {Iso8601Date, QueryFilterType} from "~/utilities/typeDefinitions";
-import {defaultColumnDefinitions, distinct, getDates, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
+import {defaultColumnDefinitions, distinct, getDates, getNonEmptyStringOrNull, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -58,8 +47,9 @@ type LoaderData = {
 export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;
 
-    const selectedGranularityRaw = urlSearchParams.get("selected_granularity");
-    let selectedGranularity: TimeGranularity;
+    // TODO: Make a function for parsing this, including handling invalid values
+    const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
+    let selectedGranularity;
     if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
         selectedGranularity = TimeGranularity.daily;
     } else {
@@ -93,55 +83,9 @@ export const loader: LoaderFunction = async ({request}) => {
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity),
     };
+
     return json(loaderData);
 };
-function getDayWiseCampaignsTrends(
-    freshsalesLeadsData: Array<FreshsalesDataAggregatedRow>,
-    adsData: Array<AdsDataAggregatedRow>,
-    shopifyData: Array<ShopifyDataAggregatedRow>,
-    minDate: Iso8601Date,
-    maxDate: Iso8601Date
-) {
-    type dayWiseDistributionPerCampaignObject = {
-        impressions: Array<number>;
-        clicks: Array<number>;
-        amountSpent: Array<number>;
-        leads: Array<number>;
-        orders: Array<number>;
-    };
-
-    const dates = getDates(minDate, maxDate);
-    const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
-    // TODO: Is this correct?
-    const freshsalesDataGroupByCampaign = freshsalesLeadsData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
-    const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
-
-    // Datatable
-    const dayWiseDistributionPerCampaign: {[key: string]: dayWiseDistributionPerCampaignObject} = {};
-    for (const campaign in adsDataGroupByCampaign) {
-        let dayWiseLeads: Array<number> = [];
-        let dayWiseOrders: Array<number> = [];
-        const dayWiseImpressions: Array<number> = aggregateByDate(adsDataGroupByCampaign[campaign], "impressions", dates);
-        const dayWiseClicks: Array<number> = aggregateByDate(adsDataGroupByCampaign[campaign], "clicks", dates);
-        const dayWiseAmountSpent: Array<number> = aggregateByDate(adsDataGroupByCampaign[campaign], "amountSpent", dates);
-        if (campaign in freshsalesDataGroupByCampaign) {
-            dayWiseLeads = aggregateByDate(freshsalesDataGroupByCampaign[campaign], "count", dates);
-        }
-        if (campaign in shopifyDataGroupByCampaign) {
-            dayWiseOrders = aggregateByDate(shopifyDataGroupByCampaign[campaign], "netQuantity", dates);
-        }
-
-        dayWiseDistributionPerCampaign[campaign] = {
-            impressions: dayWiseImpressions,
-            clicks: dayWiseClicks,
-            amountSpent: dayWiseAmountSpent,
-            leads: dayWiseLeads,
-            orders: dayWiseOrders,
-        };
-    }
-
-    return dayWiseDistributionPerCampaign;
-}
 
 export default function () {
     const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, allSourceInformation, adsData, freshsalesLeadsData, shopifyData} = useLoaderData() as LoaderData;
@@ -158,8 +102,8 @@ export default function () {
     const [selectedProducts, setSelectedProducts] = useState<Array<string>>([]);
     const [selectedPlatforms, setSelectedPlatforms] = useState<Array<string>>([]);
     const [selectedGranularity, setSelectedGranularity] = useState<TimeGranularity>(appliedSelectedGranularity);
-    const [selectedMinDate, setSelectedMinDate] = useState(appliedMinDate ?? "");
-    const [selectedMaxDate, setSelectedMaxDate] = useState(appliedMaxDate ?? "");
+    const [selectedMinDate, setSelectedMinDate] = useState<Iso8601Date>(appliedMinDate);
+    const [selectedMaxDate, setSelectedMaxDate] = useState<Iso8601Date>(appliedMaxDate);
 
     // TODO: Update filters when changing another one
 
@@ -202,7 +146,7 @@ export default function () {
                 setSelectedMinDate={setSelectedMinDate}
                 selectedMaxDate={selectedMaxDate}
                 setSelectedMaxDate={setSelectedMaxDate}
-                page={"campaigns-funnel-view"}
+                page="campaigns-funnel-view"
             />
 
             <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
@@ -488,4 +432,52 @@ function CampaignsSection({
             </div>
         </>
     );
+}
+
+function getDayWiseCampaignsTrends(
+    freshsalesLeadsData: Array<FreshsalesDataAggregatedRow>,
+    adsData: Array<AdsDataAggregatedRow>,
+    shopifyData: Array<ShopifyDataAggregatedRow>,
+    minDate: Iso8601Date,
+    maxDate: Iso8601Date
+) {
+    type dayWiseDistributionPerCampaignObject = {
+        impressions: Array<number>;
+        clicks: Array<number>;
+        amountSpent: Array<number>;
+        leads: Array<number>;
+        orders: Array<number>;
+    };
+
+    const dates = getDates(minDate, maxDate);
+    const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
+    // TODO: Is this correct?
+    const freshsalesDataGroupByCampaign = freshsalesLeadsData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
+    const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
+
+    // Datatable
+    const dayWiseDistributionPerCampaign: {[key: string]: dayWiseDistributionPerCampaignObject} = {};
+    for (const campaign in adsDataGroupByCampaign) {
+        let dayWiseLeads: Array<number> = [];
+        let dayWiseOrders: Array<number> = [];
+        const dayWiseImpressions: Array<number> = aggregateByDate(adsDataGroupByCampaign[campaign], "impressions", dates);
+        const dayWiseClicks: Array<number> = aggregateByDate(adsDataGroupByCampaign[campaign], "clicks", dates);
+        const dayWiseAmountSpent: Array<number> = aggregateByDate(adsDataGroupByCampaign[campaign], "amountSpent", dates);
+        if (campaign in freshsalesDataGroupByCampaign) {
+            dayWiseLeads = aggregateByDate(freshsalesDataGroupByCampaign[campaign], "count", dates);
+        }
+        if (campaign in shopifyDataGroupByCampaign) {
+            dayWiseOrders = aggregateByDate(shopifyDataGroupByCampaign[campaign], "netQuantity", dates);
+        }
+
+        dayWiseDistributionPerCampaign[campaign] = {
+            impressions: dayWiseImpressions,
+            clicks: dayWiseClicks,
+            amountSpent: dayWiseAmountSpent,
+            leads: dayWiseLeads,
+            orders: dayWiseOrders,
+        };
+    }
+
+    return dayWiseDistributionPerCampaign;
 }

@@ -1,33 +1,22 @@
 import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
-import * as Tabs from "@radix-ui/react-tabs";
 import {json} from "@remix-run/node";
-import {Link, useLoaderData} from "@remix-run/react";
-import {DateTime} from "luxon";
-import {Profiler, useCallback, useEffect, useState} from "react";
-import {getShopifyData, getAdsData, ShopifyData, AdsData, ShopifyDataAggregatedRow, AdsDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
-import {getProductLibrary, getCapturedUtmCampaignLibrary, ProductInformation} from "~/backend/common";
-import {Card, DateFilterSection, FancyCalendar, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
-import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
-import {
-    agGridDateComparator,
-    agGridFloatComparator,
-    colorPalette,
-    concatenateNonNullStringsWithAmpersand,
-    distinct,
-    fillColors,
-    getColor,
-    getDates,
-    numberToHumanFriendlyString,
-    roundOffToTwoDigits,
-} from "~/utilities/utilities";
-import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
-import {Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement} from "chart.js";
-import {getElementAtEvent, getElementsAtEvent, Line, Pie} from "react-chartjs-2";
-import {useRef} from "react";
-import {Bar, getDatasetAtEvent} from "react-chartjs-2";
+import {useLoaderData} from "@remix-run/react";
 import {AgGridReact} from "ag-grid-react";
+import {ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
+import {DateTime} from "luxon";
+import {useCallback, useRef, useState} from "react";
+import {getElementsAtEvent, Line, Pie} from "react-chartjs-2";
+import {AdsData, AdsDataAggregatedRow, getAdsData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
+import {getCapturedUtmCampaignLibrary, getProductLibrary, ProductInformation} from "~/backend/common";
+import {aggregateByDate, createGroupByReducer, sumReducer} from "~/backend/utilities/utilities";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
-import {aggregateByDate, createGroupByReducer,  sumReducer} from "~/backend/utilities/utilities";
+import {DateFilterSection, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
+import {Iso8601Date} from "~/utilities/typeDefinitions";
+import {
+    distinct, getColor,
+    getDates,
+    getNonEmptyStringOrNull, roundOffToTwoDigits
+} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -45,8 +34,9 @@ export const links: LinksFunction = () => {
 export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;
 
-    const selectedGranularityRaw = urlSearchParams.get("selected_granularity");
-    let selectedGranularity : TimeGranularity;
+    // TODO: Make a function for parsing this, including handling invalid values
+    const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
+    let selectedGranularity: TimeGranularity;
     if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
         selectedGranularity = TimeGranularity.daily;
     } else {
@@ -107,7 +97,6 @@ export default function () {
 
     const granularities = ["Daily", "Weekly", "Monthly", "Yearly"];
 
-
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
             <DateFilterSection
@@ -118,7 +107,7 @@ export default function () {
                 setSelectedMinDate={setSelectedMinDate}
                 selectedMaxDate={selectedMaxDate}
                 setSelectedMaxDate={setSelectedMaxDate}
-                page={"sales-report"}
+                page="sales-report"
             />
 
             <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
@@ -223,7 +212,9 @@ function CategorySection(props: {
     ];
 
     // product categories vs selectedInsight
-    const shopifyDataGroupByCategory = props.shopifyData.rows.filter((row: ShopifyDataAggregatedRow) => row.date <= props.maxDate && row.date >= props.minDate).reduce(createGroupByReducer("productCategory"), {});
+    const shopifyDataGroupByCategory = props.shopifyData.rows
+        .filter((row: ShopifyDataAggregatedRow) => row.date <= props.maxDate && row.date >= props.minDate)
+        .reduce(createGroupByReducer("productCategory"), {});
     const adsDataGroupByCategory = props.adsData.rows.filter((row: AdsDataAggregatedRow) => row.date <= props.maxDate && row.date >= props.minDate).reduce(createGroupByReducer("category"), {});
 
     const categoryVsRevenue: Array<number> = [];
@@ -429,8 +420,8 @@ function ProductsSection(props: {
 
     const filteredShopifyDataGroupByProduct = filteredShopifyData.reduce(createGroupByReducer("productTitle"), {});
 
-    const dayWiseUnitsSoldForEachProduct: {[key: string] : Array<number> } = {};
-    const dayWiseNetSalesGeneratedByEachProduct: {[key: string] : Array<number> } = {};
+    const dayWiseUnitsSoldForEachProduct: {[key: string]: Array<number>} = {};
+    const dayWiseNetSalesGeneratedByEachProduct: {[key: string]: Array<number>} = {};
 
     for (const product in filteredShopifyDataGroupByProduct) {
         const dataGroupByDate = aggregateByDate(filteredShopifyDataGroupByProduct[product], "netQuantity", dates);
@@ -539,7 +530,7 @@ function ProductsSection(props: {
                             },
                             minWidth: 500,
                         },
-                        {headerName: "No. of Units Sold", field: "noOfUnitsSoldForEachProduct", sort: "desc", comparator: agGridFloatComparator},
+                        {headerName: "No. of Units Sold", field: "noOfUnitsSoldForEachProduct", sort: "desc"},
                         {headerName: "Net Sales", field: "netSalesForEachProduct"},
                     ]}
                     defaultColDef={defaultColumnDefinitions}
@@ -607,17 +598,14 @@ function VariantSection(props: {
     );
 }
 
-function VariantTable(props: {
-    shopifyData: Array<ShopifyDataAggregatedRow>;
-    product: string | null;
-    minDate: Iso8601Date;
-    maxDate: Iso8601Date;
-}) {
+function VariantTable(props: {shopifyData: Array<ShopifyDataAggregatedRow>; product: string | null; minDate: Iso8601Date; maxDate: Iso8601Date}) {
     const dates = getDates(props.minDate, props.maxDate);
-    const shopifyDataGroupByVariantQuantity = props.shopifyData.filter((row: ShopifyDataAggregatedRow) => props.product != null && row.productTitle == props.product).reduce(createGroupByReducer("variantTitle"), {});
+    const shopifyDataGroupByVariantQuantity = props.shopifyData
+        .filter((row: ShopifyDataAggregatedRow) => props.product != null && row.productTitle == props.product)
+        .reduce(createGroupByReducer("variantTitle"), {});
 
-    const dayWiseUnitsSoldForEachVariant: {[key: string] : Array<number> }  = {};
-    const dayWiseNetSalesGeneratedByEachVariant: {[key: string] : Array<number> } = {};
+    const dayWiseUnitsSoldForEachVariant: {[key: string]: Array<number>} = {};
+    const dayWiseNetSalesGeneratedByEachVariant: {[key: string]: Array<number>} = {};
 
     for (const variant in shopifyDataGroupByVariantQuantity) {
         const dataGroupByDate = aggregateByDate(shopifyDataGroupByVariantQuantity[variant], "netQuantity", dates);
@@ -637,8 +625,6 @@ function VariantTable(props: {
         sortable: true,
         filter: true,
     };
-
-
 
     return (
         <AgGridReact
@@ -662,4 +648,3 @@ function VariantTable(props: {
         />
     );
 }
-

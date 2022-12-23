@@ -8,22 +8,20 @@ import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineEl
 import {DateTime} from "luxon";
 import {useEffect, useState} from "react";
 import {Bar, Line} from "react-chartjs-2";
-import {
-    AdsData,
-    AdsDataAggregatedRow,
-    FreshsalesData,
-    FreshsalesDataAggregatedRow,
-    getAdsData,
-    getFreshsalesData,
-    getShopifyData,
-    ShopifyData,
-    ShopifyDataAggregatedRow,
-    TimeGranularity,
-} from "~/backend/business-insights";
-import {getProductLibrary, getCapturedUtmCampaignLibrary, ProductInformation, SourceInformation} from "~/backend/common";
+import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
+import {getCapturedUtmCampaignLibrary, getProductLibrary, ProductInformation, SourceInformation} from "~/backend/common";
 import {createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
-import {Card, DateFilterSection, FancySearchableMultiSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
+import {
+    Card,
+    DateFilterSection,
+    FancySearchableMultiSelect,
+    GenericCard,
+    LargeValueDisplayingCardWithTarget,
+    SectionHeader,
+    SmallValueDisplayingCardWithTarget,
+    ValueDisplayingCard,
+} from "~/components/scratchpad";
 import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {agGridDateComparator, dateToMediumNoneEnFormat, distinct, getDates, getNonEmptyStringOrNull, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
 
@@ -76,7 +74,7 @@ export const loader: LoaderFunction = async ({request}) => {
         maxDate = maxDateRaw;
     }
 
-    // TODO: Make a function for parsing this
+    // TODO: Make a function for parsing this, including handling invalid values
     const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
     let selectedGranularity: TimeGranularity;
     if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
@@ -108,13 +106,13 @@ export default function () {
     let campaigns = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.campaignName));
     const platforms = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.platform));
 
-    const [selectedCategories, setSelectedCategories] = useState([]);
-    const [selectedProducts, setSelectedProducts] = useState([]);
-    const [selectedPlatforms, setSelectedPlatforms] = useState([]);
-    const [selectedCampaigns, setSelectedCampaigns] = useState([]);
-    const [selectedGranularity, setSelectedGranularity] = useState(TimeGranularity.daily);
-    const [selectedMinDate, setSelectedMinDate] = useState(appliedMinDate ?? "");
-    const [selectedMaxDate, setSelectedMaxDate] = useState(appliedMaxDate ?? "");
+    const [selectedCategories, setSelectedCategories] = useState<Array<string>>([]);
+    const [selectedProducts, setSelectedProducts] = useState<Array<string>>([]);
+    const [selectedPlatforms, setSelectedPlatforms] = useState<Array<string>>([]);
+    const [selectedCampaigns, setSelectedCampaigns] = useState<Array<string>>([]);
+    const [selectedGranularity, setSelectedGranularity] = useState<TimeGranularity>(TimeGranularity.daily);
+    const [selectedMinDate, setSelectedMinDate] = useState<Iso8601Date>(appliedMinDate);
+    const [selectedMaxDate, setSelectedMaxDate] = useState<Iso8601Date>(appliedMaxDate);
 
     products = allProductInformation
         .filter((productInformation: ProductInformation) => selectedCategories.length == 0 || selectedCategories.includes(productInformation.category))
@@ -139,15 +137,7 @@ export default function () {
 
     const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
 
-    const r5_marketingAcos = "?";
-    const r5_facebookAcos = "?";
-    const r5_agentAcos = "?";
-    const r5_googleAcos = "?";
-    const r5_highestAcos = "?";
-    const r5_lowestAcos = "?";
-    const r5_netAcos = "?";
-
-    // TODO: remove before push
+    // TODO: Remove before push
     // const shopifyDataToExportAsCsv = {
     //     data: shopifyData.rows || [],
     //     filename: "shopifyData",
@@ -176,7 +166,7 @@ export default function () {
                 setSelectedMinDate={setSelectedMinDate}
                 selectedMaxDate={selectedMaxDate}
                 setSelectedMaxDate={setSelectedMaxDate}
-                page={"business-insights"}
+                page="business-insights"
             />
 
             <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
@@ -544,83 +534,105 @@ function LeadsSection({
 
     return (
         <>
-            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Leads</div>
+            <SectionHeader label="Leads" />
 
-            <ValueDisplayingCard
-                queryInformation={totalLeadsCount}
-                contentExtractor={(totalLeadsCount: any) => totalLeadsCount.count}
+            <LargeValueDisplayingCardWithTarget
                 label="Total Leads"
-                className="tw-row-span-2 tw-col-span-4"
+                value={totalLeadsCount.count}
+                target={1 + totalLeadsCount.count * 1.3}
+                explanation="Total number of leads recorded on Freshsales"
                 type={ValueDisplayingCardInformationType.integer}
             />
 
-            <ValueDisplayingCard
-                queryInformation={performanceLeadsCount}
-                contentExtractor={(performanceLeadsCount: any) => performanceLeadsCount.count}
+            <SmallValueDisplayingCardWithTarget
                 label="Performance Leads"
-                className="tw-col-span-2"
+                value={performanceLeadsCount.count}
+                target={1 + performanceLeadsCount.count * 1.3}
+                explanation="Number of leads recorded through performance campaigns"
                 type={ValueDisplayingCardInformationType.integer}
             />
 
-            <Card
-                information={numberToHumanFriendlyString(performanceLeadsCpl.cpl, true)}
+            <SmallValueDisplayingCardWithTarget
                 label="Performance Leads CPL"
-                metaInformation={performanceLeadsCpl.metaInformation}
-                metaQuery={performanceLeadsCpl.metaQuery}
-                className="tw-col-span-2"
+                value={performanceLeadsCpl.cpl}
+                target={1 + performanceLeadsCpl.cpl * 1.3}
+                explanation={`(Amount Spent / Leads Count) | Performance = ${numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
+                    performanceLeadsCount.count
+                )}`}
+                type={ValueDisplayingCardInformationType.float}
             />
 
-            <Card
-                information={numberToHumanFriendlyString(performanceLeadsSpl.spl, true)}
+            <SmallValueDisplayingCardWithTarget
                 label="Performance Leads SPL"
-                metaInformation={performanceLeadsSpl.metaInformation}
-                className="tw-col-span-2"
+                value={performanceLeadsSpl.spl}
+                target={performanceLeadsSpl.spl * 1.3}
+                explanation={`(Leads Sales / Leads Count) | Performance = ${numberToHumanFriendlyString(performanceLeads.netSalesDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
+                    performanceLeadsCount.count
+                )}`}
+                type={ValueDisplayingCardInformationType.float}
             />
 
-            <Card
-                information={numberToHumanFriendlyString(performanceLeadsAcos.acos, true, true, true)}
+            <SmallValueDisplayingCardWithTarget
                 label="Performance Leads ACoS"
-                metaInformation={performanceLeadsAcos.metaInformation}
-                className="tw-col-span-2"
+                value={performanceLeadsAcos.acos}
+                target={1 + performanceLeadsAcos.acos * 1.3}
+                explanation={`(Amount Spent / Net Sales) | Performance = ${numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer))} / ${numberToHumanFriendlyString(
+                    performanceLeads.netSalesDayWise.reduce(sumReducer)
+                )}`}
+                type={ValueDisplayingCardInformationType.percentage}
             />
 
-            <ValueDisplayingCard
-                queryInformation={facebookLeadsCount}
-                contentExtractor={(facebookLeadsCount: any) => facebookLeadsCount.count}
+            <SmallValueDisplayingCardWithTarget
                 label="Facebook Leads"
-                className="tw-col-span-2"
+                value={facebookLeadsCount.count}
+                target={1 + facebookLeadsCount.count * 1.3}
+                explanation="Number of leads recorded through facebook campaigns"
                 type={ValueDisplayingCardInformationType.integer}
             />
 
-            <Card
-                information={numberToHumanFriendlyString(facebookLeadsCpl.cpl, true)}
+            <SmallValueDisplayingCardWithTarget
                 label="Facebook Leads CPL"
-                metaInformation={facebookLeadsCpl.metaInformation}
-                metaQuery={facebookLeadsCpl.metaQuery}
-                className="tw-col-span-2"
+                value={facebookLeadsCpl.cpl}
+                target={1 + facebookLeadsCpl.cpl * 1.3}
+                explanation={`(Amount Spent / Leads Count) | Facebook = ${numberToHumanFriendlyString(facebookLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
+                    facebookLeadsCount.count
+                )}`}
+                type={ValueDisplayingCardInformationType.float}
             />
 
-            <Card information={numberToHumanFriendlyString(facebookLeadsSpl.spl, true)} label="Facebook Leads SPL" metaInformation={facebookLeadsSpl.metaInformation} className="tw-col-span-2" />
+            <SmallValueDisplayingCardWithTarget
+                label="Facebook Leads SPL"
+                value={facebookLeadsSpl.spl}
+                target={1 + facebookLeadsSpl.spl * 1.3}
+                explanation={`(Leads Sales / Leads Count) | Facebook = ${numberToHumanFriendlyString(facebookLeads.netSalesDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
+                    facebookLeadsCount.count
+                )}`}
+                type={ValueDisplayingCardInformationType.float}
+            />
 
-            <Card
-                information={numberToHumanFriendlyString(facebookLeadsAcos.acos, true, true, true)}
+            <SmallValueDisplayingCardWithTarget
                 label="Facebook Leads ACoS"
-                metaInformation={facebookLeadsAcos.metaInformation}
-                className="tw-col-span-2"
+                value={facebookLeadsAcos.acos}
+                target={1 + facebookLeadsAcos.acos * 1.3}
+                explanation={`(Amount Spent / Net Sales) | Facebook = ${numberToHumanFriendlyString(facebookLeads.amountSpentDayWise.reduce(sumReducer))} / ${numberToHumanFriendlyString(
+                    facebookLeads.netSalesDayWise.reduce(sumReducer)
+                )}`}
+                type={ValueDisplayingCardInformationType.percentage}
             />
 
             <Tabs.Root defaultValue="1" className="tw-col-span-12">
-                <Tabs.List className="">
-                    <Tabs.Trigger value="1" className="lp-tab">
+                <Tabs.List>
+                    <Tabs.Trigger value="1" className="lp-tab tw-rounded-tl-md">
                         Distribution
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="2" className="lp-tab">
+                    <Tabs.Trigger value="2" className="lp-tab tw-rounded-tr-md">
                         Raw Data
                     </Tabs.Trigger>
                 </Tabs.List>
                 <Tabs.Content value="1">
                     <div className="tw-grid">
                         <GenericCard
+                            className="tw-rounded-tl-none"
                             content={
                                 <div className="tw-grid tw-grid-cols-4">
                                     <div className="tw-row-start-1 tw-col-start-2 tw-col-span-2 tw-grid">
@@ -654,12 +666,12 @@ function LeadsSection({
                                 </div>
                             }
                             metaQuery={freshsalesLeadsData.metaQuery}
-                        ></GenericCard>
+                        />
                     </div>
                 </Tabs.Content>
                 <Tabs.Content value="2">
                     <GenericCard
-                        className="tw-col-span-12"
+                        className="tw-rounded-tl-none"
                         content={
                             <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
                                 <AgGridReact
@@ -848,43 +860,80 @@ function OrdersSection({
 
     return (
         <>
-            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Orders</div>
+            <SectionHeader label="Orders" />
 
-            <ValueDisplayingCard
-                queryInformation={r2_totalOrdersCount}
-                contentExtractor={(r2_totalOrdersCount: any) => r2_totalOrdersCount.count}
+            <LargeValueDisplayingCardWithTarget
                 label="Total Orders"
-                className="tw-row-span-2 tw-col-span-4"
+                value={r2_totalOrdersCount.count}
+                target={1 + r2_totalOrdersCount.count * 1.3}
+                explanation="Total number of units orders recorded on Shopify"
                 type={ValueDisplayingCardInformationType.integer}
             />
 
-            <Card information={numberToHumanFriendlyString(directOrdersTotalCount)} label="Direct Orders" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />
+            <SmallValueDisplayingCardWithTarget
+                label="Direct Orders"
+                value={directOrdersTotalCount}
+                target={1 + directOrdersTotalCount * 1.3}
+                explanation="Number of orders placed that did not require human intervention"
+                type={ValueDisplayingCardInformationType.integer}
+            />
 
-            <Card information={numberToHumanFriendlyString(r2_directOrdersAov.aov, true)} label="AOV" metaInformation={r2_directOrdersAov.metaInformation} className="tw-col-span-2" />
+            <SmallValueDisplayingCardWithTarget
+                label="AOV"
+                value={r2_directOrdersAov.aov}
+                target={1 + r2_directOrdersAov.aov * 1.3}
+                explanation={`(Orders Revenue / Orders Count) | Direct = ${numberToHumanFriendlyString(directOrdersNetSales)} / ${numberToHumanFriendlyString(directOrdersTotalCount)}`}
+                type={ValueDisplayingCardInformationType.float}
+            />
 
-            <Card information={numberToHumanFriendlyString(r2_directOrdersDrr.drr, true)} label="DRR" metaInformation={r2_directOrdersDrr.metaInformation} className="tw-col-span-2" />
+            <SmallValueDisplayingCardWithTarget
+                label="DRR"
+                value={r2_directOrdersDrr.drr}
+                target={1 + r2_directOrdersDrr.drr * 1.3}
+                explanation={`(Total Orders / Number of Days) | Direct = ${numberToHumanFriendlyString(directOrdersTotalCount)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`}
+                type={ValueDisplayingCardInformationType.float}
+            />
 
             <div className="tw-col-span-2" />
 
-            <Card information={numberToHumanFriendlyString(assistedOrdersTotalCount)} label="Assisted Orders" metaQuery={shopifyData.metaQuery} className="tw-col-span-2" />
+            <SmallValueDisplayingCardWithTarget
+                label="Assisted Orders"
+                value={assistedOrdersTotalCount}
+                target={1 + assistedOrdersTotalCount * 1.3}
+                explanation="Number of orders placed that did not require human intervention"
+                type={ValueDisplayingCardInformationType.integer}
+            />
 
-            <Card information={numberToHumanFriendlyString(r2_assistedOrdersAov.aov, true)} label="AOV" metaInformation={r2_assistedOrdersAov.metaInformation} className="tw-col-span-2" />
+            <SmallValueDisplayingCardWithTarget
+                label="AOV"
+                value={r2_assistedOrdersAov.aov}
+                target={1 + r2_assistedOrdersAov.aov * 1.3}
+                explanation={`(Orders Revenue / Orders Count) | Assisted = ${numberToHumanFriendlyString(assistedOrdersNetSales)} / ${numberToHumanFriendlyString(assistedOrdersTotalCount)}`}
+                type={ValueDisplayingCardInformationType.float}
+            />
 
-            <Card information={numberToHumanFriendlyString(r2_assistedOrdersDrr.drr, true)} label="DRR" metaInformation={r2_assistedOrdersDrr.metaInformation} className="tw-col-span-2" />
+            <SmallValueDisplayingCardWithTarget
+                label="DRR"
+                value={r2_assistedOrdersDrr.drr}
+                target={1 + r2_assistedOrdersDrr.drr * 1.3}
+                explanation={`(Total Orders / Number of Days) | Assisted = ${numberToHumanFriendlyString(assistedOrdersTotalCount)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`}
+                type={ValueDisplayingCardInformationType.float}
+            />
 
             <div className="tw-col-span-2" />
 
             <Tabs.Root defaultValue="1" className="tw-col-span-12">
                 <Tabs.List>
-                    <Tabs.Trigger value="1" className="lp-tab">
+                    <Tabs.Trigger value="1" className="lp-tab tw-rounded-tl-md">
                         Distribution
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="2" className="lp-tab">
+                    <Tabs.Trigger value="2" className="lp-tab tw-rounded-tr-md">
                         Raw Data
                     </Tabs.Trigger>
                 </Tabs.List>
                 <Tabs.Content value="1">
                     <GenericCard
+                        className="tw-rounded-tl-none"
                         content={
                             <div className="tw-grid tw-grid-cols-4">
                                 <div className="tw-col-start-2 tw-col-span-2">
@@ -897,6 +946,7 @@ function OrdersSection({
                 </Tabs.Content>
                 <Tabs.Content value="2">
                     <GenericCard
+                        className="tw-rounded-tl-none"
                         content={
                             <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
                                 <AgGridReact
@@ -1074,45 +1124,50 @@ function RevenueSection({
 
     return (
         <>
-            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Revenue</div>
+            <SectionHeader label="Revenue" />
 
-            <Card
-                information={numberToHumanFriendlyString(r3_totalNetRevenue.netRevenue)}
+            <LargeValueDisplayingCardWithTarget
                 label="Net Revenue"
-                metaInformation={r3_totalNetRevenue.metaInformation}
-                className="tw-row-span-2 tw-col-span-4"
+                value={r3_totalNetRevenue.netRevenue}
+                target={1 + r3_totalNetRevenue.netRevenue * 1.3}
+                explanation="Post-taxation revenue"
+                type={ValueDisplayingCardInformationType.float}
             />
 
-            <Card
-                information={numberToHumanFriendlyString(directOrdersGrossRevenue.grossRevenueDayWise.reduce(sumReducer, 0), true)}
-                label="Direct Gross Revenue"
-                metaQuery={shopifyData.metaQuery}
-                className="tw-col-span-2"
+            <SmallValueDisplayingCardWithTarget
+                label="Gross Direct Revenue"
+                value={directOrdersGrossRevenue.grossRevenueDayWise.reduce(sumReducer, 0)}
+                target={1 + directOrdersGrossRevenue.grossRevenueDayWise.reduce(sumReducer, 0) * 1.3}
+                explanation="Pre-taxation revenue from direct orders"
+                type={ValueDisplayingCardInformationType.float}
             />
 
-            <Card
-                information={numberToHumanFriendlyString(r3_directOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0), true)}
-                label="Net Direct Revenue"
-                metaInformation={r3_directOrdersNetRevenue.metaInformation}
-                className="tw-col-span-2"
+            <SmallValueDisplayingCardWithTarget
+                label="Net Gross Revenue"
+                value={r3_directOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0)}
+                target={1 + r3_directOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0) * 1.3}
+                explanation="Post-taxation revenue from direct orders"
+                type={ValueDisplayingCardInformationType.float}
             />
 
             <div className="tw-col-span-2" />
 
             <div className="tw-col-span-2" />
 
-            <Card
-                information={numberToHumanFriendlyString(assistedOrdersGrossRevenue.grossRevenueDayWise.reduce(sumReducer, 0), true)}
-                label="Assisted Gross Revenue"
-                metaQuery={shopifyData.metaQuery}
-                className="tw-col-span-2"
+            <SmallValueDisplayingCardWithTarget
+                label="Gross Assisted Revenue"
+                value={assistedOrdersGrossRevenue.grossRevenueDayWise.reduce(sumReducer, 0)}
+                target={1 + assistedOrdersGrossRevenue.grossRevenueDayWise.reduce(sumReducer, 0) * 1.3}
+                explanation="Pre-taxation revenue from assisted orders"
+                type={ValueDisplayingCardInformationType.float}
             />
 
-            <Card
-                information={numberToHumanFriendlyString(r3_assistedOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0), true)}
+            <SmallValueDisplayingCardWithTarget
                 label="Net Assisted Revenue"
-                metaInformation={r3_assistedOrdersNetRevenue.metaInformation}
-                className="tw-col-span-2"
+                value={r3_assistedOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0)}
+                target={1 + r3_assistedOrdersNetRevenue.netRevenueDayWise.reduce(sumReducer, 0) * 1.3}
+                explanation="Post-taxation revenue from assisted orders"
+                type={ValueDisplayingCardInformationType.float}
             />
 
             <div className="tw-col-span-2" />
@@ -1120,19 +1175,20 @@ function RevenueSection({
             <div className="tw-col-span-2" />
 
             <Tabs.Root defaultValue="1" className="tw-col-span-12">
-                <Tabs.List className="">
-                    <Tabs.Trigger value="1" className="lp-tab">
+                <Tabs.List>
+                    <Tabs.Trigger value="1" className="lp-tab tw-rounded-tl-md">
                         Gross Revenue
                     </Tabs.Trigger>
                     <Tabs.Trigger value="2" className="lp-tab">
                         Net Revenue
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="3" className="lp-tab">
+                    <Tabs.Trigger value="3" className="lp-tab tw-rounded-tr-md">
                         Raw Data
                     </Tabs.Trigger>
                 </Tabs.List>
                 <Tabs.Content value="1">
                     <GenericCard
+                        className="tw-rounded-tl-none"
                         content={
                             <div className="tw-grid tw-grid-cols-4">
                                 <div className="tw-col-start-2 tw-col-span-2">
@@ -1146,6 +1202,7 @@ function RevenueSection({
                 </Tabs.Content>
                 <Tabs.Content value="2">
                     <GenericCard
+                        className="tw-rounded-tl-none"
                         content={
                             <div className="tw-grid tw-grid-cols-4">
                                 <div className="tw-col-start-2 tw-col-span-2">
@@ -1159,6 +1216,7 @@ function RevenueSection({
                 </Tabs.Content>
                 <Tabs.Content value="3">
                     <GenericCard
+                        className="tw-rounded-tl-none"
                         content={
                             <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
                                 <AgGridReact
@@ -1245,30 +1303,21 @@ function SpendSection({
         ),
     };
 
-    const r4_googleAdsRevenue = {
-        netSales: googleAds.netSalesDayWise.reduce(sumReducer, 0),
-    };
+    const googleAdsNetSales = googleAds.netSalesDayWise.reduce(sumReducer, 0);
 
-    const googleAdsSpends = {
-        amountSpent: googleAds.amountSpentDayWise.reduce(sumReducer, 0),
-    };
+    const googleAdsAmountSpent = googleAds.amountSpentDayWise.reduce(sumReducer, 0);
 
-    const r4_googleAdsLiveCampaignsCount = {
-        count: distinct(filterAdsData.filter((row) => row.platform == "Google" && row.amountSpent > 0).map((row) => row.campaignName)).length,
-    };
+    const googleAdsLiveCampaignsCount: number = distinct(filterAdsData.filter((row) => row.platform == "Google" && row.amountSpent > 0).map((row) => row.campaignName)).length;
 
-    const r4_googleAdsDailySpend = {
-        metaInformation: `Total Spend / Number of Days | Google = ${googleAdsSpends.amountSpent} / ${numberOfSelectedDays}`,
-        amountSpent: googleAdsSpends.amountSpent / numberOfSelectedDays,
-    };
+    const googleAdsDailyAmountSpent = googleAdsAmountSpent / numberOfSelectedDays;
 
     const r4_googleAdsAcos = {
-        metaInformation: `Total Spend / Revenue | Google = ${googleAdsSpends.amountSpent} / ${r4_googleAdsRevenue.netSales}`,
-        acos: r4_googleAdsRevenue.netSales == 0 ? 0 : googleAdsSpends.amountSpent / r4_googleAdsRevenue.netSales,
+        metaInformation: `Total Spend / Revenue | Google = ${googleAdsAmountSpent} / ${googleAdsNetSales}`,
+        acos: googleAdsNetSales == 0 ? 0 : googleAdsAmountSpent / googleAdsNetSales,
         dayWiseAcos: googleAds.amountSpentDayWise.map((value, index) => (googleAds.netSalesDayWise[index] == 0 ? 0 : value / googleAds.netSalesDayWise[index])),
     };
 
-    // Facebook Spends
+    // Facebook Ads
     const facebookAds = {
         amountSpentDayWise: aggregateByDate(
             filterAdsData.filter((row) => row.platform == "Facebook"),
@@ -1282,27 +1331,23 @@ function SpendSection({
         ),
     };
 
-    const r4_facebookAdsRevenue = {
-        netSales: facebookAds.netSalesDayWise.reduce(sumReducer, 0),
-    };
+    const facebookAdsNetSales = facebookAds.netSalesDayWise.reduce(sumReducer, 0);
 
-    const facebookAdsSpends = {
-        amountSpent: facebookAds.amountSpentDayWise.reduce(sumReducer, 0),
-    };
+    const facebookAdsAmountSpent = facebookAds.amountSpentDayWise.reduce(sumReducer, 0);
 
-    const r4_facebookAdsLiveCampaignsCount = {
-        count: distinct(filterAdsData.filter((row) => row.platform == "Facebook" && row.amountSpent > 0).map((row) => row.campaignName)).length,
-    };
+    const facebookAdsLiveCampaignsCount: number = distinct(filterAdsData.filter((row) => row.platform == "Facebook" && row.amountSpent > 0).map((row) => row.campaignName)).length;
+
+    const facebookAdsDailyAmountSpent = facebookAdsAmountSpent / numberOfSelectedDays;
 
     const r4_facebookAdsAcos = {
-        metaInformation: `Total Spend / Revenue | Facebook = ${facebookAdsSpends.amountSpent} / ${r4_facebookAdsRevenue.netSales}`,
-        acos: facebookAdsSpends.amountSpent / r4_facebookAdsRevenue.netSales,
+        metaInformation: `Total Spend / Revenue | Facebook = ${facebookAdsAmountSpent} / ${facebookAdsNetSales}`,
+        acos: facebookAdsAmountSpent / facebookAdsNetSales,
         dayWiseAcos: facebookAds.amountSpentDayWise.map((value, index) => (facebookAds.netSalesDayWise[index] == 0 ? 0 : value / facebookAds.netSalesDayWise[index])),
     };
 
-    const r4_facebookAdsDailySpend = {
-        metaInformation: `Total Spend / Number of Days | Facebook = ${facebookAdsSpends.amountSpent} / ${numberOfSelectedDays}`,
-        amountSpent: facebookAdsSpends.amountSpent / numberOfSelectedDays,
+    const facebookAdsDailySpend = {
+        metaInformation: `Total Spend / Number of Days | Facebook = ${facebookAdsAmountSpent} / ${numberOfSelectedDays}`,
+        amountSpent: facebookAdsAmountSpent / numberOfSelectedDays,
     };
 
     // Data Table for daywise distribution
@@ -1319,8 +1364,8 @@ function SpendSection({
     }, {});
 
     const r4_netSpends = {
-        metaInformation: `Facebook Ads Spends + Google Ads Spends = ${facebookAdsSpends.amountSpent} + ${googleAdsSpends.amountSpent}`,
-        amountSpent: facebookAdsSpends.amountSpent + googleAdsSpends.amountSpent,
+        metaInformation: `Facebook Ads Spends + Google Ads Spends = ${facebookAdsAmountSpent} + ${googleAdsAmountSpent}`,
+        amountSpent: facebookAdsAmountSpent + googleAdsAmountSpent,
     };
 
     ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -1357,47 +1402,92 @@ function SpendSection({
 
     return (
         <>
-            <div className="tw-col-span-12 tw-text-[3rem] tw-text-center">Spend</div>
+            <SectionHeader label="Spend" />
 
-            <Card information={numberToHumanFriendlyString(r4_netSpends.amountSpent)} label="Net Spend" metaInformation={r4_netSpends.metaInformation} className="tw-row-span-2 tw-col-span-4" />
-
-            <Card information={numberToHumanFriendlyString(facebookAdsSpends.amountSpent)} label="Facebook Ads" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r4_facebookAdsLiveCampaignsCount.count)} label="Live Campaigns" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
-
-            <Card
-                information={numberToHumanFriendlyString(r4_facebookAdsDailySpend.amountSpent, true)}
-                label="Daily Spend"
-                metaInformation={r4_facebookAdsDailySpend.metaInformation}
-                className="tw-col-span-2"
+            <LargeValueDisplayingCardWithTarget
+                label="Net Spend"
+                value={r4_netSpends.amountSpent}
+                target={1 + r4_netSpends.amountSpent * 1.3}
+                explanation={`Facebook Ads Spends + Google Ads Spends = ${facebookAdsAmountSpent} + ${googleAdsAmountSpent}`}
+                type={ValueDisplayingCardInformationType.integer}
             />
 
-            <Card information={numberToHumanFriendlyString(r4_facebookAdsAcos.acos, true, true, true)} label="ACoS" metaInformation={r4_facebookAdsAcos.metaInformation} className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(googleAdsSpends.amountSpent)} label="Google Ads" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
-
-            <Card information={numberToHumanFriendlyString(r4_googleAdsLiveCampaignsCount.count)} label="Live Campaigns" metaQuery={adsData.metaQuery} className="tw-col-span-2" />
-
-            <Card
-                information={numberToHumanFriendlyString(r4_googleAdsDailySpend.amountSpent, true)}
-                label="Daily Spend"
-                metaInformation={r4_googleAdsDailySpend.metaInformation}
-                className="tw-col-span-2"
+            <SmallValueDisplayingCardWithTarget
+                label="Facebook Ads Amount Spent"
+                value={facebookAdsAmountSpent}
+                target={1 + facebookAdsAmountSpent * 1.3}
+                explanation="Amount spent on Facebook ads"
+                type={ValueDisplayingCardInformationType.float}
             />
 
-            <Card information={numberToHumanFriendlyString(r4_googleAdsAcos.acos, true, true, true)} label="ACoS" metaInformation={r4_googleAdsAcos.metaInformation} className="tw-col-span-2" />
+            <SmallValueDisplayingCardWithTarget
+                label="Live Campaigns"
+                value={facebookAdsLiveCampaignsCount}
+                target={1 + facebookAdsLiveCampaignsCount * 1.3}
+                explanation="Number of ads run on Facebook"
+                type={ValueDisplayingCardInformationType.integer}
+            />
+
+            <SmallValueDisplayingCardWithTarget
+                label="Daily Spend"
+                value={facebookAdsDailyAmountSpent}
+                target={1 + facebookAdsDailyAmountSpent * 1.3}
+                explanation={`(Total Spend / Number of Days) | Facebook = ${facebookAdsAmountSpent} / ${numberOfSelectedDays}`}
+                type={ValueDisplayingCardInformationType.float}
+            />
+
+            <SmallValueDisplayingCardWithTarget
+                label="ACoS"
+                value={r4_facebookAdsAcos.acos}
+                target={1 + r4_facebookAdsAcos.acos * 1.3}
+                explanation={`(Total Spend / Revenue) | Facebook = ${facebookAdsAmountSpent} / ${facebookAdsNetSales}`}
+                type={ValueDisplayingCardInformationType.percentage}
+            />
+
+            <SmallValueDisplayingCardWithTarget
+                label="Google Ads Amount Spent"
+                value={googleAdsAmountSpent}
+                target={1 + googleAdsAmountSpent * 1.3}
+                explanation="Amount spent on Google ads"
+                type={ValueDisplayingCardInformationType.float}
+            />
+
+            <SmallValueDisplayingCardWithTarget
+                label="Live Campaigns"
+                value={googleAdsLiveCampaignsCount}
+                target={1 + googleAdsLiveCampaignsCount * 1.3}
+                explanation="Number of ads run on Google"
+                type={ValueDisplayingCardInformationType.integer}
+            />
+
+            <SmallValueDisplayingCardWithTarget
+                label="Daily Spend"
+                value={googleAdsDailyAmountSpent}
+                target={1 + googleAdsDailyAmountSpent * 1.3}
+                explanation={`(Total Spend / Number of Days) | Google = ${googleAdsAmountSpent} / ${numberOfSelectedDays}`}
+                type={ValueDisplayingCardInformationType.float}
+            />
+
+            <SmallValueDisplayingCardWithTarget
+                label="ACoS"
+                value={r4_googleAdsAcos.acos}
+                target={1 + r4_googleAdsAcos.acos * 1.3}
+                explanation={`(Total Spend / Revenue) | Google = ${googleAdsAmountSpent} / ${googleAdsNetSales}`}
+                type={ValueDisplayingCardInformationType.percentage}
+            />
 
             <Tabs.Root defaultValue="1" className="tw-col-span-12">
-                <Tabs.List className="">
-                    <Tabs.Trigger value="1" className="lp-tab">
+                <Tabs.List>
+                    <Tabs.Trigger value="1" className="lp-tab tw-rounded-tl-md">
                         Distribution
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="2" className="lp-tab">
+                    <Tabs.Trigger value="2" className="lp-tab tw-rounded-tr-md">
                         Raw Data
                     </Tabs.Trigger>
                 </Tabs.List>
                 <Tabs.Content value="1">
                     <GenericCard
+                        className="tw-rounded-tl-none"
                         content={
                             <div className="tw-grid tw-grid-cols-4">
                                 <div className="tw-col-start-2 tw-col-span-2">
@@ -1410,6 +1500,7 @@ function SpendSection({
                 </Tabs.Content>
                 <Tabs.Content value="2">
                     <GenericCard
+                        className="tw-rounded-tl-none"
                         content={
                             <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
                                 <AgGridReact
@@ -1424,12 +1515,12 @@ function SpendSection({
                                     }))}
                                     columnDefs={[
                                         {headerName: "Date", valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date), filter: "agDateColumnFilter", comparator: agGridDateComparator},
-                                        {headerName: "Google-Ads Amount Spent", field: "googleAdsAmountSpent"},
-                                        {headerName: "Google-Ads Net Sales", field: "googleAdsNetSales"},
-                                        {headerName: "Google-Ads ACoS", field: "googleAdsAcos"},
-                                        {headerName: "Facebook-Ads Amount Spent", field: "facebookAdsAmountSpent"},
-                                        {headerName: "Facebook-Ads Net Sales", field: "facebookAdsNetSales"},
-                                        {headerName: "Facebook-Ads ACoS", field: "facebookAdsAcos"},
+                                        {headerName: "Google Ads Amount Spent", field: "googleAdsAmountSpent"},
+                                        {headerName: "Google Ads Net Sales", field: "googleAdsNetSales"},
+                                        {headerName: "Google Ads ACoS", field: "googleAdsAcos"},
+                                        {headerName: "Facebook Ads Amount Spent", field: "facebookAdsAmountSpent"},
+                                        {headerName: "Facebook Ads Net Sales", field: "facebookAdsNetSales"},
+                                        {headerName: "Facebook Ads ACoS", field: "facebookAdsAcos"},
                                     ]}
                                     defaultColDef={defaultColumnDefinitions}
                                     animateRows={true}

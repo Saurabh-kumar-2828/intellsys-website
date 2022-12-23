@@ -21,15 +21,12 @@ import {Card, DateFilterSection, FancyCalendar, FancySearchableMultiSelect, Fanc
 import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
     agGridDateComparator,
-    agGridFloatComparator,
-    colorPalette,
-    concatenateNonNullStringsWithAmpersand,
     dateToMediumNoneEnFormat,
     defaultColumnDefinitions,
     distinct,
-    fillColors,
     getColor,
     getDates,
+    getNonEmptyStringOrNull,
     kvpArrayToObjectReducer,
     numberToHumanFriendlyString,
     roundOffToTwoDigits,
@@ -59,7 +56,8 @@ export const links: LinksFunction = () => {
 export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;
 
-    const selectedGranularityRaw = urlSearchParams.get("selected_granularity");
+    // TODO: Make a function for parsing this, including handling invalid values
+    const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
     let selectedGranularity: TimeGranularity;
     if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
         selectedGranularity = TimeGranularity.daily;
@@ -131,7 +129,7 @@ export default function () {
                     setSelectedMinDate={setSelectedMinDate}
                     selectedMaxDate={selectedMaxDate}
                     setSelectedMaxDate={setSelectedMaxDate}
-                    page={"leads-report"}
+                    page="leads-report"
                 />
 
                 <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
@@ -230,7 +228,8 @@ function LeadsSection({
             },
             title: {
                 display: true,
-                text: "Day-wise distribution -> Total Leads per status",
+                // TODO: Highlight the arrow to Ambika
+                text: "Day-wise distribution → Total Leads per status",
             },
         },
     };

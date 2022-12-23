@@ -69,13 +69,16 @@ export const loader: LoaderFunction = async () => {
         ],
         "dimensions": [
           {
-            "name": "country"
+            "name":"countryId"
+          },
+          {
+            "name":"deviceCategory"
           }
         ],
         "metrics": [
           {
             "name": 'activeUsers',
-          },
+          }
         ],
       });
 

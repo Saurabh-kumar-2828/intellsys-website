@@ -582,7 +582,7 @@ function LeadsSection({
                     performanceLeadsCount.count
                 )}`}
                 type={ValueDisplayingCardInformationType.float}
-
+                equivalentQuery={``}
             />
 
             <SmallValueDisplayingCardWithTarget
@@ -731,21 +731,21 @@ function LeadsSection({
                                             headerName: "Performance Leads CPL",
                                             field: "performanceLeadsCpl",
                                             cellRenderer: "progressCellRenderer",
-                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.cpl},
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
                                             cellClass: "!tw-px-0",
                                         },
                                         {
                                             headerName: "Performance Leads SPL",
                                             field: "performanceLeadsSpl",
                                             cellRenderer: "progressCellRenderer",
-                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.spl},
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceSpl},
                                             cellClass: "!tw-px-0",
                                         },
                                         {
                                             headerName: "Performance Leads ACoS",
                                             field: "performanceLeadsAcos",
                                             cellRenderer: "progressCellRenderer",
-                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.acos},
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceAcos},
                                             cellClass: "!tw-px-0",
                                         },
                                         {
@@ -766,21 +766,21 @@ function LeadsSection({
                                             headerName: "Facebook Leads CPL",
                                             field: "facebookLeadsCpl",
                                             cellRenderer: "progressCellRenderer",
-                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.cpl},
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.facebookCpl},
                                             cellClass: "!tw-px-0",
                                         },
                                         {
                                             headerName: "Facebook Leads SPL",
                                             field: "facebookLeadsSpl",
                                             cellRenderer: "progressCellRenderer",
-                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.spl},
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.facebookSpl},
                                             cellClass: "!tw-px-0",
                                         },
                                         {
                                             headerName: "Facebook Leads ACoS",
                                             field: "facebookLeadsAcos",
                                             cellRenderer: "progressCellRenderer",
-                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.acos},
+                                            cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.facebookAcos},
                                             cellClass: "!tw-px-0",
                                         },
                                         {

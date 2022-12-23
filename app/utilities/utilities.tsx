@@ -238,13 +238,13 @@ export const adsColorPalette = {
     performanceCount: "rgba(255, 165, 0, 0.4)",
     facebookCount: "rgba(0, 162, 237, 0.4)",
     performanceCpl: "#1B671B",
-    // facebookCpl:
-    // // performanceSpl: "#67671B",
-    // facebookSpl:
-    // performanceAcos: "#721919",
-    // facebookAcos
-    // performanceNetSales
-    // facebookNetSales: "#67671B"
+    facebookCpl: " #008000",
+    performanceSpl: "#FFFF00",
+    facebookSpl: " #FFCC00",
+    performanceAcos: "#FF0000",
+    facebookAcos: "#B30000",
+    netSales:"#FFFF00"
+
 
 };
 

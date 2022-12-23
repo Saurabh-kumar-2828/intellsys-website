@@ -1,12 +1,8 @@
-import type {MetaFunction, LoaderFunction, ActionFunction} from "@remix-run/node";
+import type {LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
-import {Form, useLoaderData} from "@remix-run/react";
-import {getMissingCampaigns, getMissingProducts, getMissingSources} from "~/backend/dashboard-health-monitoring";
-import {Card, GenericCard} from "~/components/scratchpad";
-import {dateToMediumNoneEnFormat, numberToHumanFriendlyString} from "~/utilities/utilities";
-import {FileInputField} from "~/components/reusableComponents/fileInputField";
-import {useState} from "react";
-import {fullRefresh, Operation, processFileUpload, processTruncate, Table} from "~/backend/data-management";
+import {useLoaderData} from "@remix-run/react";
+import {CampaignLibraryRow, CapturedUtmCampaignToCampaignNameRow, getMissingCampaigns, getMissingProducts, getMissingSources, ProductLibraryRow} from "~/backend/dashboard-health-monitoring";
+import {GenericCard, SectionHeader} from "~/components/scratchpad";
 
 export const meta: MetaFunction = () => {
     return {
@@ -14,8 +10,14 @@ export const meta: MetaFunction = () => {
     };
 };
 
+type LoaderData = {
+    missingCampaigns: Array<CampaignLibraryRow>;
+    missingProducts: Array<ProductLibraryRow>;
+    missingSources: Array<CapturedUtmCampaignToCampaignNameRow>;
+};
+
 export const loader: LoaderFunction = async ({request}) => {
-    return json({
+    const loaderData: LoaderData = {
         missingCampaigns: await getMissingCampaigns(),
         // missingCampaignNamesFromFacebookAds: await getMissingCampaignNamesFromFacebookAds(),
         // missingCampaignNamesFromGoogleAds: await getMissingCampaignNamesFromGoogleAds(),
@@ -24,7 +26,9 @@ export const loader: LoaderFunction = async ({request}) => {
         missingSources: await getMissingSources(),
         // missingSourceDetailsFromShopifySalesToSourceWithInformation: await getMissingSourceDetailsFromShopifySalesToSourceWithInformation(),
         // missingSourceDetailsFromFreshsalesLeadsToSourceWithInformation: await getMissingSourceDetailsFromFreshsalesLeadsToSourceWithInformation(),
-    });
+    };
+
+    return json(loaderData);
 };
 
 export default function () {
@@ -37,33 +41,33 @@ export default function () {
         missingSources,
         // missingSourceDetailsFromShopifySalesToSourceWithInformation,
         // missingSourceDetailsFromFreshsalesLeadsToSourceWithInformation,
-    } = useLoaderData();
+    } = useLoaderData() as LoaderData;
 
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
+            <SectionHeader label="Campaigns with Missing Information" />
+
             <GenericCard
                 content={
-                    missingCampaigns.rows.length == 0 ? (
+                    missingCampaigns.length == 0 ? (
                         <div>Everything working as expected</div>
                     ) : (
                         <table>
                             <tr>
                                 <th className="tw-px-2">Campaign Name</th>
-                                <th className="tw-px-4 tw-text-center">Category</th>
                                 <th className="tw-px-4 tw-text-center">Platform</th>
+                                <th className="tw-px-4 tw-text-center">Category</th>
                             </tr>
-                            {missingCampaigns.rows.map((row, rowIndex) => (
+                            {missingCampaigns.map((row, rowIndex) => (
                                 <tr key={rowIndex}>
                                     <td>{row.campaignName}</td>
+                                    <td className="tw-text-center">{row.campaignPlatform}</td>
                                     <td className="tw-text-center">?</td>
-                                    <td className="tw-text-center">{row.platform}</td>
                                 </tr>
                             ))}
                         </table>
                     )
                 }
-                label="Campaigns with Missing Information"
-                metaQuery={missingCampaigns.metaQuery}
                 className="tw-col-span-12"
             />
 
@@ -119,9 +123,11 @@ export default function () {
                 className="tw-col-span-12"
             /> */}
 
+            <SectionHeader label="Products with Missing Information" />
+
             <GenericCard
                 content={
-                    missingProducts.rows.length == 0 ? (
+                    missingProducts.length == 0 ? (
                         <div>Everything working as expected</div>
                     ) : (
                         <table>
@@ -130,7 +136,7 @@ export default function () {
                                 <th className="tw-px-4 tw-text-center">Category</th>
                                 <th className="tw-px-4 tw-text-center">Sub-Category</th>
                             </tr>
-                            {missingProducts.rows.map((row, rowIndex) => (
+                            {missingProducts.map((row, rowIndex) => (
                                 <tr key={rowIndex}>
                                     <td>{row.productName}</td>
                                     <td className="tw-text-center">?</td>
@@ -140,8 +146,6 @@ export default function () {
                         </table>
                     )
                 }
-                label="Products with Missing Information"
-                metaQuery={missingProducts.metaQuery}
                 className="tw-col-span-12"
             />
 
@@ -171,9 +175,11 @@ export default function () {
                 className="tw-col-span-12"
             /> */}
 
+            <SectionHeader label="Unmapped utm_campaign" />
+
             <GenericCard
                 content={
-                    missingSources.rows.length == 0 ? (
+                    missingSources.length == 0 ? (
                         <div>Everything working as expected</div>
                     ) : (
                         <table>
@@ -181,17 +187,15 @@ export default function () {
                                 <th className="tw-px-2">Source</th>
                                 <th className="tw-px-4 tw-text-center">Campaign Name</th>
                             </tr>
-                            {missingSources.rows.map((row, rowIndex) => (
+                            {missingSources.map((row, rowIndex) => (
                                 <tr key={rowIndex}>
-                                    <td>{row.source}</td>
+                                    <td>{row.capturedUtmCampaign}</td>
                                     <td className="tw-text-center">?</td>
                                 </tr>
                             ))}
                         </table>
                     )
                 }
-                label="Sources with Missing Information"
-                metaQuery={missingSources.metaQuery}
                 className="tw-col-span-12"
             />
 

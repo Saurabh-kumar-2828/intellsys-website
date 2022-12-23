@@ -11,6 +11,7 @@ import {Bar, Line} from "react-chartjs-2";
 import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
 import {getCapturedUtmCampaignLibrary, getProductLibrary, ProductInformation, SourceInformation} from "~/backend/common";
 import {createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities";
+import progressCellRenderer from "~/components/progressCellRenderer";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import {
     Card,
@@ -422,11 +423,27 @@ function LeadsSection({
             performanceLeadsCpl: roundOffToTwoDigits(performanceLeadsCpl.dayWiseCpl[index]),
             performanceLeadsSpl: roundOffToTwoDigits(performanceLeadsSpl.dayWiseSpl[index]),
             performanceLeadsAcos: roundOffToTwoDigits(performanceLeadsAcos.dayWiseAcos[index]),
-            performanceLeadsnetSales: roundOffToTwoDigits(performanceLeads.netSalesDayWise[index]),
+            performanceLeadsNetSales: roundOffToTwoDigits(performanceLeads.netSalesDayWise[index]),
             facebookLeadsCount: roundOffToTwoDigits(facebookLeads.countDayWise[index]),
             facebookLeadsCpl: roundOffToTwoDigits(facebookLeadsCpl.dayWiseCpl[index]),
             facebookLeadsSpl: roundOffToTwoDigits(facebookLeadsSpl.dayWiseSpl[index]),
             facebookLeadsAcos: roundOffToTwoDigits(facebookLeadsAcos.dayWiseAcos[index]),
+            facebookLeadsNetSales: roundOffToTwoDigits(facebookLeads.netSalesDayWise[index]),
+        };
+        return result;
+    }, {});
+
+    const targetForLeadsDayWise = dates.reduce((result, curDate) => {
+        result[curDate] = {
+            performanceLeads: 700,
+            performanceLeadsCpl: 70,
+            performanceLeadsSpl: 800,
+            performanceLeadsAcos: 1,
+            performanceLeadsNetSales: 800000,
+            facebookLeads: 60,
+            facebookLeadsCpl: 1,
+            facebookLeadsSpl: 300,
+            facebookLeadsAcos: 1,
         };
         return result;
     }, {});
@@ -681,11 +698,12 @@ function LeadsSection({
                                         performanceLeadsCpl: dataTableForLeadsDayWise[date].performanceLeadsCpl,
                                         performanceLeadsSpl: dataTableForLeadsDayWise[date].performanceLeadsSpl,
                                         performanceLeadsAcos: dataTableForLeadsDayWise[date].performanceLeadsAcos,
-                                        performanceLeadsnetSales: dataTableForLeadsDayWise[date].performanceLeadsnetSales,
+                                        performanceLeadsNetSales: dataTableForLeadsDayWise[date].performanceLeadsNetSales,
                                         facebookLeads: dataTableForLeadsDayWise[date].facebookLeadsCount,
                                         facebookLeadsCpl: dataTableForLeadsDayWise[date].facebookLeadsCpl,
                                         facebookLeadsSpl: dataTableForLeadsDayWise[date].facebookLeadsSpl,
                                         facebookLeadsAcos: dataTableForLeadsDayWise[date].facebookLeadsAcos,
+                                        facebookLeadsNetSales: dataTableForLeadsDayWise[date].facebookLeadsNetSales,
                                     }))}
                                     columnDefs={[
                                         {
@@ -694,19 +712,23 @@ function LeadsSection({
                                             filter: "agDateColumnFilter",
                                             comparator: agGridDateComparator,
                                         },
-                                        {headerName: "Performance Leads Count", field: "performanceLeads"},
-                                        {headerName: "Performance Leads CPL", field: "performanceLeadsCpl"},
-                                        {headerName: "Performance Leads SPL", field: "performanceLeadsSpl"},
-                                        {headerName: "Performance Leads ACOS", field: "performanceLeadsAcos"},
-                                        {headerName: "Performance Leads NetSales", field: "performanceLeadsnetSales"},
-                                        {headerName: "Facebook Leads Count", field: "facebookLeads"},
-                                        {headerName: "Facebook Leads CPL", field: "facebookLeadsCpl"},
-                                        {headerName: "Facebook Leads SPL", field: "facebookLeadsSpl"},
-                                        {headerName: "Facebook Leads ACOS", field: "facebookLeadsAcos"},
+                                        {headerName: "Performance Leads Count", field: "performanceLeads", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#ffa500"}, cellClass: "!tw-px-0"},
+                                        {headerName: "Performance Leads CPL", field: "performanceLeadsCpl", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#1b671b"}, cellClass: "!tw-px-0"},
+                                        {headerName: "Performance Leads SPL", field: "performanceLeadsSpl", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#67671b"}, cellClass: "!tw-px-0"},
+                                        {headerName: "Performance Leads ACoS", field: "performanceLeadsAcos", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#721919"}, cellClass: "!tw-px-0"},
+                                        {headerName: "Performance Leads Net Sales", field: "performanceLeadsNetSales", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#ffa500"}, cellClass: "!tw-px-0"},
+                                        {headerName: "Facebook Leads Count", field: "facebookLeads", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#00a2ed"}, cellClass: "!tw-px-0"},
+                                        {headerName: "Facebook Leads CPL", field: "facebookLeadsCpl", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#1b671b"}, cellClass: "!tw-px-0"},
+                                        {headerName: "Facebook Leads SPL", field: "facebookLeadsSpl", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#67671b"}, cellClass: "!tw-px-0"},
+                                        {headerName: "Facebook Leads ACoS", field: "facebookLeadsAcos", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#721919"}, cellClass: "!tw-px-0"},
+                                        {headerName: "Facebook Leads Net Sales", field: "facebookLeadsNetSales", cellRenderer: "progressCellRenderer", cellRendererParams: {target: targetForLeadsDayWise, color: "#00a2ed"}, cellClass: "!tw-px-0"},
                                     ]}
                                     defaultColDef={defaultColumnDefinitions}
                                     animateRows={true}
                                     enableRangeSelection={true}
+                                    frameworkComponents={{
+                                        progressCellRenderer
+                                    }}
                                 />
                             </div>
                         }

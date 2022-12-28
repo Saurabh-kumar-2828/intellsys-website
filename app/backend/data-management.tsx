@@ -8,6 +8,7 @@ import {ingestDataFromShopifyApi, shopifyTableColumnInfos} from "~/backend/utili
 import {websitePopupFormResponsesRawColumnInfos} from "~/backend/utilities/data-management/websitePopupFormResponses.server";
 import {freshsalesColumnInfos, ingestDataFromFreshsalesApi} from "~/backend/utilities/data-management/freshsales.server";
 import {facebookAdsRawColumnInfos, ingestDataFromFacebookApi} from "~/backend/utilities/data-management/facebookAds.server";
+import { ingestDataFromGoogleAnalyticsApi } from "./utilities/data-management/googleAnalytics.server";
 
 export async function fullRefresh(): Promise<void> {
     const query = `
@@ -93,6 +94,9 @@ export enum Table {
     typeformResponsesMattressRaw,
     typeformResponsesWaterPurifierRaw,
     websitePopupFormResponsesRaw,
+
+    //TODO: For test purpose
+    googleAnalyticsAPI
 }
 
 // export function getNameForTable(table: Table): string {
@@ -234,7 +238,10 @@ export async function processIngestDataFromApi(table: Table, date: string): Prom
         await ingestDataFromTypeformWaterPurifierApi(date);
     // } else if (table == Table.websitePopupFormResponsesRaw) {
     //     await truncateTable("website_popup_form_responses_raw");
-    } else {
+    } else if(table == Table.googleAnalyticsAPI){
+        await ingestDataFromGoogleAnalyticsApi("2022-12-12", "2022-12-25");
+    }
+    else {
         throw new Response(null, {status: 400});
     }
 }

@@ -750,6 +750,15 @@ export default function () {
                     </button>
                 </Form>
 
+                {/* For Test Purpose */}
+                <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
+                    <input type="text" name="table" value={Table.googleAnalyticsAPI} readOnly className="tw-hidden" />
+                    <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
+                    <button className="tw-lp-button">
+                        Fetch Data From Google Analytics API
+                    </button>
+                </Form>
+
                 <Form method="post" className="tw-col-span-12 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
                     <input type="text" name="table" value="" readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.refresh} readOnly className="tw-hidden" />

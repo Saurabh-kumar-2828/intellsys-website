@@ -41,6 +41,14 @@ export function createGroupByReducer(attribute: string) {
     };
 }
 
+export function toDateHourFormat(dateHour: string){
+    let y = Number(dateHour.substring(0, 4));
+    let m = Number(dateHour.substring(4, 2));
+    let d = Number(dateHour.substring(6, 2));
+    let h = Number(dateHour.substring(8, 2));
+    return new Date(y, m - 1, d, h);
+}
+
 // TODO: Rename to something sensible
 export function doesLeadCaptureSourceCorrespondToPerformanceLead(leadCaptureSource: string) {
     return leadCaptureSource != "Facebook On Form Ads";
@@ -70,6 +78,10 @@ export function sumReducer(total: number, sum: number) {
     return total + sum;
 }
 
+export function createObjectFromKeyValueArray(keys, values){
+    var output = keys.reduce((r, c, i) => {r[c] = values[i]; return r}, {})
+    return output;
+}
 
 // Example:
 // [[1, 2, 3]

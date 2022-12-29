@@ -113,7 +113,7 @@ type metricObject = {
     "sessionConversionRate:purchase": number;
 };
 
-interface fieldsUsedInGoogleAnalyticsAPI extends dimensionObject, metricObject {}
+interface fieldsUsedInGoogleAnalyticsApi extends dimensionObject, metricObject {}
 
 const runReportDimensions = ["city", "cityId", "country", "countryId", "dateHour", "newVsReturning", "operatingSystemWithVersion", "platform", "userGender"];
 const runReportMetrics = [
@@ -159,11 +159,11 @@ function mapDimensionValuesToHeaders(dimensionValues: Array<any>, dimensionHeade
 }
 
 function flattenToPushIntoDatabase(data: {[key: string]: metricObject}, dimensionHeaders: Array<string>) {
-    let databaseData: Array<fieldsUsedInGoogleAnalyticsAPI> = [];
+    let databaseData: Array<fieldsUsedInGoogleAnalyticsApi> = [];
     Object.entries(data).forEach((currentRow) => {
         const dimensionArray: dimensionObject = mapDimensionValuesToHeaders(currentRow[0].split(","), dimensionHeaders);
         const metricArray: metricObject = currentRow[1];
-        const keyAndMetricsArray: fieldsUsedInGoogleAnalyticsAPI = {...dimensionArray, ...metricArray};
+        const keyAndMetricsArray: fieldsUsedInGoogleAnalyticsApi = {...dimensionArray, ...metricArray};
         databaseData.push(keyAndMetricsArray);
     });
     return databaseData;

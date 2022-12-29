@@ -1,7 +1,5 @@
 import {BetaAnalyticsDataClient} from "@google-analytics/data";
-import {Dimension} from "google-spreadsheet";
 import {Iso8601Date} from "~/utilities/typeDefinitions";
-import {kvpArrayToObjectReducer} from "~/utilities/utilities";
 import {createObjectFromKeyValueArray, toDateHourFormat} from "../utilities";
 
 // export async function ingestDataFromRealTimeGoogleAnalyticsApi(startMinutesAgo: number, endMinutesAgo: 0) {
@@ -82,37 +80,6 @@ import {createObjectFromKeyValueArray, toDateHourFormat} from "../utilities";
 //     return result;
 // }
 
-type fieldsUsedInGoogleAnalyticsAPI = {
-    city: string;
-    cityId: string;
-    country: string;
-    countryId: string;
-    dateHour: Date;
-    newVsReturning: string;
-    operatingSystemWithVersion: string;
-    platform: string;
-    userGender: string;
-    //metrics
-    active1DayUsers: number;
-    active28DayUsers: number;
-    active7DayUsers: number;
-    activeUsers: number;
-    averageSessionDuration: number;
-    bounceRate: number;
-    dauPerMau: number;
-    dauPerWau: number;
-    engagedSessions: number;
-    engagementRate: number;
-    screenPageViews: number;
-    screenPageViewsPerSession: number;
-    sessionConversionRate: number;
-    sessions: number;
-    sessionsPerUser: number;
-    "sessionConversionRate:PurchaseDone": number;
-    "sessionConversionRate:click": number;
-    "sessionConversionRate:purchase": number;
-};
-
 type dimensionObject = {
     city: string;
     cityId: string;
@@ -123,7 +90,7 @@ type dimensionObject = {
     operatingSystemWithVersion: string;
     platform: string;
     userGender: string;
-}
+};
 
 type metricObject = {
     active1DayUsers: number;
@@ -146,26 +113,7 @@ type metricObject = {
     "sessionConversionRate:purchase": number;
 };
 
-const metrics = [
-    "active1DayUsers",
-    "active28DayUsers",
-    "active7DayUsers",
-    "activeUsers",
-    "averageSessionDuration",
-    "bounceRate",
-    "dauPerMau",
-    "dauPerWau",
-    "engagedSessions",
-    "engagementRate",
-    "screenPageViews",
-    "screenPageViewsPerSession",
-    "sessionConversionRate",
-    "sessions",
-    "sessionsPerUser",
-    "sessionConversionRate:PurchaseDone",
-    "sessionConversionRate:click",
-    "sessionConversionRate:purchase",
-];
+interface fieldsUsedInGoogleAnalyticsAPI extends dimensionObject, metricObject {}
 
 const runReportDimensions = ["city", "cityId", "country", "countryId", "dateHour", "newVsReturning", "operatingSystemWithVersion", "platform", "userGender"];
 const runReportMetrics = [
@@ -189,87 +137,102 @@ const runReportMetrics = [
     "sessionConversionRate:purchase",
 ];
 
+type googleAnalyticObject = {
+    value: any;
+    oneValue: any;
+};
 
-function getValues(input: Array<{value: any; oneValue: any}>): Array<any> {
+function getValues(input: Array<googleAnalyticObject>): Array<any> {
     return input.map((row) => row.value);
 }
 
-function getRowOfDatabaseData(dimensionValues: Array<any>, dimensions: Array<string>) {
-    const dimensionRow = dimensions.reduce((result , curValue:string, curIndex:number)=>{
-        if(curValue == 'dateHour'){
-            result[curValue] = toDateHourFormat(dimensionValues[curIndex]);
-        }
-        else{
-            result[curValue] = dimensionValues[curIndex];
+function mapDimensionValuesToHeaders(dimensionValues: Array<any>, dimensionHeaders: Array<string>): dimensionObject {
+    const dimensionRow: dimensionObject = dimensionHeaders.reduce((result: any, currentValue: string, currentIndex: number) => {
+        if (currentValue == "dateHour") {
+            result[currentValue as keyof dimensionObject] = toDateHourFormat(dimensionValues[currentIndex]);
+        } else {
+            result[currentValue] = dimensionValues[currentIndex];
         }
         return result;
     }, {});
     return dimensionRow;
 }
 
-function flattenToPushIntoDatabase(data: {[key: string]: {metricObject: number}}, dimensions: Array<string>) {
+function flattenToPushIntoDatabase(data: {[key: string]: metricObject}, dimensionHeaders: Array<string>) {
     let databaseData: Array<fieldsUsedInGoogleAnalyticsAPI> = [];
-    Object.entries(data).forEach((curRow) => {
-        let dimensionArray = getRowOfDatabaseData(curRow[0].split(","), dimensions);
-        let metricArray = curRow[1];
-        const keyAndMetricsArray : fieldsUsedInGoogleAnalyticsAPI = {...dimensionArray, ...metricArray};
+    Object.entries(data).forEach((currentRow) => {
+        const dimensionArray: dimensionObject = mapDimensionValuesToHeaders(currentRow[0].split(","), dimensionHeaders);
+        const metricArray: metricObject = currentRow[1];
+        const keyAndMetricsArray: fieldsUsedInGoogleAnalyticsAPI = {...dimensionArray, ...metricArray};
         databaseData.push(keyAndMetricsArray);
     });
     return databaseData;
 }
 
-function getInitalMetricsObject(){
-    return metrics.reduce((result, curValue) => {
-        result[curValue] = 0;
+// Initialize metricheaders with 0 value
+function getInitalMetricsObject(metrics: Array<string>): metricObject {
+    const output: metricObject = metrics.reduce((result: any, currentValue: string) => {
+        result[currentValue as keyof metricObject] = 0;
         return result;
     }, {});
+    return output;
 }
 
-function getMetricsRetrievedFromGA(resultFromGoogleAnalyticsApi: any, metricValues: Array<{value: any; oneValue: any}>, intialMetricObject: {metricObject: number}): {metricObject: number} {
-    let metrics = resultFromGoogleAnalyticsApi.metricHeaders.map((obj: {name: string; type: string}) => obj.name);
+/**
+ * Updates the inital metric object values with the new metrics values obtained from Google Analytics API request
+ * @param metricHeaders : Metric headers retrieved from Google Analytics API request
+ * @param metricValues : Metric Values retrieved from Google Analytics API request
+ * @param intialMetricObject : Initial metric Object
+ */
+function getMetricsRetrievedFromGoogleAnalytics(metricHeaders: Array<string>, metricValues: Array<googleAnalyticObject>, intialMetricObject: metricObject): metricObject {
     let metricsValues = getValues(metricValues);
+    const retrievedMetricsObject = createObjectFromKeyValueArray(metricHeaders, metricsValues);
 
-    const retrievedMetricsObject = createObjectFromKeyValueArray(metrics, metricsValues);
-
-    Object.keys(intialMetricObject).map((curMetric) => {
-        if (curMetric in retrievedMetricsObject) {
-            intialMetricObject[curMetric] = retrievedMetricsObject[curMetric];
+    Object.keys(intialMetricObject).map((currentMetric) => {
+        if (currentMetric in retrievedMetricsObject) {
+            intialMetricObject[currentMetric as keyof metricObject] = retrievedMetricsObject[currentMetric];
         }
     });
 
     const updatedMetricObject = intialMetricObject;
     return updatedMetricObject;
 }
-function getDataToDbFormat(accumulatedDatabaseData: {[dimensions: string]: {metricObject: number}}, resultFromGoogleAnalyticsApi: any): {[dimensions: string]: {metricObject: number}} {
-    let result: {[dimensions: string]: {metricObject: number}} = {};
 
-    resultFromGoogleAnalyticsApi.rows.forEach((row: {dimensionValues: Array<{value: any; oneValue: any}>; metricValues: Array<{value: any; oneValue: any}>}) => {
+/**
+ * Changes the data format to one that can be pushed to a database.
+ * @param accumulatedData : Accumulated data of previous Google Analytics API requests
+ * @param resultFromGoogleAnalyticsApi : Data fetched from Google Analytics API from current request
+ */
+function accumulateData(accumulatedData: {[dimensions: string]: metricObject}, resultFromGoogleAnalyticsApi: any, metrics: Array<string>): {[dimensions: string]: metricObject} {
+    let metricHeaders = resultFromGoogleAnalyticsApi.metricHeaders.map((obj: {name: string; type: string}) => obj.name);
+    resultFromGoogleAnalyticsApi.rows.forEach((row: {dimensionValues: Array<googleAnalyticObject>; metricValues: Array<googleAnalyticObject>}) => {
         const dimesionValuesAsKey = getValues(row.dimensionValues);
 
-        let metricArray: {metricObject: number};
-        if (accumulatedDatabaseData[dimesionValuesAsKey.toString()] === undefined) {
-            let intialMetricObject = getInitalMetricsObject();
-            metricArray = getMetricsRetrievedFromGA(resultFromGoogleAnalyticsApi, row.metricValues, intialMetricObject);
-
+        let metricArray: metricObject;
+        if (accumulatedData[dimesionValuesAsKey.toString()] === undefined) {
+            let intialMetricObject = getInitalMetricsObject(metrics);
+            metricArray = getMetricsRetrievedFromGoogleAnalytics(metricHeaders, row.metricValues, intialMetricObject);
         } else {
-            metricArray = getMetricsRetrievedFromGA(resultFromGoogleAnalyticsApi, row.metricValues, accumulatedDatabaseData[dimesionValuesAsKey.toString()]);
-
+            metricArray = getMetricsRetrievedFromGoogleAnalytics(metricHeaders, row.metricValues, accumulatedData[dimesionValuesAsKey.toString()]);
         }
-        accumulatedDatabaseData[dimesionValuesAsKey.toString()] = metricArray;
+        accumulatedData[dimesionValuesAsKey.toString()] = metricArray;
     });
-    return accumulatedDatabaseData;
+    return accumulatedData;
 }
 
 function getArrayAccordingToGoogleAnalyticsFormat(dimensions: Array<string>): Array<{[key: string]: string}> {
-    const output: Array<{[key: string]: string}> = dimensions.reduce((result: Array<{[key: string]: string}>, dimension) => {
+    const output: Array<{[key: string]: string}> = dimensions.reduce((result: Array<{[key: string]: string}>, currentDimension) => {
         result.push({
-            name: dimension,
+            name: currentDimension,
         });
         return result;
     }, []);
     return output;
 }
 
+/**
+ * Fetch data from Google Analytics API
+ */
 export async function getDataFromGoogleAnalyticsApi(dimensions: Array<string>, metrics: Array<string>, startDate: Iso8601Date, endDate: Iso8601Date) {
     const analyticsDataClient = new BetaAnalyticsDataClient();
 
@@ -289,22 +252,17 @@ export async function getDataFromGoogleAnalyticsApi(dimensions: Array<string>, m
 }
 
 export async function ingestDataFromGoogleAnalyticsApi(startDate: Iso8601Date, endDate: Iso8601Date, dimensions = runReportDimensions, metrics = runReportMetrics) {
-    let accumulatedDataFromGoogeAnalyticsAPI: {[dimensions: string]: {metricObject: number}} = {};
+    let accumulatedData: {[dimensions: string]: metricObject} = {};
 
     for (let i = 0; i < metrics.length; i++) {
-        let curResult;
-        if (i + 10 < metrics.length) {
-            curResult = await getDataFromGoogleAnalyticsApi(dimensions, metrics.slice(i, i + 10), startDate, endDate);
-            i = i + 10;
-        } else {
-            curResult = await getDataFromGoogleAnalyticsApi(dimensions, metrics.slice(i), startDate, endDate);
-            i = metrics.length;
-        }
-
-        //accumulating data
-        accumulatedDataFromGoogeAnalyticsAPI = getDataToDbFormat(accumulatedDataFromGoogeAnalyticsAPI, curResult);
+        let currentResult;
+        let iEnd = Math.min(i + 10, metrics.length);
+        currentResult = await getDataFromGoogleAnalyticsApi(dimensions, metrics.slice(i, iEnd), startDate, endDate);
+        i = iEnd;
+        // Accumulate data
+        accumulatedData = accumulateData(accumulatedData, currentResult, metrics);
     }
 
-    const finalDataOfGoogleAnalyticsApi = flattenToPushIntoDatabase(accumulatedDataFromGoogeAnalyticsAPI, dimensions);
-    console.log(finalDataOfGoogleAnalyticsApi);
+    const finalData = flattenToPushIntoDatabase(accumulatedData, dimensions);
+    console.log(finalData);
 }

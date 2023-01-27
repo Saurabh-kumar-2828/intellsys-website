@@ -67,7 +67,7 @@ export function FancyCalendar(props: {label; value; setValue; id}) {
     );
 }
 
-export function Card(props: {information: string; label: string; className?: string; metaQuery?: string; metaInformation?: string}) {
+export function Card(props: {information: string; label: string; className?: string; metaQuery?: string; metaInformation?: string; extraLabels?: Array<string>}) {
     return (
         <div
             className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center", props.className)}
@@ -86,6 +86,43 @@ export function Card(props: {information: string; label: string; className?: str
             )}
             <div className="tw-text-[3rem]">{props.information}</div>
             <div className="tw-font-bold">{props.label}</div>
+            {props.extraLabels == null
+                ? null
+                : props.extraLabels.map((label) => {
+                      return <div className="tw-font-bold">{label}</div>;
+                  })}
+        </div>
+    );
+}
+
+export function CustomCard(props: {information: string; informationClassName: string; label: string; className?: string; metaQuery?: string; metaInformation?: string; extraLabels?: Array<string>}) {
+    return (
+        <div
+            className={concatenateNonNullStringsWithSpaces(
+                "tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center tw-font-sans group",
+                props.className,
+                "hover:tw-bg-blue-600"
+            )}
+            title={props.information}
+        >
+            {props.metaInformation == null && props.metaQuery == null ? null : (
+                <div className="tw-absolute tw-top-4 tw-right-4 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
+                    {props.metaInformation == null ? null : <InfoCircle title={props.metaInformation} className="tw-w-4 tw-h-4 tw-cursor-help" />}
+
+                    {props.metaQuery == null ? null : (
+                        <button title={props.metaQuery} onClick={async (e) => await navigator.clipboard.writeText(props.metaQuery)}>
+                            <Clipboard className="tw-w-4 tw-h-4" />
+                        </button>
+                    )}
+                </div>
+            )}
+            <div className={props.informationClassName}>{props.information}</div>
+            <div className="tw-font-bold tw-font-sans">{props.label}</div>
+            {props.extraLabels == null
+                ? null
+                : props.extraLabels.map((label) => {
+                      return <div className="tw-font-bold tw-font-sans">{label}</div>;
+                  })}
         </div>
     );
 }
@@ -95,7 +132,10 @@ export function ValueDisplayingCard<T>(props: {queryInformation: T; contentExtra
 
     return (
         <div
-            className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-rounded-md tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center", props.className)}
+            className={concatenateNonNullStringsWithSpaces(
+                "tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-rounded-md tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center",
+                props.className
+            )}
             title={content}
         >
             {props.queryInformation.metaFiltersPossible == null ? null : (
@@ -256,7 +296,7 @@ export function LargeValueDisplayingCardWithTarget({
             labelClassName="tw-pt-12 tw-font-2rem"
             type={type}
         />
-    )
+    );
 }
 
 export function SmallValueDisplayingCardWithTarget({
@@ -266,6 +306,7 @@ export function SmallValueDisplayingCardWithTarget({
     explanation,
     equivalentQuery,
     className,
+    valueClassName,
     type,
 }: {
     label: string;
@@ -275,6 +316,7 @@ export function SmallValueDisplayingCardWithTarget({
     equivalentQuery?: string;
     className?: string;
     type: ValueDisplayingCardInformationType;
+    valueClassName?: string
 }) {
     return (
         <ValueDisplayingCardWithTarget
@@ -284,23 +326,24 @@ export function SmallValueDisplayingCardWithTarget({
             explanation={explanation}
             equivalentQuery={equivalentQuery}
             className={concatenateNonNullStringsWithSpaces(className, "tw-col-span-2")}
-            valueClassName="tw-font-2rem"
+            valueClassName={valueClassName=="undefined" ? "tw-font-2rem tw-px-0.2" : valueClassName}
             labelClassName="tw-pt-4 tw-font-1rem"
             type={type}
         />
-    )
+    );
 }
 
 export function SectionHeader({label}: {label: string}) {
-    return (
-        <div className="tw-col-span-12 tw-font-2rem tw-font-bold tw-text-center">{label}</div>
-    );
+    return <div className="tw-col-span-12 tw-font-2rem tw-font-bold tw-text-center">{label}</div>;
 }
 
 export function DateDisplayingCard(props: {information: any; label: string; className?: string; timezone: TimeZones; metaQuery?: string; metaInformation?: string}) {
     return (
         <div
-            className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-rounded-md tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center", props.className)}
+            className={concatenateNonNullStringsWithSpaces(
+                "tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-rounded-md tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center",
+                props.className
+            )}
             title={props.information}
         >
             {props.metaInformation == null && props.metaQuery == null ? null : (

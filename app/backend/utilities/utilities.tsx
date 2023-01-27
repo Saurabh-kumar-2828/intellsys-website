@@ -99,6 +99,25 @@ export function columnWiseSummationOfMatrix(arr: Array<Array<number>>) {
     return result;
 }
 
+export enum scale {
+    normalizedScale = "0-1",
+    dataDriven = "dataDriven",
+    percentageScale = "1-100",
+}
+
+export enum yAxisDisplay {
+    leftSide = "leftSide",
+    rightSide = "rightSide",
+    noDisplay = "noDisplay"
+}
+
+export enum plotMargins {
+    top = 90,
+    right = 60,
+    bottom = 90,
+    left = 60,
+};
+
 // function createGroupByReducer(result, item, attribute) {
 //     return (result, item) => {
 //         let itemsForAttribute;

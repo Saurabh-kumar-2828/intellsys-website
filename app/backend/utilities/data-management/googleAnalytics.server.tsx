@@ -246,8 +246,9 @@ export async function getDataFromGoogleAnalyticsApi(dimensions: Array<string>, m
         ],
         dimensions: getArrayAccordingToGoogleAnalyticsFormat(dimensions),
         metrics: getArrayAccordingToGoogleAnalyticsFormat(metrics),
+        returnPropertyQuota: true
     });
-
+    console.log(response);
     return response;
 }
 
@@ -259,10 +260,11 @@ export async function ingestDataFromGoogleAnalyticsApi(startDate: Iso8601Date, e
         let iEnd = Math.min(i + 10, metrics.length);
         currentResult = await getDataFromGoogleAnalyticsApi(dimensions, metrics.slice(i, iEnd), startDate, endDate);
         i = iEnd;
+        
         // Accumulate data
         accumulatedData = accumulateData(accumulatedData, currentResult, metrics);
     }
 
     const finalData = flattenToPushIntoDatabase(accumulatedData, dimensions);
-    console.log(finalData);
+    // console.log(finalData);
 }

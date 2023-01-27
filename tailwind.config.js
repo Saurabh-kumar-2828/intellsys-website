@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-
+const defaultTheme = require('tailwindcss/defaultTheme')
 const plugin = require("tailwindcss/plugin");
 
 module.exports = {
@@ -25,6 +25,9 @@ module.exports = {
             spacing: {
                 default: "2rem",
             },
+            fontFamily: {
+                sans: ['Poppins', ...defaultTheme.fontFamily.sans]
+            }
         },
     },
     plugins: [

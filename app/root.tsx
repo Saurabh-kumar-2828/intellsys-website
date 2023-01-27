@@ -6,7 +6,6 @@ import {HeaderComponent} from "~/components/headerComponent";
 import {LoaderComponent} from "~/components/loaderComponent";
 import {getAccessToken, getAuthenticatedUserDetails} from "~/backend/utilities/sessionsHelper.server";
 import {User} from "~/utilities/typeDefinitions";
-
 import tailwindStylesheet from "../build/tailwind.css";
 import { Toaster } from "react-hot-toast";
 
@@ -36,7 +35,10 @@ export const meta: MetaFunction = () => ({
     viewport: "width=device-width,initial-scale=1",
 });
 
-export const links: LinksFunction = () => [{rel: "stylesheet", href: tailwindStylesheet}];
+export const links: LinksFunction = () => [
+    {rel: "stylesheet", href: tailwindStylesheet},
+    {rel: "stylesheet", href: "https://fonts.googleapis.com/css?family=Poppins"}
+];
 
 export default function App() {
     const transition = useTransition();

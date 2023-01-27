@@ -88,7 +88,8 @@ export default function () {
                     <VerticalSpacer className="tw-h-8" />
 
                     <div>
-                        At lacus vitae nulla sagittis scelerisque nisl. Pellentesque duis cursus vestibulum, facilisi ac, sed faucibus.
+                        Growth Jockey lets your company not miss out on any growth opportunity while retaining your focus on the core business.
+
                     </div>
 
                     <VerticalSpacer className="tw-h-8" />

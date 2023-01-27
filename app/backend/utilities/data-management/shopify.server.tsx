@@ -1,10 +1,11 @@
 import {ColumnInfo} from "~/backend/data-management";
+import {Iso8601Date} from "~/utilities/typeDefinitions";
 import {delay} from "~/utilities/utilities";
 import {shopifyQuery} from "../api-integration-utilities/shopifyQuery";
 
 const shopifyApiBaseUrl = "https://livpuresleep.myshopify.com/admin/api/2022-10/graphql.json";
 
-async function getShopifyData(minDate: string, maxDate: string = "2030-10-2", numProducts: number, endCursor: string | null): Promise<Array<object>> {
+async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date = "2030-10-2", numProducts: number, endCursor: string | null): Promise<Array<object>> {
     const response = await fetch(shopifyApiBaseUrl, {
         method: "POST",
         headers: {
@@ -25,10 +26,10 @@ async function getShopifyData(minDate: string, maxDate: string = "2030-10-2", nu
     return ordersInformation;
 }
 
-function findDateRange(orders: any): object {
-    const dates = orders.map((order) => order.node.updatedAt);
-    const minDate = dates.reduce((minDate, date) => (minDate == null || date < minDate ? date : minDate), null);
-    const maxDate = dates.reduce((maxDate, date) => (maxDate == null || date > maxDate ? date : maxDate), null);
+function findDateRange(orders: any): {count: number; minDate: Iso8601Date; maxDate: Iso8601Date} {
+    const dates = orders.map((order: any) => order.node.updatedAt);
+    const minDate = dates.reduce((minDate: Iso8601Date, date: Iso8601Date) => (minDate == null || date < minDate ? date : minDate), null);
+    const maxDate = dates.reduce((maxDate: Iso8601Date, date: Iso8601Date) => (maxDate == null || date > maxDate ? date : maxDate), null);
 
     return {
         count: dates.length,
@@ -37,7 +38,7 @@ function findDateRange(orders: any): object {
     };
 }
 
-export async function ingestDataFromShopifyApi(minDate: string, maxDate: string = "2030-10-2"): Promise<Array<object>> {
+export async function ingestDataFromShopifyApi(minDate: Iso8601Date, maxDate: Iso8601Date = "2030-10-2"): Promise<Array<object>> {
     try {
         const orders: Array<object> = [];
         let orderInfo = await getShopifyData(minDate, maxDate, 1, null);

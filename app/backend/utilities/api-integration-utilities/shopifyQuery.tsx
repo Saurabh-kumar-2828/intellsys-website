@@ -4,6 +4,7 @@ query($updated_at: String, $numProducts: Int!, $cursor: String) {
       edges {
         node {
             id
+            name
             tags
             updatedAt
             cancelledAt

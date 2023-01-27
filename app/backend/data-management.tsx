@@ -9,6 +9,8 @@ import {websitePopupFormResponsesRawColumnInfos} from "~/backend/utilities/data-
 import {freshsalesColumnInfos, ingestDataFromFreshsalesApi} from "~/backend/utilities/data-management/freshsales.server";
 import {facebookAdsRawColumnInfos, ingestDataFromFacebookApi} from "~/backend/utilities/data-management/facebookAds.server";
 import { ingestDataFromGoogleAnalyticsApi } from "./utilities/data-management/googleAnalytics.server";
+import { ingestDataFromFacebookOnFormsApi, updateDataFromFacebookOnFormsApi } from "./utilities/data-management/facebookOnFormAds.server";
+import { initializeDataFromFacebookOnFormsApi } from "./utilities/data-management/initializeFacebookOnFormAds.server";
 
 export async function fullRefresh(): Promise<void> {
     const query = `
@@ -95,8 +97,9 @@ export enum Table {
     typeformResponsesWaterPurifierRaw,
     websitePopupFormResponsesRaw,
 
-    //TODO: For test purpose
-    googleAnalyticsAPI
+    //TODO: For test purpose, remove it
+    googleAnalyticsAPI,
+    facebookOnFormAPI
 }
 
 // export function getNameForTable(table: Table): string {
@@ -240,8 +243,10 @@ export async function processIngestDataFromApi(table: Table, date: string): Prom
     //     await truncateTable("website_popup_form_responses_raw");
     } else if(table == Table.googleAnalyticsAPI){
         await ingestDataFromGoogleAnalyticsApi("2022-12-12", "2022-12-25");
-    }
-    else {
+    } else if(table == Table.facebookOnFormAPI){
+        // await ingestDataFromFacebookOnFormsApi("2022-10-01");
+        await updateDataFromFacebookOnFormsApi();
+    } else {
         throw new Response(null, {status: 400});
     }
 }
@@ -257,6 +262,16 @@ function convertObjectArrayIntoArrayArray(rowObjects: Array<{[k: string]: string
     }
 
     return rowObjects.map((rowObject) => columns.map((column) => getNonEmptyStringOrNull(rowObject[column].trim())));
+}
+
+export async function processInitializeDataFromApi(table: Table, date: string): Promise<void> {
+
+    if(table == Table.facebookOnFormAPI){
+        await initializeDataFromFacebookOnFormsApi("2022-10-01", "2022-11-01");
+        // await updateDataFromFacebookOnFormsApi();
+    } else {
+        throw new Response(null, {status: 400});
+    }
 }
 
 export type ColumnInfo = {

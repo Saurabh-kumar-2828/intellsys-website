@@ -248,6 +248,15 @@ export const adsColorPalette = {
 
 };
 
+export const campaignsColorPalette = {
+    impressions : "#1F40CB",
+    clicks : "#3B82F6",
+    amountSpent : "#6D28D9",
+    leads : "#22C55E",
+    orders : "#65A30D",
+
+};
+
 export const colorPalette = {
     Mattress: "rgb(255,182,193)",
     "Non Mattress": "rgb(255,139,34)",

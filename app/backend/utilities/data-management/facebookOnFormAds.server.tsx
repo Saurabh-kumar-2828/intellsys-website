@@ -1,14 +1,15 @@
 import {ColumnInfo} from "~/backend/data-management";
-import {dateToMediumEnFormat, distinct} from "~/utilities/utilities";
+import {Iso8601DateTime, PhoneNumberWithCountryCode} from "~/utilities/typeDefinitions";
+import {dateToMediumEnFormat, distinct, getSingletonValue} from "~/utilities/utilities";
 import {execute} from "../databaseManager.server";
 const facebookApiBaseUrl = "https://graph.facebook.com/";
 
-export type fieldDataObject = {
+export type FieldDataObject = {
     name: string;
     values: Array<string>;
 };
 
-export type facebookOnFormAdObject = {
+export type FacebookOnFormAdObject = {
     id: string;
     ad_id: string;
     ad_name: string;
@@ -16,28 +17,24 @@ export type facebookOnFormAdObject = {
     adset_name: string;
     campaign_id: string;
     campaign_name: string;
-    field_data: Array<fieldDataObject>;
+    field_data: Array<FieldDataObject>;
     created_time: string;
     form_id: string;
     is_organic: boolean;
     platform: string;
 };
 
-export type leadObject = {
-    full_name: string | null;
-    city: string | null;
-    phone_number: string | null;
-    state: string | null;
-    email: string | null;
-};
-
-function filterFbResponseOnDate(dataFromFacebookApi: Array<facebookOnFormAdObject>, startDate: string | null, endDate: string | null) {
+function filterFbResponseOnDate(dataFromFacebookApi: Array<FacebookOnFormAdObject>, startDate: string | null, endDate: string | null) {
     const data = dataFromFacebookApi.filter((campaign) => {
-        if (startDate != null && endDate != null) {
-            return campaign.created_time >= startDate && campaign.created_time <= endDate;
-        } else {
-            return true;
+        if (startDate != null && campaign.created_time < startDate) {
+            return false;
         }
+
+        if (endDate != null && campaign.created_time > endDate) {
+            return false;
+        }
+
+        return true;
     });
 
     const dates = data.map((campaign) => campaign.created_time);
@@ -51,66 +48,68 @@ function filterFbResponseOnDate(dataFromFacebookApi: Array<facebookOnFormAdObjec
     };
 }
 
-async function getFacebookOnFormLeads(limit: number, endCursor: string, formId: string) {
+async function getFacebookOnFormLeads(formId: string, limit: number, endCursor: string | null) {
     const fields = "id,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,custom_disclaimer_responses,field_data,created_time,form_id,is_organic,platform";
 
     let url = `${facebookApiBaseUrl}${process.env.FACEBOOK_API_VERSION!}/${formId}/leads?fields=${fields}&access_token=${process.env
-        .FACEBOOK_ONFORMS_ACCESS_TOKEN!}&sort=created_time_descending&limit=${limit}&after=${endCursor}`;
+        .FACEBOOK_ONFORMS_ACCESS_TOKEN!}&sort=created_time_descending&limit=${limit}${endCursor == null ? "" : `&after=${endCursor}`}`;
 
     const response = await fetch(url, {
         method: "GET",
     });
 
-    const insightsFromFacebookApi = await response.json();
-    return insightsFromFacebookApi;
+    const formResponses = await response.json();
+    return formResponses;
 }
 
-export async function ingestDataFromFacebookOnFormsApi(startDate: string | null, endDate: string | null, formId: string): Promise<Array<facebookOnFormAdObject>> {
-    const allLeads: Array<facebookOnFormAdObject> = [];
-    try {
-        let onFormLeads = await getFacebookOnFormLeads(5, "", formId);
-        let filteredResponse = filterFbResponseOnDate(onFormLeads.data, startDate, endDate);
+export async function ingestDataFromFacebookOnFormsApi(formId: string, startDate: string | null, endDate: string | null): Promise<Array<FacebookOnFormAdObject>> {
+    const responseLimit = 5;
 
-        if (filteredResponse.filterData.length <= 0) {
-            return allLeads;
-        }
-        allLeads.push(...filteredResponse.filterData!);
-        while ("next" in onFormLeads.paging) {
-            onFormLeads = await getFacebookOnFormLeads(5, onFormLeads.paging.cursors.after, formId);
-            filteredResponse = filterFbResponseOnDate(onFormLeads.data, startDate, endDate);
+    const allLeads: Array<FacebookOnFormAdObject> = [];
+
+    try {
+        let endCursor = null;
+        while (true) {
+            const onFormLeads = await getFacebookOnFormLeads(formId, responseLimit, endCursor);
+            const filteredResponse = filterFbResponseOnDate(onFormLeads.data, startDate, endDate);
             allLeads.push(...filteredResponse.filterData!);
 
-            if (filteredResponse.filterData.length < onFormLeads.length || filteredResponse.filterData.length <= 0) {
+            // Break when we run out of responses, or when data starts getting filtered (due to being older than startDate)
+            if (filteredResponse.filterData.length == 0 || filteredResponse.filterData.length < onFormLeads.length) {
                 break;
             }
-        }
 
-        if (allLeads.length > 0) {
-            await pushIntoDatabase(allLeads);
+            if (!("next" in onFormLeads.paging)) {
+                break;
+            }
+
+            endCursor = onFormLeads.paging.cursors.after;
         }
-        // console.log(JSON.stringify(allLeads));
-        // console.log(allLeads.length);
     } catch (e) {
         console.log(e);
         throw e;
     }
+
     return allLeads;
 }
 
 function getAllFormIds() {
-    return ["2995134520792726", "2995134520792726"];
+    return ["2995134520792726"];
 }
 
-async function getLastUpdatedDate(formId: string): Promise<string> {
+async function getLastUpdatedDate(formId: string): Promise<Iso8601DateTime> {
     try {
-        const query = `SELECT
-                        MAX(created_at) as latest_date
-                    FROM
-                        facebook_onform_lectrix
-                    WHERE
-                        form_id=$1
-                    `;
-        const result = await execute(query, [formId]);
+        const result = await execute(
+            `
+                SELECT
+                    MAX(created_at) AS latest_date
+                FROM
+                    facebook_onform_lectrix
+                WHERE
+                    form_id = $1
+            `,
+            [formId]
+        );
         return result.rows[0].latest_date;
     } catch (e) {
         console.log(e);
@@ -118,12 +117,22 @@ async function getLastUpdatedDate(formId: string): Promise<string> {
     }
 }
 
-export async function pushIntoDatabase(newLeads: Array<facebookOnFormAdObject>) {
+export async function pushIntoDatabase(newLeads: Array<FacebookOnFormAdObject>) {
     try {
-        const query = `INSERT INTO facebook_onform_lectrix VALUES ($1, $2, $3, $4)`;
-
         for (const lead of newLeads) {
-            await execute(query, [lead.id, lead.created_time, lead.form_id, lead]);
+            await execute(
+                `
+                    INSERT INTO
+                        facebook_onform_lectrix
+                    VALUES (
+                        $1,
+                        $2,
+                        $3,
+                        $4
+                    )
+                `,
+                [lead.id, lead.created_time, lead.form_id, lead]
+            );
         }
     } catch (e) {
         console.log(e);
@@ -131,82 +140,56 @@ export async function pushIntoDatabase(newLeads: Array<facebookOnFormAdObject>) 
     }
 }
 
-export async function updateDataFromFacebookOnFormsApi() {
+export async function updateDataFromFacebookOnFormsApi(): Promise<number | null> {
     try {
         const formIds = getAllFormIds();
-        for (const formId of distinct(formIds)) {
+        for (const formId of formIds) {
             const startDate = await getLastUpdatedDate(formId);
-            const endDate = new Date().toDateString();
 
-            var newLeads: Array<facebookOnFormAdObject> = [];
-            newLeads = await ingestDataFromFacebookOnFormsApi(startDate, endDate, formId);
+            var newLeads: Array<FacebookOnFormAdObject> = [];
+            newLeads = await ingestDataFromFacebookOnFormsApi(formId, startDate, null);
 
-            if (newLeads.length > 0) {
-                pushIntoDatabase(newLeads);
-            }
+            pushIntoDatabase(newLeads);
             sendDataToLmsEvents(newLeads);
+
+            return newLeads.length;
         }
     } catch (e) {
         console.log(e);
         throw e;
     }
+
+    return null;
 }
 
-// export const facebookAdsRawColumnInfos: Array<ColumnInfo> = [
-//     {tableColumn: "campaign_name", csvColumn: "Campaign name"},
-//     {tableColumn: "ad_set_name", csvColumn: "Ad set name"},
-//     {tableColumn: "ad_name", csvColumn: "Ad name"},
-//     {tableColumn: "day", csvColumn: "Day"},
-//     {tableColumn: "impressions", csvColumn: "Impressions"},
-//     {tableColumn: "currency", csvColumn: "Currency"},
-//     {tableColumn: "amount_spent", csvColumn: "Amount spent (INR)"},
-//     {tableColumn: "leads", csvColumn: "Leads"},
-//     {tableColumn: "link_clicks", csvColumn: "Link clicks"},
-//     {tableColumn: "ctr", csvColumn: "CTR (link click-through rate)"},
-//     {tableColumn: "cpc", csvColumn: "CPC (cost per link click)"},
-//     {tableColumn: "cpi", csvColumn: "CPI"},
-// ];
+function extractLeadInformation(lead: FacebookOnFormAdObject) {
+    if (lead.form_id == "2995134520792726") {
+        // TODO: Figure out a better way to handle form version changes, and enable this again
+        // const full_name = getSingletonValue(getSingletonValue(lead.field_data.filter(field => field.name == "full_name")).values);
+        // const city = getSingletonValue(getSingletonValue(lead.field_data.filter(field => field.name == "city")).values);
+        // const phone_number = getSingletonValue(getSingletonValue(lead.field_data.filter(field => field.name == "phone_number")).values);
+        // const state = getSingletonValue(getSingletonValue(lead.field_data.filter(field => field.name == "state")).values);
+        // const email = getSingletonValue(getSingletonValue(lead.field_data.filter(field => field.name == "email")).values);
 
-function extractLeadInformation(lead: facebookOnFormAdObject) {
-    const result: leadObject = {
-        full_name: null,
-        city: null,
-        phone_number: null,
-        state: null,
-        email: null,
-    };
-    for (const field of lead.field_data) {
-        if (field.name == "full_name") {
-            result["full_name"] = field.values[0];
-        } else if (field.name == "city") {
-            result["city"] = field.values[0];
-        } else if (field.name == "phone_number") {
-            result["phone_number"] = field.values[0];
-        } else if (field.name == "state") {
-            result["state"] = field.values[0];
-        } else if (field.name == "email") {
-            result["email"] = field.values[0];
-        }
-    }
-    return result;
-}
+        const full_name = lead.field_data.filter(field => field.name == "full_name")[0]?.values[0];
+        const city = lead.field_data.filter(field => field.name == "city")[0]?.values[0];
+        const phone_number = lead.field_data.filter(field => field.name == "phone_number")[0]?.values[0];
+        const state = lead.field_data.filter(field => field.name == "state")[0]?.values[0];
+        const email = lead.field_data.filter(field => field.name == "email")[0]?.values[0];
 
-async function sendDataToLmsEvents(leadsData: Array<facebookOnFormAdObject>) {
-    for (const lead of leadsData) {
-        const leadFieldData: leadObject = extractLeadInformation(lead);
         const lmsData = {
             date_created: dateToMediumEnFormat(lead.created_time),
             date_modified: "",
-            name: leadFieldData.full_name,
-            mobile_no: leadFieldData.phone_number,
+            name: full_name,
+            mobile_no: phone_number.slice(-10),
             alt_no: null,
             referral_code: null,
             referral_phone: null,
             referral_name: null,
-            email: leadFieldData.email,
-            city: leadFieldData.city,
+            email: email,
+            city: city,
             district: "",
-            state: leadFieldData.state,
+            state: state,
             lead_id: lead.id,
             action_id: lead.campaign_id,
             action_type: "try_at_home_test_ride",
@@ -224,24 +207,31 @@ async function sendDataToLmsEvents(leadsData: Array<facebookOnFormAdObject>) {
             test_ride_date: "",
             test_ride_timeSlot: "",
         };
-        const response = await sendDataToLms(lmsData);
-        const result = await response?.json();
-        console.log(result);
+
+        return lmsData;
+    } else {
+        throw "";
     }
 }
 
-export async function sendDataToLms(searchParameters) {
-    let lmsResponse;
+async function sendDataToLmsEvents(leadsData: Array<FacebookOnFormAdObject>) {
+    for (const lead of leadsData) {
+        const lmsData = extractLeadInformation(lead);
+        await sendDataToLms(lmsData);
+    }
+}
+
+export async function sendDataToLms(lmsData) {
     try {
-        lmsResponse = await fetch(process.env.LMS_BASE_URL + "/api/new_lead_v2.php", {
+        await fetch(process.env.LMS_BASE_URL + "/api/new_lead_v2.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 Authorization: process.env.LMS_AUTHORIZATION_TOKEN!,
             },
-            body: JSON.stringify(searchParameters),
+            body: JSON.stringify(lmsData),
         });
-        return lmsResponse;
+        // TODO: Check for failures here?
     } catch (e) {
         console.log("LMS Exception");
         console.log(e);

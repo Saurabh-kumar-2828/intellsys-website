@@ -2,7 +2,7 @@ import {Listbox} from "@headlessui/react";
 import {Link} from "@remix-run/react";
 import {DateTime, Info} from "luxon";
 import {useId} from "react";
-import {Clipboard, Funnel, FunnelFill, InfoCircle, XCircleFill} from "react-bootstrap-icons";
+import {CheckCircleFill, Clipboard, Funnel, FunnelFill, InfoCircle, XCircleFill} from "react-bootstrap-icons";
 import {getElementAtEvent, getElementsAtEvent, Line, Doughnut} from "react-chartjs-2";
 import {ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
 import toast from "react-hot-toast";
@@ -520,6 +520,15 @@ export function errorToast(content: any) {
     toast((toast_) => (
         <div className="tw-bg-bg+1 tw-text-fg tw-flex tw-flex-row tw-items-center tw-gap-x-4">
             <XCircleFill className="tw-w-4 tw-h-4 tw-flex-0 tw-text-red-600" />
+            <div className="tw-flex-1">{content}</div>
+        </div>
+    ));
+}
+
+export function successToast(content: any) {
+    toast((toast_) => (
+        <div className="tw-bg-bg+1 tw-text-fg tw-flex tw-flex-row tw-items-center tw-gap-x-4">
+            <CheckCircleFill className="tw-w-4 tw-h-4 tw-flex-0 tw-text-green-500" />
             <div className="tw-flex-1">{content}</div>
         </div>
     ));

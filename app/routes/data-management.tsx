@@ -752,7 +752,7 @@ export default function () {
 
                 {/* For Test Purpose */}
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                    <input type="text" name="table" value={Table.googleAnalyticsAPI} readOnly className="tw-hidden" />
+                    <input type="text" name="table" value={Table.googleAnalyticsApi} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                     <button className="tw-lp-button">
                         Fetch Data From Google Analytics API
@@ -760,7 +760,7 @@ export default function () {
                 </Form>
 
                 <Form method="post" className="tw-col-span-3 tw-flex tw-flex-col tw-justify-center tw-items-stretch tw-gap-y-6">
-                    <input type="text" name="table" value={Table.facebookOnFormAPI} readOnly className="tw-hidden" />
+                    <input type="text" name="table" value={Table.facebookOnFormApi} readOnly className="tw-hidden" />
                     <input type="text" name="operation" value={Operation.ingestDataFromApi} readOnly className="tw-hidden" />
                     <button className="tw-lp-button">
                         Fetch Data From Facebook Onforms API

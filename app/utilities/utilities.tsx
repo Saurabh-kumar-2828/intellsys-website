@@ -232,6 +232,26 @@ export function getDates(minDate: any, maxDate: any) {
     return dates;
 }
 
+export function getSingletonValue<T>(arr: Array<T>): T {
+    if (arr.length != 1) {
+        throw "Error: Zero/more than one value received, when one and only one was expected";
+    }
+
+    return arr[0];
+}
+
+export function getSingletonValueOrNull<T>(arr: Array<T>): T | null {
+    if (arr.length == 0) {
+        return null;
+    }
+
+    if (arr.length > 1) {
+        throw "Error: More than one value received, when one and only one was expected";
+    }
+
+    return arr[0];
+}
+
 export const adsColorPalette = {
     performenceAds: "#ffa500",
     facebookAds: "#00a2ed",

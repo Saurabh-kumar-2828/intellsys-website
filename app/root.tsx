@@ -7,7 +7,7 @@ import {LoaderComponent} from "~/components/loaderComponent";
 import {getAccessToken, getAuthenticatedUserDetails} from "~/backend/utilities/sessionsHelper.server";
 import {User} from "~/utilities/typeDefinitions";
 import tailwindStylesheet from "../build/tailwind.css";
-import { Toaster } from "react-hot-toast";
+import {Toaster} from "react-hot-toast";
 
 type LoaderData = {
     userDetails: User | null;
@@ -37,7 +37,7 @@ export const meta: MetaFunction = () => ({
 
 export const links: LinksFunction = () => [
     {rel: "stylesheet", href: tailwindStylesheet},
-    {rel: "stylesheet", href: "https://fonts.googleapis.com/css?family=Poppins"}
+    {rel: "stylesheet", href: "https://fonts.googleapis.com/css?family=Poppins"},
 ];
 
 export default function App() {

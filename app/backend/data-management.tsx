@@ -98,8 +98,8 @@ export enum Table {
     websitePopupFormResponsesRaw,
 
     //TODO: For test purpose, remove it
-    googleAnalyticsAPI,
-    facebookOnFormAPI
+    googleAnalyticsApi,
+    facebookOnFormApi
 }
 
 // export function getNameForTable(table: Table): string {
@@ -241,11 +241,8 @@ export async function processIngestDataFromApi(table: Table, date: string): Prom
         await ingestDataFromTypeformWaterPurifierApi(date);
     // } else if (table == Table.websitePopupFormResponsesRaw) {
     //     await truncateTable("website_popup_form_responses_raw");
-    } else if(table == Table.googleAnalyticsAPI){
+    } else if(table == Table.googleAnalyticsApi){
         await ingestDataFromGoogleAnalyticsApi("2022-12-12", "2022-12-25");
-    } else if(table == Table.facebookOnFormAPI){
-        // await ingestDataFromFacebookOnFormsApi("2022-10-01");
-        await updateDataFromFacebookOnFormsApi();
     } else {
         throw new Response(null, {status: 400});
     }
@@ -266,7 +263,7 @@ function convertObjectArrayIntoArrayArray(rowObjects: Array<{[k: string]: string
 
 export async function processInitializeDataFromApi(table: Table, date: string): Promise<void> {
 
-    if(table == Table.facebookOnFormAPI){
+    if(table == Table.facebookOnFormApi){
         await initializeDataFromFacebookOnFormsApi("2022-10-01", "2022-11-01");
         // await updateDataFromFacebookOnFormsApi();
     } else {

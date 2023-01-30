@@ -24,28 +24,20 @@ export type FacebookOnFormAdObject = {
     platform: string;
 };
 
-function filterFbResponseOnDate(dataFromFacebookApi: Array<FacebookOnFormAdObject>, startDate: string | null, endDate: string | null) {
+function filterFbResponseOnDate(dataFromFacebookApi: Array<FacebookOnFormAdObject>, startDate: string | null, endDate: string | null): Array<FacebookOnFormAdObject> {
     const data = dataFromFacebookApi.filter((campaign) => {
-        if (startDate != null && campaign.created_time < startDate) {
+        if (startDate != null && new Date(campaign.created_time) < new Date(startDate)) {
             return false;
         }
 
-        if (endDate != null && campaign.created_time > endDate) {
+        if (endDate != null && new Date(campaign.created_time) > new Date(endDate)) {
             return false;
         }
 
         return true;
     });
 
-    const dates = data.map((campaign) => campaign.created_time);
-    const minDate = dates.reduce((minDate, date) => (minDate == "" || date < minDate ? date : minDate), "");
-    const maxDate = dates.reduce((maxDate, date) => (maxDate == "" || date > maxDate ? date : maxDate), "");
-
-    return {
-        filterData: data.reverse(),
-        minDate: minDate,
-        maxDate: maxDate,
-    };
+    return data.reverse();
 }
 
 async function getFacebookOnFormLeads(formId: string, limit: number, endCursor: string | null) {
@@ -71,11 +63,11 @@ export async function ingestDataFromFacebookOnFormsApi(formId: string, startDate
         let endCursor = null;
         while (true) {
             const onFormLeads = await getFacebookOnFormLeads(formId, responseLimit, endCursor);
-            const filteredResponse = filterFbResponseOnDate(onFormLeads.data, startDate, endDate);
-            allLeads.push(...filteredResponse.filterData!);
+            const filteredResponses = filterFbResponseOnDate(onFormLeads.data, startDate, endDate);
+            allLeads.push(...filteredResponses);
 
             // Break when we run out of responses, or when data starts getting filtered (due to being older than startDate)
-            if (filteredResponse.filterData.length == 0 || filteredResponse.filterData.length < onFormLeads.length) {
+            if (filteredResponses.length == 0 || filteredResponses.length < onFormLeads.data.length) {
                 break;
             }
 
@@ -146,8 +138,7 @@ export async function updateDataFromFacebookOnFormsApi(): Promise<number | null>
         for (const formId of formIds) {
             const startDate = await getLastUpdatedDate(formId);
 
-            var newLeads: Array<FacebookOnFormAdObject> = [];
-            newLeads = await ingestDataFromFacebookOnFormsApi(formId, startDate, null);
+            const newLeads = await ingestDataFromFacebookOnFormsApi(formId, startDate, null);
 
             pushIntoDatabase(newLeads);
             sendDataToLmsEvents(newLeads);

@@ -1,6 +1,7 @@
 import {ColumnInfo} from "~/backend/data-management";
 import {execute} from "../databaseManager.server";
-import {facebookOnFormAdObject, pushIntoDatabase} from "./facebookOnFormAds.server";
+import {pushIntoDatabase} from "./facebookOnFormAds.server";
+
 const facebookApiBaseUrl = "https://graph.facebook.com/";
 
 // function filterFbResponseOnDate(dataFromFacebookApi: Array<facebookOnFormAdObject>, startDate: string, endDate: string) {
@@ -80,6 +81,3 @@ const facebookApiBaseUrl = "https://graph.facebook.com/";
 //     }
 //     return allLeads;
 // }
-
-
-

@@ -14,22 +14,22 @@ export const meta: MetaFunction = () => {
 };
 
 type ActionData = {
-    newLeadsCount: number | null;
+    idToCountOfLeads: {[formId: string]: number} | null;
     error: string | null;
 };
 
 export const action: ActionFunction = async ({request}) => {
     // const body = await request.formData();
 
-    let newLeadsCount: number | null;
+    let idToCountOfLeads: {[formId: string]: number} | null;
     try {
-        newLeadsCount = await updateDataFromFacebookOnFormsApi();
+        idToCountOfLeads = await updateDataFromFacebookOnFormsApi();
     } catch (error) {
         console.log("Error doing tasks");
         console.log(error);
 
         const actionData: ActionData = {
-            newLeadsCount: null,
+            idToCountOfLeads: null,
             error: error.message,
         };
 
@@ -37,7 +37,7 @@ export const action: ActionFunction = async ({request}) => {
     }
 
     const actionData: ActionData = {
-        newLeadsCount: newLeadsCount,
+        idToCountOfLeads: idToCountOfLeads,
         error: null,
     };
 
@@ -50,7 +50,14 @@ export default function () {
     useEffect(() => {
         if (actionData != null) {
             if (actionData.error == null) {
-                successToast(`Successfully loaded ${actionData.newLeadsCount} leads`);
+                let message = "";
+                for (const kvp of Object.entries(actionData.idToCountOfLeads)) {
+                    if (message.length != 0) {
+                        message += "\n";
+                    }
+                    message += `Form ID ${kvp[0]}: Loaded ${kvp[1]} leads`
+                }
+                successToast(message);
             } else {
                 errorToast(actionData.error);
             }

@@ -1,11 +1,11 @@
 import {Listbox} from "@headlessui/react";
 import {Link} from "@remix-run/react";
+import {ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
 import {DateTime, Info} from "luxon";
 import {useId} from "react";
-import {CheckCircleFill, Clipboard, Funnel, FunnelFill, InfoCircle, XCircleFill} from "react-bootstrap-icons";
-import {getElementAtEvent, getElementsAtEvent, Line, Doughnut} from "react-chartjs-2";
-import {ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
-import toast from "react-hot-toast";
+import {Clipboard, Funnel, FunnelFill, InfoCircle} from "react-bootstrap-icons";
+import {Doughnut} from "react-chartjs-2";
+import {toast} from "react-toastify";
 import {TimeGranularity} from "~/backend/business-insights";
 import {filterToHumanReadableString, filterToTextColor, TimeZones, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithAmpersand, concatenateNonNullStringsWithSpaces, numberToHumanFriendlyString} from "~/utilities/utilities";
@@ -316,7 +316,7 @@ export function SmallValueDisplayingCardWithTarget({
     equivalentQuery?: string;
     className?: string;
     type: ValueDisplayingCardInformationType;
-    valueClassName?: string
+    valueClassName?: string;
 }) {
     return (
         <ValueDisplayingCardWithTarget
@@ -326,7 +326,7 @@ export function SmallValueDisplayingCardWithTarget({
             explanation={explanation}
             equivalentQuery={equivalentQuery}
             className={concatenateNonNullStringsWithSpaces(className, "tw-col-span-2")}
-            valueClassName={valueClassName=="undefined" ? "tw-font-2rem tw-px-0.2" : valueClassName}
+            valueClassName={valueClassName == "undefined" ? "tw-font-2rem tw-px-0.2" : valueClassName}
             labelClassName="tw-pt-4 tw-font-1rem"
             type={type}
         />
@@ -517,19 +517,9 @@ export function DateFilterSection(props: {
 }
 
 export function errorToast(content: any) {
-    toast((toast_) => (
-        <div className="tw-bg-bg+1 tw-text-fg tw-flex tw-flex-row tw-items-center tw-gap-x-4">
-            <XCircleFill className="tw-w-4 tw-h-4 tw-flex-0 tw-text-red-600" />
-            <div className="tw-flex-1">{content}</div>
-        </div>
-    ));
+    toast.error(content);
 }
 
 export function successToast(content: any) {
-    toast((toast_) => (
-        <div className="tw-bg-bg+1 tw-text-fg tw-flex tw-flex-row tw-items-center tw-gap-x-4">
-            <CheckCircleFill className="tw-w-4 tw-h-4 tw-flex-0 tw-text-green-500" />
-            <div className="tw-flex-1">{content}</div>
-        </div>
-    ));
+    toast.success(content);
 }

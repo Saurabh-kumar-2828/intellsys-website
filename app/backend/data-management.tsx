@@ -8,9 +8,7 @@ import {ingestDataFromShopifyApi, shopifyTableColumnInfos} from "~/backend/utili
 import {websitePopupFormResponsesRawColumnInfos} from "~/backend/utilities/data-management/websitePopupFormResponses.server";
 import {freshsalesColumnInfos, ingestDataFromFreshsalesApi} from "~/backend/utilities/data-management/freshsales.server";
 import {facebookAdsRawColumnInfos, ingestDataFromFacebookApi} from "~/backend/utilities/data-management/facebookAds.server";
-import { ingestDataFromGoogleAnalyticsApi } from "./utilities/data-management/googleAnalytics.server";
-import { ingestDataFromFacebookOnFormsApi, updateDataFromFacebookOnFormsApi } from "./utilities/data-management/facebookOnFormAds.server";
-import { initializeDataFromFacebookOnFormsApi } from "./utilities/data-management/initializeFacebookOnFormAds.server";
+import {ingestDataFromGoogleAnalyticsApi} from "~/backend/utilities/data-management/googleAnalytics.server";
 
 export async function fullRefresh(): Promise<void> {
     const query = `
@@ -99,7 +97,7 @@ export enum Table {
 
     //TODO: For test purpose, remove it
     googleAnalyticsApi,
-    facebookOnFormApi
+    facebookOnFormApi,
 }
 
 // export function getNameForTable(table: Table): string {
@@ -239,9 +237,9 @@ export async function processIngestDataFromApi(table: Table, date: string): Prom
         await ingestDataFromTypeformMattressApi(date);
     } else if (table == Table.typeformResponsesWaterPurifierRaw) {
         await ingestDataFromTypeformWaterPurifierApi(date);
-    // } else if (table == Table.websitePopupFormResponsesRaw) {
-    //     await truncateTable("website_popup_form_responses_raw");
-    } else if(table == Table.googleAnalyticsApi){
+        // } else if (table == Table.websitePopupFormResponsesRaw) {
+        //     await truncateTable("website_popup_form_responses_raw");
+    } else if (table == Table.googleAnalyticsApi) {
         await ingestDataFromGoogleAnalyticsApi("2022-12-12", "2022-12-25");
     } else {
         throw new Response(null, {status: 400});
@@ -262,9 +260,8 @@ function convertObjectArrayIntoArrayArray(rowObjects: Array<{[k: string]: string
 }
 
 export async function processInitializeDataFromApi(table: Table, date: string): Promise<void> {
-
-    if(table == Table.facebookOnFormApi){
-        await initializeDataFromFacebookOnFormsApi("2022-10-01", "2022-11-01");
+    if (table == Table.facebookOnFormApi) {
+        // await initializeDataFromFacebookOnFormsApi("2022-10-01", "2022-11-01");
         // await updateDataFromFacebookOnFormsApi();
     } else {
         throw new Response(null, {status: 400});

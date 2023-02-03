@@ -26,11 +26,11 @@ export type FacebookOnFormAdObject = {
 
 function filterFbResponseOnDate(dataFromFacebookApi: Array<FacebookOnFormAdObject>, startDate: string | null, endDate: string | null): Array<FacebookOnFormAdObject> {
     const data = dataFromFacebookApi.filter((campaign) => {
-        if (startDate != null && new Date(campaign.created_time) < new Date(startDate)) {
+        if (startDate != null && new Date(campaign.created_time) <= new Date(startDate)) {
             return false;
         }
 
-        if (endDate != null && new Date(campaign.created_time) > new Date(endDate)) {
+        if (endDate != null && new Date(campaign.created_time) >= new Date(endDate)) {
             return false;
         }
 
@@ -86,7 +86,7 @@ export async function ingestDataFromFacebookOnFormsApi(formId: string, startDate
 }
 
 function getAllFormIds() {
-    return ["2995134520792726"];
+    return ["2995134520792726", "868223280887849", "1512895339218745", "557293623119394"];
 }
 
 async function getLastUpdatedDate(formId: string): Promise<Iso8601DateTime> {
@@ -132,7 +132,7 @@ export async function pushIntoDatabase(newLeads: Array<FacebookOnFormAdObject>) 
     }
 }
 
-export async function updateDataFromFacebookOnFormsApi(): Promise<number | null> {
+export async function updateDataFromFacebookOnFormsApi(): Promise<{[formId: string]: number} | null> {
     try {
         const formIds = getAllFormIds();
         for (const formId of formIds) {
@@ -143,7 +143,16 @@ export async function updateDataFromFacebookOnFormsApi(): Promise<number | null>
             pushIntoDatabase(newLeads);
             sendDataToLmsEvents(newLeads);
 
-            return newLeads.length;
+            const idToCountOfLeads: {[formId: string]: number} = {};
+            for (const newLead of newLeads) {
+                if (!(newLead.form_id in idToCountOfLeads)) {
+                    idToCountOfLeads[newLead.form_id] = 0;
+                }
+
+                idToCountOfLeads[newLead.form_id]++;
+            }
+
+            return idToCountOfLeads;
         }
     } catch (e) {
         console.log(e);
@@ -214,7 +223,7 @@ async function sendDataToLmsEvents(leadsData: Array<FacebookOnFormAdObject>) {
 
 export async function sendDataToLms(lmsData) {
     try {
-        await fetch(process.env.LMS_BASE_URL + "/api/new_lead_v2.php", {
+        const response = await fetch(process.env.LMS_BASE_URL + "/api/new_lead_v2.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -222,6 +231,10 @@ export async function sendDataToLms(lmsData) {
             },
             body: JSON.stringify(lmsData),
         });
+
+        if (!response.ok) {
+            console.log(await response.json());
+        }
         // TODO: Check for failures here?
     } catch (e) {
         console.log("LMS Exception");

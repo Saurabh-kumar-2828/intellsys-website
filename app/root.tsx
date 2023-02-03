@@ -1,13 +1,13 @@
-import type {ShouldReloadFunction} from "@remix-run/react";
+import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
-import type {MetaFunction, LinksFunction, LoaderFunction} from "@remix-run/node";
-import {Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData, useLocation, useTransition} from "@remix-run/react";
+import {Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData, useTransition} from "@remix-run/react";
+import {ToastContainer} from "react-toastify";
+import {getAccessToken, getAuthenticatedUserDetails} from "~/backend/utilities/sessionsHelper.server";
 import {HeaderComponent} from "~/components/headerComponent";
 import {LoaderComponent} from "~/components/loaderComponent";
-import {getAccessToken, getAuthenticatedUserDetails} from "~/backend/utilities/sessionsHelper.server";
 import {User} from "~/utilities/typeDefinitions";
 import tailwindStylesheet from "../build/tailwind.css";
-import {Toaster} from "react-hot-toast";
+import reactToastifyStylesheet from "react-toastify/dist/ReactToastify.css";
 
 type LoaderData = {
     userDetails: User | null;
@@ -37,6 +37,7 @@ export const meta: MetaFunction = () => ({
 
 export const links: LinksFunction = () => [
     {rel: "stylesheet", href: tailwindStylesheet},
+    {rel: "stylesheet", href: reactToastifyStylesheet},
     {rel: "stylesheet", href: "https://fonts.googleapis.com/css?family=Poppins"},
 ];
 
@@ -60,13 +61,13 @@ export default function App() {
                         <Outlet />
                     </div>
                 </div>
-                <Toaster
+
+                <ToastContainer
                     position="top-right"
-                    toastOptions={{
-                        duration: 5000,
-                        className: "!tw-bg-bg+1",
-                    }}
+                    autoClose={false}
+                    theme="dark"
                 />
+
                 <ScrollRestoration />
                 <Scripts />
                 <LiveReload />

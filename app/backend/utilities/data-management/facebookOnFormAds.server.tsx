@@ -134,6 +134,8 @@ export async function pushIntoDatabase(newLeads: Array<FacebookOnFormAdObject>) 
 
 export async function updateDataFromFacebookOnFormsApi(): Promise<{[formId: string]: number} | null> {
     try {
+        const idToCountOfLeads: {[formId: string]: number} = {};
+
         const formIds = getAllFormIds();
         for (const formId of formIds) {
             const startDate = await getLastUpdatedDate(formId);
@@ -143,17 +145,10 @@ export async function updateDataFromFacebookOnFormsApi(): Promise<{[formId: stri
             pushIntoDatabase(newLeads);
             sendDataToLmsEvents(newLeads);
 
-            const idToCountOfLeads: {[formId: string]: number} = {};
-            for (const newLead of newLeads) {
-                if (!(newLead.form_id in idToCountOfLeads)) {
-                    idToCountOfLeads[newLead.form_id] = 0;
-                }
-
-                idToCountOfLeads[newLead.form_id]++;
-            }
-
-            return idToCountOfLeads;
+            idToCountOfLeads[formId] = newLeads.length;
         }
+
+        return idToCountOfLeads;
     } catch (e) {
         console.log(e);
         throw e;

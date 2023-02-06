@@ -1,7 +1,18 @@
 // TODO: Add support for the concept of "has field been fetched" for better validation
 export type User = {
-    id: string;
+    id: Uuid;
+    name: string;
+    privileges: Array<Uuid>;
 }
+
+export type Company = {
+    id: Uuid;
+    name: string;
+    pages: Array<string> | null;
+};
+
+export type Uuid = string;
+export type Jwt = string;
 
 export type Iso8601Time = string;
 export type Iso8601Date = string;

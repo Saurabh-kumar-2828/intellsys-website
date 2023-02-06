@@ -1,14 +1,17 @@
-import type {MetaFunction, ActionFunction, LoaderFunction} from "@remix-run/node";
-import {json} from "@remix-run/node";
-import {redirect} from "@remix-run/node";
-import {Form, Link, useActionData, useLoaderData, useNavigate} from "@remix-run/react";
-import {Base64} from "js-base64";
-import {useState} from "react";
-
+import type {ActionFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
+import {json, redirect} from "@remix-run/node";
+import {Form, useActionData} from "@remix-run/react";
+import {useEffect} from "react";
+import {validateUser} from "~/backend/authentication.server";
+import {commitCookieSession, getCookieSession} from "~/backend/utilities/cookieSessions.server";
+import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
-import {ResponsiveImage} from "~/components/reusableComponents/responsiveImage";
-import {concatenateNonNullStringsWithSpaces, getNonEmptyStringOrNull} from "~/utilities/utilities";
-import {getAuthenticatedUserDetails} from "~/backend/utilities/sessionsHelper.server";
+import {errorToast} from "~/components/scratchpad";
+import {getNonEmptyStringOrNull} from "~/utilities/utilities";
+
+type ActionData = null | {
+    error: string;
+};
 
 export const action: ActionFunction = async ({request}) => {
     const body = await request.formData();
@@ -18,46 +21,40 @@ export const action: ActionFunction = async ({request}) => {
 
     // TODO: Do this properly
 
-    const values = {
-        username,
-        password
-    };
+    if (username == null || password == null) {
+        const actionData: ActionData = {
+            error: "Username or password cannot be empty!",
+        };
 
-    const errors = [];
-
-    if (username == null) {
-        errors.push("Username cannot be empty!");
+        return json(actionData);
     }
 
-    if (password == null) {
-        errors.push("Password cannot be empty!");
+    const response = await validateUser(username, password);
+    if (response == null) {
+        const actionData = {
+            error: "Incorrect username or password!",
+        };
+
+        return json(actionData);
     }
 
-    if (errors.length != 0) {
-        return json({
-            values,
-            errors,
-        });
-    }
+    const cookieSession = await getCookieSession(request.headers.get("Cookie"));
 
-    if (username == "gj" && password == "gj") {
-        return redirect("/set-session?userId=admin");
-    } else if (username == "harsha@livpure.com" && password == "Livpure!") {
-        return redirect("/set-session?userId=harsha@livpure.com");
-    } else {
-        errors.push("Invalid credentials!");
-    }
+    cookieSession.set("accessToken", response.accessTokenJwt);
+    // session.set("refreshToken", response.refreshTokenJwt);
 
-    return json({
-        values,
-        errors,
+    // return redirect(coalesce(redirectTo, "/"), {
+    return redirect("/", {
+        headers: {
+            "Set-Cookie": await commitCookieSession(cookieSession),
+        },
     });
 };
 
 export const loader: LoaderFunction = async ({request}) => {
-    const userDetails = await getAuthenticatedUserDetails(request);
+    const accessToken = await getAccessTokenFromCookies(request);
 
-    if (userDetails != null) {
+    if (accessToken != null) {
         return redirect("/");
     }
 
@@ -71,26 +68,25 @@ export const meta: MetaFunction = () => {
 };
 
 export default function () {
-    const actionData = useActionData();
+    const actionData = useActionData() as ActionData;
+
+    useEffect(() => {
+        if (actionData != null) {
+            errorToast(actionData.error);
+        }
+    }, [actionData]);
 
     return (
         <div>
             <div className="tw-flex-grow-[999] tw-grid tw-grid-cols-1 md:tw-grid-cols-[1fr_30rem] tw-items-center tw-justify-center tw-px-screen-edge tw-min-h-[calc(100vh-var(--gj-header-height))] tw-gap-x-8 tw-gap-y-8">
                 <div className="tw-flex tw-flex-col tw-justify-center">
-                    <div className="tw-font-h1-400">
-                        Codify Your Coffee
-                    </div>
+                    <div className="tw-font-h1-400">Codify Your Coffee</div>
 
-                    <div className="tw-font-h1-400">
-                        Techify Your Meals
-                    </div>
+                    <div className="tw-font-h1-400">Techify Your Meals</div>
 
                     <VerticalSpacer className="tw-h-8" />
 
-                    <div>
-                        Growth Jockey lets your company not miss out on any growth opportunity while retaining your focus on the core business.
-
-                    </div>
+                    <div>Growth Jockey lets your company not miss out on any growth opportunity while retaining your focus on the core business.</div>
 
                     <VerticalSpacer className="tw-h-8" />
 
@@ -99,15 +95,8 @@ export default function () {
                     </a>
                 </div>
 
-                <Form
-                    method="post"
-                    className="tw-flex tw-flex-col tw-bg-dark-bg-500 tw-rounded-2xl tw-p-8"
-                >
-                    <label
-                        htmlFor="username"
-                    >
-                        Username
-                    </label>
+                <Form method="post" className="tw-flex tw-flex-col tw-bg-dark-bg-500 tw-rounded-2xl tw-p-8">
+                    <label htmlFor="username">Username</label>
 
                     <VerticalSpacer className="tw-h-2" />
 
@@ -117,18 +106,13 @@ export default function () {
                         name="username"
                         placeholder="Enter your email"
                         required
-                        defaultValue={actionData?.values?.username ?? ""}
                         // pattern="[0-9]{10}"
                         className="is-text-input"
                     />
 
                     <VerticalSpacer className="tw-h-4" />
 
-                    <label
-                        htmlFor="password"
-                    >
-                        Password
-                    </label>
+                    <label htmlFor="password">Password</label>
 
                     <VerticalSpacer className="tw-h-2" />
 
@@ -139,23 +123,12 @@ export default function () {
                         placeholder="Enter your password"
                         required
                         // pattern="[0-9]{10}"
-                        defaultValue={actionData?.values?.password ?? ""}
                         className="is-text-input"
                     />
 
                     <VerticalSpacer />
 
-                    {actionData?.errors == null ? null : (
-                        <>
-                            <div className="tw-text-red-500 tw-text-center">{actionData?.errors.join(", ")}</div>
-
-                            <VerticalSpacer />
-                        </>
-                    )}
-
-                    <button className="is-button tw-self-center tw-px-16">
-                        Sign In
-                    </button>
+                    <button className="is-button tw-self-center tw-px-16">Sign In</button>
                 </Form>
             </div>
         </div>

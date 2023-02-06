@@ -1,10 +1,11 @@
 import {LoaderFunction, MetaFunction, redirect} from "@remix-run/node";
-import {getAccessToken, getAuthenticatedUserDetails} from "~/backend/utilities/sessionsHelper.server";
+import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 
 export const loader: LoaderFunction = async ({request}) => {
-    const userDetails = await getAuthenticatedUserDetails(request);
+    const accessToken = await getAccessTokenFromCookies(request);
 
-    if (userDetails == null) {
+    // TODO: Figure out the proper way to do this
+    if (accessToken == null) {
         const currentUrl = new URL(request.url).pathname;
 
         if (currentUrl != "/sign-in") {

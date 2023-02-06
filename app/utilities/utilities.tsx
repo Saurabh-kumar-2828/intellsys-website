@@ -13,7 +13,7 @@ export function getUrlForCdnResource(imageId, imageVariant) {
     return `https://imagedelivery.net/${cloudflareImagesAccountHash}/${imageId}/${imageVariant}`;
 }
 
-export function getNonEmptyStringOrNull(str) {
+export function getNonEmptyStringOrNull(str): string | null {
     if (str?.length == 0) {
         return null;
     }
@@ -233,8 +233,12 @@ export function getDates(minDate: any, maxDate: any) {
 }
 
 export function getSingletonValue<T>(arr: Array<T>): T {
-    if (arr.length != 1) {
-        throw "Error: Zero/more than one value received, when one and only one was expected";
+    if (arr.length == 0) {
+        throw Error(`Zero values received, when one and only one was expected: ${JSON.stringify(arr)}`);
+    }
+
+    if (arr.length > 1) {
+        throw Error(`More than one value received, when one and only one was expected: ${JSON.stringify(arr)}`);
     }
 
     return arr[0];
@@ -246,7 +250,7 @@ export function getSingletonValueOrNull<T>(arr: Array<T>): T | null {
     }
 
     if (arr.length > 1) {
-        throw "Error: More than one value received, when one and only one was expected";
+        throw Error(`More than one value received, when one and only one was expected: ${JSON.stringify(arr)}`);
     }
 
     return arr[0];

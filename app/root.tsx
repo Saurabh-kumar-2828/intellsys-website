@@ -2,28 +2,42 @@ import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node"
 import {json, redirect} from "@remix-run/node";
 import {Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData, useTransition} from "@remix-run/react";
 import {ToastContainer} from "react-toastify";
-import {getAccessToken, getAuthenticatedUserDetails} from "~/backend/utilities/sessionsHelper.server";
 import {HeaderComponent} from "~/components/headerComponent";
 import {LoaderComponent} from "~/components/loaderComponent";
-import {User} from "~/utilities/typeDefinitions";
+import {Company, User} from "~/utilities/typeDefinitions";
 import tailwindStylesheet from "../build/tailwind.css";
 import reactToastifyStylesheet from "react-toastify/dist/ReactToastify.css";
+import {getAccessTokenFromCookies, getUserDetails} from "~/backend/utilities/cookieSessionsHelper.server";
+import {getAccessibleCompanies, getNameAndPrivilegesForUser} from "~/backend/userDetails.server";
 
 type LoaderData = {
     userDetails: User | null;
+    accessibleCompanies: Array<Company> | null;
 };
 
 export const loader: LoaderFunction = async ({request}) => {
-    const accessToken = await getAccessToken(request);
+    const accessToken = await getAccessTokenFromCookies(request);
 
     if (accessToken != null && accessToken.schemaVersion != process.env.COOKIE_SCHEMA_VERSION) {
         return redirect("/sign-out");
     }
 
-    const userDetails = await getAuthenticatedUserDetails(request);
+    if (accessToken == null) {
+        const loaderData: LoaderData = {
+            userDetails: null,
+            accessibleCompanies: null,
+        };
+
+        return json(loaderData);
+    }
+
+    console.log(accessToken);
+    const userDetails = await getNameAndPrivilegesForUser(accessToken.userId);
+    const accessibleCompanies = await getAccessibleCompanies(userDetails);
 
     const loaderData: LoaderData = {
         userDetails: userDetails,
+        accessibleCompanies: accessibleCompanies,
     };
 
     return json(loaderData);
@@ -44,7 +58,7 @@ export const links: LinksFunction = () => [
 export default function App() {
     const transition = useTransition();
 
-    const {userDetails} = useLoaderData();
+    const {userDetails, accessibleCompanies} = useLoaderData();
 
     return (
         <html lang="en">
@@ -56,7 +70,7 @@ export default function App() {
             <body className="tw-bg-dark-bg-400 tw-text-base tw-text-fg">
                 <div className="tw-grid tw-grid-rows-[auto_1fr] tw-min-h-screen">
                     {transition.state == "idle" ? null : <LoaderComponent />}
-                    <HeaderComponent userDetails={userDetails} className="tw-row-start-1 tw-z-50" />
+                    <HeaderComponent userDetails={userDetails} accessibleCompanies={accessibleCompanies} className="tw-row-start-1 tw-z-50" />
                     <div className="tw-row-start-2">
                         <Outlet />
                     </div>

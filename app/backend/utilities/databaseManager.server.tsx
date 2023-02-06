@@ -1,7 +1,7 @@
 import {Pool, QueryResult} from "pg";
 
 declare global {
-    var _databaseConnectionPool;
+    var _databaseConnectionPool: Pool | null;
 }
 
 // TODO: Proper error handling
@@ -10,15 +10,7 @@ export async function execute(query: string, queryArguments?: Array<any>): Promi
     const databaseConnectionPool = await getDatabaseConnectionPool();
 
     // TODO: Confirm success, or log error
-    let response;
-    try {
-        response = await databaseConnectionPool.query(query, queryArguments);
-    } catch (e) {
-        console.log("Encountered error while running SQL query:");
-        console.log(query);
-        console.log(queryArguments);
-        console.log(e);
-    }
+    const response = await databaseConnectionPool.query(query, queryArguments);
 
     return response;
 }

@@ -153,8 +153,6 @@ export async function updateDataFromFacebookOnFormsApi(): Promise<{[formId: stri
         console.log(e);
         throw e;
     }
-
-    return null;
 }
 
 function extractLeadInformation(lead: FacebookOnFormAdObject) {
@@ -186,17 +184,15 @@ function extractLeadInformation(lead: FacebookOnFormAdObject) {
             district: "",
             state: state,
             lead_id: lead.id,
-            action_id: lead.campaign_id,
-            action_type: "try_at_home_test_ride",
             pincode: "",
             address: "",
-            source_of_enquiry: "Website",
-            utm_source: "",
+            source_of_enquiry: "Facebook On-Form",
+            utm_source: "facebook",
             utm_medium: lead.campaign_name,
             current_source_of_water: "",
             current_plan_selected: "",
-            lead_created_page: "Campaign Try At Home",
-            current_lead_page: "Campaign Try At Home",
+            lead_created_page: "",
+            current_lead_page: "",
             business_id: "1",
             user_id: "",
             test_ride_date: "",
@@ -205,7 +201,7 @@ function extractLeadInformation(lead: FacebookOnFormAdObject) {
 
         return lmsData;
     } else {
-        throw "";
+        throw `Unsupported LMS Data format: ${JSON.stringify(lead)}`;
     }
 }
 

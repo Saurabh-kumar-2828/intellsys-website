@@ -3,14 +3,14 @@ import {List} from "react-bootstrap-icons";
 
 import {MenuComponent} from "~/components/menuComponent";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
-import {User} from "~/utilities/typeDefinitions";
+import {Company, User} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
 
-export function HeaderComponent(props: {userDetails: User | null, className?: string}) {
+export function HeaderComponent({userDetails, accessibleCompanies, className}: {userDetails: User | null, accessibleCompanies: Array<Company> | null, className?: string}) {
     const currentUrl = useLocation().pathname;
 
     return (
-        <div className={concatenateNonNullStringsWithSpaces("tw-sticky tw-top-0 tw-h-16 tw-bg-dark-bg-400", props.className)}>
+        <div className={concatenateNonNullStringsWithSpaces("tw-sticky tw-top-0 tw-h-16 tw-bg-dark-bg-400", className)}>
             <div className="tw-grid tw-grid-cols-[auto_1fr_auto] tw-items-center tw-p-4">
                 <Link to="/" className="tw-col-start-1">
                     <div className="tw-flex tw-flex-row tw-items-center tw-gap-x-2">
@@ -18,7 +18,7 @@ export function HeaderComponent(props: {userDetails: User | null, className?: st
                     </div>
                 </Link>
 
-                {currentUrl.startsWith("/sign-in") ? null : <MenuComponent className="tw-col-start-3 tw-h-8" userDetails={props.userDetails} />}
+                {currentUrl.startsWith("/sign-in") ? null : <MenuComponent className="tw-col-start-3 tw-h-8" userDetails={userDetails} accessibleCompanies={accessibleCompanies} />}
             </div>
         </div>
     );

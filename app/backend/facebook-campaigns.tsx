@@ -11,6 +11,7 @@ export async function getCampaignsInformation(
     selectedGranularity: string,
     minDate: string,
     maxDate: string,
+    companyId: string
 ) {
     try {
         const selectValues = [];
@@ -55,7 +56,7 @@ export async function getCampaignsInformation(
             `
         );
 
-        const result = await execute(query);
+        const result = await execute(companyId, query);
 
         if (result.rows.length != 1) {
             throw "";
@@ -83,6 +84,7 @@ export async function getCampaignsTrends (
     selectedGranularity: string,
     minDate: string,
     maxDate: string,
+    companyId: string
 ) {
     try {
         const selectValues = [];
@@ -137,7 +139,7 @@ export async function getCampaignsTrends (
             `
         );
 
-        const result = await execute(query);
+        const result = await execute(companyId, query);
 
         return {
             metaQuery: query,
@@ -179,6 +181,7 @@ export async function getSales(
     selectedGranularity: string,
     minDate: string,
     maxDate: string,
+    companyId: string
 ) {
     try {
         const selectValues = [];
@@ -221,7 +224,7 @@ export async function getSales(
             `
         );
 
-        const result = await execute(query);
+        const result = await execute(companyId, query);
 
         if (result.rows.length != 1) {
             throw "";

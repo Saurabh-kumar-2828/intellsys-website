@@ -4,6 +4,7 @@ import {getSingletonValue} from "~/utilities/utilities";
 
 export async function getNameAndPrivilegesForUser(userId: Uuid): Promise<User> {
     const result = await execute(
+        null,
         `
             SELECT
                 *
@@ -31,6 +32,7 @@ function rowToUser(row: any): User {
 export async function getAccessibleCompanies(user: User): Promise<Array<Company>> {
     // TODO: TO THIS PROPERLY
     const result = await execute(
+        null,
         `
             SELECT
                 *

@@ -2,6 +2,7 @@ import {execute} from "~/backend/utilities/databaseManager.server";
 import {dateToIso8601Date, dateToMediumEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
 import {Iso8601Date} from "~/utilities/typeDefinitions";
+import {Companies} from "do-not-commit";
 
 export enum TimeGranularity {
     daily = "Daily",
@@ -33,7 +34,7 @@ export type ShopifyDataAggregatedRow = {
     netQuantity: number;
 };
 
-export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity): Promise<ShopifyData> {
+export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: string): Promise<ShopifyData> {
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "date")} AS date,
@@ -73,7 +74,7 @@ export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date,
             date
     `;
 
-    const result = await execute(query);
+    const result = await execute(companyId, query);
 
     return {
         metaQuery: query,
@@ -120,7 +121,7 @@ export type FreshsalesDataAggregatedRow = {
     timeToClose: number;
 };
 
-export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity): Promise<FreshsalesData> {
+export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: string): Promise<FreshsalesData> {
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "fs.lead_created_at")} AS date_,
@@ -161,7 +162,7 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
         ORDER BY
             date_
     `;
-    const result = await execute(query);
+    const result = await execute(companyId, query);
     return {
         metaQuery: query,
         rows: result.rows.map((row) => rowToFreshsalesDataAggregatedRow(row)),
@@ -200,7 +201,7 @@ export type AdsDataAggregatedRow = {
     category: string;
 };
 
-export async function getAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity): Promise<AdsData> {
+export async function getAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: string): Promise<AdsData> {
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "date")} AS date,
@@ -224,7 +225,7 @@ export async function getAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, gra
             date
     `;
 
-    const result = await execute(query);
+    const result = await execute(companyId, query);
 
     return {
         metaQuery: query,

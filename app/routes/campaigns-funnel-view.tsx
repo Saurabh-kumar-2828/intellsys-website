@@ -16,6 +16,7 @@ import {campaignsColorPalette, defaultColumnDefinitions, distinct, getDates, get
 import BarGraphComponent from "../components/d3Componenets/barGraphComponent";
 import {progressCellRendererTarget} from "~/components/progressCellRenderer";
 import styles from "app/styles.css";
+import { Companies } from "do-not-commit";
 export const meta: MetaFunction = () => {
     return {
         title: "Campaigns Funnel - Intellsys",
@@ -75,6 +76,12 @@ export const loader: LoaderFunction = async ({request}) => {
         maxDate = maxDateRaw;
     }
 
+    // Get companyId
+    // const companyId = urlSearchParams.get("company_id");
+
+    // For test purpose
+    const companyId = Companies.livpure;
+
     // TODO: Add filters
     const loaderData: LoaderData = {
         appliedSelectedGranularity: selectedGranularity,
@@ -82,9 +89,9 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedMaxDate: maxDate,
         allProductInformation: await getProductLibrary(),
         allSourceInformation: await getCapturedUtmCampaignLibrary(),
-        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity),
-        freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity),
-        adsData: await getAdsData(minDate, maxDate, selectedGranularity),
+        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
+        freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
+        adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
     };
 
     return json(loaderData);

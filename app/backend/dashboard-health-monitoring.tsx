@@ -7,7 +7,7 @@ export type CampaignLibraryRow = {
     campaignCategory: string;
 };
 
-export async function getMissingCampaigns(): Promise<Array<CampaignLibraryRow>> {
+export async function getMissingCampaigns(companyId: string): Promise<Array<CampaignLibraryRow>> {
     const query = `
         SELECT DISTINCT
             campaign_name,
@@ -109,7 +109,7 @@ export type ProductLibraryRow = {
     productSubCategory: string;
 };
 
-export async function getMissingProducts(): Promise<Array<ProductLibraryRow>> {
+export async function getMissingProducts(companyId: string): Promise<Array<ProductLibraryRow>> {
     const query = `
         SELECT DISTINCT
             product_title,
@@ -123,7 +123,7 @@ export async function getMissingProducts(): Promise<Array<ProductLibraryRow>> {
             product_sub_category IS NULL
     `;
 
-    const result = await execute(query);
+    const result = await execute(companyId, query);
 
     return result.rows.map((row) => rowToProductLibraryRow(row));
 }
@@ -172,7 +172,7 @@ export type CapturedUtmCampaignToCampaignNameRow = {
     campaignName: string;
 };
 
-export async function getMissingSources(): Promise<Array<CapturedUtmCampaignToCampaignNameRow>> {
+export async function getMissingSources(companyId: string): Promise<Array<CapturedUtmCampaignToCampaignNameRow>> {
     const query = `
         SELECT DISTINCT
             lead_generation_source AS captured_utm_campaign,
@@ -195,7 +195,7 @@ export async function getMissingSources(): Promise<Array<CapturedUtmCampaignToCa
             lead_generation_source_campaign_platform IS NULL
     `;
 
-    const result = await execute(query);
+    const result = await execute(companyId, query);
 
     return result.rows.map((row) => rowToCapturedUtmCampaignToCampaignNameRow(row));
 }

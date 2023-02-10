@@ -1,6 +1,7 @@
 import type {LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
+import { Companies } from "do-not-commit";
 import {CampaignLibraryRow, CapturedUtmCampaignToCampaignNameRow, getMissingCampaigns, getMissingProducts, getMissingSources, ProductLibraryRow} from "~/backend/dashboard-health-monitoring";
 import {GenericCard, SectionHeader} from "~/components/scratchpad";
 
@@ -17,13 +18,19 @@ type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({request}) => {
+    const urlSearchParams = new URL(request.url).searchParams;
+    // Get companyId
+    // const companyId = urlSearchParams.get("company_id");
+
+    // For test purpose
+    const companyId = Companies.livpure;
     const loaderData: LoaderData = {
-        missingCampaigns: await getMissingCampaigns(),
+        missingCampaigns: await getMissingCampaigns(companyId),
         // missingCampaignNamesFromFacebookAds: await getMissingCampaignNamesFromFacebookAds(),
         // missingCampaignNamesFromGoogleAds: await getMissingCampaignNamesFromGoogleAds(),
-        missingProducts: await getMissingProducts(),
+        missingProducts: await getMissingProducts(companyId),
         // missingProductDetailsFromShopifySalesToSourceWithInformation: await getMissingProductDetailsFromShopifySalesToSourceWithInformation(),
-        missingSources: await getMissingSources(),
+        missingSources: await getMissingSources(companyId),
         // missingSourceDetailsFromShopifySalesToSourceWithInformation: await getMissingSourceDetailsFromShopifySalesToSourceWithInformation(),
         // missingSourceDetailsFromFreshsalesLeadsToSourceWithInformation: await getMissingSourceDetailsFromFreshsalesLeadsToSourceWithInformation(),
     };

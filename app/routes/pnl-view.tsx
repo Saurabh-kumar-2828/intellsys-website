@@ -2,6 +2,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import {json, LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {AgGridReact} from "ag-grid-react";
+import { Companies } from "do-not-commit";
 import {DateTime, DayNumbers, Info} from "luxon";
 import {useState} from "react";
 import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
@@ -61,6 +62,12 @@ export const loader: LoaderFunction = async ({request}) => {
         maxDate = maxDateRaw;
     }
 
+    // Get companyId
+    // const companyId = urlSearchParams.get("company_id");
+
+    // For test purpose
+    const companyId = Companies.livpure;
+
     // TODO: Make a function for parsing this
     const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
     let selectedGranularity: TimeGranularity;
@@ -76,9 +83,9 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedSelectedGranularity: selectedGranularity,
         allProductInformation: await getProductLibrary(),
         allSourceInformation: await getCapturedUtmCampaignLibrary(),
-        freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity),
-        adsData: await getAdsData(minDate, maxDate, selectedGranularity),
-        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity),
+        freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
+        adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
+        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
     };
 
     return json(loaderData);

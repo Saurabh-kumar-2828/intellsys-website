@@ -1,6 +1,7 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {dateToMediumNoneEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
+import { Companies } from "do-not-commit";
 
 // TODO: Fix nomenclature
 
@@ -17,7 +18,7 @@ async function getDataInformation(tableName: string, dateColumn: string) {
             `
         );
 
-        const result = await execute(query);
+        const result = await execute(Companies.livpure, query);
 
         if (result.rows.length == 0) {
             throw "";

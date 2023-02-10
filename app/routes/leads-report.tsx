@@ -39,6 +39,7 @@ import {Bar, getDatasetAtEvent} from "react-chartjs-2";
 import {AgGridReact} from "ag-grid-react";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {aggregateByDate, createGroupByReducer, sumReducer} from "~/backend/utilities/utilities";
+import { Companies } from "do-not-commit";
 
 export const meta: MetaFunction = () => {
     return {
@@ -81,6 +82,12 @@ export const loader: LoaderFunction = async ({request}) => {
         maxDate = maxDateRaw;
     }
 
+    // Get companyId
+    // const companyId = urlSearchParams.get("company_id");
+
+    // For test purpose
+    const companyId = Companies.livpure;
+
     // TODO: Add filters
 
     return json({
@@ -89,9 +96,9 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedMaxDate: maxDate,
         allProductInformation: await getProductLibrary(),
         allSourceInformation: await getCapturedUtmCampaignLibrary(),
-        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity),
-        freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity),
-        adsData: await getAdsData(minDate, maxDate, selectedGranularity),
+        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
+        freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
+        adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
     });
 };
 

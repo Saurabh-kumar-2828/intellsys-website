@@ -3,6 +3,7 @@ import {json} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {AgGridReact} from "ag-grid-react";
 import {ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
+import { Companies } from "do-not-commit";
 import {DateTime} from "luxon";
 import {useCallback, useRef, useState} from "react";
 import {getElementsAtEvent, Line, Pie} from "react-chartjs-2";
@@ -59,6 +60,13 @@ export const loader: LoaderFunction = async ({request}) => {
         maxDate = maxDateRaw;
     }
 
+    // Get companyId
+    // const companyId = urlSearchParams.get("company_id");
+
+    // For test purpose
+    const companyId = Companies.livpure;
+
+
     // TODO: Add filters
 
     return json({
@@ -67,8 +75,8 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedMaxDate: maxDate,
         allProductInformation: await getProductLibrary(),
         allSourceInformation: await getCapturedUtmCampaignLibrary(),
-        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity),
-        adsData: await getAdsData(minDate, maxDate, selectedGranularity),
+        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
+        adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
     });
 };
 

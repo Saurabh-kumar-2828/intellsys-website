@@ -5,6 +5,7 @@ import {useLoaderData} from "@remix-run/react";
 import "ag-grid-enterprise";
 import {AgGridReact} from "ag-grid-react";
 import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
+import { Companies } from "do-not-commit";
 import {DateTime} from "luxon";
 import {useEffect, useState} from "react";
 import {Bar, Line} from "react-chartjs-2";
@@ -85,6 +86,12 @@ export const loader: LoaderFunction = async ({request}) => {
         maxDate = maxDateRaw;
     }
 
+    // Get companyId
+    // const companyId = urlSearchParams.get("company_id");
+
+    // For test purpose
+    const companyId = Companies.livpure;
+
     // TODO: Make a function for parsing this, including handling invalid values
     const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
     let selectedGranularity: TimeGranularity;
@@ -100,9 +107,9 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedSelectedGranularity: selectedGranularity,
         allProductInformation: await getProductLibrary(),
         allSourceInformation: await getCapturedUtmCampaignLibrary(),
-        freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity),
-        adsData: await getAdsData(minDate, maxDate, selectedGranularity),
-        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity),
+        freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
+        adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
+        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
     };
 
     return json(loaderData);

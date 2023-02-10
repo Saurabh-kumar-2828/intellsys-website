@@ -15,9 +15,9 @@ export async function doesTableExist(tableName: string): Promise<boolean> {
             `
         );
 
-        await execute(query);
+        await execute(null, query);
 
-        const result = await execute(query);
+        const result = await execute(null, query);
 
         if (result.rows.length != 1) {
             throw "";
@@ -41,7 +41,7 @@ export async function createFreshsalesLeadsRaw(): Promise<void> {
             `
         );
 
-        await execute(query);
+        await execute(null, query);
     } catch (e) {
         console.log("Error executing function");
         console.log(e);

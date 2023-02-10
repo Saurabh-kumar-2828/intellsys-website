@@ -1,3 +1,4 @@
+import { Companies } from "do-not-commit";
 import jwt, {Jwt} from "jsonwebtoken";
 import {AccessToken} from "~/backend/utilities/cookieSessionsHelper.server";
 import {execute} from "~/backend/utilities/databaseManager.server";
@@ -6,6 +7,7 @@ import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 export async function validateUser(username: string, password: string): Promise<{accessTokenJwt: Jwt; userId: Uuid} | null> {
     const result = await execute(
+        Companies.livpure,
         `
             SELECT
                 id

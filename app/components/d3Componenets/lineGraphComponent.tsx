@@ -3,7 +3,7 @@ import {ScaleBand, scaleBand, ScaleLinear, scaleLinear, scaleOrdinal} from "d3-s
 import {select} from "d3-selection";
 import {line} from "d3-shape";
 import React from "react";
-import {plotMargins, scale, yAxisDisplay} from "~/backend/utilities/utilities";
+import {plotMargins, scale, yAxisDisplay} from "~/backend/utilities/utilities.server";
 import {legend} from "./legend";
 import {bisector} from "d3-array";
 

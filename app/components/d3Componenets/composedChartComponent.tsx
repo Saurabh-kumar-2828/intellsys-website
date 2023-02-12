@@ -4,7 +4,7 @@ import {select} from "d3-selection";
 import React, {useRef} from "react";
 import BarGraphComponent from "./barGraphComponent";
 import {LineGraphComponent} from "./lineGraphComponent";
-import {plotMargins, scale, yAxisDisplay} from "~/backend/utilities/utilities";
+import {plotMargins, scale, yAxisDisplay} from "~/backend/utilities/utilities.server";
 import {legend} from "./legend";
 
 export type legendObject = {

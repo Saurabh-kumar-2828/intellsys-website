@@ -128,6 +128,7 @@
 //         console.log("processFileUpload: File empty");
 //         throw new Response(null, {status: 400});
 //     }
+
 //     if (table == Table.facebookAdsRaw) {
 //         await insertIntoTableWrapper("facebook_ads_raw", facebookAdsRawColumnInfos, rowObjects, companyId);
 //     } else if (table == Table.freshsalesLeadsMattressRaw) {

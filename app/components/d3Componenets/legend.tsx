@@ -1,5 +1,5 @@
 import React from "react";
-import {plotMargins, yAxisDisplay} from "~/backend/utilities/utilities";
+import {plotMargins, yAxisDisplay} from "~/backend/utilities/utilities.server";
 import {legendObject} from "./composedChartComponent";
 
 export const legend = (

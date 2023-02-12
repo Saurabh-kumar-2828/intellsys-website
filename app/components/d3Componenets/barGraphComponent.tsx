@@ -2,7 +2,7 @@ import React from "react";
 import {axisLeft, axisRight} from "d3-axis";
 import {ScaleBand, scaleBand, ScaleLinear, scaleLinear} from "d3-scale";
 import {select} from "d3-selection";
-import {plotMargins, scale, yAxisDisplay} from "~/backend/utilities/utilities";
+import {plotMargins, scale, yAxisDisplay} from "~/backend/utilities/utilities.server";
 
 type lineDataObject = {
     dates: Array<string>;

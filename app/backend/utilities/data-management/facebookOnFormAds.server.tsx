@@ -63,6 +63,7 @@ export async function ingestDataFromFacebookOnFormsApi(formId: string, startDate
         let endCursor = null;
         while (true) {
             const onFormLeads = await getFacebookOnFormLeads(formId, responseLimit, endCursor);
+            // TODO: Add time-based filtering in the above function, and remove the following function
             const filteredResponses = filterFbResponseOnDate(onFormLeads.data, startDate, endDate);
             allLeads.push(...filteredResponses);
 

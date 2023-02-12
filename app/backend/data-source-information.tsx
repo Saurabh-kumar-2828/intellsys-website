@@ -1,6 +1,6 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {dateToMediumNoneEnFormat} from "~/utilities/utilities";
-import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
+import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities.server";
 import { Companies } from "do-not-commit";
 
 // TODO: Fix nomenclature

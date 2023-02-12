@@ -6,7 +6,7 @@ import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {AdsDataAggregatedRow, FreshsalesData, FreshsalesDataAggregatedRow, getAdsData, getFreshsalesData, getShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
 import {getCapturedUtmCampaignLibrary, getProductLibrary, ProductInformation, SourceInformation} from "~/backend/common";
-import {aggregateByDate, columnWiseSummationOfMatrix, createGroupByReducer, scale, sumReducer, yAxisDisplay} from "~/backend/utilities/utilities";
+import {aggregateByDate, columnWiseSummationOfMatrix, createGroupByReducer, scale, sumReducer, yAxisDisplay} from "~/backend/utilities/utilities.server";
 import {ComposedChart} from "~/components/d3Componenets/composedChartComponent";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import {LineGraphComponent} from "~/components/d3Componenets/lineGraphComponent";

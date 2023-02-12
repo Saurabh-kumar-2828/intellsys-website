@@ -7,7 +7,7 @@ import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {Company, User} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
 
-export function MenuComponent({userDetails, accessibleCompanies, className}: {userDetails: User | null; accessibleCompanies: Array<Company> | null; className?: string}) {
+export function MenuComponent({userDetails, accessibleCompanies, className}: {userDetails: User; accessibleCompanies: Array<Company> | null; className?: string}) {
     const currentUrl = useLocation().pathname;
 
     const [isMenuExpanded, setIsMenuExpanded] = useState(false);
@@ -90,9 +90,7 @@ export function MenuComponent({userDetails, accessibleCompanies, className}: {us
     // );
 
     return (
-        <div className={concatenateNonNullStringsWithSpaces("tw-flex tw-flex-row tw-gap-x-4", className)}>
-            <div className="tw-bg-red-400 tw-w-8 tw-h-8 tw-rounded-full" title={userDetails == null ? "Logged out" : `Logged in as ${userDetails.name}`} />
-
+        <div className={className}>
             <button onClick={toggleMenu}>
                 <List className="tw-w-8 tw-h-8" />
             </button>

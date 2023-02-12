@@ -1,8 +1,9 @@
 import { execute } from "~/backend/utilities/databaseManager.server";
-var format = require("pg-format");
+import format from "pg-format";
 
 export async function doesTableExist(tableName: string): Promise<boolean> {
     try {
+        // TODO: Remove pg-format and find a better way to do this
         const query = format(
             `
                 SELECT

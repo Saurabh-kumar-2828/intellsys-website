@@ -1,6 +1,6 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {dateToIso8601Date, dateToMediumEnFormat} from "~/utilities/utilities";
-import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities";
+import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities.server";
 import {Iso8601Date} from "~/utilities/typeDefinitions";
 import {Companies} from "do-not-commit";
 

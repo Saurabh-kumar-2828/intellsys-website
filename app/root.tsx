@@ -31,7 +31,6 @@ export const loader: LoaderFunction = async ({request}) => {
         return json(loaderData);
     }
 
-    console.log(accessToken);
     const userDetails = await getNameAndPrivilegesForUser(accessToken.userId);
     const accessibleCompanies = await getAccessibleCompanies(userDetails);
 

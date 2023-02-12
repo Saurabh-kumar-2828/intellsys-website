@@ -7,7 +7,7 @@ import {DateTime, DayNumbers, Info} from "luxon";
 import {useState} from "react";
 import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
 import {getCapturedUtmCampaignLibrary, getProductLibrary, ProductInformation, SourceInformation} from "~/backend/common";
-import {aggregateByDate, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities";
+import {aggregateByDate, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities.server";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import {Iso8601Date} from "~/utilities/typeDefinitions";

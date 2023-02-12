@@ -38,7 +38,7 @@ import {useRef} from "react";
 import {Bar, getDatasetAtEvent} from "react-chartjs-2";
 import {AgGridReact} from "ag-grid-react";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
-import {aggregateByDate, createGroupByReducer, sumReducer} from "~/backend/utilities/utilities";
+import {aggregateByDate, createGroupByReducer, sumReducer} from "~/backend/utilities/utilities.server";
 import { Companies } from "do-not-commit";
 
 export const meta: MetaFunction = () => {

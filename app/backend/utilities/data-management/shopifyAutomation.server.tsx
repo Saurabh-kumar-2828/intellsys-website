@@ -1,6 +1,6 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {Iso8601DateTime} from "~/utilities/typeDefinitions";
-var format = require("pg-format");
+import format from "pg-format";
 
 type amount = {amount: string; currencyCode: string};
 type paymentObject = {presentmentMoney: amount; shopMoney: amount};
@@ -36,6 +36,7 @@ async function insertIntoTable(tableName: string, tableColumns: Array<string>, r
     for (let i = 0; i < rows.length; i += maxRowsPerQuery) {
         const rowsSubset = rows.slice(i, i + maxRowsPerQuery);
 
+        // TODO: Remove pg-format and find a better way to do this
         const query = format(
             `
                 INSERT INTO ${tableName}

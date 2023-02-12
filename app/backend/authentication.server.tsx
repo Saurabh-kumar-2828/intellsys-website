@@ -2,12 +2,13 @@ import { Companies } from "do-not-commit";
 import jwt, {Jwt} from "jsonwebtoken";
 import {AccessToken} from "~/backend/utilities/cookieSessionsHelper.server";
 import {execute} from "~/backend/utilities/databaseManager.server";
+import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
 import {Uuid} from "~/utilities/typeDefinitions";
 import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 export async function validateUser(username: string, password: string): Promise<{accessTokenJwt: Jwt; userId: Uuid} | null> {
     const result = await execute(
-        Companies.livpure,
+        Companies.Intellsys,
         `
             SELECT
                 id
@@ -30,11 +31,11 @@ export async function validateUser(username: string, password: string): Promise<
 
     const accessToken: AccessToken = {
         userId: userId,
-        schemaVersion: process.env.COOKIE_SCHEMA_VERSION,
+        schemaVersion: getRequiredEnvironmentVariable("COOKIE_SCHEMA_VERSION"),
     };
 
     return {
-        accessTokenJwt: jwt.sign(accessToken, process.env.JWT_SECRET),
+        accessTokenJwt: jwt.sign(accessToken, getRequiredEnvironmentVariable("JWT_SECRET")) as any as Jwt,
         userId: userId,
     };
 }

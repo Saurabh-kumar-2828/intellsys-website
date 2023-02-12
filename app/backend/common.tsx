@@ -14,7 +14,7 @@ export async function getProductLibrary(): Promise<Array<ProductInformation>> {
                 *
             FROM
                 product_library
-        `
+        `,
     );
 
     return result.rows.map((row) => rowToProductInformation(row));
@@ -47,7 +47,7 @@ export async function getCapturedUtmCampaignLibrary() {
                 *
             FROM
                 captured_utm_campaign_library
-        `
+        `,
     );
 
     return result.rows.map((row) => rowToSourceInformation(row));

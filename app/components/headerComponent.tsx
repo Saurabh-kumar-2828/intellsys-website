@@ -1,14 +1,9 @@
-import {Link, useLocation} from "@remix-run/react";
-import {List} from "react-bootstrap-icons";
-
+import {Link} from "@remix-run/react";
 import {MenuComponent} from "~/components/menuComponent";
-import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {Company, User} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
 
-export function HeaderComponent({userDetails, accessibleCompanies, className}: {userDetails: User | null, accessibleCompanies: Array<Company> | null, className?: string}) {
-    const currentUrl = useLocation().pathname;
-
+export function HeaderComponent({userDetails, accessibleCompanies, className}: {userDetails: User | null; accessibleCompanies: Array<Company> | null; className?: string}) {
     return (
         <div className={concatenateNonNullStringsWithSpaces("tw-sticky tw-top-0 tw-h-16 tw-bg-dark-bg-400", className)}>
             <div className="tw-grid tw-grid-cols-[auto_1fr_auto] tw-items-center tw-p-4">
@@ -18,7 +13,12 @@ export function HeaderComponent({userDetails, accessibleCompanies, className}: {
                     </div>
                 </Link>
 
-                {currentUrl.startsWith("/sign-in") ? null : <MenuComponent className="tw-col-start-3 tw-h-8" userDetails={userDetails} accessibleCompanies={accessibleCompanies} />}
+                {userDetails == null ? null : (
+                    <div className="tw-col-start-3 tw-flex tw-flex-row tw-gap-x-4">
+                        <img className="tw-w-8 tw-h-8 tw-rounded-full" src={`https://images.growthjockey.com/intellsys/users/${userDetails.id}.jpg`} title={userDetails.name} />
+                        <MenuComponent className="tw-h-8" userDetails={userDetails} accessibleCompanies={accessibleCompanies} />
+                    </div>
+                )}
             </div>
         </div>
     );

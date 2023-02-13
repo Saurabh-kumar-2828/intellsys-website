@@ -216,34 +216,12 @@ export type AdsDataAggregatedRow = {
 
 // TODO: Remove? At the very least, refactor to use getGoogleAdsData and getFacebookAdsData.
 export async function getAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
-    const query = `
-        SELECT
-            ${getGranularityQuery(granularity, "date")} AS date,
-            SUM(amount_spent) AS amount_spent,
-            SUM(impressions) AS impressions,
-            SUM(clicks) AS clicks,
-            campaign_name,
-            platform,
-            category
-        FROM
-            ads_with_information
-        WHERE
-            DATE(date) >= '${minDate}'
-            AND DATE(date) <= '${maxDate}'
-        GROUP BY
-            date,
-            campaign_name,
-            platform,
-            category
-        ORDER BY
-            date
-    `;
-
-    const result = await execute(companyId, query);
+    const googleAdsData = await getGoogleAdsData(minDate, maxDate, granularity, companyId);
+    const facebookAdsData = await getFacebookAdsData(minDate, maxDate, granularity, companyId);
 
     return {
-        metaQuery: query,
-        rows: result.rows.map((row) => rowToAdsDataAggregatedRow(row)),
+        metaQuery: googleAdsData.metaQuery + "\n" + facebookAdsData.metaQuery,
+        rows: [...googleAdsData.rows, ...facebookAdsData.rows],
     };
 }
 
@@ -279,7 +257,33 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
         ORDER BY
             date
     `;
-    console.log(query);
+
+    const result = await execute(companyId, query);
+
+    return {
+        metaQuery: query,
+        rows: result.rows.map((row) => rowToAdsDataAggregatedRow(row)),
+    };
+}
+
+export async function getFacebookAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
+    const query = `
+        SELECT
+            ${getGranularityQuery(granularity, "date")} AS date,
+            campaign_name,
+            cost AS amount_spent,
+            impressions,
+            clicks,
+            campaign_category AS category,
+            'Facebook' AS platform
+        FROM
+            facebook_ads_with_information
+        WHERE
+            DATE(date) >= '${minDate}'
+            AND DATE(date) <= '${maxDate}'
+        ORDER BY
+            date
+    `;
 
     const result = await execute(companyId, query);
 

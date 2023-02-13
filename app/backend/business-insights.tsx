@@ -219,10 +219,12 @@ export async function getAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, gra
     const googleAdsData = await getGoogleAdsData(minDate, maxDate, granularity, companyId);
     const facebookAdsData = await getFacebookAdsData(minDate, maxDate, granularity, companyId);
 
-    return {
+    const result = {
         metaQuery: googleAdsData.metaQuery + "\n" + facebookAdsData.metaQuery,
         rows: [...googleAdsData.rows, ...facebookAdsData.rows],
     };
+
+    return result;
 }
 
 function rowToAdsDataAggregatedRow(row: unknown): AdsDataAggregatedRow {
@@ -244,7 +246,7 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
         SELECT
             ${getGranularityQuery(granularity, "date")} AS date,
             campaign_name,
-            cost AS amount_spent,
+            spend AS amount_spent,
             impressions,
             clicks,
             campaign_category AS category,
@@ -271,7 +273,7 @@ export async function getFacebookAdsData(minDate: Iso8601Date, maxDate: Iso8601D
         SELECT
             ${getGranularityQuery(granularity, "date")} AS date,
             campaign_name,
-            cost AS amount_spent,
+            spend AS amount_spent,
             impressions,
             clicks,
             campaign_category AS category,

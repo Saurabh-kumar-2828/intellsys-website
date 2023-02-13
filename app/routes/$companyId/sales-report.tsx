@@ -1,23 +1,31 @@
-import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
+import {LinksFunction, LoaderFunction, MetaFunction, redirect} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {AgGridReact} from "ag-grid-react";
 import {ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
-import { Companies } from "do-not-commit";
+import {Companies} from "do-not-commit";
 import {DateTime} from "luxon";
 import {useCallback, useRef, useState} from "react";
 import {getElementsAtEvent, Line, Pie} from "react-chartjs-2";
-import {AdsData, AdsDataAggregatedRow, getAdsData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
-import {getCampaignLibrary, getProductLibrary, ProductInformation} from "~/backend/common";
-import {aggregateByDate, createGroupByReducer, sumReducer} from "~/backend/utilities/utilities.server";
+import {
+    AdsData,
+    AdsDataAggregatedRow,
+    FreshsalesData,
+    getAdsData,
+    getFreshsalesData,
+    getShopifyData,
+    getTimeGranularityFromUnknown,
+    ShopifyData,
+    ShopifyDataAggregatedRow,
+    TimeGranularity,
+} from "~/backend/business-insights";
+import {CampaignInformation, getCampaignLibrary, getProductLibrary, ProductInformation} from "~/backend/common";
+import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
+import {aggregateByDate, createGroupByReducer, getUrlFromRequest, sumReducer} from "~/backend/utilities/utilities.server";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {DateFilterSection, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
 import {Iso8601Date} from "~/utilities/typeDefinitions";
-import {
-    distinct, getColor,
-    getDates,
-    getNonEmptyStringOrNull, roundOffToTwoDigits
-} from "~/utilities/utilities";
+import {distinct, getColor, getDates, getNonEmptyStringOrNull, roundOffToTwoDigits} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -32,17 +40,40 @@ export const links: LinksFunction = () => {
     ];
 };
 
-export const loader: LoaderFunction = async ({request}) => {
+type LoaderData = {
+    appliedMinDate: Iso8601Date;
+    appliedMaxDate: Iso8601Date;
+    appliedSelectedGranularity: TimeGranularity;
+    allProductInformation: Array<ProductInformation>;
+    allCampaignInformation: Array<CampaignInformation>;
+    freshsalesLeadsData: FreshsalesData;
+    adsData: {
+        metaQuery: string;
+        rows: Array<AdsDataAggregatedRow>;
+    };
+    shopifyData: {
+        metaQuery: string;
+        rows: Array<ShopifyDataAggregatedRow>;
+    };
+};
+
+export const loader: LoaderFunction = async ({request, params}) => {
+    const accessToken = await getAccessTokenFromCookies(request);
+
+    if (accessToken == null) {
+        // TODO: Add message in login page
+        return redirect(`/sign-in?redirectTo=${getUrlFromRequest(request)}`);
+    }
+
+    const companyId = params.companyId;
+    if (companyId == null) {
+        throw new Response(null, {status: 404});
+    }
+
     const urlSearchParams = new URL(request.url).searchParams;
 
-    // TODO: Make a function for parsing this, including handling invalid values
     const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
-    let selectedGranularity: TimeGranularity;
-    if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
-        selectedGranularity = TimeGranularity.daily;
-    } else {
-        selectedGranularity = selectedGranularityRaw;
-    }
+    const selectedGranularity: TimeGranularity = selectedGranularityRaw == null ? TimeGranularity.daily : getTimeGranularityFromUnknown(selectedGranularityRaw);
 
     const minDateRaw = urlSearchParams.get("min_date");
     let minDate;
@@ -60,24 +91,19 @@ export const loader: LoaderFunction = async ({request}) => {
         maxDate = maxDateRaw;
     }
 
-    // Get companyId
-    // const companyId = urlSearchParams.get("company_id");
-
-    // For test purpose
-    const companyId = Companies.livpure;
-
-
     // TODO: Add filters
-
-    return json({
+    const loaderData: LoaderData = {
         appliedSelectedGranularity: selectedGranularity,
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
-        allProductInformation: await getProductLibrary(),
-        allCampaignInformation: await getCampaignLibrary(),
-        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
+        allProductInformation: await getProductLibrary(companyId),
+        allCampaignInformation: await getCampaignLibrary(companyId),
+        freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
-    });
+        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
+    };
+
+    return json(loaderData);
 };
 
 export default function () {
@@ -223,7 +249,14 @@ function CategorySection(props: {
     const shopifyDataGroupByCategory = props.shopifyData.rows
         .filter((row: ShopifyDataAggregatedRow) => row.date <= props.maxDate && row.date >= props.minDate)
         .reduce(createGroupByReducer("productCategory"), {});
-    const adsDataGroupByCategory = props.adsData.rows.filter((row: AdsDataAggregatedRow) => row.date <= props.maxDate && row.date >= props.minDate).reduce(createGroupByReducer("category"), {});
+
+    const adsDataGroupByCategory = props.adsData.rows
+        .filter((row: AdsDataAggregatedRow) => {
+            row.date <= props.maxDate && row.date >= props.minDate;
+        })
+        .reduce(createGroupByReducer("category"), {});
+
+    console.log(adsDataGroupByCategory);
 
     const categoryVsRevenue: Array<number> = [];
     const categoryVsRevenueColor: Array<string> = [];

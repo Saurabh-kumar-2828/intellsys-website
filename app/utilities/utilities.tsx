@@ -202,7 +202,7 @@ export function numberToHumanFriendlyString(n, isFloat = false, shorten = true, 
 }
 
 export function roundOffToTwoDigits(n) {
-    return n.toFixed(2);
+    return Number(n).toFixed(2);
 }
 
 export const defaultColumnDefinitions = {

@@ -11,6 +11,7 @@ import {useEffect, useState} from "react";
 import {Bar, Line} from "react-chartjs-2";
 import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
 import {getCampaignLibrary, getProductLibrary, ProductInformation, CampaignInformation} from "~/backend/common";
+import { getAccessTokenFromCookies } from "~/backend/utilities/cookieSessionsHelper.server";
 import {createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities.server";
 import {progressCellRenderer} from "~/components/progressCellRenderer";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
@@ -67,8 +68,24 @@ type LoaderData = {
     };
 };
 
-export const loader: LoaderFunction = async ({request}) => {
+export const loader: LoaderFunction = async ({request, params}) => {
+
+    const accessToken = await getAccessTokenFromCookies(request);
+
+    if (accessToken == null) {
+        // TODO: Add message in login page
+        return redirect(`/sign-in?redirectTo=${getUrlFromRequest(request)}`);
+    }
+
+    const companyId = params.companyId;
+    if (companyId == null) {
+        throw new Response(null, {status: 404});
+    }
+
     const urlSearchParams = new URL(request.url).searchParams;
+
+    const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
+    const selectedGranularity: TimeGranularity = selectedGranularityRaw == null ? TimeGranularity.daily : getTimeGranularityFromUnknown(selectedGranularityRaw);
 
     const minDateRaw = urlSearchParams.get("min_date");
     let minDate;
@@ -86,27 +103,13 @@ export const loader: LoaderFunction = async ({request}) => {
         maxDate = maxDateRaw;
     }
 
-    // Get companyId
-    // const companyId = urlSearchParams.get("company_id");
-
-    // For test purpose
-    const companyId = Companies.livpure;
-
-    // TODO: Make a function for parsing this, including handling invalid values
-    const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
-    let selectedGranularity: TimeGranularity;
-    if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
-        selectedGranularity = TimeGranularity.daily;
-    } else {
-        selectedGranularity = selectedGranularityRaw;
-    }
 
     const loaderData: LoaderData = {
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
         appliedSelectedGranularity: selectedGranularity,
-        allProductInformation: await getProductLibrary(),
-        allCampaignInformation: await getCampaignLibrary(),
+        allProductInformation: await getProductLibrary(companyId),
+        allCampaignInformation: await getCampaignLibrary(companyId),
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),

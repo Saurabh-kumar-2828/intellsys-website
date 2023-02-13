@@ -18,22 +18,18 @@ export async function execute(companyId: Uuid , query: string, queryArguments?: 
 }
 
 async function getDatabaseConnectionPool(companyId: Uuid): Promise<Pool> {
-    // TODO: Proper error handling
-    if (global._databaseConnectionPool.companyId == null) {
-        global._databaseConnectionPool.companyId = await getNewDatabaseConnectionPool(companyId);
+    if (global._databaseConnectionPool == null) {
+        global._databaseConnectionPool = {};
     }
-    return global._databaseConnectionPool.companyId;
+
+    if (!(companyId in global._databaseConnectionPool)) {
+        global._databaseConnectionPool[companyId] = await getNewDatabaseConnectionPool(companyId);
+    }
+
+    return global._databaseConnectionPool[companyId];
 }
 
 async function getNewDatabaseConnectionPool(companyId: Uuid): Promise<Pool> {
-    // const dbHost: string = process.env.DB_HOST;
-    // const dbPort: number = parseInt(process.env.DB_PORT);
-    // const dbName: string = process.env.DB_NAME;
-    // const dbUsername: string = process.env.DB_USERNAME;
-    // const dbPassword: string = process.env.DB_PASSWORD;
-
-    console.log(companyDatabaseCredentialsMap);
-
     const companyDatabaseCredentials = companyDatabaseCredentialsMap[companyId];
 
     const dbHost: string = companyDatabaseCredentials.DB_HOST;

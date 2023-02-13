@@ -1,7 +1,7 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {dateToIso8601Date, dateToMediumEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities.server";
-import {Iso8601Date} from "~/utilities/typeDefinitions";
+import {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {Companies} from "do-not-commit";
 
 export enum TimeGranularity {
@@ -10,6 +10,30 @@ export enum TimeGranularity {
     monthly = "Monthly",
     // quarterly = "Quarterly",
     yearly = "Yearly",
+}
+
+export function getTimeGranularityFromUnknown(timeGranularity: unknown): TimeGranularity {
+    if (!(timeGranularity instanceof String)) {
+        throw Error(`Unexpected TimeGranularity ${timeGranularity}`);
+    }
+
+    switch (timeGranularity) {
+        case TimeGranularity.daily: {
+            return TimeGranularity.daily;
+        }
+        case TimeGranularity.weekly: {
+            return TimeGranularity.weekly;
+        }
+        case TimeGranularity.monthly: {
+            return TimeGranularity.monthly;
+        }
+        case TimeGranularity.yearly: {
+            return TimeGranularity.yearly;
+        }
+        default: {
+            throw Error(`Unexpected TimeGranularity ${timeGranularity}`);
+        }
+    }
 }
 
 export type ShopifyData = {
@@ -34,7 +58,7 @@ export type ShopifyDataAggregatedRow = {
     netQuantity: number;
 };
 
-export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: string): Promise<ShopifyData> {
+export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<ShopifyData> {
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "date")} AS date,
@@ -82,7 +106,7 @@ export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date,
     };
 }
 
-function getRowToShopifyDataAggregatedRow(row: any): ShopifyDataAggregatedRow {
+function getRowToShopifyDataAggregatedRow(row: unknown): ShopifyDataAggregatedRow {
     const shopifyDataAggregatedRow: ShopifyDataAggregatedRow = {
         date: row.date.toISOString().slice(0, 10),
         productCategory: row.product_category,
@@ -121,57 +145,46 @@ export type FreshsalesDataAggregatedRow = {
     timeToClose: number;
 };
 
-export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: string): Promise<FreshsalesData> {
+export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<FreshsalesData> {
     const query = `
         SELECT
-            ${getGranularityQuery(granularity, "fs.lead_created_at")} AS date_,
-            fs.category,
-            fs.lead_lead_stage,
-            fs.lead_capture_source,
-            fs.lead_generation_source,
-            fs.lead_generation_source_campaign_name,
-            fs.lead_generation_source_campaign_platform,
-            fs.lead_generation_source_campaign_category,
+            ${getGranularityQuery(granularity, "lead_created_at")} AS date,
+            category,
+            lead_lead_stage,
+            lead_capture_source,
+            lead_generation_source,
+            lead_generation_source_campaign_name,
+            lead_generation_source_campaign_platform,
+            lead_generation_source_campaign_category,
             COUNT(*) AS count,
-            coalesce(avg(case
-                when shopify.date is null then null
-                else DATE_PART('day', shopify.date::timestamp - fs.lead_created_at::timestamp)
-            end), 0) as time_to_close
+            AVG(time_to_close) AS time_to_close
         FROM
-            freshsales_leads_to_source_with_information AS fs
-            LEFT JOIN
-            (
-                SELECT MAX(date) as date, customer_email
-                FROM shopify_sales_to_source_with_information
-                GROUP BY customer_email
-            ) AS shopify
-            ON
-            fs.lead_emails = shopify.customer_email
+            freshsales_leads_to_source_with_information
         WHERE
-            DATE(fs.lead_created_at) >= '${minDate}' AND
-            DATE(fs.lead_created_at) <= '${maxDate}'
+            DATE(lead_created_at) BETWEEN '${minDate}' AND '${maxDate}'
         GROUP BY
-            date_,
-            fs.category,
-            fs.lead_lead_stage,
-            fs.lead_capture_source,
-            fs.lead_generation_source,
-            fs.lead_generation_source_campaign_name,
-            fs.lead_generation_source_campaign_platform,
-            fs.lead_generation_source_campaign_category
+            lead_created_at,
+            category,
+            lead_lead_stage,
+            lead_capture_source,
+            lead_generation_source,
+            lead_generation_source_campaign_name,
+            lead_generation_source_campaign_platform,
+            lead_generation_source_campaign_category
         ORDER BY
-            date_
+            lead_created_at
     `;
     const result = await execute(companyId, query);
+
     return {
         metaQuery: query,
         rows: result.rows.map((row) => rowToFreshsalesDataAggregatedRow(row)),
     };
 }
 
-function rowToFreshsalesDataAggregatedRow(row: any): FreshsalesDataAggregatedRow {
+function rowToFreshsalesDataAggregatedRow(row: unknown): FreshsalesDataAggregatedRow {
     const freshsalesDataAggregatedRow: FreshsalesDataAggregatedRow = {
-        date: dateToIso8601Date(row["date_"]),
+        date: dateToIso8601Date(row.date),
         count: parseInt(row.count),
         category: row.category,
         leadStage: row.lead_lead_stage,
@@ -201,7 +214,8 @@ export type AdsDataAggregatedRow = {
     category: string;
 };
 
-export async function getAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: string): Promise<AdsData> {
+// TODO: Remove? At the very least, refactor to use getGoogleAdsData and getFacebookAdsData.
+export async function getAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "date")} AS date,
@@ -233,7 +247,7 @@ export async function getAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, gra
     };
 }
 
-function rowToAdsDataAggregatedRow(row: any): AdsDataAggregatedRow {
+function rowToAdsDataAggregatedRow(row: unknown): AdsDataAggregatedRow {
     const adsDataAggregatedRow: AdsDataAggregatedRow = {
         date: row.date.toISOString().slice(0, 10),
         amountSpent: parseFloat(row.amount_spent),
@@ -245,4 +259,32 @@ function rowToAdsDataAggregatedRow(row: any): AdsDataAggregatedRow {
     };
 
     return adsDataAggregatedRow;
+}
+
+export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
+    const query = `
+        SELECT
+            ${getGranularityQuery(granularity, "date")} AS date,
+            campaign_name,
+            cost AS amount_spent,
+            impressions,
+            clicks,
+            campaign_category AS category,
+            'Google' AS platform
+        FROM
+            google_ads_with_information
+        WHERE
+            DATE(date) >= '${minDate}'
+            AND DATE(date) <= '${maxDate}'
+        ORDER BY
+            date
+    `;
+    console.log(query);
+
+    const result = await execute(companyId, query);
+
+    return {
+        metaQuery: query,
+        rows: result.rows.map((row) => rowToAdsDataAggregatedRow(row)),
+    };
 }

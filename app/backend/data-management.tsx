@@ -47,7 +47,7 @@
 //     await execute(null, query);
 // }
 
-// export async function insertIntoTable(tableName: string, tableColumns: Array<string>, rows: Array<Array<string>>, companyId: string): Promise<void> {
+// export async function insertIntoTable(tableName: string, tableColumns: Array<string>, rows: Array<Array<string>>, companyId: Uuid): Promise<void> {
 //     const maxRowsPerQuery = 500;
 
 //     for (let i = 0; i < rows.length; i += maxRowsPerQuery) {
@@ -67,13 +67,13 @@
 //     }
 // }
 
-// async function deleteDataFromTable(tableName: string, dateColumn: string, startDate: string, endDate: string, companyId: string): Promise<void> {
+// async function deleteDataFromTable(tableName: string, dateColumn: string, startDate: string, endDate: string, companyId: Uuid): Promise<void> {
 //     const query = `DELETE FROM ${tableName} WHERE ${dateColumn} >= $1 AND ${dateColumn} <= $2`;
 
 //     await execute(companyId, query, [startDate, endDate]);
 // }
 
-// async function truncateTable(tableName: string, companyId: string): Promise<void> {
+// async function truncateTable(tableName: string, companyId: Uuid): Promise<void> {
 //     const query = `DELETE FROM ${tableName}`;
 
 //     await execute(companyId, query);
@@ -120,7 +120,7 @@
 // //     }
 // // }
 
-// export async function processFileUpload(table: Table, file: File, companyId: string): Promise<void> {
+// export async function processFileUpload(table: Table, file: File, companyId: Uuid): Promise<void> {
 //     const fileContents = await file.text();
 //     const rowObjects = csv.parse(fileContents, {output: "objects"});
 
@@ -156,7 +156,7 @@
 //     }
 // }
 
-// async function insertIntoTableWrapper(tableName: string, columnInfos: Array<ColumnInfo>, rowObjects, companyId: string): Promise<void> {
+// async function insertIntoTableWrapper(tableName: string, columnInfos: Array<ColumnInfo>, rowObjects, companyId: Uuid): Promise<void> {
 //     const rows = convertObjectArrayIntoArrayArray(
 //         rowObjects,
 //         columnInfos.map((columnInfo) => columnInfo.csvColumn)
@@ -170,7 +170,7 @@
 //     );
 // }
 
-// export async function processDelete(table: Table, startDate: string, endDate: string, companyId: string): Promise<void> {
+// export async function processDelete(table: Table, startDate: string, endDate: string, companyId: Uuid): Promise<void> {
 //     if (table == Table.facebookAdsRaw) {
 //         await deleteDataFromTable("facebook_ads_raw", "day", startDate, endDate, companyId);
 //     } else if (table == Table.freshsalesLeadsMattressRaw) {
@@ -197,7 +197,7 @@
 //     }
 // }
 
-// export async function processTruncate(table: Table, companyId: string): Promise<void> {
+// export async function processTruncate(table: Table, companyId: Uuid): Promise<void> {
 //     if (table == Table.facebookAdsRaw) {
 //         await truncateTable("facebook_ads_raw", companyId);
 //     } else if (table == Table.freshsalesLeadsMattressRaw) {

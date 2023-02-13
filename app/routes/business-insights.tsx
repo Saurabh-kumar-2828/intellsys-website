@@ -10,7 +10,7 @@ import {DateTime} from "luxon";
 import {useEffect, useState} from "react";
 import {Bar, Line} from "react-chartjs-2";
 import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
-import {getCapturedUtmCampaignLibrary, getProductLibrary, ProductInformation, SourceInformation} from "~/backend/common";
+import {getCampaignLibrary, getProductLibrary, ProductInformation, CampaignInformation} from "~/backend/common";
 import {createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities.server";
 import {progressCellRenderer} from "~/components/progressCellRenderer";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
@@ -55,7 +55,7 @@ type LoaderData = {
     appliedMaxDate: Iso8601Date;
     appliedSelectedGranularity: string;
     allProductInformation: Array<ProductInformation>;
-    allSourceInformation: Array<SourceInformation>;
+    allCampaignInformation: Array<CampaignInformation>;
     freshsalesLeadsData: FreshsalesData;
     adsData: {
         metaQuery: string;
@@ -106,7 +106,7 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedMaxDate: maxDate,
         appliedSelectedGranularity: selectedGranularity,
         allProductInformation: await getProductLibrary(),
-        allSourceInformation: await getCapturedUtmCampaignLibrary(),
+        allCampaignInformation: await getCampaignLibrary(),
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
@@ -116,13 +116,13 @@ export const loader: LoaderFunction = async ({request}) => {
 };
 
 export default function () {
-    const {appliedMinDate, appliedMaxDate, allProductInformation, allSourceInformation, freshsalesLeadsData, adsData, shopifyData} = useLoaderData() as LoaderData;
+    const {appliedMinDate, appliedMaxDate, allProductInformation, allCampaignInformation, freshsalesLeadsData, adsData, shopifyData} = useLoaderData() as LoaderData;
 
     // Default values of filters
     const businesses = distinct(allProductInformation.map((productInformation) => productInformation.category));
     let products = distinct(allProductInformation.map((productInformation) => productInformation.productName));
-    let campaigns = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.campaignName));
-    const platforms = distinct(allSourceInformation.map((sourceInformation) => sourceInformation.platform));
+    let campaigns = distinct(allCampaignInformation.map((campaignInformation) => campaignInformation.campaignName));
+    const platforms = distinct(allCampaignInformation.map((campaignInformation) => campaignInformation.platform));
 
     const [selectedCategories, setSelectedCategories] = useState<Array<string>>([]);
     const [selectedProducts, setSelectedProducts] = useState<Array<string>>([]);
@@ -136,10 +136,10 @@ export default function () {
         .filter((productInformation: ProductInformation) => selectedCategories.length == 0 || selectedCategories.includes(productInformation.category))
         .map((productInformation) => productInformation.productName);
     campaigns = distinct(
-        allSourceInformation
-            .filter((sourceInformation) => selectedCategories.length == 0 || selectedCategories.includes(sourceInformation.category))
-            .filter((sourceInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(sourceInformation.platform))
-            .map((sourceInformation) => sourceInformation.campaignName)
+        allCampaignInformation
+            .filter((campaignInformation) => selectedCategories.length == 0 || selectedCategories.includes(campaignInformation.category))
+            .filter((campaignInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(campaignInformation.platform))
+            .map((campaignInformation) => campaignInformation.campaignName)
     );
     const granularities = [TimeGranularity.daily, TimeGranularity.monthly, TimeGranularity.yearly];
 

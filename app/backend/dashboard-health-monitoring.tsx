@@ -1,4 +1,5 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
+import {Uuid} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 export type CampaignLibraryRow = {
@@ -7,7 +8,7 @@ export type CampaignLibraryRow = {
     campaignCategory: string;
 };
 
-export async function getMissingCampaigns(companyId: string): Promise<Array<CampaignLibraryRow>> {
+export async function getMissingCampaigns(companyId: Uuid): Promise<Array<CampaignLibraryRow>> {
     const query = `
         SELECT DISTINCT
             campaign_name,
@@ -35,7 +36,7 @@ export async function getMissingCampaigns(companyId: string): Promise<Array<Camp
     return result.rows.map((row) => rowToCampaignLibraryRow(row));
 }
 
-function rowToCampaignLibraryRow(row: any): CampaignLibraryRow {
+function rowToCampaignLibraryRow(row: unknown): CampaignLibraryRow {
     const campaignLibraryRow: CampaignLibraryRow = {
         campaignName: row.campaign_name ?? "[NULL]",
         campaignPlatform: row.campaign_platform ?? "[NULL]",
@@ -109,7 +110,7 @@ export type ProductLibraryRow = {
     productSubCategory: string;
 };
 
-export async function getMissingProducts(companyId: string): Promise<Array<ProductLibraryRow>> {
+export async function getMissingProducts(companyId: Uuid): Promise<Array<ProductLibraryRow>> {
     const query = `
         SELECT DISTINCT
             product_title,
@@ -128,7 +129,7 @@ export async function getMissingProducts(companyId: string): Promise<Array<Produ
     return result.rows.map((row) => rowToProductLibraryRow(row));
 }
 
-function rowToProductLibraryRow(row: any): ProductLibraryRow {
+function rowToProductLibraryRow(row: unknown): ProductLibraryRow {
     const productLibraryRow: ProductLibraryRow = {
         productName: row.product_title ?? "[NULL]",
         productCategory: row.product_category ?? "[NULL]",
@@ -172,7 +173,7 @@ export type CapturedUtmCampaignToCampaignNameRow = {
     campaignName: string;
 };
 
-export async function getMissingSources(companyId: string): Promise<Array<CapturedUtmCampaignToCampaignNameRow>> {
+export async function getMissingSources(companyId: Uuid): Promise<Array<CapturedUtmCampaignToCampaignNameRow>> {
     const query = `
         SELECT DISTINCT
             lead_generation_source AS captured_utm_campaign,
@@ -200,7 +201,7 @@ export async function getMissingSources(companyId: string): Promise<Array<Captur
     return result.rows.map((row) => rowToCapturedUtmCampaignToCampaignNameRow(row));
 }
 
-function rowToCapturedUtmCampaignToCampaignNameRow(row: any): CapturedUtmCampaignToCampaignNameRow {
+function rowToCapturedUtmCampaignToCampaignNameRow(row: unknown): CapturedUtmCampaignToCampaignNameRow {
     const capturedUtmCampaignToCampaignNameRow: CapturedUtmCampaignToCampaignNameRow = {
         capturedUtmCampaign: row.captured_utm_campaign ?? "[NULL]",
         campaignName: row.campaign_name ?? "[NULL]",

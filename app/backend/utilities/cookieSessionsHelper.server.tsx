@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import {getCookieSession} from "~/backend/utilities/cookieSessions.server";
 import {execute} from "~/backend/utilities/databaseManager.server";
+import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
 import {User, Uuid} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
 // import {getUserDetailsFromDatabase} from "~/backend/userDetails.server";
@@ -51,7 +52,12 @@ async function decodeAccessToken(accessToken: string): Promise<null | AccessToke
     let accessTokenDecoded;
 
     try {
-        accessTokenDecoded = jwt.verify(accessToken, process.env.JWT_SECRET);
+        accessTokenDecoded = jwt.verify(accessToken, getRequiredEnvironmentVariable("JWT_SECRET"));
+
+        if (accessTokenDecoded.schemaVersion != process.env.COOKIE_SCHEMA_VERSION) {
+            return null;
+        }
+
         // TODO: Add additional checks for structure of token?
     } catch {
         accessTokenDecoded = null;

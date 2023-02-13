@@ -1,10 +1,11 @@
+import {Companies} from "do-not-commit";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {Company, User, Uuid} from "~/utilities/typeDefinitions";
 import {getSingletonValue} from "~/utilities/utilities";
 
 export async function getNameAndPrivilegesForUser(userId: Uuid): Promise<User> {
     const result = await execute(
-        null,
+        Companies.Intellsys,
         `
             SELECT
                 *
@@ -19,7 +20,7 @@ export async function getNameAndPrivilegesForUser(userId: Uuid): Promise<User> {
     return rowToUser(getSingletonValue(result.rows));
 }
 
-function rowToUser(row: any): User {
+function rowToUser(row: unknown): User {
     const user: User = {
         id: row.user_id,
         name: row.name,
@@ -30,24 +31,23 @@ function rowToUser(row: any): User {
 }
 
 export async function getAccessibleCompanies(user: User): Promise<Array<Company>> {
-    // TODO: TO THIS PROPERLY
+    // TODO: DO THIS PROPERLY
     const result = await execute(
-        null,
+        Companies.Intellsys,
         `
             SELECT
                 *
             FROM
                 companies
             WHERE
-                id::TEXT IN ($1)
+                id IN ${`(${user.privileges.map(companyId => `'${companyId}'`).join(", ")})`}
         `,
-        [`[${user.privileges.map(companyId => `'${companyId}'`).join(", ")}]`],
     );
 
     return result.rows.map(row => rowToCompany(row));
 }
 
-function rowToCompany(row: any): Company {
+function rowToCompany(row: unknown): Company {
     const company: Company = {
         id: row.id,
         name: row.name,

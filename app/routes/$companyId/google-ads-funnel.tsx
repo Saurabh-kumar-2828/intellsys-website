@@ -1,25 +1,35 @@
-import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
-import {json} from "@remix-run/node";
+import {json, LinksFunction, LoaderFunction, MetaFunction, redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {AgGridReact} from "ag-grid-react";
+import styles from "app/styles.css";
 import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
-import {AdsDataAggregatedRow, FreshsalesData, FreshsalesDataAggregatedRow, getAdsData, getFreshsalesData, getShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
+import {
+    AdsDataAggregatedRow,
+    FreshsalesData,
+    FreshsalesDataAggregatedRow,
+    getFreshsalesData,
+    getGoogleAdsData,
+    getShopifyData,
+    getTimeGranularityFromUnknown,
+    ShopifyDataAggregatedRow,
+    TimeGranularity,
+} from "~/backend/business-insights";
 import {getCampaignLibrary, getProductLibrary, ProductInformation, CampaignInformation} from "~/backend/common";
-import {aggregateByDate, columnWiseSummationOfMatrix, createGroupByReducer, scale, sumReducer, yAxisDisplay} from "~/backend/utilities/utilities.server";
+import {getAccessibleCompanies, getNameAndPrivilegesForUser} from "~/backend/userDetails.server";
+import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
+import {aggregateByDate, columnWiseSummationOfMatrix, createGroupByReducer, getUrlFromRequest, scale, sumReducer} from "~/backend/utilities/utilities.server";
 import {ComposedChart} from "~/components/d3Componenets/composedChartComponent";
-import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import {LineGraphComponent} from "~/components/d3Componenets/lineGraphComponent";
+import {progressCellRendererTarget} from "~/components/progressCellRenderer";
+import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import {CustomCard, DateFilterSection, FancySearchableMultiSelect, GenericCard, SmallValueDisplayingCardWithTarget} from "~/components/scratchpad";
 import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
-import {campaignsColorPalette, defaultColumnDefinitions, distinct, getDates, getNonEmptyStringOrNull, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
-import BarGraphComponent from "../components/d3Componenets/barGraphComponent";
-import {progressCellRendererTarget} from "~/components/progressCellRenderer";
-import styles from "app/styles.css";
-import { Companies } from "do-not-commit";
+import {campaignsColorPalette, defaultColumnDefinitions, distinct, getDates, getNonEmptyStringOrNull, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
+
 export const meta: MetaFunction = () => {
     return {
-        title: "Campaigns Funnel - Intellsys",
+        title: "Google Ads Funnel - Intellsys",
     };
 };
 
@@ -38,7 +48,7 @@ type LoaderData = {
     allProductInformation: Array<ProductInformation>;
     allCampaignInformation: Array<CampaignInformation>;
     freshsalesLeadsData: FreshsalesData;
-    adsData: {
+    googleAdsData: {
         metaQuery: string;
         rows: Array<AdsDataAggregatedRow>;
     };
@@ -48,17 +58,23 @@ type LoaderData = {
     };
 };
 
-export const loader: LoaderFunction = async ({request}) => {
+export const loader: LoaderFunction = async ({request, params}) => {
+    const accessToken = await getAccessTokenFromCookies(request);
+
+    if (accessToken == null) {
+        // TODO: Add message in login page
+        return redirect(`/sign-in?redirectTo=${getUrlFromRequest(request)}`);
+    }
+
+    const companyId = params.companyId;
+    if (companyId == null) {
+        throw new Response(null, {status: 404});
+    }
+
     const urlSearchParams = new URL(request.url).searchParams;
 
-    // TODO: Make a function for parsing this, including handling invalid values
     const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
-    let selectedGranularity;
-    if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
-        selectedGranularity = TimeGranularity.daily;
-    } else {
-        selectedGranularity = selectedGranularityRaw;
-    }
+    const selectedGranularity: TimeGranularity = selectedGranularityRaw == null ? TimeGranularity.daily : getTimeGranularityFromUnknown(selectedGranularityRaw);
 
     const minDateRaw = urlSearchParams.get("min_date");
     let minDate;
@@ -76,22 +92,16 @@ export const loader: LoaderFunction = async ({request}) => {
         maxDate = maxDateRaw;
     }
 
-    // Get companyId
-    // const companyId = urlSearchParams.get("company_id");
-
-    // For test purpose
-    const companyId = Companies.livpure;
-
     // TODO: Add filters
     const loaderData: LoaderData = {
         appliedSelectedGranularity: selectedGranularity,
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
-        allProductInformation: await getProductLibrary(),
-        allCampaignInformation: await getCampaignLibrary(),
-        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
+        allProductInformation: await getProductLibrary(companyId),
+        allCampaignInformation: await getCampaignLibrary(companyId),
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
-        adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
+        googleAdsData: await getGoogleAdsData(minDate, maxDate, selectedGranularity, companyId),
+        shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
     };
 
     return json(loaderData);
@@ -114,7 +124,7 @@ type campaignTargetObject = {
 };
 
 export default function () {
-    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, allCampaignInformation, adsData, freshsalesLeadsData, shopifyData} = useLoaderData() as LoaderData;
+    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, allCampaignInformation, freshsalesLeadsData, googleAdsData, shopifyData} = useLoaderData() as LoaderData;
 
     const businesses = distinct(allProductInformation.map((productInformation: ProductInformation) => productInformation.category));
     let products = distinct(allProductInformation.map((productInformation: ProductInformation) => productInformation.productName));
@@ -141,7 +151,7 @@ export default function () {
         allCampaignInformation
             .filter((campaignInformation: CampaignInformation) => selectedCategories.length == 0 || selectedCategories.includes(campaignInformation.category))
             .filter((campaignInformation: CampaignInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(campaignInformation.platform))
-            .map((campaignInformation: CampaignInformation) => campaignInformation.campaignName)
+            .map((campaignInformation: CampaignInformation) => campaignInformation.campaignName),
     );
     const granularities = [TimeGranularity.daily, TimeGranularity.monthly, TimeGranularity.yearly];
 
@@ -154,7 +164,7 @@ export default function () {
         .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.leadGenerationSourceCampaignPlatform))
         .filter((row) => selectedProducts.length == 0 || selectedProducts.includes(row.productTitle));
 
-    const filterAdsData = adsData.rows
+    const filterAdsData = googleAdsData.rows
         .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
         .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform));
 
@@ -306,7 +316,7 @@ function CampaignsSection({
                   selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
                       result.push(dayWiseCampaignsTrends[campaign].amountSpent);
                       return result;
-                  }, [])
+                  }, []),
               )
             : [];
 
@@ -316,7 +326,7 @@ function CampaignsSection({
                   selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
                       result.push(dayWiseCampaignsTrends[campaign].clicks);
                       return result;
-                  }, [])
+                  }, []),
               )
             : [];
 
@@ -326,7 +336,7 @@ function CampaignsSection({
                   selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
                       result.push(dayWiseCampaignsTrends[campaign].impressions);
                       return result;
-                  }, [])
+                  }, []),
               )
             : [];
 
@@ -389,7 +399,7 @@ function CampaignsSection({
                                     return !!params.data;
                                 },
                                 minWidth: 250,
-                                headerClass: 'tw-text-sm tw-font-medium'
+                                headerClass: "tw-text-sm tw-font-medium",
                             },
                             {
                                 headerName: "Impressions",
@@ -399,7 +409,7 @@ function CampaignsSection({
                                 cellRenderer: progressCellRendererTarget,
                                 cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.impressions},
                                 cellClass: "!tw-px-0.5",
-                                headerClass: 'tw-text-sm tw-font-medium'
+                                headerClass: "tw-text-sm tw-font-medium",
                             },
                             {
                                 headerName: "Amount Spent",
@@ -407,7 +417,7 @@ function CampaignsSection({
                                 cellRenderer: progressCellRendererTarget,
                                 cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.amountSpent},
                                 cellClass: "!tw-px-0.5",
-                                headerClass: 'tw-text-sm tw-font-medium'
+                                headerClass: "tw-text-sm tw-font-medium",
                             },
                             {
                                 headerName: "Clicks",
@@ -415,7 +425,7 @@ function CampaignsSection({
                                 cellRenderer: progressCellRendererTarget,
                                 cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.clicks},
                                 cellClass: "!tw-px-0.5",
-                                headerClass: 'tw-text-sm tw-font-medium'
+                                headerClass: "tw-text-sm tw-font-medium",
                             },
                             {
                                 headerName: "Leads",
@@ -423,7 +433,7 @@ function CampaignsSection({
                                 cellRenderer: progressCellRendererTarget,
                                 cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.leads},
                                 cellClass: "!tw-px-0.5",
-                                headerClass: 'tw-text-sm tw-font-medium'
+                                headerClass: "tw-text-sm tw-font-medium",
                             },
                             {
                                 headerName: "Orders",
@@ -431,7 +441,7 @@ function CampaignsSection({
                                 cellRenderer: progressCellRendererTarget,
                                 cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.orders},
                                 cellClass: "!tw-px-0.5",
-                                headerClass: 'tw-text-sm tw-font-medium'
+                                headerClass: "tw-text-sm tw-font-medium",
                             },
                         ]}
                         defaultColDef={defaultColumnDefinitions}
@@ -596,7 +606,7 @@ function getDayWiseCampaignsTrends(
     adsData: Array<AdsDataAggregatedRow>,
     shopifyData: Array<ShopifyDataAggregatedRow>,
     minDate: Iso8601Date,
-    maxDate: Iso8601Date
+    maxDate: Iso8601Date,
 ) {
     const dates = getDates(minDate, maxDate);
     const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});

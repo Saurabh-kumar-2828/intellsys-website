@@ -2,6 +2,7 @@ import {execute} from "~/backend/utilities/databaseManager.server";
 import {dateToMediumNoneEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities.server";
 import {get_r4_facebookAdsSpends } from "~/backend/business-insights";
+import {Uuid} from "~/utilities/typeDefinitions";
 
 export async function getCampaignsInformation(
     selectedCategories: Array<string>,
@@ -11,7 +12,7 @@ export async function getCampaignsInformation(
     selectedGranularity: string,
     minDate: string,
     maxDate: string,
-    companyId: string
+    companyId: Uuid
 ) {
     try {
         const selectValues = [];
@@ -84,7 +85,7 @@ export async function getCampaignsTrends (
     selectedGranularity: string,
     minDate: string,
     maxDate: string,
-    companyId: string
+    companyId: Uuid
 ) {
     try {
         const selectValues = [];
@@ -181,7 +182,7 @@ export async function getSales(
     selectedGranularity: string,
     minDate: string,
     maxDate: string,
-    companyId: string
+    companyId: Uuid
 ) {
     try {
         const selectValues = [];

@@ -8,7 +8,7 @@ import {DateTime} from "luxon";
 import {useCallback, useRef, useState} from "react";
 import {getElementsAtEvent, Line, Pie} from "react-chartjs-2";
 import {AdsData, AdsDataAggregatedRow, getAdsData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
-import {getCapturedUtmCampaignLibrary, getProductLibrary, ProductInformation} from "~/backend/common";
+import {getCampaignLibrary, getProductLibrary, ProductInformation} from "~/backend/common";
 import {aggregateByDate, createGroupByReducer, sumReducer} from "~/backend/utilities/utilities.server";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {DateFilterSection, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
@@ -74,7 +74,7 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
         allProductInformation: await getProductLibrary(),
-        allSourceInformation: await getCapturedUtmCampaignLibrary(),
+        allCampaignInformation: await getCampaignLibrary(),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
     });

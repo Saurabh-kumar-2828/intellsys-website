@@ -12,8 +12,8 @@ export function joinValues(values: Array<string>, separator: string, surroundWit
 //     return values.filter(value => value != null).join(`${separator} `);
 // }
 
-export function getGranularityQuery(granularity: TimeGranularity, columnName: string): string {
-    switch (granularity) {
+export function getGranularityQuery(timeGranularity: TimeGranularity, columnName: string): string {
+    switch (timeGranularity) {
         case TimeGranularity.daily: {
             return `DATE_TRUNC('DAY', ${columnName})`;
         }
@@ -27,7 +27,7 @@ export function getGranularityQuery(granularity: TimeGranularity, columnName: st
             return `DATE_TRUNC('YEAR', ${columnName})`;
         }
         default: {
-            throw "";
+            throw Error(`Unexpected TimeGranularity ${timeGranularity}`);
         }
     }
 }
@@ -142,7 +142,7 @@ export function getOptionalEnvironmentVariable(variable: string): string | null 
         return null;
     }
 
-    return variable;
+    return value;
 }
 
 export function getRequiredEnvironmentVariable(variable: string): string {
@@ -152,5 +152,14 @@ export function getRequiredEnvironmentVariable(variable: string): string {
         throw Error(`Required environment variable ${variable} not found!`);
     }
 
-    return variable;
+    return value;
+}
+
+// TODO: replace this with production url correctly
+export function getUrlFromRequest(request: Request) {
+    if (process.env.NODE_ENV == "production") {
+        return request.url.replace(`http://localhost:${process.env.PORT}`, `${process.env.WEBSITE_BASE_URL}`);
+    } else {
+        return request.url;
+    }
 }

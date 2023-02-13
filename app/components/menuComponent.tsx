@@ -51,19 +51,19 @@ export function MenuComponent({userDetails, accessibleCompanies, className}: {us
             url: "/pnl-view",
             displayName: "P&L View",
         },
-        null,
-        {
-            url: "/data-management",
-            displayName: "Data Management",
-        },
-        {
-            url: "/data-source-information",
-            displayName: "Data Source Information",
-        },
-        {
-            url: "/dashboard-health-monitoring",
-            displayName: "Dashboard Health Monitoring",
-        },
+        // null,
+        // {
+        //     url: "/data-management",
+        //     displayName: "Data Management",
+        // },
+        // {
+        //     url: "/data-source-information",
+        //     displayName: "Data Source Information",
+        // },
+        // {
+        //     url: "/dashboard-health-monitoring",
+        //     displayName: "Dashboard Health Monitoring",
+        // },
         // {
         //     url: "/table-management",
         //     displayName: "Table Management",

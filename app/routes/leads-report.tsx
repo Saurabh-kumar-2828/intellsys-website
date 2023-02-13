@@ -16,7 +16,7 @@ import {
     FreshsalesData,
     FreshsalesDataAggregatedRow,
 } from "~/backend/business-insights";
-import {getProductLibrary, getCapturedUtmCampaignLibrary, ProductInformation} from "~/backend/common";
+import {getProductLibrary, getCampaignLibrary, ProductInformation} from "~/backend/common";
 import {Card, DateFilterSection, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
 import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
@@ -95,7 +95,7 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
         allProductInformation: await getProductLibrary(),
-        allSourceInformation: await getCapturedUtmCampaignLibrary(),
+        allCampaignInformation: await getCampaignLibrary(),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),

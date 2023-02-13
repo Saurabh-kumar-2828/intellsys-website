@@ -16,11 +16,9 @@ type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({request}) => {
-    const accessToken = await getAccessTokenFromCookies(request);
+    // TODO: Remove all this from here
 
-    if (accessToken != null && accessToken.schemaVersion != process.env.COOKIE_SCHEMA_VERSION) {
-        return redirect("/sign-out");
-    }
+    const accessToken = await getAccessTokenFromCookies(request);
 
     if (accessToken == null) {
         const loaderData: LoaderData = {

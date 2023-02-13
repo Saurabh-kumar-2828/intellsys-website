@@ -6,7 +6,7 @@ import { Companies } from "do-not-commit";
 import {DateTime, DayNumbers, Info} from "luxon";
 import {useState} from "react";
 import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
-import {getCapturedUtmCampaignLibrary, getProductLibrary, ProductInformation, SourceInformation} from "~/backend/common";
+import {getCampaignLibrary, getProductLibrary, ProductInformation, CampaignInformation} from "~/backend/common";
 import {aggregateByDate, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/backend/utilities/utilities.server";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
@@ -31,7 +31,7 @@ type LoaderData = {
     appliedMaxDate: Iso8601Date;
     appliedSelectedGranularity: string;
     allProductInformation: Array<ProductInformation>;
-    allSourceInformation: Array<SourceInformation>;
+    allCampaignInformation: Array<CampaignInformation>;
     freshsalesLeadsData: FreshsalesData;
     adsData: {
         metaQuery: string;
@@ -82,7 +82,7 @@ export const loader: LoaderFunction = async ({request}) => {
         appliedMaxDate: maxDate,
         appliedSelectedGranularity: selectedGranularity,
         allProductInformation: await getProductLibrary(),
-        allSourceInformation: await getCapturedUtmCampaignLibrary(),
+        allCampaignInformation: await getCampaignLibrary(),
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
@@ -92,7 +92,7 @@ export const loader: LoaderFunction = async ({request}) => {
 };
 
 export default function () {
-    const {appliedMinDate, appliedMaxDate, allProductInformation, allSourceInformation, freshsalesLeadsData, adsData, shopifyData} = useLoaderData() as LoaderData;
+    const {appliedMinDate, appliedMaxDate, allProductInformation, allCampaignInformation, freshsalesLeadsData, adsData, shopifyData} = useLoaderData() as LoaderData;
 
     const granularities = [TimeGranularity.daily, TimeGranularity.monthly, TimeGranularity.yearly];
     const [selectedGranularity, setSelectedGranularity] = useState(TimeGranularity.daily);

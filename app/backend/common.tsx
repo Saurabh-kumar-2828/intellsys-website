@@ -1,4 +1,5 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
+import {Uuid} from "~/utilities/typeDefinitions";
 
 export type ProductInformation = {
     productName: string;
@@ -6,12 +7,15 @@ export type ProductInformation = {
     subCategory: string;
 };
 
-export async function getProductLibrary(): Promise<Array<ProductInformation>> {
+export async function getProductLibrary(companyId: Uuid): Promise<Array<ProductInformation>> {
     // TODO: Authentication
     const result = await execute(
+        companyId,
         `
             SELECT
-                *
+                product_name,
+                product_category,
+                product_sub_category
             FROM
                 product_library
         `,
@@ -20,7 +24,7 @@ export async function getProductLibrary(): Promise<Array<ProductInformation>> {
     return result.rows.map((row) => rowToProductInformation(row));
 }
 
-function rowToProductInformation(row: any): ProductInformation {
+function rowToProductInformation(row: unknown): ProductInformation {
     // TODO: Change row naming
     const productInformation = {
         productName: row.product_name,
@@ -31,36 +35,36 @@ function rowToProductInformation(row: any): ProductInformation {
     return productInformation;
 }
 
-// TODO: Rename
-export type SourceInformation = {
-    source: string;
+export type CampaignInformation = {
     campaignName: string;
     category: string;
     platform: string;
 };
 
-export async function getCapturedUtmCampaignLibrary() {
+export async function getCampaignLibrary(companyId: Uuid) {
     // TODO: Authentication
     const result = await execute(
+        companyId,
         `
             SELECT
-                *
+                campaign_name,
+                campaign_category,
+                campaign_platform
             FROM
-                captured_utm_campaign_library
+                campaign_library
         `,
     );
 
-    return result.rows.map((row) => rowToSourceInformation(row));
+    return result.rows.map((row) => rowToCampaignInformation(row));
 }
 
-function rowToSourceInformation(row: any): SourceInformation {
+function rowToCampaignInformation(row: unknown): CampaignInformation {
     // TODO: Change row naming
-    const sourceInformation = {
-        source: row.source,
+    const campaignInformation = {
         campaignName: row.campaign_name,
         category: row.campaign_category,
         platform: row.campaign_platform,
     };
 
-    return sourceInformation;
+    return campaignInformation;
 }

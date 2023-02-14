@@ -1,17 +1,19 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import {json, LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
+import {json, LinksFunction, LoaderFunction, MetaFunction, redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {AgGridReact} from "ag-grid-react";
 import { Companies } from "do-not-commit";
 import {DateTime, DayNumbers, Info} from "luxon";
 import {useState} from "react";
-import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
+import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, getTimeGranularityFromUnknown, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
 import {getCampaignLibrary, getProductLibrary, ProductInformation, CampaignInformation} from "~/backend/common";
 import {aggregateByDate, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/utilities/utilities";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
-import {Iso8601Date} from "~/utilities/typeDefinitions";
+import {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {getDates, getNonEmptyStringOrNull, roundOffToTwoDigits, transposeData} from "~/utilities/utilities";
+import { getAccessTokenFromCookies } from "~/backend/utilities/cookieSessionsHelper.server";
+import { getUrlFromRequest } from "~/backend/utilities/utilities.server";
 
 export const meta: MetaFunction = () => {
     return {
@@ -41,10 +43,26 @@ type LoaderData = {
         metaQuery: string;
         rows: Array<ShopifyDataAggregatedRow>;
     };
+    companyId: Uuid,
 };
 
-export const loader: LoaderFunction = async ({request}) => {
+export const loader: LoaderFunction = async ({request, params}) => {
+    const accessToken = await getAccessTokenFromCookies(request);
+
+    if (accessToken == null) {
+        // TODO: Add message in login page
+        return redirect(`/sign-in?redirectTo=${getUrlFromRequest(request)}`);
+    }
+
+    const companyId = params.companyId;
+    if (companyId == null) {
+        throw new Response(null, {status: 404});
+    }
+
     const urlSearchParams = new URL(request.url).searchParams;
+
+    const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
+    const selectedGranularity: TimeGranularity = selectedGranularityRaw == null ? TimeGranularity.daily : getTimeGranularityFromUnknown(selectedGranularityRaw);
 
     const minDateRaw = urlSearchParams.get("min_date");
     let minDate;
@@ -62,37 +80,23 @@ export const loader: LoaderFunction = async ({request}) => {
         maxDate = maxDateRaw;
     }
 
-    // Get companyId
-    // const companyId = urlSearchParams.get("company_id");
-
-    // For test purpose
-    const companyId = Companies.livpure;
-
-    // TODO: Make a function for parsing this
-    const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
-    let selectedGranularity: TimeGranularity;
-    if (selectedGranularityRaw == null || selectedGranularityRaw.length == 0) {
-        selectedGranularity = TimeGranularity.daily;
-    } else {
-        selectedGranularity = selectedGranularityRaw;
-    }
-
     const loaderData: LoaderData = {
+        appliedSelectedGranularity: selectedGranularity,
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
-        appliedSelectedGranularity: selectedGranularity,
-        allProductInformation: await getProductLibrary(),
-        allCampaignInformation: await getCampaignLibrary(),
+        allProductInformation: await getProductLibrary(companyId),
+        allCampaignInformation: await getCampaignLibrary(companyId),
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
+        companyId: companyId
     };
 
     return json(loaderData);
 };
 
 export default function () {
-    const {appliedMinDate, appliedMaxDate, allProductInformation, allCampaignInformation, freshsalesLeadsData, adsData, shopifyData} = useLoaderData() as LoaderData;
+    const {appliedMinDate, appliedMaxDate, allProductInformation, allCampaignInformation, freshsalesLeadsData, adsData, shopifyData, companyId} = useLoaderData() as LoaderData;
 
     const granularities = [TimeGranularity.daily, TimeGranularity.monthly, TimeGranularity.yearly];
     const [selectedGranularity, setSelectedGranularity] = useState(TimeGranularity.daily);
@@ -117,7 +121,7 @@ export default function () {
                     setSelectedMinDate={setSelectedMinDate}
                     selectedMaxDate={selectedMaxDate}
                     setSelectedMaxDate={setSelectedMaxDate}
-                    page="/pnl-view"
+                    page={`/${companyId}/pnl-view`}
                 />
             </div>
             <VerticalSpacer className="tw-h-32" />

@@ -3,7 +3,6 @@ import {json} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {AgGridReact} from "ag-grid-react";
 import {ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
-import {Companies} from "do-not-commit";
 import {DateTime} from "luxon";
 import {useCallback, useRef, useState} from "react";
 import {getElementsAtEvent, Line, Pie} from "react-chartjs-2";
@@ -56,6 +55,7 @@ type LoaderData = {
         metaQuery: string;
         rows: Array<ShopifyDataAggregatedRow>;
     };
+    companyId: Uuid;
 };
 
 export const loader: LoaderFunction = async ({request, params}) => {
@@ -102,13 +102,14 @@ export const loader: LoaderFunction = async ({request, params}) => {
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
+        companyId: companyId,
     };
 
     return json(loaderData);
 };
 
 export default function () {
-    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, shopifyData, adsData} = useLoaderData();
+    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, shopifyData, adsData, companyId} = useLoaderData();
     const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
 
     const r5_marketingAcos = "?";
@@ -142,7 +143,7 @@ export default function () {
                 setSelectedMinDate={setSelectedMinDate}
                 selectedMaxDate={selectedMaxDate}
                 setSelectedMaxDate={setSelectedMaxDate}
-                page="/sales-report"
+                page={`/${companyId}/sales-report`}
             />
 
             <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
@@ -256,8 +257,6 @@ function CategorySection(props: {
             row.date <= props.maxDate && row.date >= props.minDate;
         })
         .reduce(createGroupByReducer("category"), {});
-
-    console.log(adsDataGroupByCategory);
 
     const categoryVsRevenue: Array<number> = [];
     const categoryVsRevenueColor: Array<string> = [];

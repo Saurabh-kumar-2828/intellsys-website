@@ -67,6 +67,7 @@ type LoaderData = {
         metaQuery: string;
         rows: Array<ShopifyDataAggregatedRow>;
     };
+    companyId: Uuid;
 };
 
 export const loader: LoaderFunction = async ({request, params}) => {
@@ -114,13 +115,14 @@ export const loader: LoaderFunction = async ({request, params}) => {
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
+        companyId: companyId,
     };
 
     return json(loaderData);
 };
 
 export default function () {
-    const {appliedMinDate, appliedMaxDate, allProductInformation, allCampaignInformation, freshsalesLeadsData, adsData, shopifyData} = useLoaderData() as LoaderData;
+    const {appliedMinDate, appliedMaxDate, allProductInformation, allCampaignInformation, freshsalesLeadsData, adsData, shopifyData, companyId} = useLoaderData() as LoaderData;
 
     // Default values of filters
     const businesses = distinct(allProductInformation.map((productInformation) => productInformation.category));
@@ -188,7 +190,7 @@ export default function () {
                 setSelectedMinDate={setSelectedMinDate}
                 selectedMaxDate={selectedMaxDate}
                 setSelectedMaxDate={setSelectedMaxDate}
-                page="/business-insights"
+                page={`/${companyId}/business-insights`}
             />
 
             <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">

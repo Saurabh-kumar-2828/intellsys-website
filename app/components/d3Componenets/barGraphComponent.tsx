@@ -2,7 +2,7 @@ import React from "react";
 import {axisLeft, axisRight} from "d3-axis";
 import {ScaleBand, scaleBand, ScaleLinear, scaleLinear} from "d3-scale";
 import {select} from "d3-selection";
-import {plotMargins, scale, yAxisDisplay} from "~/backend/utilities/utilities.server";
+import {plotMargins, Scale} from "~/utilities/utilities";
 
 type lineDataObject = {
     dates: Array<string>;
@@ -59,9 +59,9 @@ export class BarGraphComponent extends React.Component<props> {
 
         // Yscale
         var yScale: ScaleLinear<number, number, never>;
-        if (this.props.scale == scale.normalizedScale) {
+        if (this.props.scale == Scale.normalizedScale) {
             data.yMax = 1;
-        } else if (this.props.scale == scale.percentageScale) {
+        } else if (this.props.scale == Scale.percentageScale) {
             data.yMax = 100;
         }
         yScale = scaleLinear().domain([0, data.yMax]).range([0, innerHeight]).nice();

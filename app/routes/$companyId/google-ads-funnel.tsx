@@ -15,17 +15,29 @@ import {
     ShopifyDataAggregatedRow,
     TimeGranularity,
 } from "~/backend/business-insights";
-import {getCampaignLibrary, getProductLibrary, ProductInformation, CampaignInformation} from "~/backend/common";
-import {getAccessibleCompanies, getNameAndPrivilegesForUser} from "~/backend/userDetails.server";
+import {CampaignInformation, getCampaignLibrary, getProductLibrary, ProductInformation} from "~/backend/common";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
-import {aggregateByDate, columnWiseSummationOfMatrix, createGroupByReducer, getUrlFromRequest, scale, sumReducer} from "~/backend/utilities/utilities.server";
+import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {ComposedChart} from "~/components/d3Componenets/composedChartComponent";
 import {LineGraphComponent} from "~/components/d3Componenets/lineGraphComponent";
 import {progressCellRendererTarget} from "~/components/progressCellRenderer";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import {CustomCard, DateFilterSection, FancySearchableMultiSelect, GenericCard, SmallValueDisplayingCardWithTarget} from "~/components/scratchpad";
-import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
-import {campaignsColorPalette, defaultColumnDefinitions, distinct, getDates, getNonEmptyStringOrNull, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
+import {Iso8601Date, QueryFilterType, Uuid, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
+import {
+    aggregateByDate,
+    campaignsColorPalette,
+    columnWiseSummationOfMatrix,
+    createGroupByReducer,
+    defaultColumnDefinitions,
+    distinct,
+    getDates,
+    getNonEmptyStringOrNull,
+    numberToHumanFriendlyString,
+    roundOffToTwoDigits,
+    Scale,
+    sumReducer,
+} from "~/utilities/utilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -56,6 +68,7 @@ type LoaderData = {
         metaQuery: string;
         rows: Array<ShopifyDataAggregatedRow>;
     };
+    companyId: Uuid;
 };
 
 export const loader: LoaderFunction = async ({request, params}) => {
@@ -102,6 +115,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
         googleAdsData: await getGoogleAdsData(minDate, maxDate, selectedGranularity, companyId),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
+        companyId: companyId,
     };
 
     return json(loaderData);
@@ -124,7 +138,7 @@ type campaignTargetObject = {
 };
 
 export default function () {
-    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, allCampaignInformation, freshsalesLeadsData, googleAdsData, shopifyData} = useLoaderData() as LoaderData;
+    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, allCampaignInformation, freshsalesLeadsData, googleAdsData, shopifyData, companyId} = useLoaderData() as LoaderData;
 
     const businesses = distinct(allProductInformation.map((productInformation: ProductInformation) => productInformation.category));
     let products = distinct(allProductInformation.map((productInformation: ProductInformation) => productInformation.productName));
@@ -184,7 +198,7 @@ export default function () {
                     setSelectedMinDate={setSelectedMinDate}
                     selectedMaxDate={selectedMaxDate}
                     setSelectedMaxDate={setSelectedMaxDate}
-                    page="campaigns-funnel-view"
+                    page={`/${companyId}/google-ads-funnel`}
                 />
 
                 <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
@@ -268,6 +282,12 @@ function CampaignsSection({
         const campaigns = selectedRows.map((row) => row.campaignName);
         setSelectedCampaigns(campaigns);
     }, []);
+
+    const onDataFirstRendered = useCallback((params) => {
+        gridRef.current.api.forEachNode((node) =>
+          node.setSelected(true)
+        );
+      }, []);
 
     const dayWiseCampaignsTrends = getDayWiseCampaignsTrends(freshsalesLeadsData, adsData, shopifyData, minDate, maxDate);
 
@@ -448,6 +468,7 @@ function CampaignsSection({
                         animateRows={true}
                         rowSelection={"multiple"}
                         onSelectionChanged={onSelectionChanged}
+                        onFirstDataRendered={onDataFirstRendered}
                     />
                 </div>
             </div>
@@ -455,7 +476,7 @@ function CampaignsSection({
             <div className="tw-row-start-2">
                 <div className="tw-grid tw-grid-cols-5 tw-gap-x-3">
                     <CustomCard
-                        information={`₹${numberToHumanFriendlyString(campaignsInformation.amountSpent)}`}
+                        information={`₹${numberToHumanFriendlyString(campaignsInformation.amountSpent, true)}`}
                         label="Amount Spent"
                         metaInformation={"Amount Spent"}
                         className="tw-col-start-1 tw-rounded-lg"
@@ -509,7 +530,7 @@ function CampaignsSection({
                         explanation={`Spends = ${numberToHumanFriendlyString(campaignsInformation.amountSpent)}`}
                         type={ValueDisplayingCardInformationType.float}
                         className="tw-col-start-1 hover:bg-sky-700"
-                        valueClassName="tw-text-lg tw-px-0.2 tw-font-semibold "
+                        valueClassName="tw-text-lg tw-px-0.2 tw-font-semibold"
                     />
                     <SmallValueDisplayingCardWithTarget
                         label="Impressions"
@@ -563,31 +584,43 @@ function CampaignsSection({
                                         title={"Day-on-day distribution of selected campaigns"}
                                         className="tw-row-start-1 tw-col-start-1"
                                     >
-                                        {showAmountSpent && <LineGraphComponent data={salesLineData} scale={scale.dataDriven} />}
+                                        {showAmountSpent && <LineGraphComponent data={salesLineData} scale={Scale.dataDriven} />}
 
-                                        {showClicks && <LineGraphComponent data={clicksLineData} scale={scale.dataDriven} />}
+                                        {showClicks && <LineGraphComponent data={clicksLineData} scale={Scale.dataDriven} />}
 
-                                        {showImpressions && <LineGraphComponent data={impressionsLineData} scale={scale.dataDriven} />}
+                                        {showImpressions && <LineGraphComponent data={impressionsLineData} scale={Scale.dataDriven} />}
                                     </ComposedChart>
                                 </div>
 
                                 <div className="tw-row-start-2 tw-flex tw-flex-row tw-justify-center">
                                     <input type="checkbox" className="tw-h-5 tw-w-5" id="amountspent" checked={showAmountSpent} onChange={(e) => setShowAmountSpent(e.target.checked)} />
-                                    <label htmlFor="amountspent" className="tw-pl-3 tw-font-sans">
+                                    <label
+                                        // TODO: Disabled because having multiple panes is causing issue with this
+                                        // htmlFor="amountspent"
+                                        className="tw-pl-3 tw-font-sans"
+                                    >
                                         Amount Spent
                                     </label>
 
                                     <HorizontalSpacer className="tw-w-8" />
 
                                     <input type="checkbox" className="tw-h-5 tw-w-5" id="clicks" checked={showClicks} onChange={(e) => setShowClicks(e.target.checked)} />
-                                    <label htmlFor="clicks" className="tw-pl-3 tw-font-sans">
+                                    <label
+                                        htmlFor="clicks"
+                                        // TODO: Disabled because having multiple panes is causing issue with this
+                                        // className="tw-pl-3 tw-font-sans"
+                                    >
                                         Clicks
                                     </label>
 
                                     <HorizontalSpacer className="tw-w-8" />
 
                                     <input type="checkbox" className="tw-h-5 tw-w-5" id="impressions" checked={showImpressions} onChange={(e) => setShowImpressions(e.target.checked)} />
-                                    <label htmlFor="impressions" className="tw-pl-3 tw-font-sans">
+                                    <label
+                                        // TODO: Disabled because having multiple panes is causing issue with this
+                                        // htmlFor="impressions"
+                                        className="tw-pl-3 tw-font-sans"
+                                    >
                                         Impressions
                                     </label>
                                 </div>

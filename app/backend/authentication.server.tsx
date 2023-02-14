@@ -7,20 +7,6 @@ import {Uuid} from "~/utilities/typeDefinitions";
 import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 export async function validateUser(username: string, password: string): Promise<{accessTokenJwt: Jwt; userId: Uuid} | null> {
-    // const result = await execute(
-    //     Companies.Intellsys,
-    //     `
-    //         SELECT
-    //             id
-    //         FROM
-    //             users
-    //         WHERE
-    //             username = $1 AND
-    //             hashed_password = crypt($2, hashed_password)
-    //     `,
-    //     [username, password]
-    // );
-
     const result = await execute(
         Companies.Intellsys,
         `
@@ -29,9 +15,10 @@ export async function validateUser(username: string, password: string): Promise<
             FROM
                 users
             WHERE
-                username = $1
+                username = $1 AND
+                hashed_password = crypt($2, hashed_password)
         `,
-        [username]
+        [username, password]
     );
 
     const row = getSingletonValueOrNull(result.rows);

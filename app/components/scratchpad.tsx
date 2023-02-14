@@ -446,8 +446,6 @@ export function DateFilterSection(props: {
                 <div className={props.className}>
                     <Listbox
                         onChange={(selectedMonth) => {
-                            console.log(selectedMonth);
-
                             const dt = DateTime.now();
                             if (months.indexOf(selectedMonth) + 1 <= dt.get("month")) {
                                 props.setSelectedMinDate(
@@ -503,7 +501,7 @@ export function DateFilterSection(props: {
 
                 <Link
                     to={concatenateNonNullStringsWithAmpersand(
-                        `/${props.page}?selected_granularity=${props.selectedGranularity}`,
+                        `${props.page}?selected_granularity=${props.selectedGranularity}`,
                         `min_date=${props.selectedMinDate}`,
                         `max_date=${props.selectedMaxDate}`
                     )}

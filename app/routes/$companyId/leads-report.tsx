@@ -1,47 +1,42 @@
-import {LinksFunction, LoaderFunction, MetaFunction, redirect} from "@remix-run/node";
 import * as Tabs from "@radix-ui/react-tabs";
-import {json} from "@remix-run/node";
-import {Link, useLoaderData} from "@remix-run/react";
+import {json, LinksFunction, LoaderFunction, MetaFunction, redirect} from "@remix-run/node";
+import {useLoaderData} from "@remix-run/react";
+import {AgGridReact} from "ag-grid-react";
+import {ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
 import {DateTime} from "luxon";
-import {Profiler, useCallback, useEffect, useState} from "react";
+import {useState} from "react";
+import {Line} from "react-chartjs-2";
 import {
-    getShopifyData,
-    getAdsData,
-    ShopifyData,
-    AdsData,
-    ShopifyDataAggregatedRow,
     AdsDataAggregatedRow,
-    TimeGranularity,
-    getFreshsalesData,
     FreshsalesData,
     FreshsalesDataAggregatedRow,
+    getAdsData,
+    getFreshsalesData,
+    getShopifyData,
     getTimeGranularityFromUnknown,
+    ShopifyDataAggregatedRow,
+    TimeGranularity,
 } from "~/backend/business-insights";
-import {getProductLibrary, getCampaignLibrary, ProductInformation, CampaignInformation} from "~/backend/common";
-import {Card, DateFilterSection, FancyCalendar, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
+import {CampaignInformation, getCampaignLibrary, getProductLibrary, ProductInformation} from "~/backend/common";
+import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
+import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
+import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
+import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
+import {DateFilterSection, FancySearchableMultiSelect, GenericCard, ValueDisplayingCard} from "~/components/scratchpad";
 import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
+    aggregateByDate,
     agGridDateComparator,
+    createGroupByReducer,
     dateToMediumNoneEnFormat,
     defaultColumnDefinitions,
     distinct,
     getColor,
     getDates,
     getNonEmptyStringOrNull,
-    kvpArrayToObjectReducer,
     numberToHumanFriendlyString,
     roundOffToTwoDigits,
 } from "~/utilities/utilities";
-import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
-import {Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement} from "chart.js";
-import {getElementAtEvent, getElementsAtEvent, Line, Pie} from "react-chartjs-2";
-import {useRef} from "react";
-import {Bar, getDatasetAtEvent} from "react-chartjs-2";
-import {AgGridReact} from "ag-grid-react";
-import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
-import {aggregateByDate, createGroupByReducer, getUrlFromRequest, sumReducer} from "~/backend/utilities/utilities.server";
-import { Companies } from "do-not-commit";
-import { getAccessTokenFromCookies } from "~/backend/utilities/cookieSessionsHelper.server";
 
 export const meta: MetaFunction = () => {
     return {
@@ -118,9 +113,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
         adsData: await getAdsData(minDate, maxDate, selectedGranularity, companyId),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
-    }
-
-
+    };
 
     return json(loaderData);
 };
@@ -160,7 +153,7 @@ export default function () {
                     setSelectedMinDate={setSelectedMinDate}
                     selectedMaxDate={selectedMaxDate}
                     setSelectedMaxDate={setSelectedMaxDate}
-                    page="leads-report"
+                    page="/leads-report"
                 />
 
                 <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
@@ -400,7 +393,6 @@ function LeadsSection({
 //             ])
 //             .map(([key, value]) => [key, kvpArrayToObjectReducer(value)])
 //     );
-
 
 //     const timeToCloseGroupByCampaign = kvpArrayToObjectReducer(
 //         Object.entries(freshsalesLeadsDataGroupByCampaigns).map(([campaignName, rowsGroupByCampaigns]) => [campaignName, rowsGroupByCampaigns.reduce((total: number, current: FreshsalesDataAggregatedRow) => total + current.timeToClose, 0)])

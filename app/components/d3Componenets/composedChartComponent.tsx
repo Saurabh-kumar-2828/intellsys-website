@@ -4,8 +4,8 @@ import {select} from "d3-selection";
 import React, {useRef} from "react";
 import BarGraphComponent from "./barGraphComponent";
 import {LineGraphComponent} from "./lineGraphComponent";
-import {plotMargins, scale, yAxisDisplay} from "~/backend/utilities/utilities.server";
 import {legend} from "./legend";
+import {plotMargins, Scale} from "~/utilities/utilities";
 
 export type legendObject = {
     color: string;
@@ -187,10 +187,10 @@ function getAllYAxisScales(children: any, innerHeight: number) {
     var isPercentageScaleAdded: boolean = false;
     React.Children.map(children, (child) => {
         if (child != null) {
-            if (child.props.scale == scale.normalizedScale) {
+            if (child.props.scale == Scale.normalizedScale) {
                 if (!isNormalizedScaleAdded) {
                     normalizedScale = {
-                        type: scale.normalizedScale,
+                        type: Scale.normalizedScale,
                         min: 0,
                         max: 1,
                         yScale: scaleLinear().domain([0, 1]).range([innerHeight, 0]).nice(),
@@ -200,10 +200,10 @@ function getAllYAxisScales(children: any, innerHeight: number) {
                 } else {
                     normalizedScale.legends.push({color: child.props.data.series.color, name: child.props.data.series.name});
                 }
-            } else if (child.props.scale == scale.percentageScale) {
+            } else if (child.props.scale == Scale.percentageScale) {
                 if (!isPercentageScaleAdded) {
                     percentageScale = {
-                        type: scale.percentageScale,
+                        type: Scale.percentageScale,
                         min: 0,
                         max: 100,
                         yScale: scaleLinear().domain([0, 100]).range([innerHeight, 0]).nice(),
@@ -213,9 +213,9 @@ function getAllYAxisScales(children: any, innerHeight: number) {
                 } else {
                     percentageScale.legends.push({color: child.props.data.series.color, name: child.props.data.series.name});
                 }
-            } else if (child.props.scale == scale.dataDriven) {
+            } else if (child.props.scale == Scale.dataDriven) {
                 scales.push({
-                    type: scale.dataDriven,
+                    type: Scale.dataDriven,
                     min: 0,
                     max: child.props.data.yMax,
                     yScale: scaleLinear().domain([0, child.props.data.yMax]).range([innerHeight, 0]).nice(),

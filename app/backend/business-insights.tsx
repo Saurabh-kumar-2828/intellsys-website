@@ -1,8 +1,7 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
-import {dateToIso8601Date, dateToMediumEnFormat} from "~/utilities/utilities";
-import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities.server";
+import {getGranularityQuery} from "~/backend/utilities/utilities.server";
 import {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {Companies} from "do-not-commit";
+import {dateToIso8601Date} from "~/utilities/utilities";
 
 export enum TimeGranularity {
     daily = "Daily",
@@ -13,7 +12,7 @@ export enum TimeGranularity {
 }
 
 export function getTimeGranularityFromUnknown(timeGranularity: unknown): TimeGranularity {
-    if (!(timeGranularity instanceof String)) {
+    if (!(typeof timeGranularity === "string")) {
         throw Error(`Unexpected TimeGranularity ${timeGranularity}`);
     }
 

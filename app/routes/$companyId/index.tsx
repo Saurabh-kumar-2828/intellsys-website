@@ -4,7 +4,7 @@ import {getAccessibleCompanies, getNameAndPrivilegesForUser} from "~/backend/use
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {Company, User} from "~/utilities/typeDefinitions";
-import {getSingletonValue} from "~/utilities/utilities";
+import {getSingletonValue, getSingletonValueOrNull} from "~/utilities/utilities";
 
 type LoaderData = {
     userDetails: User;
@@ -28,7 +28,10 @@ export const loader: LoaderFunction = async ({request, params}) => {
         throw new Response(null, {status: 404});
     }
 
-    const company = getSingletonValue(accessibleCompanies.filter(company => company.id == companyId));
+    const company = getSingletonValueOrNull(accessibleCompanies.filter(company => company.id == companyId));
+    if (company == null) {
+        throw new Response(null, {status: 404});
+    }
 
     const loaderData: LoaderData = {
         userDetails: userDetails,

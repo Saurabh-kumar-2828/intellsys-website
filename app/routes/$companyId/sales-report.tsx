@@ -21,11 +21,12 @@ import {
 } from "~/backend/business-insights";
 import {CampaignInformation, getCampaignLibrary, getProductLibrary, ProductInformation} from "~/backend/common";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
-import {aggregateByDate, createGroupByReducer, getUrlFromRequest, sumReducer} from "~/backend/utilities/utilities.server";
+import {aggregateByDate, createGroupByReducer, sumReducer} from "~/utilities/utilities";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {DateFilterSection, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
 import {Iso8601Date} from "~/utilities/typeDefinitions";
 import {distinct, getColor, getDates, getNonEmptyStringOrNull, roundOffToTwoDigits} from "~/utilities/utilities";
+import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 
 export const meta: MetaFunction = () => {
     return {
@@ -141,7 +142,7 @@ export default function () {
                 setSelectedMinDate={setSelectedMinDate}
                 selectedMaxDate={selectedMaxDate}
                 setSelectedMaxDate={setSelectedMaxDate}
-                page="sales-report"
+                page="/sales-report"
             />
 
             <div className="tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-32 -tw-m-8 tw-mb-0 tw-shadow-[0px_10px_15px_-3px] tw-shadow-zinc-900 tw-z-30 tw-p-4 tw-grid tw-grid-cols-[auto_auto_auto_auto_auto_auto_auto_1fr_auto] tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">

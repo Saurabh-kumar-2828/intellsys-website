@@ -1,16 +1,19 @@
-import {Link, useLocation} from "@remix-run/react";
+import {Link, useLocation, useParams} from "@remix-run/react";
 import React, {useState} from "react";
 
 import {List, XLg} from "react-bootstrap-icons";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
-import {Company, User} from "~/utilities/typeDefinitions";
+import {Company, User, Uuid} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
 
 export function MenuComponent({userDetails, accessibleCompanies, className}: {userDetails: User; accessibleCompanies: Array<Company> | null; className?: string}) {
     const currentUrl = useLocation().pathname;
+    const params = useParams();
 
     const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+
+    const companyId: Uuid = params.companyId;
 
     function toggleMenu() {
         const isMenuExpandedOld = isMenuExpanded;
@@ -27,28 +30,32 @@ export function MenuComponent({userDetails, accessibleCompanies, className}: {us
 
     const pages = [
         {
-            url: "/",
+            url: `/${companyId}/`,
             displayName: "Home",
         },
         null,
         {
-            url: "/business-insights",
+            url: `/${companyId}/business-insights`,
             displayName: "Business Insights",
         },
         {
-            url: "/campaigns-funnel-view",
-            displayName: "Campaigns Funnel View",
+            url: `/${companyId}/google-ads-funnel`,
+            displayName: "Google Ads Funnel",
         },
         {
-            url: "/sales-report",
+            url: `/${companyId}/facebook-ads-funnel`,
+            displayName: "Facebook Ads Funnel",
+        },
+        {
+            url: `/${companyId}/sales-report`,
             displayName: "Sales Report",
         },
         {
-            url: "/leads-report",
+            url: `/${companyId}/leads-report`,
             displayName: "Leads Report",
         },
         {
-            url: "/pnl-view",
+            url: `/${companyId}/pnl-view`,
             displayName: "P&L View",
         },
         // null,

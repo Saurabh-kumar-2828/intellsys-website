@@ -3,9 +3,9 @@ import {ScaleBand, scaleBand, ScaleLinear, scaleLinear, scaleOrdinal} from "d3-s
 import {select} from "d3-selection";
 import {line} from "d3-shape";
 import React from "react";
-import {plotMargins, scale, yAxisDisplay} from "~/backend/utilities/utilities.server";
 import {legend} from "./legend";
 import {bisector} from "d3-array";
+import {plotMargins, Scale} from "~/utilities/utilities";
 
 type lineDataObject = {
     dates: Array<string>;
@@ -54,9 +54,9 @@ export class LineGraphComponent extends React.Component<props> {
 
         // Yscale
         var yScale: ScaleLinear<number, number, never>;
-        if (this.props.scale == scale.normalizedScale) {
+        if (this.props.scale == Scale.normalizedScale) {
             data.yMax = 1;
-        } else if (this.props.scale == scale.percentageScale) {
+        } else if (this.props.scale == Scale.percentageScale) {
             data.yMax = 100;
         }
         yScale = scaleLinear().domain([0, data.yMax]).range([innerHeight, 0]).nice();

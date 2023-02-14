@@ -157,7 +157,8 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
         FROM
             freshsales_leads_to_source_with_information
         WHERE
-            DATE(lead_created_at) BETWEEN '${minDate}' AND '${maxDate}'
+            DATE(lead_created_at) >= '${minDate}' AND
+            DATE(lead_created_at) <= '${maxDate}'
         GROUP BY
             lead_created_at,
             category,

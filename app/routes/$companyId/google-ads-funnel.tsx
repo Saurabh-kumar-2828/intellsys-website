@@ -237,6 +237,7 @@ export default function () {
                         setHoverOnImpressionCard={setHoverOnImpressionsCard}
                     />
                 </div>
+
                 <div className="tw-grid-col-start-1">
                     <CampaignsSection
                         shopifyData={filterShopifyData}
@@ -606,9 +607,9 @@ function CampaignsSection({
 
                                     <input type="checkbox" className="tw-h-5 tw-w-5" id="clicks" checked={showClicks} onChange={(e) => setShowClicks(e.target.checked)} />
                                     <label
-                                        htmlFor="clicks"
                                         // TODO: Disabled because having multiple panes is causing issue with this
-                                        // className="tw-pl-3 tw-font-sans"
+                                        // htmlFor="clicks"
+                                        className="tw-pl-3 tw-font-sans"
                                     >
                                         Clicks
                                     </label>

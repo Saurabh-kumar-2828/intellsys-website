@@ -125,7 +125,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
     return json(loaderData);
 };
 
-type dayWiseDistributionPerCampaignObject = {
+type DayWiseDistributionPerCampaignObject = {
     impressions: Array<number>;
     clicks: Array<number>;
     amountSpent: Array<number>;
@@ -133,7 +133,7 @@ type dayWiseDistributionPerCampaignObject = {
     orders: Array<number>;
 };
 
-type campaignTargetObject = {
+type CampaignTargetObject = {
     impressions: number;
     clicks: number;
     amountSpent: number;
@@ -745,7 +745,7 @@ function getDayWiseCampaignsTrends(
     const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
 
     // Datatable
-    const dayWiseDistributionPerCampaign: {[key: string]: dayWiseDistributionPerCampaignObject} = {};
+    const dayWiseDistributionPerCampaign: {[key: string]: DayWiseDistributionPerCampaignObject} = {};
     for (const campaign in adsDataGroupByCampaign) {
         let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
         let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
@@ -789,7 +789,7 @@ function getMetricsGroupByDateAndCampaignName(
     const freshsalesDataGroupByCampaign = freshsalesLeadsData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
     const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
 
-    let leadsAndOrdersGroupByCampaignNameAndDate = {};
+    let leadsAndOrdersGroupByCampaignNameAndDate:{[key: string]: any} = {};
     for (const campaign of campaigns) {
         let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
         let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
@@ -817,7 +817,7 @@ function getMetricsGroupByDateAndCampaignName(
 
 function getTargets(campaigns: Array<string>) {
     campaigns.length > 0
-        ? campaigns.reduce((result: {[key: string]: campaignTargetObject}, currentCampaign) => {
+        ? campaigns.reduce((result: {[key: string]: CampaignTargetObject}, currentCampaign) => {
               result[currentCampaign] = {
                   impressions: 400000,
                   clicks: 20000,

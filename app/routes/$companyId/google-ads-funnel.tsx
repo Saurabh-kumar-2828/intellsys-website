@@ -186,7 +186,6 @@ export default function () {
         .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
         .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform));
 
-
     useEffect(() => {
         setSelectedProducts([]);
         setSelectedPlatforms([]);
@@ -232,13 +231,7 @@ export default function () {
             </div>
             <div className="tw-grid tw-grid-cols-2 tw-gap-x-5 tw-px-4 tw-py-4">
                 <div className="tw-grid-col-start-1">
-                    <CampaignsSection
-                        shopifyData={filterShopifyData}
-                        adsData={filterAdsData}
-                        freshsalesLeadsData={filterFreshsalesData}
-                        minDate={appliedMinDate}
-                        maxDate={appliedMaxDate}
-                    />
+                    <CampaignsSection shopifyData={filterShopifyData} adsData={filterAdsData} freshsalesLeadsData={filterFreshsalesData} minDate={appliedMinDate} maxDate={appliedMaxDate} />
                 </div>
 
                 <div className="tw-grid-col-start-1">
@@ -270,7 +263,6 @@ function CampaignsSection({
     minDate: Iso8601Date;
     maxDate: Iso8601Date;
 }) {
-
     const gridRef = useRef(null);
 
     const [selectedCampaigns, setSelectedCampaigns] = useState([]);
@@ -282,7 +274,7 @@ function CampaignsSection({
 
     const onSelectionChanged = useCallback(() => {
         var selectedRows = gridRef.current.api.getSelectedRows();
-        const campaigns = selectedRows.map((row: { campaignName: any; }) => row.campaignName);
+        const campaigns = selectedRows.map((row: {campaignName: any}) => row.campaignName);
         setSelectedCampaigns(campaigns);
     }, []);
 
@@ -293,7 +285,6 @@ function CampaignsSection({
     const dayWiseCampaignsTrends = getDayWiseCampaignsTrends(freshsalesLeadsData, adsData, shopifyData, minDate, maxDate);
 
     const campaigns = Object.keys(dayWiseCampaignsTrends);
-    // console.log(dayWiseCampaignsTrends)
 
     const performanceleadscount = {
         count: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign!].leads.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
@@ -312,26 +303,14 @@ function CampaignsSection({
         clicks: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign].clicks.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
     };
 
-    // Test
-    // getMetricsGroupByDateAndCampaignName(freshsalesLeadsData, adsData, shopifyData, campaigns, minDate, maxDate);
-
     // Graphs
     const labels = getDates(minDate, maxDate);
 
     // Targets
-    const targetForCampaigns =
-        campaigns.length > 0
-            ? campaigns.reduce((result: {[key: string]: campaignTargetObject}, currentCampaign) => {
-                  result[currentCampaign] = {
-                      impressions: 400000,
-                      clicks: 20000,
-                      amountSpent: 200000,
-                      leads: 2000,
-                      orders: 100,
-                  };
-                  return result;
-              }, {})
-            : {};
+    const targetForCampaigns = getTargets(campaigns);
+
+    // Leads and orders group by date and campaign
+    const leadsAndOrdersGroupByCampaignNameAndDate = getMetricsGroupByDateAndCampaignName(freshsalesLeadsData, adsData, shopifyData, campaigns, minDate, maxDate);
 
     // Data for lineChartComponent
 
@@ -339,7 +318,7 @@ function CampaignsSection({
         selectedCampaigns.length > 0
             ? columnWiseSummationOfMatrix(
                   selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
-                      (campaign in dayWiseCampaignsTrends == true) ? result.push(dayWiseCampaignsTrends[campaign].amountSpent) : result.push(new Array(dates.length).fill(0));
+                      campaign in dayWiseCampaignsTrends == true ? result.push(dayWiseCampaignsTrends[campaign].amountSpent) : result.push(new Array(dates.length).fill(0));
                       return result;
                   }, []),
               )
@@ -349,7 +328,7 @@ function CampaignsSection({
         selectedCampaigns.length > 0
             ? columnWiseSummationOfMatrix(
                   selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
-                      (campaign in dayWiseCampaignsTrends == true) ? result.push(dayWiseCampaignsTrends[campaign].clicks) : result.push(new Array(dates.length).fill(0));
+                      campaign in dayWiseCampaignsTrends == true ? result.push(dayWiseCampaignsTrends[campaign].clicks) : result.push(new Array(dates.length).fill(0));
                       return result;
                   }, []),
               )
@@ -359,7 +338,7 @@ function CampaignsSection({
         selectedCampaigns.length > 0
             ? columnWiseSummationOfMatrix(
                   selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
-                      (campaign in dayWiseCampaignsTrends == true) ? result.push(dayWiseCampaignsTrends[campaign].impressions) : result.push(new Array(dates.length).fill(0));
+                      campaign in dayWiseCampaignsTrends == true ? result.push(dayWiseCampaignsTrends[campaign].impressions) : result.push(new Array(dates.length).fill(0));
                       return result;
                   }, []),
               )
@@ -401,7 +380,6 @@ function CampaignsSection({
     };
 
     return (
-
         <div className="tw-grid tw-grid-cols-1 tw-gap-y-8">
             <div className="tw-row-start-1">
                 <div className="tw-h-[410px] ag-theme-alpine-dark ag-root-wrapper">
@@ -681,6 +659,8 @@ function CampaignsSection({
                                         impressions: object.impressions,
                                         clicks: object.clicks,
                                         amountSpent: object.amountSpent,
+                                        leads: leadsAndOrdersGroupByCampaignNameAndDate[object.campaignName].leads[object.date],
+                                        orders: leadsAndOrdersGroupByCampaignNameAndDate[object.campaignName].orders[object.date],
                                     }))}
                                     columnDefs={[
                                         {
@@ -717,6 +697,20 @@ function CampaignsSection({
                                             // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
                                             cellClass: "!tw-px-0",
                                         },
+                                        {
+                                            headerName: "Leads",
+                                            field: "leads",
+                                            // cellRenderer: "progressCellRenderer",
+                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Orders",
+                                            field: "orders",
+                                            // cellRenderer: "progressCellRenderer",
+                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
+                                            cellClass: "!tw-px-0",
+                                        },
                                     ]}
                                     defaultColDef={defaultColumnDefinitions}
                                     animateRows={true}
@@ -746,8 +740,6 @@ function getDayWiseCampaignsTrends(
 
     const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
 
-    console.log(adsDataGroupByCampaign);
-
     // TODO: Is this correct?
     const freshsalesDataGroupByCampaign = freshsalesLeadsData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
     const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
@@ -755,7 +747,6 @@ function getDayWiseCampaignsTrends(
     // Datatable
     const dayWiseDistributionPerCampaign: {[key: string]: dayWiseDistributionPerCampaignObject} = {};
     for (const campaign in adsDataGroupByCampaign) {
-
         let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
         let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
         let dayWiseImpressions: Array<number> = new Array(dates.length).fill(0);
@@ -800,35 +791,41 @@ function getMetricsGroupByDateAndCampaignName(
 
     let leadsAndOrdersGroupByCampaignNameAndDate = {};
     for (const campaign of campaigns) {
-        let dayWiseLeads: Array<number> = [];
-        let dayWiseOrders: Array<number> = [];
+        let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
+        let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
         if (campaign in freshsalesDataGroupByCampaign) {
             dayWiseLeads = aggregateByDate(freshsalesDataGroupByCampaign[campaign], "count", dates);
-            console.log(dayWiseLeads);
         }
         if (campaign in shopifyDataGroupByCampaign) {
             dayWiseOrders = aggregateByDate(shopifyDataGroupByCampaign[campaign], "netQuantity", dates);
         }
 
         //map leads to date
-        // let leadsToDate:{[key: string]: number} = {};
-        // let ordersToDate:{[key: string]: number} = {};
-        // dates.forEach((key, i) => dayWiseLeads[i] !== undefined ? leadsToDate[key] = dayWiseLeads[i] : dayWiseLeads[i] = 0);
-        // dates.forEach((key, i) => dayWiseOrders[i] !== undefined ? ordersToDate[key] = dayWiseOrders[i] : dayWiseOrders[i] = 0);
+        let leadsToDate: {[key: string]: number} = {};
+        let ordersToDate: {[key: string]: number} = {};
+        dates.forEach((key, i) => (leadsToDate[key] = dayWiseLeads[i]));
+        dates.forEach((key, i) => (ordersToDate[key] = dayWiseOrders[i]));
 
-        // leadsAndOrdersGroupByCampaignNameAndDate[campaign] = {
-        //     leads: leadsToDate,
-        //     orders: ordersToDate,
-        // }
+        leadsAndOrdersGroupByCampaignNameAndDate[campaign] = {
+            leads: leadsToDate,
+            orders: ordersToDate,
+        };
     }
 
-    // console.log(leadsAndOrdersGroupByCampaignNameAndDate);
+    return leadsAndOrdersGroupByCampaignNameAndDate;
+}
 
-    // adsData.map((object) => ({
-    //     campaignName: object.campaignName,
-    //     date:object.date,
-    //     impressions: object.impressions,
-    //     clicks: object.clicks,
-    //     amountSpent: object.amountSpent,
-    // }))
+function getTargets(campaigns: Array<string>) {
+    campaigns.length > 0
+        ? campaigns.reduce((result: {[key: string]: campaignTargetObject}, currentCampaign) => {
+              result[currentCampaign] = {
+                  impressions: 400000,
+                  clicks: 20000,
+                  amountSpent: 200000,
+                  leads: 2000,
+                  orders: 100,
+              };
+              return result;
+          }, {})
+        : {};
 }

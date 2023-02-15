@@ -294,39 +294,39 @@ function CampaignsSection({
     const campaigns = Object.keys(dayWiseCampaignsTrends);
 
     const performanceleadscount = {
-        count: selectedCampaigns.map((campaign) => dayWiseCampaignsTrends[campaign!].leads.reduce(sumReducer, 0)).reduce(sumReducer, 0),
+        count: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign!].leads.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
         metaInformation: "Number of leads created",
     };
 
     // TODO: net quantity or count?
     const sales = {
-        count: selectedCampaigns.map((campaign) => dayWiseCampaignsTrends[campaign!].orders.reduce(sumReducer, 0)).reduce(sumReducer, 0),
+        count: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign!].orders.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
         metaInformation: "Number of units sold",
     };
 
     const campaignsInformation = {
-        impressions: selectedCampaigns.map((campaign) => dayWiseCampaignsTrends[campaign!].impressions.reduce(sumReducer, 0)).reduce(sumReducer, 0),
-        amountSpent: selectedCampaigns.map((campaign) => dayWiseCampaignsTrends[campaign!].amountSpent.reduce(sumReducer, 0)).reduce(sumReducer, 0),
-        clicks: selectedCampaigns.map((campaign) => dayWiseCampaignsTrends[campaign!].clicks.reduce(sumReducer, 0)).reduce(sumReducer, 0),
+        impressions: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign].impressions.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
+        amountSpent: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign].amountSpent.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
+        clicks: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign].clicks.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
     };
 
     // Graphs
     const labels = getDates(minDate, maxDate);
 
     // Targets
-    const targetForCampaigns =
-        campaigns.length > 0
-            ? campaigns.reduce((result: {[key: string]: campaignTargetObject}, currentCampaign) => {
-                  result[currentCampaign] = {
-                      impressions: 400000,
-                      clicks: 20000,
-                      amountSpent: 200000,
-                      leads: 2000,
-                      orders: 100,
-                  };
-                  return result;
-              }, {})
-            : {};
+    // const targetForCampaigns =
+    //     campaigns.length > 0
+    //         ? campaigns.reduce((result: {[key: string]: campaignTargetObject}, currentCampaign) => {
+    //               result[currentCampaign] = {
+    //                   impressions: 400000,
+    //                   clicks: 20000,
+    //                   amountSpent: 200000,
+    //                   leads: 2000,
+    //                   orders: 100,
+    //               };
+    //               return result;
+    //           }, {})
+    //         : {};
 
     // Data for lineChartComponent
 
@@ -426,40 +426,40 @@ function CampaignsSection({
                                 field: "impressions",
                                 sort: "desc",
                                 sortIndex: 1,
-                                cellRenderer: progressCellRendererTarget,
-                                cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.impressions},
+                                // cellRenderer: progressCellRendererTarget,
+                                // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.impressions},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
                             },
                             {
                                 headerName: "Amount Spent",
                                 field: "amountSpent",
-                                cellRenderer: progressCellRendererTarget,
-                                cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.amountSpent},
+                                // cellRenderer: progressCellRendererTarget,
+                                // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.amountSpent},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
                             },
                             {
                                 headerName: "Clicks",
                                 field: "clicks",
-                                cellRenderer: progressCellRendererTarget,
-                                cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.clicks},
+                                // cellRenderer: progressCellRendererTarget,
+                                // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.clicks},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
                             },
                             {
                                 headerName: "Leads",
                                 field: "leads",
-                                cellRenderer: progressCellRendererTarget,
-                                cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.leads},
+                                // cellRenderer: progressCellRendererTarget,
+                                // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.leads},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
                             },
                             {
                                 headerName: "Orders",
                                 field: "orders",
-                                cellRenderer: progressCellRendererTarget,
-                                cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.orders},
+                                // cellRenderer: progressCellRendererTarget,
+                                // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.orders},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
                             },
@@ -650,11 +650,15 @@ function getDayWiseCampaignsTrends(
     // Datatable
     const dayWiseDistributionPerCampaign: {[key: string]: dayWiseDistributionPerCampaignObject} = {};
     for (const campaign in adsDataGroupByCampaign) {
-        let dayWiseLeads: Array<number> = [];
-        let dayWiseOrders: Array<number> = [];
-        const dayWiseImpressions: Array<number> = aggregateByDate(adsDataGroupByCampaign[campaign], "impressions", dates);
-        const dayWiseClicks: Array<number> = aggregateByDate(adsDataGroupByCampaign[campaign], "clicks", dates);
-        const dayWiseAmountSpent: Array<number> = aggregateByDate(adsDataGroupByCampaign[campaign], "amountSpent", dates);
+        let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
+        let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
+        let dayWiseImpressions: Array<number> = new Array(dates.length).fill(0);
+        let dayWiseClicks: Array<number> = new Array(dates.length).fill(0);
+        let dayWiseAmountSpent: Array<number> = new Array(dates.length).fill(0);
+
+        dayWiseImpressions = aggregateByDate(adsDataGroupByCampaign[campaign], "impressions", dates);
+        dayWiseClicks = aggregateByDate(adsDataGroupByCampaign[campaign], "clicks", dates);
+        dayWiseAmountSpent = aggregateByDate(adsDataGroupByCampaign[campaign], "amountSpent", dates);
         if (campaign in freshsalesDataGroupByCampaign) {
             dayWiseLeads = aggregateByDate(freshsalesDataGroupByCampaign[campaign], "count", dates);
         }

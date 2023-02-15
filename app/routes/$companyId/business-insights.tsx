@@ -12,7 +12,7 @@ import {Bar, Line} from "react-chartjs-2";
 import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, getTimeGranularityFromUnknown, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
 import {getCampaignLibrary, getProductLibrary, ProductInformation, CampaignInformation} from "~/backend/common";
 import { getAccessTokenFromCookies } from "~/backend/utilities/cookieSessionsHelper.server";
-import {createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead} from "~/utilities/utilities";
+import {aggregateByDate, createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead, sumReducer} from "~/utilities/utilities";
 import {progressCellRenderer} from "~/components/progressCellRenderer";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import {
@@ -25,7 +25,7 @@ import {
     SmallValueDisplayingCardWithTarget,
     ValueDisplayingCard,
 } from "~/components/scratchpad";
-import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
+import {Iso8601Date, QueryFilterType, Uuid, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
     adsColorPalette,
     agGridDateComparator,
@@ -361,7 +361,7 @@ function LeadsSection({
         //     performanceLeadsCount.count
         // )}`,
         // metaQuery: adsData.metaQuery,
-        cpl: numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer, 0) / performanceLeadsCount.count),
+        cpl: numberToHumanFriendlyString(performanceLeadsCount.count == 0 ? 0 : performanceLeads.amountSpentDayWise.reduce(sumReducer, 0) / performanceLeadsCount.count),
         dayWiseCpl: performanceLeads.amountSpentDayWise.map((value, index) => (performanceLeads.countDayWise[index] == 0 ? 0 : value / performanceLeads.countDayWise[index])),
     };
 
@@ -369,7 +369,7 @@ function LeadsSection({
         metaInformation: `Leads Sales / Leads Count | Performance = ${numberToHumanFriendlyString(performanceLeads.netSalesDayWise.reduce(sumReducer))} / ${numberToHumanFriendlyString(
             performanceLeadsCount.count
         )}`,
-        spl: performanceLeads.netSalesDayWise.reduce(sumReducer) / performanceLeadsCount.count,
+        spl: numberToHumanFriendlyString(performanceLeadsCount.count == 0 ? 0 : performanceLeads.netSalesDayWise.reduce(sumReducer) / performanceLeadsCount.count),
         dayWiseSpl: performanceLeads.netSalesDayWise.map((value, index) => (performanceLeads.countDayWise[index] == 0 ? 0 : value / performanceLeads.countDayWise[index])),
     };
 
@@ -377,7 +377,7 @@ function LeadsSection({
         metaInformation: `Amount Spent / Net Sales | Performance = ${numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer))} / ${numberToHumanFriendlyString(
             performanceLeads.netSalesDayWise.reduce(sumReducer)
         )}`,
-        acos: performanceLeads.amountSpentDayWise.reduce(sumReducer) / performanceLeads.netSalesDayWise.reduce(sumReducer),
+        acos: numberToHumanFriendlyString(performanceLeads.netSalesDayWise.reduce(sumReducer) == 0 ? 0 :performanceLeads.amountSpentDayWise.reduce(sumReducer) / performanceLeads.netSalesDayWise.reduce(sumReducer)),
         dayWiseAcos: performanceLeads.amountSpentDayWise.map((value, index) => (performanceLeads.netSalesDayWise[index] == 0 ? 0 : value / performanceLeads.netSalesDayWise[index])),
     };
 
@@ -409,7 +409,7 @@ function LeadsSection({
             facebookLeadsCount.count
         )}`,
         metaQuery: adsData.metaQuery,
-        cpl: facebookLeadsCount.count == 0 ? 0 : facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
+        cpl: numberToHumanFriendlyString(facebookLeadsCount.count == 0 ? 0 : facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count),
         dayWiseCpl: facebookLeads.amountSpentDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
     };
 
@@ -417,7 +417,7 @@ function LeadsSection({
         metaInformation: `Leads Sales / Leads Count | Facebook = ${numberToHumanFriendlyString(facebookLeads.netSalesDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
             facebookLeadsCount.count
         )}`,
-        spl: facebookLeadsCount.count == 0 ? 0 : facebookLeads.netSalesDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count,
+        spl: numberToHumanFriendlyString(facebookLeadsCount.count == 0 ? 0 : facebookLeads.netSalesDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count),
         dayWiseSpl: facebookLeads.netSalesDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
     };
 
@@ -425,7 +425,7 @@ function LeadsSection({
         metaInformation: `Amount Spent / Net Sales | Facebook = ${numberToHumanFriendlyString(facebookLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
             facebookLeads.netSalesDayWise.reduce(sumReducer, 0)
         )}`,
-        acos: facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeads.netSalesDayWise.reduce(sumReducer, 0),
+        acos: numberToHumanFriendlyString(facebookLeads.netSalesDayWise.reduce(sumReducer, 0) == 0 ? 0 : facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeads.netSalesDayWise.reduce(sumReducer, 0)),
         dayWiseAcos: facebookLeads.amountSpentDayWise.map((value, index) => (facebookLeads.netSalesDayWise[index] == 0 ? 0 : value / facebookLeads.netSalesDayWise[index])),
     };
 
@@ -868,7 +868,7 @@ function OrdersSection({
 
     const directOrdersAov = {
         metaInformation: `Orders Revenue / Orders Count | Direct = ${numberToHumanFriendlyString(directOrdersNetSales)} / ${numberToHumanFriendlyString(directOrdersTotalCount)}`,
-        aov: directOrdersNetSales / directOrdersTotalCount,
+        aov: directOrdersTotalCount == 0 ? 0 : directOrdersNetSales / directOrdersTotalCount,
         dayWiseAov: directOrders.dayWiseNetSales.map((value, index) => (directOrders.dayWiseCount[index] == 0 ? 0 : value / directOrders.dayWiseCount[index])),
     };
 
@@ -894,13 +894,13 @@ function OrdersSection({
 
     const assistedOrdersAov = {
         metaInformation: `Orders Revenue / Orders Count | Assisted = ${numberToHumanFriendlyString(assistedOrdersNetSales)} / ${numberToHumanFriendlyString(assistedOrdersTotalCount)}`,
-        aov: assistedOrdersNetSales / assistedOrdersTotalCount,
+        aov: assistedOrdersTotalCount == 0 ? 0 : assistedOrdersNetSales / assistedOrdersTotalCount,
         dayWiseAov: assistedOrders.dayWiseNetSales.map((value, index) => (assistedOrders.dayWiseCount[index] == 0 ? 0 : value / assistedOrders.dayWiseCount[index])),
     };
 
     const assistedOrdersDrr = {
         metaInformation: `Total Assisted Orders / Number of Days | Assisted = ${numberToHumanFriendlyString(assistedOrdersTotalCount)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`,
-        drr: assistedOrdersTotalCount / numberOfSelectedDays,
+        drr: numberOfSelectedDays == 0 ? 0: assistedOrdersTotalCount / numberOfSelectedDays,
     };
 
     const dataTableForOrdersDayWise = dates.reduce((result, curDate, index) => {
@@ -1430,7 +1430,7 @@ function SpendSection({
 
     const facebookAdsAcos = {
         metaInformation: `Total Spend / Revenue | Facebook = ${facebookAdsAmountSpent} / ${facebookAdsNetSales}`,
-        acos: facebookAdsAmountSpent / facebookAdsNetSales,
+        acos: facebookAdsNetSales == 0 ? 0 : facebookAdsAmountSpent / facebookAdsNetSales,
         dayWiseAcos: facebookAds.amountSpentDayWise.map((value, index) => (facebookAds.netSalesDayWise[index] == 0 ? 0 : value / facebookAds.netSalesDayWise[index])),
     };
 
@@ -1647,18 +1647,6 @@ function getOrdersRevenue(shopifyData: Array<ShopifyDataAggregatedRow>) {
     return result;
 }
 
-function aggregateByDate(arr: Array<object>, param: string, dates: Array<string>) {
-    const counts = dates.map((date) => arr.filter((x) => x.date == date).reduce((total, x) => total + x[param], 0));
-
-    const sum1 = arr.reduce((total, x) => total + x[param], 0);
-    const sum2 = counts.reduce((total, x) => total + x, 0);
-    if (Math.abs(sum1 - sum2) > 0.1) {
-        console.log("SUMS DON'T ADD UP!", sum1, sum2);
-    }
-
-    return counts;
-}
-
 function getNetRevenue(row: ShopifyDataAggregatedRow): number {
     let returnProvision;
 
@@ -1679,8 +1667,4 @@ function getNetRevenue(row: ShopifyDataAggregatedRow): number {
     }
 
     return (row.netSales / 1.18) * (1 - returnProvision / 100);
-}
-
-function sumReducer(total: number, sum: number) {
-    return total + sum;
 }

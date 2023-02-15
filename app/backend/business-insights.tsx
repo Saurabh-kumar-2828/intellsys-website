@@ -212,6 +212,9 @@ export type AdsDataAggregatedRow = {
 };
 
 // TODO: Remove? At the very least, refactor to use getGoogleAdsData and getFacebookAdsData.
+// Metrics: amountSpent, impressions, clicks
+// Dependent column: platform, category
+// pivots: date, campaign name
 export async function getAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
     const googleAdsData = await getGoogleAdsData(minDate, maxDate, granularity, companyId);
     const facebookAdsData = await getFacebookAdsData(minDate, maxDate, granularity, companyId);

@@ -23,7 +23,7 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {aggregateByDate, createGroupByReducer, sumReducer} from "~/utilities/utilities";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {DateFilterSection, FancySearchableSelect, GenericCard} from "~/components/scratchpad";
-import {Iso8601Date} from "~/utilities/typeDefinitions";
+import {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {distinct, getColor, getDates, getNonEmptyStringOrNull, roundOffToTwoDigits} from "~/utilities/utilities";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 
@@ -110,6 +110,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
 
 export default function () {
     const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, shopifyData, adsData, companyId} = useLoaderData();
+
     const numberOfSelectedDays = DateTime.fromISO(appliedMaxDate).diff(DateTime.fromISO(appliedMinDate), "days").toObject().days! + 1;
 
     const r5_marketingAcos = "?";

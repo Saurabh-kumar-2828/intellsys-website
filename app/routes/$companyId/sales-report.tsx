@@ -26,6 +26,7 @@ import {DateFilterSection, FancySearchableSelect, GenericCard} from "~/component
 import {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {distinct, getColor, getDates, getNonEmptyStringOrNull, roundOffToTwoDigits} from "~/utilities/utilities";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
+import "ag-grid-enterprise";
 
 export const meta: MetaFunction = () => {
     return {

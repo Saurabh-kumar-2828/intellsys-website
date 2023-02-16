@@ -42,6 +42,7 @@ import {
     Scale,
     sumReducer,
 } from "~/utilities/utilities";
+import "ag-grid-enterprise";
 
 export const meta: MetaFunction = () => {
     return {
@@ -404,6 +405,7 @@ function CampaignsSection({
                                 },
                                 minWidth: 250,
                                 headerClass: "tw-text-sm tw-font-medium",
+                                resizable: true,
                             },
                             {
                                 headerName: "Impressions",
@@ -414,6 +416,7 @@ function CampaignsSection({
                                 // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.impressions},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
+                                resizable: true
                             },
                             {
                                 headerName: "Amount Spent",
@@ -422,6 +425,7 @@ function CampaignsSection({
                                 // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.amountSpent},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
+                                resizable: true
                             },
                             {
                                 headerName: "Clicks",
@@ -430,6 +434,7 @@ function CampaignsSection({
                                 // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.clicks},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
+                                resizable: true
                             },
                             {
                                 headerName: "Leads",
@@ -438,6 +443,7 @@ function CampaignsSection({
                                 // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.leads},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
+                                resizable: true
                             },
                             {
                                 headerName: "Orders",
@@ -446,6 +452,7 @@ function CampaignsSection({
                                 // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.orders},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
+                                resizable: true
                             },
                         ]}
                         defaultColDef={defaultColumnDefinitions}
@@ -453,6 +460,7 @@ function CampaignsSection({
                         rowSelection={"multiple"}
                         onSelectionChanged={onSelectionChanged}
                         onFirstDataRendered={onDataFirstRendered}
+                        enableRangeSelection={true}
                     />
                 </div>
             </div>
@@ -668,6 +676,7 @@ function CampaignsSection({
                                             valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date),
                                             filter: "agDateColumnFilter",
                                             comparator: agGridDateComparator,
+                                            resizable: true,
                                         },
                                         {
                                             headerName: "Campaign Name",
@@ -675,6 +684,7 @@ function CampaignsSection({
                                             // cellRenderer: "progressCellRenderer",
                                             // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCount},
                                             cellClass: "!tw-px-0",
+                                            resizable: true,
                                         },
                                         {
                                             headerName: "Clicks",
@@ -682,6 +692,7 @@ function CampaignsSection({
                                             // cellRenderer: "progressCellRenderer",
                                             // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCount},
                                             cellClass: "!tw-px-0",
+                                            resizable: true,
                                         },
                                         {
                                             headerName: "Impressions",
@@ -689,6 +700,7 @@ function CampaignsSection({
                                             // cellRenderer: "progressCellRenderer",
                                             // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
                                             cellClass: "!tw-px-0",
+                                            resizable: true,
                                         },
                                         {
                                             headerName: "Amount Spent",
@@ -696,6 +708,7 @@ function CampaignsSection({
                                             // cellRenderer: "progressCellRenderer",
                                             // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
                                             cellClass: "!tw-px-0",
+                                            resizable: true,
                                         },
                                         {
                                             headerName: "Leads",
@@ -703,6 +716,7 @@ function CampaignsSection({
                                             // cellRenderer: "progressCellRenderer",
                                             // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
                                             cellClass: "!tw-px-0",
+                                            resizable: true,
                                         },
                                         {
                                             headerName: "Orders",
@@ -710,6 +724,7 @@ function CampaignsSection({
                                             // cellRenderer: "progressCellRenderer",
                                             // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
                                             cellClass: "!tw-px-0",
+                                            resizable: true,
                                         },
                                     ]}
                                     defaultColDef={defaultColumnDefinitions}
@@ -789,7 +804,7 @@ function getMetricsGroupByDateAndCampaignName(
     const freshsalesDataGroupByCampaign = freshsalesLeadsData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
     const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
 
-    let leadsAndOrdersGroupByCampaignNameAndDate:{[key: string]: any} = {};
+    let leadsAndOrdersGroupByCampaignNameAndDate: {[key: string]: any} = {};
     for (const campaign of campaigns) {
         let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
         let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);

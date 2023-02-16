@@ -208,6 +208,7 @@ export function roundOffToTwoDigits(n) {
 export const defaultColumnDefinitions = {
     sortable: true,
     filter: true,
+    resizable: true,
 };
 
 export function getIntegerArrayOfLength(n: number) {

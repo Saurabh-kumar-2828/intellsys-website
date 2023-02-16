@@ -14,6 +14,7 @@ import {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {getDates, getNonEmptyStringOrNull, roundOffToTwoDigits, transposeData} from "~/utilities/utilities";
 import { getAccessTokenFromCookies } from "~/backend/utilities/cookieSessionsHelper.server";
 import { getUrlFromRequest } from "~/backend/utilities/utilities.server";
+import "ag-grid-enterprise";
 
 export const meta: MetaFunction = () => {
     return {

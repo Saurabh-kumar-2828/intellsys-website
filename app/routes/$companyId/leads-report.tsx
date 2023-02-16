@@ -6,6 +6,7 @@ import {ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineEl
 import {DateTime} from "luxon";
 import {useState} from "react";
 import {Line} from "react-chartjs-2";
+import "ag-grid-enterprise";
 import {
     AdsDataAggregatedRow,
     FreshsalesData,

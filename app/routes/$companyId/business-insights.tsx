@@ -15,6 +15,7 @@ import { getAccessTokenFromCookies } from "~/backend/utilities/cookieSessionsHel
 import {aggregateByDate, createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead, sumReducer} from "~/utilities/utilities";
 import {progressCellRenderer} from "~/components/progressCellRenderer";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
+import "ag-grid-enterprise";
 import {
     Card,
     DateFilterSection,

@@ -1,15 +1,17 @@
+import * as Tabs from "@radix-ui/react-tabs";
 import {json, LinksFunction, LoaderFunction, MetaFunction, redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {AgGridReact} from "ag-grid-react";
 import styles from "app/styles.css";
+import {max} from "d3";
 import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {
     AdsDataAggregatedRow,
     FreshsalesData,
     FreshsalesDataAggregatedRow,
-    getFacebookAdsData,
     getFreshsalesData,
+    getFacebookAdsData,
     getShopifyData,
     getTimeGranularityFromUnknown,
     ShopifyDataAggregatedRow,
@@ -23,12 +25,14 @@ import {LineGraphComponent} from "~/components/d3Componenets/lineGraphComponent"
 import {progressCellRendererTarget} from "~/components/progressCellRenderer";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import {CustomCard, DateFilterSection, FancySearchableMultiSelect, GenericCard, SmallValueDisplayingCardWithTarget} from "~/components/scratchpad";
-import {Iso8601Date, QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
+import {Iso8601Date, QueryFilterType, Uuid, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
     aggregateByDate,
+    agGridDateComparator,
     campaignsColorPalette,
     columnWiseSummationOfMatrix,
     createGroupByReducer,
+    dateToMediumNoneEnFormat,
     defaultColumnDefinitions,
     distinct,
     getDates,
@@ -121,7 +125,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
     return json(loaderData);
 };
 
-type dayWiseDistributionPerCampaignObject = {
+type DayWiseDistributionPerCampaignObject = {
     impressions: Array<number>;
     clicks: Array<number>;
     amountSpent: Array<number>;
@@ -129,7 +133,7 @@ type dayWiseDistributionPerCampaignObject = {
     orders: Array<number>;
 };
 
-type campaignTargetObject = {
+type CampaignTargetObject = {
     impressions: number;
     clicks: number;
     amountSpent: number;
@@ -138,7 +142,8 @@ type campaignTargetObject = {
 };
 
 export default function () {
-    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, allCampaignInformation, freshsalesLeadsData, facebookAdsData, shopifyData, companyId} = useLoaderData() as LoaderData;
+    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, allProductInformation, allCampaignInformation, freshsalesLeadsData, facebookAdsData, shopifyData, companyId} =
+        useLoaderData() as LoaderData;
 
     const businesses = distinct(allProductInformation.map((productInformation: ProductInformation) => productInformation.category));
     let products = distinct(allProductInformation.map((productInformation: ProductInformation) => productInformation.productName));
@@ -157,7 +162,6 @@ export default function () {
     const [hoverOnImpressionsCard, setHoverOnImpressionsCard] = useState(false);
 
     // TODO: Update filters when changing another one
-
     products = allProductInformation
         .filter((productInformation: ProductInformation) => selectedCategories.length == 0 || selectedCategories.includes(productInformation.category))
         .map((productInformation: {productName: string}) => productInformation.productName);
@@ -227,16 +231,9 @@ export default function () {
             </div>
             <div className="tw-grid tw-grid-cols-2 tw-gap-x-5 tw-px-4 tw-py-4">
                 <div className="tw-grid-col-start-1">
-                    <CampaignsSection
-                        shopifyData={filterShopifyData}
-                        adsData={filterAdsData}
-                        freshsalesLeadsData={filterFreshsalesData}
-                        minDate={appliedMinDate}
-                        maxDate={appliedMaxDate}
-                        hoverOnImpressionCard={hoverOnImpressionsCard}
-                        setHoverOnImpressionCard={setHoverOnImpressionsCard}
-                    />
+                    <CampaignsSection shopifyData={filterShopifyData} adsData={filterAdsData} freshsalesLeadsData={filterFreshsalesData} minDate={appliedMinDate} maxDate={appliedMaxDate} />
                 </div>
+
                 <div className="tw-grid-col-start-1">
                     <CampaignsSection
                         shopifyData={filterShopifyData}
@@ -259,16 +256,12 @@ function CampaignsSection({
     shopifyData,
     minDate,
     maxDate,
-    hoverOnImpressionCard,
-    setHoverOnImpressionCard,
 }: {
     freshsalesLeadsData: Array<FreshsalesDataAggregatedRow>;
     adsData: Array<AdsDataAggregatedRow>;
     shopifyData: Array<ShopifyDataAggregatedRow>;
     minDate: Iso8601Date;
     maxDate: Iso8601Date;
-    hoverOnImpressionCard: boolean;
-    setHoverOnImpressionCard: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
     const gridRef = useRef(null);
 
@@ -277,17 +270,17 @@ function CampaignsSection({
     const [showClicks, setShowClicks] = useState(false);
     const [showImpressions, setShowImpressions] = useState(false);
 
+    const dates = getDates(minDate, maxDate);
+
     const onSelectionChanged = useCallback(() => {
         var selectedRows = gridRef.current.api.getSelectedRows();
-        const campaigns = selectedRows.map((row) => row.campaignName);
+        const campaigns = selectedRows.map((row: {campaignName: any}) => row.campaignName);
         setSelectedCampaigns(campaigns);
     }, []);
 
     const onDataFirstRendered = useCallback((params) => {
-        gridRef.current.api.forEachNode((node) =>
-          node.setSelected(true)
-        );
-      }, []);
+        gridRef.current.api.forEachNode((node) => node.setSelected(true));
+    }, []);
 
     const dayWiseCampaignsTrends = getDayWiseCampaignsTrends(freshsalesLeadsData, adsData, shopifyData, minDate, maxDate);
 
@@ -314,19 +307,10 @@ function CampaignsSection({
     const labels = getDates(minDate, maxDate);
 
     // Targets
-    // const targetForCampaigns =
-    //     campaigns.length > 0
-    //         ? campaigns.reduce((result: {[key: string]: campaignTargetObject}, currentCampaign) => {
-    //               result[currentCampaign] = {
-    //                   impressions: 400000,
-    //                   clicks: 20000,
-    //                   amountSpent: 200000,
-    //                   leads: 2000,
-    //                   orders: 100,
-    //               };
-    //               return result;
-    //           }, {})
-    //         : {};
+    const targetForCampaigns = getTargets(campaigns);
+
+    // Leads and orders group by date and campaign
+    const leadsAndOrdersGroupByCampaignNameAndDate = getMetricsGroupByDateAndCampaignName(freshsalesLeadsData, adsData, shopifyData, campaigns, minDate, maxDate);
 
     // Data for lineChartComponent
 
@@ -334,7 +318,7 @@ function CampaignsSection({
         selectedCampaigns.length > 0
             ? columnWiseSummationOfMatrix(
                   selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
-                      result.push(dayWiseCampaignsTrends[campaign].amountSpent);
+                      campaign in dayWiseCampaignsTrends == true ? result.push(dayWiseCampaignsTrends[campaign].amountSpent) : result.push(new Array(dates.length).fill(0));
                       return result;
                   }, []),
               )
@@ -344,7 +328,7 @@ function CampaignsSection({
         selectedCampaigns.length > 0
             ? columnWiseSummationOfMatrix(
                   selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
-                      result.push(dayWiseCampaignsTrends[campaign].clicks);
+                      campaign in dayWiseCampaignsTrends == true ? result.push(dayWiseCampaignsTrends[campaign].clicks) : result.push(new Array(dates.length).fill(0));
                       return result;
                   }, []),
               )
@@ -354,7 +338,7 @@ function CampaignsSection({
         selectedCampaigns.length > 0
             ? columnWiseSummationOfMatrix(
                   selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
-                      result.push(dayWiseCampaignsTrends[campaign].impressions);
+                      campaign in dayWiseCampaignsTrends == true ? result.push(dayWiseCampaignsTrends[campaign].impressions) : result.push(new Array(dates.length).fill(0));
                       return result;
                   }, []),
               )
@@ -377,7 +361,7 @@ function CampaignsSection({
             values: clicks.map((d, index) => ({date: labels[index], value: d})),
         },
         dates: labels,
-        yMax: amountSpent.length > 0 ? Math.max(...clicks) : 100,
+        yMax: clicks.length > 0 ? Math.max(...clicks) : 100,
     };
 
     const salesLineData = {
@@ -530,7 +514,7 @@ function CampaignsSection({
                         explanation={`Spends = ${numberToHumanFriendlyString(campaignsInformation.amountSpent)}`}
                         type={ValueDisplayingCardInformationType.float}
                         className="tw-col-start-1 hover:bg-sky-700"
-                        valueClassName="tw-text-lg tw-px-0.2 tw-font-semibold "
+                        valueClassName="tw-text-lg tw-px-0.2 tw-font-semibold"
                     />
                     <SmallValueDisplayingCardWithTarget
                         label="Impressions"
@@ -571,65 +555,176 @@ function CampaignsSection({
                 </div>
             </div>
 
-            <div className="tw-row-start-4">
-                <div className="tw-grid tw-overflow-auto">
+            <Tabs.Root defaultValue="1" className="tw-row-start-4">
+                <Tabs.List>
+                    <Tabs.Trigger value="1" className="lp-tab tw-rounded-tl-md">
+                        Distribution
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="2" className="lp-tab tw-rounded-tr-md">
+                        Raw Data
+                    </Tabs.Trigger>
+                </Tabs.List>
+                <Tabs.Content value="1">
+                    <div className="tw-grid tw-overflow-auto">
+                        <GenericCard
+                            content={
+                                <div className="tw-grid tw-grid-cols-1 tw-overflow-auto tw-gap-y-2 tw-py-4">
+                                    <div className="tw-row-start-1">
+                                        <ComposedChart
+                                            width={canvasDimensions.width}
+                                            height={canvasDimensions.height}
+                                            xValues={labels}
+                                            title={"Day-on-day distribution of selected campaigns"}
+                                            className="tw-row-start-1 tw-col-start-1"
+                                        >
+                                            {showAmountSpent && <LineGraphComponent data={salesLineData} scale={Scale.dataDriven} />}
+
+                                            {showClicks && <LineGraphComponent data={clicksLineData} scale={Scale.dataDriven} />}
+
+                                            {showImpressions && <LineGraphComponent data={impressionsLineData} scale={Scale.dataDriven} />}
+                                        </ComposedChart>
+                                    </div>
+
+                                    <div className="tw-row-start-2 tw-flex tw-flex-row tw-justify-center">
+                                        <input
+                                            type="checkbox"
+                                            className="tw-h-5 tw-w-5"
+                                            id="amountspent"
+                                            checked={showAmountSpent}
+                                            onChange={(e) => {
+                                                showClicks == false && showImpressions == false ? setShowAmountSpent(true) : setShowAmountSpent(e.target.checked);
+                                            }}
+                                        />
+                                        <label
+                                            // TODO: Disabled because having multiple panes is causing issue with this
+                                            // htmlFor="amountspent"
+                                            className="tw-pl-3 tw-font-sans"
+                                        >
+                                            Amount Spent
+                                        </label>
+
+                                        <HorizontalSpacer className="tw-w-8" />
+
+                                        <input
+                                            type="checkbox"
+                                            className="tw-h-5 tw-w-5"
+                                            id="clicks"
+                                            checked={showClicks}
+                                            onChange={(e) => {
+                                                showAmountSpent == false && showImpressions == false ? setShowClicks(true) : setShowClicks(e.target.checked);
+                                            }}
+                                        />
+                                        <label
+                                            // TODO: Disabled because having multiple panes is causing issue with this
+                                            // htmlFor="clicks"
+                                            className="tw-pl-3 tw-font-sans"
+                                        >
+                                            Clicks
+                                        </label>
+
+                                        <HorizontalSpacer className="tw-w-8" />
+
+                                        <input
+                                            type="checkbox"
+                                            className="tw-h-5 tw-w-5"
+                                            id="impressions"
+                                            checked={showImpressions}
+                                            onChange={(e) => {
+                                                showAmountSpent == false && showClicks == false ? setShowImpressions(true) : setShowImpressions(e.target.checked);
+                                            }}
+                                        />
+                                        <label
+                                            // TODO: Disabled because having multiple panes is causing issue with this
+                                            // htmlFor="impressions"
+                                            className="tw-pl-3 tw-font-sans"
+                                        >
+                                            Impressions
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                            // metaQuery={shopifyData.metaQuery}
+                        />
+                    </div>
+                </Tabs.Content>
+                <Tabs.Content value="2">
                     <GenericCard
+                        className="tw-rounded-tl-none"
                         content={
-                            <div className="tw-grid tw-grid-cols-1 tw-overflow-auto tw-gap-y-2 tw-py-4">
-                                <div className="tw-row-start-1">
-                                    <ComposedChart
-                                        width={canvasDimensions.width}
-                                        height={canvasDimensions.height}
-                                        xValues={labels}
-                                        title={"Day-on-day distribution of selected campaigns"}
-                                        className="tw-row-start-1 tw-col-start-1"
-                                    >
-                                        {showAmountSpent && <LineGraphComponent data={salesLineData} scale={Scale.dataDriven} />}
-
-                                        {showClicks && <LineGraphComponent data={clicksLineData} scale={Scale.dataDriven} />}
-
-                                        {showImpressions && <LineGraphComponent data={impressionsLineData} scale={Scale.dataDriven} />}
-                                    </ComposedChart>
-                                </div>
-
-                                <div className="tw-row-start-2 tw-flex tw-flex-row tw-justify-center">
-                                    <input type="checkbox" className="tw-h-5 tw-w-5" id="amountspent" checked={showAmountSpent} onChange={(e) => setShowAmountSpent(e.target.checked)} />
-                                    <label
-                                        // TODO: Disabled because having multiple panes is causing issue with this
-                                        // htmlFor="amountspent"
-                                        className="tw-pl-3 tw-font-sans"
-                                    >
-                                        Amount Spent
-                                    </label>
-
-                                    <HorizontalSpacer className="tw-w-8" />
-
-                                    <input type="checkbox" className="tw-h-5 tw-w-5" id="clicks" checked={showClicks} onChange={(e) => setShowClicks(e.target.checked)} />
-                                    <label
-                                        htmlFor="clicks"
-                                        // TODO: Disabled because having multiple panes is causing issue with this
-                                        // className="tw-pl-3 tw-font-sans"
-                                    >
-                                        Clicks
-                                    </label>
-
-                                    <HorizontalSpacer className="tw-w-8" />
-
-                                    <input type="checkbox" className="tw-h-5 tw-w-5" id="impressions" checked={showImpressions} onChange={(e) => setShowImpressions(e.target.checked)} />
-                                    <label
-                                        // TODO: Disabled because having multiple panes is causing issue with this
-                                        // htmlFor="impressions"
-                                        className="tw-pl-3 tw-font-sans"
-                                    >
-                                        Impressions
-                                    </label>
-                                </div>
+                            <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                                <AgGridReact
+                                    rowData={adsData.map((object) => ({
+                                        campaignName: object.campaignName,
+                                        date: object.date,
+                                        impressions: object.impressions,
+                                        clicks: object.clicks,
+                                        amountSpent: object.amountSpent,
+                                        leads: leadsAndOrdersGroupByCampaignNameAndDate[object.campaignName].leads[object.date],
+                                        orders: leadsAndOrdersGroupByCampaignNameAndDate[object.campaignName].orders[object.date],
+                                    }))}
+                                    columnDefs={[
+                                        {
+                                            headerName: "Date",
+                                            valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date),
+                                            filter: "agDateColumnFilter",
+                                            comparator: agGridDateComparator,
+                                        },
+                                        {
+                                            headerName: "Campaign Name",
+                                            field: "campaignName",
+                                            // cellRenderer: "progressCellRenderer",
+                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCount},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Clicks",
+                                            field: "clicks",
+                                            // cellRenderer: "progressCellRenderer",
+                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCount},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Impressions",
+                                            field: "impressions",
+                                            // cellRenderer: "progressCellRenderer",
+                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Amount Spent",
+                                            field: "amountSpent",
+                                            // cellRenderer: "progressCellRenderer",
+                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Leads",
+                                            field: "leads",
+                                            // cellRenderer: "progressCellRenderer",
+                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                        {
+                                            headerName: "Orders",
+                                            field: "orders",
+                                            // cellRenderer: "progressCellRenderer",
+                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
+                                            cellClass: "!tw-px-0",
+                                        },
+                                    ]}
+                                    defaultColDef={defaultColumnDefinitions}
+                                    animateRows={true}
+                                    enableRangeSelection={true}
+                                    // frameworkComponents={{
+                                    //     progressCellRenderer,
+                                    // }}
+                                />
                             </div>
                         }
-                        // metaQuery={shopifyData.metaQuery}
+                        metaQuery={freshsalesLeadsData.metaQuery}
                     />
-                </div>
-            </div>
+                </Tabs.Content>
+            </Tabs.Root>
         </div>
     );
 }
@@ -642,13 +737,15 @@ function getDayWiseCampaignsTrends(
     maxDate: Iso8601Date,
 ) {
     const dates = getDates(minDate, maxDate);
+
     const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
+
     // TODO: Is this correct?
     const freshsalesDataGroupByCampaign = freshsalesLeadsData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
     const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
 
     // Datatable
-    const dayWiseDistributionPerCampaign: {[key: string]: dayWiseDistributionPerCampaignObject} = {};
+    const dayWiseDistributionPerCampaign: {[key: string]: DayWiseDistributionPerCampaignObject} = {};
     for (const campaign in adsDataGroupByCampaign) {
         let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
         let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
@@ -659,6 +756,7 @@ function getDayWiseCampaignsTrends(
         dayWiseImpressions = aggregateByDate(adsDataGroupByCampaign[campaign], "impressions", dates);
         dayWiseClicks = aggregateByDate(adsDataGroupByCampaign[campaign], "clicks", dates);
         dayWiseAmountSpent = aggregateByDate(adsDataGroupByCampaign[campaign], "amountSpent", dates);
+
         if (campaign in freshsalesDataGroupByCampaign) {
             dayWiseLeads = aggregateByDate(freshsalesDataGroupByCampaign[campaign], "count", dates);
         }
@@ -676,4 +774,58 @@ function getDayWiseCampaignsTrends(
     }
 
     return dayWiseDistributionPerCampaign;
+}
+
+function getMetricsGroupByDateAndCampaignName(
+    freshsalesLeadsData: Array<FreshsalesDataAggregatedRow>,
+    adsData: Array<AdsDataAggregatedRow>,
+    shopifyData: Array<ShopifyDataAggregatedRow>,
+    campaigns: Array<string>,
+    minDate: Iso8601Date,
+    maxDate: Iso8601Date,
+) {
+    const dates = getDates(minDate, maxDate);
+
+    const freshsalesDataGroupByCampaign = freshsalesLeadsData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
+    const shopifyDataGroupByCampaign = shopifyData.reduce(createGroupByReducer("leadGenerationSourceCampaignName"), {});
+
+    let leadsAndOrdersGroupByCampaignNameAndDate:{[key: string]: any} = {};
+    for (const campaign of campaigns) {
+        let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
+        let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
+        if (campaign in freshsalesDataGroupByCampaign) {
+            dayWiseLeads = aggregateByDate(freshsalesDataGroupByCampaign[campaign], "count", dates);
+        }
+        if (campaign in shopifyDataGroupByCampaign) {
+            dayWiseOrders = aggregateByDate(shopifyDataGroupByCampaign[campaign], "netQuantity", dates);
+        }
+
+        //map leads to date
+        let leadsToDate: {[key: string]: number} = {};
+        let ordersToDate: {[key: string]: number} = {};
+        dates.forEach((key, i) => (leadsToDate[key] = dayWiseLeads[i]));
+        dates.forEach((key, i) => (ordersToDate[key] = dayWiseOrders[i]));
+
+        leadsAndOrdersGroupByCampaignNameAndDate[campaign] = {
+            leads: leadsToDate,
+            orders: ordersToDate,
+        };
+    }
+
+    return leadsAndOrdersGroupByCampaignNameAndDate;
+}
+
+function getTargets(campaigns: Array<string>) {
+    campaigns.length > 0
+        ? campaigns.reduce((result: {[key: string]: CampaignTargetObject}, currentCampaign) => {
+              result[currentCampaign] = {
+                  impressions: 400000,
+                  clicks: 20000,
+                  amountSpent: 200000,
+                  leads: 2000,
+                  orders: 100,
+              };
+              return result;
+          }, {})
+        : {};
 }

@@ -171,6 +171,7 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
         ORDER BY
             lead_created_at
     `;
+
     const result = await execute(companyId, query);
 
     return {

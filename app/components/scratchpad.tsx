@@ -101,7 +101,7 @@ export function CustomCard(props: {information: string; informationClassName: st
             className={concatenateNonNullStringsWithSpaces(
                 "tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center tw-font-sans group",
                 props.className,
-                "hover:tw-bg-blue-600"
+                "hover:tw-bg-blue-600",
             )}
             title={props.information}
         >
@@ -134,7 +134,7 @@ export function ValueDisplayingCard<T>(props: {queryInformation: T; contentExtra
         <div
             className={concatenateNonNullStringsWithSpaces(
                 "tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-rounded-md tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center",
-                props.className
+                props.className,
             )}
             title={content}
         >
@@ -342,7 +342,7 @@ export function DateDisplayingCard(props: {information: any; label: string; clas
         <div
             className={concatenateNonNullStringsWithSpaces(
                 "tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-rounded-md tw-p-4 tw-grid tw-grid-cols-1 tw-content-center tw-text-center",
-                props.className
+                props.className,
             )}
             title={props.information}
         >
@@ -411,7 +411,7 @@ export function DateFilterSection(props: {
         <div
             className={concatenateNonNullStringsWithSpaces(
                 "tw-col-span-12 tw-bg-dark-bg-400 tw-sticky tw-top-16 -tw-m-8 tw-mb-0 tw-z-40 tw-p-4 tw-flex tw-flex-row tw-items-start tw-gap-x-4",
-                props.className
+                props.className,
             )}
         >
             <div className="tw-flex-1 tw-flex tw-flex-row tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
@@ -452,13 +452,13 @@ export function DateFilterSection(props: {
                                     DateTime.now()
                                         .startOf("month")
                                         .set({month: months.indexOf(selectedMonth) + 1})
-                                        .toISODate()
+                                        .toISODate(),
                                 );
                                 props.setSelectedMaxDate(
                                     DateTime.now()
                                         .set({month: months.indexOf(selectedMonth) + 1})
                                         .endOf("month")
-                                        .toISODate()
+                                        .toISODate(),
                                 );
                             } else if (months.indexOf(selectedMonth) + 1 > dt.get("month")) {
                                 const year = DateTime.now().plus({months: -12}).get("year");
@@ -466,13 +466,13 @@ export function DateFilterSection(props: {
                                     DateTime.now()
                                         .startOf("month")
                                         .set({year: year, month: months.indexOf(selectedMonth) + 1})
-                                        .toISODate()
+                                        .toISODate(),
                                 );
                                 props.setSelectedMaxDate(
                                     DateTime.now()
                                         .set({year: year, month: months.indexOf(selectedMonth) + 1})
                                         .endOf("month")
-                                        .toISODate()
+                                        .toISODate(),
                                 );
                             }
                         }}
@@ -503,7 +503,7 @@ export function DateFilterSection(props: {
                     to={concatenateNonNullStringsWithAmpersand(
                         `${props.page}?selected_granularity=${props.selectedGranularity}`,
                         `min_date=${props.selectedMinDate}`,
-                        `max_date=${props.selectedMaxDate}`
+                        `max_date=${props.selectedMaxDate}`,
                     )}
                     className="-tw-col-end-1 is-button tw-rounded-md tw-py-2"
                 >

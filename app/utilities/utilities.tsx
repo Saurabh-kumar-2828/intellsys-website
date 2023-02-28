@@ -352,7 +352,7 @@ export function toDateHourFormat(dateHour: string){
 
 // TODO: Rename to something sensible
 export function doesLeadCaptureSourceCorrespondToPerformanceLead(leadCaptureSource: string) {
-    return leadCaptureSource != "Facebook On Form Ads";
+    return leadCaptureSource != "Facebook Ads";
 }
 
 // TODO: Rename to something sensible

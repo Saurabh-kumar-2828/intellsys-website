@@ -585,7 +585,7 @@ function LeadsSection({
                 target={1 + performanceLeadsCount.count * 1.3}
                 explanation="Number of leads recorded through performance campaigns"
                 type={ValueDisplayingCardInformationType.integer}
-                equivalentQuery={`SELECT COUNT(*) FROM freshsales_leads_to_source_with_information WHERE DATE(lead_created_at)>=${minDate} AND DATE(lead_created_at)<=${maxDate} AND lead_capture_source != Facebook On Form Ads`}
+                equivalentQuery={`SELECT COUNT(*) FROM freshsales_leads_to_source_with_information WHERE DATE(lead_created_at)>=${minDate} AND DATE(lead_created_at)<=${maxDate} AND lead_capture_source != Facebook Ads`}
             />
 
             <SmallValueDisplayingCardWithTarget
@@ -625,7 +625,7 @@ function LeadsSection({
                 target={1 + facebookLeadsCount.count * 1.3}
                 explanation="Number of leads recorded through facebook campaigns"
                 type={ValueDisplayingCardInformationType.integer}
-                equivalentQuery={`SELECT COUNT(*) FROM freshsales_leads_to_source_with_information WHERE DATE(lead_created_at)>=${minDate} AND DATE(lead_created_at)<=${maxDate} AND lead_capture_source = 'Facebook On Form Ads'`}
+                equivalentQuery={`SELECT COUNT(*) FROM freshsales_leads_to_source_with_information WHERE DATE(lead_created_at)>=${minDate} AND DATE(lead_created_at)<=${maxDate} AND lead_capture_source = 'Facebook Ads'`}
 
             />
 

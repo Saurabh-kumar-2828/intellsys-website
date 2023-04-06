@@ -404,8 +404,9 @@ export function DateFilterSection(props: {
 }) {
     // const months = Info.months("long", {locale: "en-US"});
 
-    let m = [...Array(13).keys()];
-    const months = m.map((num) => `${DateTime.now().startOf("month").minus({months: num}).monthLong}, ${DateTime.now().startOf("month").minus({months: num}).year}`)
+    let m = [...Array(12).keys()];
+    // const months = m.map((num) => `${DateTime.now().startOf("month").minus({months: num}).monthLong}, ${DateTime.now().startOf("month").minus({months: num}).year}`)
+    const months = m.map((num) => DateTime.now().startOf("month").minus({months: num+1}))
 
     const startDateId = useId();
     const endDateId = useId();
@@ -448,36 +449,20 @@ export function DateFilterSection(props: {
 
                 <div className={props.className}>
                     <Listbox
-                        onChange={(selectedMonth) => {
-                            const dt = DateTime.now();
-                            if (months.indexOf(selectedMonth) + 1 <= dt.get("month")) {
-                                props.setSelectedMinDate(
-                                    DateTime.now()
-                                        .startOf("month")
-                                        .set({month: months.indexOf(selectedMonth) + 1})
-                                        .toISODate(),
-                                );
-                                props.setSelectedMaxDate(
-                                    DateTime.now()
-                                        .set({month: months.indexOf(selectedMonth) + 1})
-                                        .endOf("month")
-                                        .toISODate(),
-                                );
-                            } else if (months.indexOf(selectedMonth) + 1 > dt.get("month")) {
-                                const year = DateTime.now().plus({months: -12}).get("year");
-                                props.setSelectedMinDate(
-                                    DateTime.now()
-                                        .startOf("month")
-                                        .set({year: year, month: months.indexOf(selectedMonth) + 1})
-                                        .toISODate(),
-                                );
-                                props.setSelectedMaxDate(
-                                    DateTime.now()
-                                        .set({year: year, month: months.indexOf(selectedMonth) + 1})
-                                        .endOf("month")
-                                        .toISODate(),
-                                );
-                            }
+                        onChange={(dateTime: DateTime) => {
+                            console.log(dateTime)
+                            props.setSelectedMinDate(
+                                DateTime.now()
+                                .startOf("month")
+                                .set({month: dateTime.month, year: dateTime.year})
+                                .toISODate(),
+                            );
+                            props.setSelectedMaxDate(
+                                DateTime.now()
+                                .startOf("month")
+                                .set({month: dateTime.month, year: dateTime.year})
+                                .toISODate(),
+                            );
                         }}
                     >
                         <Listbox.Button>
@@ -487,7 +472,7 @@ export function DateFilterSection(props: {
                         <Listbox.Options className="tw-w-fit tw-absolute tw-top-16 tw-bg-dark-bg-500 tw-rounded-md tw-max-h-[calc(100vh-20rem)] tw-border tw-border-fg tw-overflow-auto tw-z-100">
                             {months.map((option, optionIndex) => (
                                 <Listbox.Option value={option} key={optionIndex} className="tw-p-2 tw-cursor-pointer">
-                                    <div>{option}</div>
+                                    <div>{`${option.monthLong}, ${option.year}`}</div>
                                 </Listbox.Option>
                             ))}
                         </Listbox.Options>

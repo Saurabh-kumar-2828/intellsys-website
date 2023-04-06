@@ -58,6 +58,7 @@ export type ShopifyDataAggregatedRow = {
 };
 
 export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<ShopifyData> {
+
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "date")} AS date,
@@ -142,6 +143,7 @@ export type FreshsalesDataAggregatedRow = {
 };
 
 export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<FreshsalesData> {
+    console.log(granularity);
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "lead_created_at")} AS date,
@@ -178,6 +180,7 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
         metaQuery: query,
         rows: result.rows.map((row) => rowToFreshsalesDataAggregatedRow(row)),
     };
+
 }
 
 function rowToFreshsalesDataAggregatedRow(row: unknown): FreshsalesDataAggregatedRow {
@@ -243,6 +246,7 @@ function rowToAdsDataAggregatedRow(row: unknown): AdsDataAggregatedRow {
 }
 
 export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
+
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "date")} AS date,
@@ -260,6 +264,8 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
         ORDER BY
             date
     `;
+
+
 
     const result = await execute(companyId, query);
 

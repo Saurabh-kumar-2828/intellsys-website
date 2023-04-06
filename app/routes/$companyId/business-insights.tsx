@@ -426,7 +426,7 @@ function LeadsSection({
         metaInformation: `Amount Spent / Net Sales | Facebook = ${numberToHumanFriendlyString(facebookLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
             facebookLeads.netSalesDayWise.reduce(sumReducer, 0)
         )}`,
-        acos: numberToHumanFriendlyString(facebookLeads.netSalesDayWise.reduce(sumReducer, 0) == 0 ? 0 : facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeads.netSalesDayWise.reduce(sumReducer, 0)),
+        acos:  numberToHumanFriendlyString(facebookLeads.netSalesDayWise.reduce(sumReducer, 0) == 0 ? 0 : facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeads.netSalesDayWise.reduce(sumReducer, 0)),
         dayWiseAcos: facebookLeads.amountSpentDayWise.map((value, index) => (facebookLeads.netSalesDayWise[index] == 0 ? 0 : value / facebookLeads.netSalesDayWise[index])),
     };
 

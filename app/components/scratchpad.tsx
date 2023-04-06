@@ -402,7 +402,10 @@ export function DateFilterSection(props: {
     page: string;
     className?: string;
 }) {
-    const months = Info.months("long", {locale: "en-US"});
+    // const months = Info.months("long", {locale: "en-US"});
+
+    let m = [...Array(13).keys()];
+    const months = m.map((num) => `${DateTime.now().startOf("month").minus({months: num}).monthLong}, ${DateTime.now().startOf("month").minus({months: num}).year}`)
 
     const startDateId = useId();
     const endDateId = useId();

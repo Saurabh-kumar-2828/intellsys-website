@@ -459,7 +459,7 @@ export function DateFilterSection(props: {
                             );
                             props.setSelectedMaxDate(
                                 DateTime.now()
-                                .startOf("month")
+                                .endOf("month")
                                 .set({month: dateTime.month, year: dateTime.year})
                                 .toISODate(),
                             );

@@ -1,9 +1,10 @@
 import {LoaderFunction, redirect} from "@remix-run/node";
-import {getAccessToken} from "~/backend/utilities/data-management/facebookOAuth.server";
+import { facebookOAuthFlow } from "~/backend/utilities/data-management/facebookOAuth.server";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 
 export const loader: LoaderFunction = async ({request, params}) => {
+
     const urlSearchParams = new URL(request.url).searchParams;
 
     const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"))
@@ -13,7 +14,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
     }
 
     if(authorizationCode!=null){
-        getAccessToken(authorizationCode, companyId)
+        facebookOAuthFlow(authorizationCode, companyId)
     }
 
     return redirect(`http://localhost:3000/${companyId}/facebook-oauth`);

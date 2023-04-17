@@ -4,19 +4,35 @@ import {execute} from "~/backend/utilities/databaseManager.server";
 import {Uuid} from "~/utilities/typeDefinitions";
 import {v4 as uuidv4} from 'uuid';
 
-type AccessToken = {
+type FacebookAdsCredentials = {
   accessToken: string,
   expiresIn: string,
   tokenType: string
 }
 
+type JSONValue =
+    | string
+    | number
+    | boolean
 
-export async function storeCredentials(token: AccessToken, companyId: Uuid) {
+interface Credentials {
+    [x: string]: JSONValue;
+}
+
+export async function storeCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid) {
+  /**
+   * Store the credentials of a company's data source.
+   * @param  {Credentials} credentials credentials of a company's data source.
+   * @param  {Uuid} companyId Unique Id of the company
+   * @param  {Uuid} credentialType Unique Id of the data source
+   * @returns  This function does not return anything
+ */
+
   try {
 
         const credentialId = uuidv4()
 
-        // Push in credentials table
+        // Write in credentials table
         await execute(
             Companies.Intellsys,
             `
@@ -38,15 +54,11 @@ export async function storeCredentials(token: AccessToken, companyId: Uuid) {
               credentialId,
               DateTime.now().toISODate(),
               DateTime.now().toISODate(),
-              {
-                  access_token : token.accessToken,
-                  expiry_date: DateTime.now().plus({seconds: parseInt(token.expiresIn)}).toISODate()
-              }
-
+              credentials
             ]
         );
 
-        // Store credentials id in credentials table
+        // write credentials-id in credentials store
         await execute(
           Companies.Intellsys,
           `
@@ -64,8 +76,8 @@ export async function storeCredentials(token: AccessToken, companyId: Uuid) {
           `,
           [
             companyId,
-            Sources.FacebookAds,
-            credentialId,
+            credentialType,
+            credentialId
           ]
       );
 
@@ -77,55 +89,84 @@ export async function storeCredentials(token: AccessToken, companyId: Uuid) {
 
 
 const facebookApiBaseUrl = "https://graph.facebook.com";
-export async function getAccessToken(authorizationCode: string | null, companyId: string) {
+export async function facebookOAuthFlow(authorizationCode: string | null, companyId: string) {
 
   const redirectUri = `http://localhost:3000/${companyId}/capture-authorization-code`
 
   try {
-    const url = `${facebookApiBaseUrl}/v16.0/oauth/access_token?client_id=${process.env.FACEBOOK_CLIENT_ID!}&client_secret=${process.env.CLIENT_SECRET}&redirect_uri=${redirectUri}&code=${authorizationCode}`;
 
+    // Get Access token by giving authorization code.
+    const url = `${facebookApiBaseUrl}/v16.0/oauth/access_token?client_id=${process.env.FACEBOOK_CLIENT_ID!}&client_secret=${process.env.CLIENT_SECRET}&redirect_uri=${redirectUri}&code=${authorizationCode}`;
     const response = await fetch(url, {
       method: "POST",
     });
-
     var token = await response.json();
+    token = convertTokenToFacebookCredentialsType(token);
 
-    token = convertTokenToAccessTokenType(token);
-
-    console.log(token);
     if(companyId != 'undefined'){
-      storeCredentials(token, companyId);
-      const data = await getFacebookData(token.accessToken)
-      console.log("data: ", data)
+
+      // Store credentials in database.
+      storeCredentials(
+        {
+          // TODO: Hash the token
+          access_token: token.accessToken,
+          expiry_date: DateTime.now().plus({seconds: parseInt(token.expiresIn)}).toISODate()
+        },
+        companyId,
+        Sources.FacebookAds
+      );
+
+      // Get data from the facebook ads source.
+      const data = await getFacebookData(token.accessToken);
+      console.log("data: ", data);
+
     }
   } catch(e) {
-    console.log(e)
+    console.log(e);
   }
+
 }
 
 
-function convertTokenToAccessTokenType(token: any): AccessToken{
+function convertTokenToFacebookCredentialsType(token: any): FacebookAdsCredentials {
 
-  const result: AccessToken = {
-    accessToken : token.access_token,
-    expiresIn : token.expires_in,
-    tokenType : token.token_type
+  let result: FacebookAdsCredentials = {
+    accessToken: "",
+    expiresIn: "",
+    tokenType: ""
+  };
+
+  try {
+
+    result = {
+      accessToken: token.access_token,
+      expiresIn: token.expires_in,
+      tokenType: token.token_type
+    }
+
+  } catch(e) {
+    console.log(e);
   }
+
   return result;
 }
 
 
 async function getFacebookData(accessToken: string) {
-  console.log(accessToken);
 
-  const fields =
-      "campaign_id,campaign_name";
-  const level = "campaign";
-  let url = `${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/act_${process.env.FACEBOOK_ACCOUNT_ID!}/insights?fields=${fields}&level=${level}&access_token=${accessToken}`;
-  const response = await fetch(url, {
-      method: "GET",
-  });
+  try {
+    const fields = "campaign_id,campaign_name";
+    const level = "campaign";
+    let url = `${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/act_${process.env.FACEBOOK_ACCOUNT_ID!}/insights?fields=${fields}&level=${level}&access_token=${accessToken}`;
+    const response = await fetch(url, {
+        method: "GET",
+    });
 
-  const insightsFromFacebookApi = await response.json();
-  return insightsFromFacebookApi;
+    const insightsFromFacebookApi = await response.json();
+    return insightsFromFacebookApi;
+
+  } catch (e){
+    console.log(e);
+  }
+
 }

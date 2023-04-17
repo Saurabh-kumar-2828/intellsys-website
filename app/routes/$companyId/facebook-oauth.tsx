@@ -1,5 +1,6 @@
 import { ActionFunction, redirect } from "@remix-run/node";
 import { Form } from "@remix-run/react";
+import { getFacebookData } from "~/backend/utilities/data-management/facebookOAuth.server";
 
 export let action: ActionFunction = async ({request, params}) => {
 
@@ -13,9 +14,9 @@ export let action: ActionFunction = async ({request, params}) => {
 
     const redirectUri = `http://localhost:3000/${companyId}/capture-authorization-code`;
 
-    const auth_url = `https://www.facebook.com/v16.0/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID!}&redirect_uri=${redirectUri}&scope=${scope}`;
+    const auth_url = `https://www.facebook.com/${process.env.FACEBOOK_API_VERSION!}/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID!}&redirect_uri=${redirectUri}&scope=${scope}`;
 
-    return redirect(auth_url)
+    return redirect(auth_url);
 }
 
 

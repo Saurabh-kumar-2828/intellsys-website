@@ -6,15 +6,31 @@ declare global {
     var _databaseConnectionPool: {[key: Uuid]: Pool};
 }
 
+export function getErrorFromUnknown(error: unknown) {
+    if (error instanceof Error) {
+        return error;
+    }
+
+    return Error(String(error));
+}
+
 // TODO: Proper error handling
 // TODO: Rename to something better
-export async function execute(companyId: Uuid , query: string, queryArguments?: Array<any>): Promise<QueryResult<any>> {
-    const databaseConnectionPool = await getDatabaseConnectionPool(companyId);
+export async function execute(companyId: Uuid , query: string, queryArguments?: Array<any>): Promise<QueryResult<any> | Error> {
+    try {
 
-    // TODO: Confirm success, or log error
-    const response = await databaseConnectionPool.query(query, queryArguments);
+        const databaseConnectionPool = await getDatabaseConnectionPool(companyId);
 
-    return response;
+        // TODO: Confirm success, or log error
+        const response = await databaseConnectionPool.query(query, queryArguments);
+
+        return response as QueryResult<any>;;
+
+    } catch(error_: unknown) {
+        const error = getErrorFromUnknown(error_);
+        return error;
+    }
+
 }
 
 async function getDatabaseConnectionPool(companyId: Uuid): Promise<Pool> {

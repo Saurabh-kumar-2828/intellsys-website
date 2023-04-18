@@ -16,7 +16,6 @@ interface Credentials {
 }
 
 export async function writeInCredentialsStoreTable(companyId: Uuid, credentialType: Uuid, credentialId: Uuid){
-
     await execute(
         Companies.Intellsys,
         `
@@ -36,8 +35,7 @@ export async function writeInCredentialsStoreTable(companyId: Uuid, credentialTy
     );
 }
 
-export async function writeInCredentialsTable(companyId: Uuid, credentialType: Uuid, credentialId: Uuid){
-
+export async function writeInCredentialsTable(credentials: Credentials, credentialId: Uuid){
     await execute(
         Companies.Intellsys,
         `
@@ -72,7 +70,7 @@ export async function storeCredentials(credentials: Credentials, companyId: Uuid
         const credentialId = uuidv4();
 
         // 1. Store credentials in credentials table.
-        await writeInCredentialsTable(companyId, credentialType, credentialId);
+        await writeInCredentialsTable(credentials, credentialId);
 
         // 2. Store mapping of company id, credential type to credential id in credential_store table.
         await writeInCredentialsStoreTable(companyId, credentialType, credentialId);
@@ -194,7 +192,6 @@ async function getCredentialsInner(credentialId: Uuid): Promise<Credentials | Er
 }
 
 export async function getCredentials(companyId: Uuid, credentialType: Uuid): Promise<Credentials | Error> {
-
     // 1. Get credential id associated with given company and data source.
     const credentialId = await getCredentialsId(companyId, credentialType);
     if(credentialId instanceof Error){
@@ -250,7 +247,6 @@ async function updateCredentials(credentials: Credentials, companyId: Uuid, cred
 }
 
 export async function refreshAccessToken(expiredAccessToken: Uuid, companyId: Uuid): Promise<Uuid | Error> {
-
         // Retrieves a new access token from the API.
         const url = `
             ${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/oauth/access_token?
@@ -318,7 +314,6 @@ export async function getFacebookData(companyId: Uuid) {
 
 async function callFacbookAdsApi(accessToken: string) {
     try {
-
         const fields = "campaign_id,campaign_name";
         const level = "campaign";
         let url = `

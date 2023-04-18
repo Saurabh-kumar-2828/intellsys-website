@@ -3,6 +3,7 @@ import {DateTime} from "luxon";
 import {execute, getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {Uuid} from "~/utilities/typeDefinitions";
 import {v4 as uuidv4} from "uuid";
+import Cryptr from 'cryptr';
 import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 type FacebookAdsCredentials = {
@@ -14,6 +15,8 @@ type FacebookAdsCredentials = {
 interface Credentials {
     [x: string]: string | number | boolean;
 }
+
+const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
 
 export async function writeInCredentialsStoreTable(companyId: Uuid, credentialType: Uuid, credentialId: Uuid){
     await execute(
@@ -55,87 +58,6 @@ export async function writeInCredentialsTable(credentials: Credentials, credenti
         `,
         [credentialId, DateTime.now().toISODate(), DateTime.now().toISODate(), credentials],
     );
-}
-
-export async function storeCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid) {
-    /**
-     * Store the credentials of a company's data source.
-     * @param  {Credentials} credentials credentials of a company's data source.
-     * @param  {Uuid} companyId Unique Id of the company
-     * @param  {Uuid} credentialType Unique Id of the data source
-     * @returns  This function does not return anything
-     */
-
-    try {
-        const credentialId = uuidv4();
-
-        // 1. Store credentials in credentials table.
-        await writeInCredentialsTable(credentials, credentialId);
-
-        // 2. Store mapping of company id, credential type to credential id in credential_store table.
-        await writeInCredentialsStoreTable(companyId, credentialType, credentialId);
-
-    } catch (e) {
-        console.log(e);
-        throw e;
-    }
-}
-
-const facebookApiBaseUrl = "https://graph.facebook.com";
-export async function facebookOAuthFlow(authorizationCode: string | null, companyId: string) {
-    const redirectUri = `http://localhost:3000/${companyId}/capture-authorization-code`;
-
-    try {
-        // Post api to retrieve access token by giving authorization code.
-        const url = `
-            ${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/oauth/access_token?
-            client_id=${process.env.FACEBOOK_CLIENT_ID!}&
-            client_secret=${process.env.CLIENT_SECRET!}&
-            redirect_uri=${redirectUri}&
-            code=${authorizationCode}
-        `;
-        const response = await fetch(url, {
-            method: "POST",
-        });
-        var token = await response.json();
-        token = convertTokenToFacebookCredentialsType(token);
-
-        if(token instanceof Error){
-            return token;
-        }
-
-        if (companyId != "undefined") {
-            // Store credentials in database.
-            storeCredentials(
-                {
-                    // TODO: Hash the token.
-                    access_token: token.accessToken,
-                    expiry_date: DateTime.now()
-                        .plus({seconds: parseInt(token.expiryDate)})
-                        .toISODate(),
-                },
-                companyId,
-                Sources.FacebookAds,
-            );
-        }
-    } catch (e) {
-        console.log(e);
-    }
-}
-
-function convertTokenToFacebookCredentialsType(token: any): FacebookAdsCredentials | Error {
-    try {
-        let result: FacebookAdsCredentials = {
-            accessToken: token.access_token,
-            expiryDate: token.expires_in,
-            tokenType: token.token_type,
-        };
-
-        return result;
-    } catch (error_: unknown) {
-        const error = getErrorFromUnknown(error_);
-        return error;
-    }
 }
 
 async function getCredentialsId(companyId: Uuid, credentialType: Uuid): Promise<Uuid | Error> {
@@ -188,7 +110,12 @@ async function getCredentialsById(credentialId: Uuid): Promise<Credentials | Err
         throw Error("No credentials found!");
     }
 
-    return credentialsObject.credentials as Credentials;
+    const credentialsResponse = {
+        access_token: cryptr.decrypt(credentialsObject.credentials.access_token),
+        expiry_date: credentialsObject.credentials.expiry_date
+    };
+
+    return credentialsResponse as Credentials;
 }
 
 export async function getCredentials(companyId: Uuid, credentialType: Uuid): Promise<Credentials | Error> {
@@ -202,20 +129,6 @@ export async function getCredentials(companyId: Uuid, credentialType: Uuid): Pro
     const credentials = await getCredentialsById(credentialId);
     return credentials;
 
-}
-
-export async function getFacebookCredentials(companyId: string): Promise<Credentials | Error> {
-    const credentialsRaw = await getCredentials(companyId, Sources.FacebookAds);
-    if(credentialsRaw instanceof Error){
-        return credentialsRaw;
-    } else {
-        const credentials: FacebookAdsCredentials = {
-            accessToken: credentialsRaw["access_token"] as string,
-            expiryDate: credentialsRaw["expiry_date"] as string
-        }
-
-        return credentials;
-    }
 }
 
 async function updateCredentialsById(credentialsId: Uuid, credentials: Credentials){
@@ -232,8 +145,30 @@ async function updateCredentialsById(credentialsId: Uuid, credentials: Credentia
         `,
         [credentials, DateTime.now(), credentialsId]
     );
+}
 
-    console.log(response);
+export async function storeCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid) {
+    /**
+     * Store the credentials of a company's data source.
+     * @param  {Credentials} credentials credentials of a company's data source.
+     * @param  {Uuid} companyId Unique Id of the company
+     * @param  {Uuid} credentialType Unique Id of the data source
+     * @returns  This function does not return anything
+     */
+
+    try {
+        const credentialId = uuidv4();
+
+        // 1. Store credentials in credentials table.
+        await writeInCredentialsTable(credentials, credentialId);
+
+        // 2. Store mapping of company id, credential type to credential id in credential_store table.
+        await writeInCredentialsStoreTable(companyId, credentialType, credentialId);
+
+    } catch (e) {
+        console.log(e);
+        throw e;
+    }
 }
 
 async function updateCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid) {
@@ -244,6 +179,77 @@ async function updateCredentials(credentials: Credentials, companyId: Uuid, cred
 
     await updateCredentialsById(credentialsId, credentials);
 
+}
+
+const facebookApiBaseUrl = "https://graph.facebook.com";
+export async function facebookOAuthFlow(authorizationCode: string | null, companyId: string) {
+    const redirectUri = `http://localhost:3000/${companyId}/capture-authorization-code`;
+
+    try {
+        // Post api to retrieve access token by giving authorization code.
+        const url = `
+            ${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/oauth/access_token?
+            client_id=${process.env.FACEBOOK_CLIENT_ID!}&
+            client_secret=${process.env.CLIENT_SECRET!}&
+            redirect_uri=${redirectUri}&
+            code=${authorizationCode}
+        `;
+        const response = await fetch(url, {
+            method: "POST",
+        });
+        var token = await response.json();
+        token = convertTokenToFacebookCredentialsType(token);
+
+        if(token instanceof Error){
+            return token;
+        }
+
+        if (companyId != "undefined") {
+            // Store credentials in database.
+            storeCredentials(
+                {
+                    // TODO: Hash the token.
+                    access_token: cryptr.encrypt(token.accessToken),
+                    expiry_date: DateTime.now()
+                        .plus({seconds: parseInt(token.expiryDate)})
+                        .toISODate(),
+                },
+                companyId,
+                Sources.FacebookAds,
+            );
+        }
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+function convertTokenToFacebookCredentialsType(token: any): FacebookAdsCredentials | Error {
+    try {
+        let result: FacebookAdsCredentials = {
+            accessToken: token.access_token,
+            expiryDate: token.expires_in,
+            tokenType: token.token_type,
+        };
+
+        return result;
+    } catch (error_: unknown) {
+        const error = getErrorFromUnknown(error_);
+        return error;
+    }
+}
+
+export async function getFacebookCredentials(companyId: string): Promise<Credentials | Error> {
+    const credentialsRaw = await getCredentials(companyId, Sources.FacebookAds);
+    if(credentialsRaw instanceof Error){
+        return credentialsRaw;
+    } else {
+        const credentials: FacebookAdsCredentials = {
+            accessToken: credentialsRaw["access_token"] as string,
+            expiryDate: credentialsRaw["expiry_date"] as string
+        }
+
+        return credentials;
+    }
 }
 
 export async function refreshAccessToken(expiredAccessToken: Uuid, companyId: Uuid): Promise<Uuid | Error> {
@@ -270,7 +276,7 @@ export async function refreshAccessToken(expiredAccessToken: Uuid, companyId: Uu
             updateCredentials(
                 {
                     // TODO: Hash the token.
-                    access_token: token.accessToken,
+                    access_token: cryptr.encrypt(token.access_token),
                     expiry_date: DateTime.now()
                         .plus({seconds: parseInt(token.expiryDate)})
                         .toISODate(),

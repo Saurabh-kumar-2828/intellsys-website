@@ -165,7 +165,7 @@ async function getCredentialsId(companyId: Uuid, credentialType: Uuid): Promise<
     }
 }
 
-async function getCredentialsInner(credentialId: Uuid): Promise<Credentials | Error> {
+async function getCredentialsById(credentialId: Uuid): Promise<Credentials | Error> {
     // Returns the credentials associated with a given credential ID.
     const query2 = `
             SELECT
@@ -199,7 +199,7 @@ export async function getCredentials(companyId: Uuid, credentialType: Uuid): Pro
     }
 
     // 2. Get credentials associated with given credential id.
-    const credentials = await getCredentialsInner(credentialId);
+    const credentials = await getCredentialsById(credentialId);
     return credentials;
 
 }
@@ -218,7 +218,7 @@ export async function getFacebookCredentials(companyId: string): Promise<Credent
     }
 }
 
-async function updateInCredentialsTable(credentialsId: Uuid, credentials: Credentials){
+async function updateCredentialsById(credentialsId: Uuid, credentials: Credentials){
     const response = await execute(
         Companies.Intellsys,
         `
@@ -242,7 +242,7 @@ async function updateCredentials(credentials: Credentials, companyId: Uuid, cred
         return credentialsId
     }
 
-    await updateInCredentialsTable(credentialsId, credentials);
+    await updateCredentialsById(credentialsId, credentials);
 
 }
 
@@ -286,6 +286,7 @@ export async function refreshAccessToken(expiredAccessToken: Uuid, companyId: Uu
 
 export async function getFacebookData(companyId: Uuid) {
     try {
+        // 1. Retrieve Facebook credentials stored in database.
         const credentials = await getFacebookCredentials(companyId);
         if(credentials instanceof Error){
             return credentials
@@ -293,6 +294,7 @@ export async function getFacebookData(companyId: Uuid) {
 
         let accessToken = credentials.accessToken as string;
 
+        // 2. If access token is expired, refresh the token.
         if(credentials.expiryDate < DateTime.now().toISODate()){
 
             const newAccessToken = await refreshAccessToken(credentials.accessToken as string, companyId);
@@ -303,7 +305,7 @@ export async function getFacebookData(companyId: Uuid) {
             accessToken = newAccessToken as string;
         }
 
-        // Get data from the facebook ads source.
+        // 3. Get data from the facebook ads source.
         const data = await callFacbookAdsApi(accessToken);
         console.log("data: ", data);
 

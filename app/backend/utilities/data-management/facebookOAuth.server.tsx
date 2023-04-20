@@ -3,7 +3,7 @@ import {DateTime} from "luxon";
 import {execute, getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {Uuid} from "~/utilities/typeDefinitions";
 import {v4 as uuidv4} from "uuid";
-import Cryptr from 'cryptr';
+import Cryptr from "cryptr";
 import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 type FacebookAdsCredentials = {
@@ -17,6 +17,12 @@ interface Credentials {
 }
 
 const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
+
+export const baseUrl = "http://localhost:3000";
+
+export function getRedirectUri(companyId: Uuid): string{
+    return `${baseUrl}/${companyId}/capture-authorization-code`;
+}
 
 export async function writeInCredentialsStoreTable(companyId: Uuid, credentialType: Uuid, credentialId: Uuid){
     await execute(
@@ -182,8 +188,8 @@ async function updateCredentials(credentials: Credentials, companyId: Uuid, cred
 }
 
 const facebookApiBaseUrl = "https://graph.facebook.com";
-export async function facebookOAuthFlow(authorizationCode: string | null, companyId: string) {
-    const redirectUri = `http://localhost:3000/${companyId}/capture-authorization-code`;
+export async function facebookOAuthFlow(authorizationCode: string | null, companyId: string): Promise<void | Error> {
+    const redirectUri = getRedirectUri(companyId);
 
     try {
         // Post api to retrieve access token by giving authorization code.
@@ -194,6 +200,8 @@ export async function facebookOAuthFlow(authorizationCode: string | null, compan
             redirect_uri=${redirectUri}&
             code=${authorizationCode}
         `;
+
+        console.log(url);
         const response = await fetch(url, {
             method: "POST",
         });

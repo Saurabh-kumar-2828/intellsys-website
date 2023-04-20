@@ -24,7 +24,7 @@ export let action: ActionFunction = async ({request, params}) => {
         const redirectUri = "http://localhost:3000/capture-authorization-code";
 
         const url = `https://accounts.google.com/o/oauth2/v2/auth?scope=${scope}&client_id=${process.env.GOOGLE_CLIENT_ID!}&response_type=code&redirect_uri=${redirectUri}&prompt=consent&access_type=offline&state=${companyId}`;
-        console.log(url);
+        
         return redirect(url);
     }
 

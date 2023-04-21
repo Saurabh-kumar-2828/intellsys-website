@@ -2,11 +2,13 @@ import Cryptr from "cryptr";
 import {Sources} from "do-not-commit";
 import {DateTime} from "luxon";
 import { getCredentials, storeCredentials, updateCredentials } from "~/backend/utilities/data-management/credentials.server";
-import {Credentials} from "~/backend/utilities/data-management/facebookOAuth.server";
+import {Credentials, getRedirectUri} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {Uuid} from "~/utilities/typeDefinitions";
 
-// TODO: Fix timezone
+// TODO: Fix timezone in database
+
+export const googleAdsScope = "https://www.googleapis.com/auth/adwords";
 
 type GoogleAdsCredentials = {
     accessToken: string;
@@ -81,9 +83,10 @@ export async function googleOAuthFlow(authorizationCode: Uuid, companyId: Uuid):
      *  Handles the OAuth2 flow to authorize the Google Ads API for the given companyId.
      */
 
-    const redirectUri = "http://localhost:3000/capture-authorization-code"; //TODO: Fix name, move this to env
-
     try {
+
+        const redirectUri = getRedirectUri(companyId, Sources.GoogleAds);
+
         // Post api to retrieve access token by giving authorization code.
         const url = `https://oauth2.googleapis.com/token?client_id=${process.env.GOOGLE_CLIENT_ID!}&client_secret=${process.env.GOOGLE_CLIENT_SECRET!}&redirect_uri=${redirectUri}&code=${authorizationCode}&grant_type=authorization_code`;
 
@@ -169,7 +172,6 @@ async function getAccessToken(companyId: Uuid): Promise<string | Error> {
 
 export async function getGoogleData(companyId: Uuid) {
     try {
-        // Get token
         const accessToken = await getAccessToken(companyId);
         if(accessToken instanceof Error){
             return accessToken;

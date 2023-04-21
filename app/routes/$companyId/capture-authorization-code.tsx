@@ -1,5 +1,5 @@
 import {LoaderFunction, redirect} from "@remix-run/node";
-import { baseUrl, facebookOAuthFlow } from "~/backend/utilities/data-management/facebookOAuth.server";
+import {facebookOAuthFlow} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 
@@ -20,5 +20,5 @@ export const loader: LoaderFunction = async ({request, params}) => {
         throw Error("Authorization failed!");
     }
 
-    return redirect(`${baseUrl}/${companyId}/data-sources`);
+    return redirect(`${process.env.REDIRECT_BASE_URI}/${companyId}/data-sources`);
 }

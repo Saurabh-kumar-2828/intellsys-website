@@ -6,6 +6,7 @@ import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {Uuid} from "~/utilities/typeDefinitions";
 
 const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
+export const facebookAdsScope = "ads_read, ads_management";
 
 type FacebookAdsCredentials = {
     accessToken: string;
@@ -17,19 +18,31 @@ export interface Credentials {
     [x: string]: string | number | boolean;
 }
 
-export const baseUrl = "http://localhost:3000";
 const facebookApiBaseUrl = "https://graph.facebook.com";
 
 
-export function getRedirectUri(companyId: Uuid): string {
-    return `${baseUrl}/${companyId}/capture-authorization-code`;
+export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Error {
+
+    if(dataSource == Sources.FacebookAds){
+        return `${process.env.REDIRECT_BASE_URI!}/${companyId}/capture-authorization-code`;
+    }
+
+    if(dataSource == Sources.GoogleAds){
+        return `${process.env.REDIRECT_BASE_URI!}/capture-authorization-code`;
+    }
+
+    return Error("Invalid data source!")
 }
 
 export async function facebookOAuthFlow(authorizationCode: string, companyId: string): Promise<void | Error> {
     /**
      * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
      */
-    const redirectUri = getRedirectUri(companyId);
+
+    const redirectUri = getRedirectUri(companyId, Sources.FacebookAds);
+    if(redirectUri instanceof Error){
+        return redirectUri;
+    }
 
     try {
         // Post api to retrieve access token by giving authorization code.
@@ -70,12 +83,12 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: st
 }
 
 function convertTokenToFacebookCredentialsType(token: any): FacebookAdsCredentials | Error {
+
     try {
         let result: FacebookAdsCredentials = {
             accessToken: token.access_token,
             expiryDate: token.expires_in,
         };
-
         return result;
     } catch (error_: unknown) {
         const error = getErrorFromUnknown(error_);
@@ -87,6 +100,7 @@ export async function getFacebookCredentials(companyId: string): Promise<Credent
     /**
      * Retrieves the Facebook Ads credentials for a given company ID.
      */
+
     const credentialsRaw = await getCredentials(companyId, Sources.FacebookAds);
     if(credentialsRaw instanceof Error){
         return credentialsRaw;
@@ -169,6 +183,7 @@ export async function getFacebookData(companyId: Uuid) {
 }
 
 async function callFacbookAdsApi(accessToken: string) {
+
     try {
         const fields = "campaign_id,campaign_name";
         const level = "campaign";

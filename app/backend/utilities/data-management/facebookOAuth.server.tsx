@@ -1,7 +1,7 @@
 import Cryptr from "cryptr";
 import {Sources} from "do-not-commit";
 import {DateTime} from "luxon";
-import { getCredentials, storeCredentials, updateCredentials } from "~/backend/utilities/data-management/credentials.server";
+import { Credentials, getCredentials, storeCredentials, updateCredentials } from "~/backend/utilities/data-management/credentials.server";
 import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {Uuid} from "~/utilities/typeDefinitions";
 
@@ -13,10 +13,6 @@ type FacebookAdsCredentials = {
     expiryDate: string;
     tokenType?: string;
 };
-
-export interface Credentials {
-    [x: string]: string | number | boolean;
-}
 
 const facebookApiBaseUrl = "https://graph.facebook.com";
 

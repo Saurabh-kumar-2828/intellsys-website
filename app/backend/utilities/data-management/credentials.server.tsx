@@ -1,11 +1,14 @@
 import Cryptr from "cryptr";
-import { Companies } from "do-not-commit";
-import { DateTime } from "luxon";
-import { Credentials } from "~/backend/utilities/data-management/facebookOAuth.server";
-import { execute } from "~/backend/utilities/databaseManager.server";
-import { Uuid } from "~/utilities/typeDefinitions";
-import { getSingletonValueOrNull } from "~/utilities/utilities";
+import {Companies} from "do-not-commit";
+import {DateTime} from "luxon";
+import {execute} from "~/backend/utilities/databaseManager.server";
+import {Uuid} from "~/utilities/typeDefinitions";
+import {getSingletonValueOrNull} from "~/utilities/utilities";
 import {v4 as uuidv4} from "uuid";
+
+export interface Credentials {
+    [x: string]: string | number | boolean;
+}
 
 const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
 

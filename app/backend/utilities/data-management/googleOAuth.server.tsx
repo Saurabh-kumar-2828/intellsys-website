@@ -1,8 +1,8 @@
 import Cryptr from "cryptr";
 import {Sources} from "do-not-commit";
 import {DateTime} from "luxon";
-import { getCredentials, storeCredentials, updateCredentials } from "~/backend/utilities/data-management/credentials.server";
-import {Credentials, getRedirectUri} from "~/backend/utilities/data-management/facebookOAuth.server";
+import { Credentials, getCredentials, storeCredentials, updateCredentials } from "~/backend/utilities/data-management/credentials.server";
+import {getRedirectUri} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {Uuid} from "~/utilities/typeDefinitions";
 

@@ -153,7 +153,7 @@ export async function storeCredentials(credentials: Credentials, companyId: Uuid
         // 1. Store credentials in credentials table.
         await writeInCredentialsTable(credentials, credentialId);
 
-        // 2. Store mapping of company id, credential type to credential id in credential_store table.
+        // 2. Writes a mapping of company ID, credential type, and credential ID to the `credentials_store` table.
         await writeInCredentialsStoreTable(companyId, credentialType, credentialId);
 
     } catch (e) {

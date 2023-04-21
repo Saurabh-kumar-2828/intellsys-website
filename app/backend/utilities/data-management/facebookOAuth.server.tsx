@@ -18,13 +18,17 @@ export interface Credentials {
 }
 
 export const baseUrl = "http://localhost:3000";
+const facebookApiBaseUrl = "https://graph.facebook.com";
 
-export function getRedirectUri(companyId: Uuid): string{
+
+export function getRedirectUri(companyId: Uuid): string {
     return `${baseUrl}/${companyId}/capture-authorization-code`;
 }
 
-const facebookApiBaseUrl = "https://graph.facebook.com";
 export async function facebookOAuthFlow(authorizationCode: string, companyId: string): Promise<void | Error> {
+    /**
+     * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
+     */
     const redirectUri = getRedirectUri(companyId);
 
     try {
@@ -47,7 +51,7 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: st
             return token;
         }
 
-        if (companyId != "undefined") {
+        if (companyId != undefined) {
             // Store credentials in database.
             storeCredentials(
                 {
@@ -70,7 +74,6 @@ function convertTokenToFacebookCredentialsType(token: any): FacebookAdsCredentia
         let result: FacebookAdsCredentials = {
             accessToken: token.access_token,
             expiryDate: token.expires_in,
-            tokenType: token.token_type,
         };
 
         return result;
@@ -81,6 +84,9 @@ function convertTokenToFacebookCredentialsType(token: any): FacebookAdsCredentia
 }
 
 export async function getFacebookCredentials(companyId: string): Promise<Credentials | Error> {
+    /**
+     * Retrieves the Facebook Ads credentials for a given company ID.
+     */
     const credentialsRaw = await getCredentials(companyId, Sources.FacebookAds);
     if(credentialsRaw instanceof Error){
         return credentialsRaw;
@@ -95,71 +101,71 @@ export async function getFacebookCredentials(companyId: string): Promise<Credent
 }
 
 export async function refreshAccessToken(expiredAccessToken: Uuid, companyId: Uuid): Promise<Uuid | Error> {
-        // Retrieves a new access token from the API.
-        const url = `
-            ${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/oauth/access_token?
-            client_id=${process.env.FACEBOOK_CLIENT_ID!}&
-            client_secret=${process.env.FACEBOOK_CLIENT_SECRET!}&
-            grant_type=fb_exchange_token&
-            fb_exchange_token=${expiredAccessToken}
-        `;
-        const response = await fetch(url, {
-            method: "GET",
-        });
-        var token = await response.json();
-        token = convertTokenToFacebookCredentialsType(token);
+    /**
+     * Retrieves a new access token from the Facebook API using a provided expired access token.
+     * Updates the credentials in the database for the specified company ID.
+     */
 
-        if(token instanceof Error){
-            return token;
-        }
+    const url = `
+        ${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/oauth/access_token?
+        client_id=${process.env.FACEBOOK_CLIENT_ID!}&
+        client_secret=${process.env.FACEBOOK_CLIENT_SECRET!}&
+        grant_type=fb_exchange_token&
+        fb_exchange_token=${expiredAccessToken}
+    `;
+    const response = await fetch(url, {
+        method: "GET",
+    });
+    var token = await response.json();
+    token = convertTokenToFacebookCredentialsType(token);
 
-        if (companyId != "undefined") {
-            // Update credentials in database.
-            updateCredentials(
-                {
-                    // TODO: Hash the token.
-                    access_token: cryptr.encrypt(token.access_token),
-                    expiry_date: DateTime.now()
-                        .plus({seconds: parseInt(token.expiryDate)})
-                        .toISO(),
-                },
-                companyId,
-                Sources.FacebookAds,
-            );
-            return token.accessToken;
-        } else {
-            return Error("Company undefined!")
-        }
+    if(token instanceof Error){
+        return token;
+    }
+
+    if (companyId != "undefined") {
+        // Update credentials in database.
+        updateCredentials(
+            {
+                access_token: cryptr.encrypt(token.access_token),
+                expiry_date: DateTime.now()
+                    .plus({seconds: parseInt(token.expiryDate)})
+                    .toISO(),
+            },
+            companyId,
+            Sources.FacebookAds,
+        );
+        return token.accessToken;
+    } else {
+        return Error("Company undefined!")
+    }
 }
 
 export async function getFacebookData(companyId: Uuid) {
-    try {
-        // 1. Retrieve Facebook credentials stored in database.
-        const credentials = await getFacebookCredentials(companyId);
-        if(credentials instanceof Error){
-            return credentials
-        }
 
-        let accessToken = credentials.accessToken as string;
-
-        // 2. If access token is expired, refresh the token.
-        if(credentials.expiryDate < DateTime.now().toISO()){
-
-            const newAccessToken = await refreshAccessToken(credentials.accessToken as string, companyId);
-            if(newAccessToken instanceof Error){
-                return newAccessToken;
-            }
-
-            accessToken = newAccessToken as string;
-        }
-
-        // 3. Get data from the facebook ads source.
-        const data = await callFacbookAdsApi(accessToken);
-        console.log("data: ", data);
-
-    } catch (e) {
-        console.log(e);
+    // 1. Retrieve Facebook credentials stored in database.
+    const credentials = await getFacebookCredentials(companyId);
+    if(credentials instanceof Error){
+        return credentials
     }
+
+    let accessToken = credentials.accessToken as string;
+
+    // 2. If access token is expired, refresh the token.
+    if(credentials.expiryDate < DateTime.now().toISO()){
+
+        const newAccessToken = await refreshAccessToken(credentials.accessToken as string, companyId);
+        if(newAccessToken instanceof Error){
+            return newAccessToken;
+        }
+
+        accessToken = newAccessToken as string;
+    }
+
+    // 3. Get data from the facebook ads source.
+    const data = await callFacbookAdsApi(accessToken);
+    console.log("data: ", data);
+
 }
 
 async function callFacbookAdsApi(accessToken: string) {

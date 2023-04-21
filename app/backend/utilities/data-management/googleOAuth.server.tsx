@@ -17,6 +17,10 @@ type GoogleAdsCredentials = {
 const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
 
 export async function getGoogleCredentials(companyId: string): Promise<GoogleAdsCredentials | Error> {
+    /**
+     * Retrieves Google Ads credentials from the database for the given companyId.
+     */
+
     const credentialsRaw = await getCredentials(companyId, Sources.GoogleAds);
     if(credentialsRaw instanceof Error){
         return credentialsRaw;
@@ -31,7 +35,11 @@ export async function getGoogleCredentials(companyId: string): Promise<GoogleAds
     }
 }
 
-async function refreshAccessToken(oldAccessToken: string): Promise<any | Error>{
+async function refreshAccessToken(oldAccessToken: string): Promise<any | Error> {
+    /**
+     * Sends a request to the Google Ads OAuth2 API to refresh an access token.
+     */
+
     try {
         let url = `
             https://oauth2.googleapis.com/token?client_id=${process.env.GOOGLE_CLIENT_ID}&client_secret=${process.env.GOOGLE_CLIENT_SECRET}&refresh_token=${oldAccessToken}&grant_type=refresh_token;
@@ -69,7 +77,11 @@ function convertTokenToGoogleCredentialsType(credentials: Credentials): GoogleAd
 }
 
 export async function googleOAuthFlow(authorizationCode: Uuid, companyId: Uuid): Promise<void | Error> {
-    const redirectUri = "http://localhost:3000/capture-authorization-code";
+    /**
+     *  Handles the OAuth2 flow to authorize the Google Ads API for the given companyId.
+     */
+
+    const redirectUri = "http://localhost:3000/capture-authorization-code"; //TODO: Fix name, move this to env
 
     try {
         // Post api to retrieve access token by giving authorization code.
@@ -105,8 +117,10 @@ export async function googleOAuthFlow(authorizationCode: Uuid, companyId: Uuid):
     }
 }
 
-async function getAccessToken(companyId: Uuid): Promise<string | Error>{
-    // Retrieves an access token, if the token is expired, the function will refresh it automatically.
+async function getAccessToken(companyId: Uuid): Promise<string | Error> {
+    /**
+     *  Retrieves a valid access token for the Google Ads API for the given companyId, refreshing the token if necessary.
+     */
 
     // 1. Retrieve Google credentials stored in database.
     const credentials = await getGoogleCredentials(companyId);
@@ -117,6 +131,7 @@ async function getAccessToken(companyId: Uuid): Promise<string | Error>{
 
     let accessToken = credentials.accessToken as string;
 
+    // 2. Check if access token is valid.
     if(DateTime.now().toISO() > credentials.expiryDate){
         const rawResponse = await refreshAccessToken(accessToken);
 

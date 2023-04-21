@@ -1,9 +1,10 @@
 import Cryptr from "cryptr";
-import { Sources } from "do-not-commit";
-import { DateTime } from "luxon";
-import { Credentials, getCredentials, storeCredentials, updateCredentials } from "~/backend/utilities/data-management/facebookOAuth.server";
-import { getErrorFromUnknown } from "~/backend/utilities/databaseManager.server";
-import { Uuid } from "~/utilities/typeDefinitions";
+import {Sources} from "do-not-commit";
+import {DateTime} from "luxon";
+import { getCredentials, storeCredentials, updateCredentials } from "~/backend/utilities/data-management/credentials.server";
+import {Credentials} from "~/backend/utilities/data-management/facebookOAuth.server";
+import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
+import {Uuid} from "~/utilities/typeDefinitions";
 
 // TODO: Fix timezone
 
@@ -153,14 +154,11 @@ async function getAccessToken(companyId: Uuid): Promise<string | Error>{
 
 export async function getGoogleData(companyId: Uuid) {
     try {
-
         // Get token
         const accessToken = await getAccessToken(companyId);
         if(accessToken instanceof Error){
             return accessToken;
         }
-
-        console.log(accessToken);
 
         const data = await callGoogleAdsApi(accessToken);
         console.log("data: ", data);

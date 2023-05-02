@@ -1,4 +1,4 @@
-import {getPostgresDatabaseManager} from "global-common-typescript/server/postgresDatabaseManager.server";
+import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getCredentialsId} from "~/backend/utilities/data-management/credentials.server";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {getGranularityQuery} from "~/backend/utilities/utilities.server";

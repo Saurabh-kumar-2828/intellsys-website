@@ -1,9 +1,9 @@
 import Cryptr from "cryptr";
-import {Sources} from "do-not-commit";
 import {DateTime} from "luxon";
-import { Credentials, getCredentials, storeCredentials, updateCredentials } from "~/backend/utilities/data-management/credentials.server";
+import {Credentials, getCredentials, storeCredentials, updateCredentials} from "~/backend/utilities/data-management/credentials.server";
 import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
-import {Uuid} from "~/utilities/typeDefinitions";
+import {CredentialType, Uuid} from "~/utilities/typeDefinitions";
+import { Response } from "~/backend/utilities/data-management/credentials.server";
 
 const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
 export const facebookAdsScope = "ads_read, ads_management";
@@ -19,23 +19,23 @@ const facebookApiBaseUrl = "https://graph.facebook.com";
 
 export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Error {
 
-    if(dataSource == Sources.FacebookAds){
+    if(dataSource == CredentialType.facebookAds){
         return `${process.env.REDIRECT_BASE_URI!}/${companyId}/capture-authorization-code`;
     }
 
-    if(dataSource == Sources.GoogleAds){
+    if(dataSource == CredentialType.googleAds){
         return `${process.env.REDIRECT_BASE_URI!}/capture-authorization-code`;
     }
 
     return Error("Invalid data source!")
 }
 
-export async function facebookOAuthFlow(authorizationCode: string, companyId: string): Promise<void | Error> {
+export async function facebookOAuthFlow(authorizationCode: string, companyId: string): Promise<string | Error> {
     /**
      * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
      */
 
-    const redirectUri = getRedirectUri(companyId, Sources.FacebookAds);
+    const redirectUri = getRedirectUri(companyId, CredentialType.facebookAds);
     if(redirectUri instanceof Error){
         return redirectUri;
     }
@@ -62,7 +62,7 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: st
 
         if (companyId != undefined) {
             // Store credentials in database.
-            storeCredentials(
+            const response1 = await storeCredentials(
                 {
                     access_token: cryptr.encrypt(token.accessToken),
                     expiry_date: DateTime.now()
@@ -70,11 +70,18 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: st
                         .toISO(),
                 },
                 companyId,
-                Sources.FacebookAds,
+                CredentialType.facebookAds,
             );
+
+            if(response1 instanceof Error){
+                return response1;
+            }
+
+            return Response.Success;
         }
     } catch (e) {
-        console.log(e);
+        const error = getErrorFromUnknown(e);
+        return error;
     }
 }
 
@@ -97,7 +104,7 @@ export async function getFacebookCredentials(companyId: string): Promise<Credent
      * Retrieves the Facebook Ads credentials for a given company ID.
      */
 
-    const credentialsRaw = await getCredentials(companyId, Sources.FacebookAds);
+    const credentialsRaw = await getCredentials(companyId, CredentialType.facebookAds);
     if(credentialsRaw instanceof Error){
         return credentialsRaw;
     } else {
@@ -143,7 +150,7 @@ export async function refreshAccessToken(expiredAccessToken: Uuid, companyId: Uu
                     .toISO(),
             },
             companyId,
-            Sources.FacebookAds,
+            CredentialType.facebookAds,
         );
         return token.accessToken;
     } else {

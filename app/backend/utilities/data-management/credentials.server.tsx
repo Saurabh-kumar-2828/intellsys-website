@@ -1,19 +1,23 @@
 import Cryptr from "cryptr";
-import {Companies} from "do-not-commit";
+import {Companies} from "~/utilities/typeDefinitions";
 import {DateTime} from "luxon";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {Uuid} from "~/utilities/typeDefinitions";
 import {getSingletonValueOrNull} from "~/utilities/utilities";
 import {v4 as uuidv4} from "uuid";
+import {addCredentialsToKms, getCredentialsFromKms, updateCredentialsInKms} from "~/backend/utilities/kms.server";
 
 export interface Credentials {
     [x: string]: string | number | boolean;
 }
 
+export enum Response {
+    Success = "success",
+}
 const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
 
-export async function writeInCredentialsStoreTable(companyId: Uuid, credentialType: Uuid, credentialId: Uuid){
-    await execute(
+export async function writeInCredentialsStoreTable(companyId: Uuid, credentialType: Uuid, credentialId: Uuid): Promise<string | Error> {
+    const response = await execute(
         Companies.Intellsys,
         `
           INSERT INTO
@@ -30,32 +34,25 @@ export async function writeInCredentialsStoreTable(companyId: Uuid, credentialTy
       `,
         [companyId, credentialType, credentialId],
     );
+
+    if (response instanceof Error) {
+        return response;
+    }
+
+    return Response.Success;
 }
 
-export async function writeInCredentialsTable(credentials: Credentials, credentialId: Uuid){
-    await execute(
-        Companies.Intellsys,
-        `
-            INSERT INTO
-              credentials (
-                credential_id,
-                created_at,
-                updated_at,
-                credentials
-              )
-            VALUES (
-                $1,
-                $2,
-                $3,
-                $4
-            )
-        `,
-        [credentialId, DateTime.now().toISO(), DateTime.now().toISO(), credentials],
-    );
+export async function writeInCredentialsTable(credentials: Credentials, credentialId: Uuid): Promise<string | Error> {
+    const response = addCredentialsToKms(credentialId, credentials);
+    if (response instanceof Error) {
+        return response;
+    }
+    return response;
 }
 
-async function getCredentialsId(companyId: Uuid, credentialType: Uuid): Promise<Uuid | Error> {
+export async function getCredentialsId(companyId: Uuid, credentialType: Uuid): Promise<Uuid | Error> {
     // Returns the credential ID associated with a given company Id and credential type.
+
     const query1 = `
             SELECT
                 credential_id
@@ -76,72 +73,47 @@ async function getCredentialsId(companyId: Uuid, credentialType: Uuid): Promise<
 
     if (credentialIdObject.credential_id == null) {
         return Error("No credentials found!");
-    } else{
+    } else {
         return credentialIdObject.credential_id;
     }
 }
 
 async function getCredentialsById(credentialId: Uuid): Promise<Credentials | Error> {
     // Returns the credentials associated with a given credential ID.
-    const query2 = `
-            SELECT
-                credentials
-            FROM
-                credentials
-            WHERE
-                credential_id = $1
-        `;
 
-    const credentialsRaw = await execute(Companies.Intellsys, query2, [credentialId]);
+    const credentialsRaw = await getCredentialsFromKms(credentialId);
 
     if (credentialsRaw instanceof Error) {
         return credentialsRaw;
     }
 
-    const credentialsObject = getSingletonValueOrNull(credentialsRaw.rows);
-
-    if (credentialsObject.credentials == null) {
-        throw Error("No credentials found!");
-    }
-
+    const credential = JSON.parse(credentialsRaw);
     const credentialsResponse = {
-        access_token: cryptr.decrypt(credentialsObject.credentials.access_token),
-        expiry_date: credentialsObject.credentials.expiry_date
+        access_token: cryptr.decrypt(credential.access_token),
+        expiry_date: credential.expiry_date,
     };
 
     return credentialsResponse as Credentials;
 }
 
 export async function getCredentials(companyId: Uuid, credentialType: Uuid): Promise<Credentials | Error> {
+
     // 1. Get credential id associated with given company and data source.
     const credentialId = await getCredentialsId(companyId, credentialType);
-    if(credentialId instanceof Error){
+    if (credentialId instanceof Error) {
         return credentialId;
     }
 
     // 2. Get credentials associated with given credential id.
     const credentials = await getCredentialsById(credentialId);
     return credentials;
-
 }
 
-async function updateCredentialsById(credentialsId: Uuid, credentials: Credentials){
-    const response = await execute(
-        Companies.Intellsys,
-        `
-          UPDATE
-            credentials
-          SET
-            credentials=$1,
-            updated_at=$2
-          WHERE
-            credential_id=$3
-        `,
-        [credentials, DateTime.now(), credentialsId]
-    );
+async function updateCredentialsById(credentialsId: Uuid, credentials: Credentials) {
+    updateCredentialsInKms(credentialsId, credentials);
 }
 
-export async function storeCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid) {
+export async function storeCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid): Promise<string | Error> {
     /**
      * Store the credentials of a company's data source.
      * @param  {Credentials} credentials credentials of a company's data source.
@@ -154,11 +126,19 @@ export async function storeCredentials(credentials: Credentials, companyId: Uuid
         const credentialId = uuidv4();
 
         // 1. Store credentials in credentials table.
-        await writeInCredentialsTable(credentials, credentialId);
+        const response = await writeInCredentialsTable(credentials, credentialId);
+        if (response instanceof Error) {
+            return response;
+        }
 
         // 2. Writes a mapping of company ID, credential type, and credential ID to the `credentials_store` table.
-        await writeInCredentialsStoreTable(companyId, credentialType, credentialId);
+        const response1 = await writeInCredentialsStoreTable(companyId, credentialType, credentialId);
 
+        if (response1 instanceof Error) {
+            return response1;
+        }
+
+        return Response.Success;
     } catch (e) {
         console.log(e);
         throw e;
@@ -167,8 +147,8 @@ export async function storeCredentials(credentials: Credentials, companyId: Uuid
 
 export async function updateCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid) {
     const credentialsId = await getCredentialsId(companyId, credentialType);
-    if(credentialsId instanceof Error){
-        return credentialsId
+    if (credentialsId instanceof Error) {
+        return credentialsId;
     }
 
     await updateCredentialsById(credentialsId, credentials);

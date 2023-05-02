@@ -1,10 +1,9 @@
 import Cryptr from "cryptr";
-import {Sources} from "do-not-commit";
 import {DateTime} from "luxon";
 import { Credentials, getCredentials, storeCredentials, updateCredentials } from "~/backend/utilities/data-management/credentials.server";
 import {getRedirectUri} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
-import {Uuid} from "~/utilities/typeDefinitions";
+import {CredentialType, Uuid} from "~/utilities/typeDefinitions";
 
 // TODO: Fix timezone in database
 
@@ -23,7 +22,7 @@ export async function getGoogleCredentials(companyId: string): Promise<GoogleAds
      * Retrieves Google Ads credentials from the database for the given companyId.
      */
 
-    const credentialsRaw = await getCredentials(companyId, Sources.GoogleAds);
+    const credentialsRaw = await getCredentials(companyId, CredentialType.googleAds);
     if(credentialsRaw instanceof Error){
         return credentialsRaw;
     } else {
@@ -103,7 +102,7 @@ export async function googleOAuthFlow(authorizationCode: Uuid, companyId: Uuid):
 
         if (companyId != "undefined") {
             // Store credentials in database.
-            storeCredentials(
+            await storeCredentials(
                 {
                     access_token: cryptr.encrypt(token.accessToken),
                     expiry_date: DateTime.now()

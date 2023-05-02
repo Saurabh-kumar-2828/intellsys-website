@@ -9,7 +9,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         throw new Response(null, {status: 404});
     }
 
-    // getFacebookData(companyId);
-    getGoogleData(companyId);
+    getFacebookData(companyId);
+    // getGoogleData(companyId);
     return null;
 }

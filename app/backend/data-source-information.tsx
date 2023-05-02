@@ -1,6 +1,6 @@
 export {};
 
-// import {Companies} from "do-not-commit";
+// import {Companies} from "~/utilities/typeDefinitions";
 // import {execute} from "~/backend/utilities/databaseManager.server";
 
 // // TODO: Fix nomenclature

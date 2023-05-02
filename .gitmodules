@@ -1,0 +1,3 @@
+[submodule "app/global-common-typescript"]
+	path = app/global-common-typescript
+	url = ../global-common-typescript.git

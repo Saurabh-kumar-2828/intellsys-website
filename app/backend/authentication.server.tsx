@@ -1,4 +1,4 @@
-import { Companies } from "do-not-commit";
+import { Companies } from "~/utilities/typeDefinitions";
 import jwt, {Jwt} from "jsonwebtoken";
 import {AccessToken} from "~/backend/utilities/cookieSessionsHelper.server";
 import {execute} from "~/backend/utilities/databaseManager.server";

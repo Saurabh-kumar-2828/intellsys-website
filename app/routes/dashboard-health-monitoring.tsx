@@ -1,7 +1,7 @@
 import type {LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
-import { Companies } from "do-not-commit";
+import { Companies } from "~/utilities/typeDefinitions";
 import {CampaignLibraryRow, CapturedUtmCampaignToCampaignNameRow, getMissingCampaigns, getMissingProducts, getMissingSources, ProductLibraryRow} from "~/backend/dashboard-health-monitoring";
 import {GenericCard, SectionHeader} from "~/components/scratchpad";
 

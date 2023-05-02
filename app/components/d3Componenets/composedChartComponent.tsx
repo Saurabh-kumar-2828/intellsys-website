@@ -1,7 +1,7 @@
 import {axisBottom, axisLeft, axisRight} from "d3-axis";
 import {NumberValue, scaleBand, scaleLinear, ScaleLinear} from "d3-scale";
 import {select} from "d3-selection";
-import React, {useRef} from "react";
+import React, {useEffect, useRef} from "react";
 import BarGraphComponent from "./barGraphComponent";
 import {LineGraphComponent} from "./lineGraphComponent";
 import {legend} from "./legend";
@@ -34,6 +34,7 @@ export function ComposedChart(props: {xValues: Array<string>; className: string;
     if (props.children == null) {
         return null;
     }
+
     // Common x-scale
     const xScale = scaleBand()
         .domain(props.xValues.map((d: string) => d))
@@ -41,82 +42,87 @@ export function ComposedChart(props: {xValues: Array<string>; className: string;
         .padding(padding)
         .round(true);
 
-    // Plot graph
-    const node = select(ref.current);
 
-    node.attr("width", width).attr("height", height);
-    node.selectAll("*").remove();
+    useEffect(() => {
 
-    // X-axis
-    node.append("g")
-        .attr("transform", `translate(${plotMargins.left},${height - plotMargins.bottom})`)
-        .attr("class", "xAxis")
-        .call(axisBottom(xScale));
+        // Plot graph
+        const node = select(ref.current);
 
-    node.selectAll(".tick")
-        .selectAll("text")
-        .style("text-anchor", "end")
-        .style("font-weight", 500)
-        .style("font-size", 12)
-        .style("color", "#CCC0C0")
-        .style("font-family", "Poppins")
-        .style("font-style", "normal")
-        .attr("dx", "-.18em")
-        .attr("transform", "rotate(-35)");
+        node.attr("width", width).attr("height", height);
+        node.selectAll("*").remove();
 
-    // Y-axis
-    const yAxisScales = getAllYAxisScales(props.children, innerHeight);
-
-    if (yAxisScales.length <= 2) {
-        // Left-axis
+        // X-axis
         node.append("g")
-            .attr("transform", `translate(${plotMargins.left}, ${plotMargins.top})`)
-            .attr("class", "yAxis")
-            .style("font-weight", 400)
+            .attr("transform", `translate(${plotMargins.left},${height - plotMargins.bottom})`)
+            .attr("class", "xAxis")
+            .call(axisBottom(xScale));
+
+        node.selectAll(".tick")
+            .selectAll("text")
+            .style("text-anchor", "end")
+            .style("font-weight", 500)
             .style("font-size", 12)
             .style("color", "#CCC0C0")
             .style("font-family", "Poppins")
             .style("font-style", "normal")
-            .call(axisLeft(yAxisScales[0].yScale));
+            .attr("dx", "-.18em")
+            .attr("transform", "rotate(-35)");
 
-        // Legend
-        node.call(legend, {data: yAxisScales[0].legends, x: plotMargins.left / 2, y: legendBoxTopMargin});
+        // Y-axis
+        const yAxisScales = getAllYAxisScales(props.children, innerHeight);
 
-        // Right-axis
-        if (yAxisScales.length == 2) {
+        if (yAxisScales.length <= 2) {
+            // Left-axis
             node.append("g")
-                .attr("transform", `translate(${plotMargins.left + innerWidth}, ${plotMargins.top})`)
+                .attr("transform", `translate(${plotMargins.left}, ${plotMargins.top})`)
                 .attr("class", "yAxis")
-                .call(axisRight(yAxisScales[1].yScale));
+                .style("font-weight", 400)
+                .style("font-size", 12)
+                .style("color", "#CCC0C0")
+                .style("font-family", "Poppins")
+                .style("font-style", "normal")
+                .call(axisLeft(yAxisScales[0].yScale));
 
             // Legend
-            node.call(legend, {data: yAxisScales[1].legends, x: innerWidth - plotMargins.left, y: legendBoxTopMargin});
+            node.call(legend, {data: yAxisScales[0].legends, x: plotMargins.left / 2, y: legendBoxTopMargin});
+
+            // Right-axis
+            if (yAxisScales.length == 2) {
+                node.append("g")
+                    .attr("transform", `translate(${plotMargins.left + innerWidth}, ${plotMargins.top})`)
+                    .attr("class", "yAxis")
+                    .call(axisRight(yAxisScales[1].yScale));
+
+                // Legend
+                node.call(legend, {data: yAxisScales[1].legends, x: innerWidth - plotMargins.left, y: legendBoxTopMargin});
+            }
+
+            node.selectAll(".tick").selectAll("text").style("font-weight", 400).style("color", "#CCC0C0").style("font-size", 12).style("font-family", "Poppins").style("font-style", "normal");
+        } else {
+            var legendsFromAllScales: Array<legendObject> = [];
+            yAxisScales.map((value: scaleObject) => {
+                legendsFromAllScales = legendsFromAllScales.concat(value.legends);
+            });
+            node.call(legend, {data: legendsFromAllScales, x: plotMargins.left / 2, y: legendBoxTopMargin});
         }
 
-        node.selectAll(".tick").selectAll("text").style("font-weight", 400).style("color", "#CCC0C0").style("font-size", 12).style("font-family", "Poppins").style("font-style", "normal");
-    } else {
-        var legendsFromAllScales: Array<legendObject> = [];
-        yAxisScales.map((value: scaleObject) => {
-            legendsFromAllScales = legendsFromAllScales.concat(value.legends);
-        });
-        node.call(legend, {data: legendsFromAllScales, x: plotMargins.left / 2, y: legendBoxTopMargin});
-    }
+        // Grid lines
+        node.append("g")
+            .attr("class", "grid-lines")
+            .attr("transform", `translate(${plotMargins.left}, ${plotMargins.top})`)
+            .selectAll("line")
+            .data(yAxisScales[0].yScale.ticks())
+            .join("line")
+            .attr("x1", xScale.bandwidth())
+            .attr("x2", innerWidth)
+            .attr("y1", (d) => yAxisScales[0].yScale(d))
+            .attr("y2", (d) => yAxisScales[0].yScale(d))
+            .style("stroke", "#CCC0C0")
+            .style("opacity", 0.3)
+            .style("stroke-dasharray", 10)
+            .style("fill", "none");
 
-    // Grid lines
-    node.append("g")
-        .attr("class", "grid-lines")
-        .attr("transform", `translate(${plotMargins.left}, ${plotMargins.top})`)
-        .selectAll("line")
-        .data(yAxisScales[0].yScale.ticks())
-        .join("line")
-        .attr("x1", xScale.bandwidth())
-        .attr("x2", innerWidth)
-        .attr("y1", (d) => yAxisScales[0].yScale(d))
-        .attr("y2", (d) => yAxisScales[0].yScale(d))
-        .style("stroke", "#CCC0C0")
-        .style("opacity", 0.3)
-        .style("stroke-dasharray", 10)
-        .style("fill", "none");
+    }, [ref, props.xValues, props.className, props.children, props.title, props.height, props.width]);
 
     // Title of graph
     // node.append("text")
@@ -129,25 +135,25 @@ export function ComposedChart(props: {xValues: Array<string>; className: string;
 
     return (
         <svg className={props.className ? props.className : ""} ref={ref}>
-            {React.Children.map(props.children, (child) => {
+            {/* {React.Children.map(props.children, (child) => {
                 if (child == null) {
                     return null;
                 }
                 const childClass = child.type.displayName;
-                if (childClass == "BarGraphComponent") {
-                    return (
-                        <BarGraphComponent
-                            data={child.props.data}
-                            className={props.className ? props.className : ""}
-                            container={ref.current}
-                            xScale={xScale}
-                            scale={child.props.scale}
-                            width={width}
-                            height={height}
-                            padding={padding}
-                        />
-                    );
-                }
+                // if (childClass == "BarGraphComponent") {
+                //     return (
+                //         <BarGraphComponent
+                //             data={child.props.data}
+                //             className={props.className ? props.className : ""}
+                //             container={ref.current}
+                //             xScale={xScale}
+                //             scale={child.props.scale}
+                //             width={width}
+                //             height={height}
+                //             padding={padding}
+                //         />
+                //     );
+                // }
                 if (childClass == "LineGraphComponent") {
                     return (
                         <LineGraphComponent
@@ -162,7 +168,7 @@ export function ComposedChart(props: {xValues: Array<string>; className: string;
                         />
                     );
                 }
-            })}
+            })} */}
         </svg>
     );
 }

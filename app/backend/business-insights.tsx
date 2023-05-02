@@ -1,6 +1,8 @@
+import {getPostgresDatabaseManager} from "global-common-typescript/server/postgresDatabaseManager.server";
+import {getCredentialsId} from "~/backend/utilities/data-management/credentials.server";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {getGranularityQuery} from "~/backend/utilities/utilities.server";
-import {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
+import {CredentialType, Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {dateToIso8601Date} from "~/utilities/utilities";
 
 export enum TimeGranularity {
@@ -58,7 +60,6 @@ export type ShopifyDataAggregatedRow = {
 };
 
 export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<ShopifyData> {
-
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "date")} AS date,
@@ -143,7 +144,7 @@ export type FreshsalesDataAggregatedRow = {
 };
 
 export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<FreshsalesData> {
-    console.log(granularity);
+    console.log(companyId);
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "lead_created_at")} AS date,
@@ -180,7 +181,6 @@ export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Da
         metaQuery: query,
         rows: result.rows.map((row) => rowToFreshsalesDataAggregatedRow(row)),
     };
-
 }
 
 function rowToFreshsalesDataAggregatedRow(row: unknown): FreshsalesDataAggregatedRow {
@@ -246,7 +246,6 @@ function rowToAdsDataAggregatedRow(row: unknown): AdsDataAggregatedRow {
 }
 
 export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
-
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "date")} AS date,
@@ -265,9 +264,81 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
             date
     `;
 
-
-
     const result = await execute(companyId, query);
+
+    return {
+        metaQuery: query,
+        rows: result.rows.map((row) => rowToAdsDataAggregatedRow(row)),
+    };
+}
+
+export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData | Error> {
+    const credentialId = await getCredentialsId(companyId, CredentialType.databaseNew);
+    if (credentialId instanceof Error) {
+        return credentialId;
+    }
+
+    const postgresDatabaseManager = await getPostgresDatabaseManager(credentialId);
+    if (postgresDatabaseManager instanceof Error) {
+        return postgresDatabaseManager;
+    }
+
+    const query = `
+            SELECT
+                DATE_TRUNC('DAY', "__hevo_report_date"::timestamp) AS date,
+                name AS campaign_name,
+                cost_micros/1000000 AS spend,
+                impressions AS impressions,
+                clicks AS clicks
+            FROM
+                google_ads_campaign
+            WHERE
+                DATE(__hevo_report_date) >= '${minDate}'
+                AND DATE(__hevo_report_date) <= '${maxDate}'
+                AND (cost_micros >= 0 OR impressions >= 0 OR clicks >= 0)
+            ORDER BY
+                date
+        `;
+
+    const result = await postgresDatabaseManager.execute(query);
+    if (result instanceof Error) {
+        return result;
+    }
+
+    return {
+        metaQuery: query,
+        rows: result.rows.map((row) => rowToAdsDataAggregatedRow(row)),
+    };
+}
+
+export async function getFacebookAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData | Error> {
+    const credentialId = await getCredentialsId(companyId, CredentialType.databaseNew);
+    if (credentialId instanceof Error) {
+        return credentialId;
+    }
+
+    const postgresDatabaseManager = await getPostgresDatabaseManager(credentialId);
+    if (postgresDatabaseManager instanceof Error) {
+        return postgresDatabaseManager;
+    }
+
+    const query = `
+        SELECT
+            DATE_TRUNC('DAY', "date_start"::timestamp) AS date,
+            campaign_name,
+            spend AS spend,
+            impressions AS impressions,
+            inline_link_clicks AS clicks
+        FROM
+            facebook_ads_ad_insights
+        WHERE
+            DATE(date_start) >= '${minDate}'
+            AND DATE(date_start) <= '${maxDate}'
+            AND (spend > 0 OR impressions > 0 OR inline_link_clicks > 0)
+        ORDER BY
+            date
+    `;
+    const result = await postgresDatabaseManager.execute(query);
 
     return {
         metaQuery: query,

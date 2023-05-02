@@ -72,3 +72,25 @@ export function filterToHumanReadableString(filterType: QueryFilterType) {
         throw new Error(`Unexpected value for QueryFilterType ${filterType}`);
     }
 }
+
+export enum CredentialType {
+    facebookAds = "c32d8b45-92fe-44f6-8b61-42c2107dfe87",
+    googleAds = "76fc1962-628f-4e53-898b-9c85c362bf11",
+    databaseNew = "adac3858-fab9-4d36-8bb4-1e3a09247f87",
+    databaseOld = "ac200d5a-cabf-4484-8d84-f96e05a7bef9"
+}
+
+export enum Companies {
+    Intellsys = "",
+    Livpure = "833e5ca8-249d-4486-97e8-95cc576f0484",
+    Livguard = "84589528-ef5e-46b2-90bd-96b6e2d206ce",
+    Lectrix = "ba3033ba-32a8-49f7-b2bf-16c3be6d331a",
+    IntellsysRaw = "12176c01-616e-4308-b635-2fff6a481f90" // For product and campaign library
+};
+
+export const companyDatabaseCredentialsMap: {[key: string]: string} = {
+    [Companies.Intellsys]: "24292254-f51b-40e5-b450-e70949876332",
+    [Companies.Livpure]:  "f8d430d0-6761-43c0-bf73-c606e37629e1",
+    [Companies.Lectrix]: "1dbe5ecb-6ade-4a38-a46b-502f42d65d73",
+    [Companies.IntellsysRaw]: "4447787a-f311-43e7-b21c-665ce8b9c52e"
+};

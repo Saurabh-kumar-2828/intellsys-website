@@ -1,8 +1,6 @@
 import {LoaderFunction, redirect} from "@remix-run/node";
-import { baseUrl, facebookOAuthFlow } from "~/backend/utilities/data-management/facebookOAuth.server";
 import { googleOAuthFlow } from "~/backend/utilities/data-management/googleOAuth.server";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
-
 
 export const loader: LoaderFunction = async ({request}) => {
 
@@ -20,5 +18,5 @@ export const loader: LoaderFunction = async ({request}) => {
         throw Error("Authorization failed!");
     }
 
-    return redirect(`${baseUrl}/${companyId}/data-sources`);
+    return redirect(`${process.env.REDIRECT_BASE_URI}/${companyId}/data-sources`);
 }

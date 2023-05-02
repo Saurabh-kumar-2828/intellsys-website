@@ -1,5 +1,5 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
-import {Uuid} from "~/utilities/typeDefinitions";
+import {Companies, Uuid} from "~/utilities/typeDefinitions";
 
 export type ProductInformation = {
     productName: string;
@@ -10,7 +10,7 @@ export type ProductInformation = {
 export async function getProductLibrary(companyId: Uuid): Promise<Array<ProductInformation>> {
     // TODO: Authentication
     const result = await execute(
-        companyId,
+        Companies.IntellsysRaw,
         `
             SELECT
                 product_name,
@@ -44,7 +44,7 @@ export type CampaignInformation = {
 export async function getCampaignLibrary(companyId: Uuid) {
     // TODO: Authentication
     const result = await execute(
-        companyId,
+        Companies.IntellsysRaw,
         `
             SELECT
                 campaign_name,

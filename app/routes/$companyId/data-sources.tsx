@@ -2,7 +2,7 @@ import {ActionFunction, redirect} from "@remix-run/node";
 import {Form} from "@remix-run/react";
 import {facebookAdsScope, getRedirectUri} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.server";
-import { CredentialType } from "~/utilities/typeDefinitions";
+import {CredentialType} from "~/utilities/typeDefinitions";
 
 export let action: ActionFunction = async ({request, params}) => {
     const body = await request.formData();
@@ -35,13 +35,21 @@ export default function () {
         <div className="tw-grid tw-h-32 tw-grid-cols-3 tw-gap-1">
             <div className="tw-col-start-1">
                 <Form method="post">
-                    <input type="hidden" name="action" value="facebook" />
+                    <input
+                        type="hidden"
+                        name="action"
+                        value="facebook"
+                    />
                     <button className="tw-lp-button tw-bg-blue-500">Authorize Facebook Account</button>
                 </Form>
             </div>
             <div className="tw-col-start-2">
                 <Form method="post">
-                    <input type="hidden" name="action" value="google" />
+                    <input
+                        type="hidden"
+                        name="action"
+                        value="google"
+                    />
                     <button className="tw-lp-button tw-bg-blue-700">Authorize Google Account</button>
                 </Form>
             </div>

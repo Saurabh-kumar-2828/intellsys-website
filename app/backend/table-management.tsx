@@ -1,4 +1,4 @@
-import { execute } from "~/backend/utilities/databaseManager.server";
+import {execute} from "~/backend/utilities/databaseManager.server";
 import format from "pg-format";
 
 export async function doesTableExist(tableName: string): Promise<boolean> {
@@ -13,7 +13,7 @@ export async function doesTableExist(tableName: string): Promise<boolean> {
                 WHERE
                     relname = '${tableName}' AND
                     relkind IN ('r', 'v', 'm', 'p')
-            `
+            `,
         );
 
         await execute(null, query);
@@ -39,7 +39,7 @@ export async function createFreshsalesLeadsRaw(): Promise<void> {
         const query = format(
             `
 
-            `
+            `,
         );
 
         await execute(null, query);

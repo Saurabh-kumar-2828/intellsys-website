@@ -1,10 +1,10 @@
 import {useState} from "react";
-import { CaretLeftFill, CaretRightFill } from "react-bootstrap-icons";
+import {CaretLeftFill, CaretRightFill} from "react-bootstrap-icons";
 import {Swiper} from "swiper/react";
 import {SwiperSlide} from "swiper/react";
-import { concatenateNonNullStringsWithSpaces } from "~/utilities/utilities";
+import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
 
-export function SwiperWithCustomArrows(props: {swiperAttributes, buttonClassName, items, itemBuilder}) {
+export function SwiperWithCustomArrows(props: {swiperAttributes; buttonClassName; items; itemBuilder}) {
     const isLooping = props.swiperAttributes.loop;
 
     const [swiperInstance, setSwiperInstance] = useState(null);
@@ -17,7 +17,7 @@ export function SwiperWithCustomArrows(props: {swiperAttributes, buttonClassName
                 className={concatenateNonNullStringsWithSpaces(
                     "tw-flex-none tw-w-8 tw-h-8 tw-bg-[#272727] tw-text-white enabled:tw-lectrix-bg-primary-on-hover tw-rounded-full tw-flex tw-items-center tw-justify-center",
                     !prevButtonEnabled && "tw-text-neutral-700",
-                    props.buttonClassName ?? null
+                    props.buttonClassName ?? null,
                 )}
                 onClick={(e) => swiperInstance.slidePrev()}
                 disabled={!prevButtonEnabled}
@@ -57,7 +57,7 @@ export function SwiperWithCustomArrows(props: {swiperAttributes, buttonClassName
                 className={concatenateNonNullStringsWithSpaces(
                     "tw-flex-none tw-w-8 tw-h-8 tw-bg-[#272727] tw-text-white enabled:tw-lectrix-bg-primary-on-hover tw-rounded-full tw-flex tw-items-center tw-justify-center",
                     !nextButtonEnabled && "tw-text-neutral-700",
-                    props.buttonClassName ?? null
+                    props.buttonClassName ?? null,
                 )}
                 onClick={(e) => swiperInstance.slideNext()}
                 disabled={!nextButtonEnabled}

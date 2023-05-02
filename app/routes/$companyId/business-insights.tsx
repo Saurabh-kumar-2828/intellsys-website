@@ -5,13 +5,24 @@ import {useLoaderData} from "@remix-run/react";
 import "ag-grid-enterprise";
 import {AgGridReact} from "ag-grid-react";
 import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
-import { Companies } from "~/utilities/typeDefinitions";
+import {Companies} from "~/utilities/typeDefinitions";
 import {DateTime} from "luxon";
 import {useEffect, useState} from "react";
 import {Bar, Line} from "react-chartjs-2";
-import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, getTimeGranularityFromUnknown, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
+import {
+    AdsData,
+    AdsDataAggregatedRow,
+    FreshsalesData,
+    getAdsData,
+    getFreshsalesData,
+    getShopifyData,
+    getTimeGranularityFromUnknown,
+    ShopifyData,
+    ShopifyDataAggregatedRow,
+    TimeGranularity,
+} from "~/backend/business-insights";
 import {getCampaignLibrary, getProductLibrary, ProductInformation, CampaignInformation} from "~/backend/common";
-import { getAccessTokenFromCookies } from "~/backend/utilities/cookieSessionsHelper.server";
+import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {aggregateByDate, createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead, sumReducer} from "~/utilities/utilities";
 import {progressCellRenderer} from "~/components/progressCellRenderer";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
@@ -39,7 +50,7 @@ import {
     roundOffToTwoDigits,
 } from "~/utilities/utilities";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
-import { getCredentialsFromKms } from "~/backend/utilities/kms.server";
+import {getCredentialsFromKms} from "~/backend/utilities/kms.server";
 
 export const meta: MetaFunction = () => {
     return {
@@ -73,7 +84,6 @@ type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({request, params}) => {
-
     const accessToken = await getAccessTokenFromCookies(request);
 
     if (accessToken == null) {
@@ -146,7 +156,7 @@ export default function () {
         allCampaignInformation
             .filter((campaignInformation) => selectedCategories.length == 0 || selectedCategories.includes(campaignInformation.category))
             .filter((campaignInformation) => selectedPlatforms.length == 0 || selectedPlatforms.includes(campaignInformation.platform))
-            .map((campaignInformation) => campaignInformation.campaignName)
+            .map((campaignInformation) => campaignInformation.campaignName),
     );
     const granularities = [TimeGranularity.daily, TimeGranularity.monthly, TimeGranularity.yearly];
 
@@ -339,17 +349,17 @@ function LeadsSection({
         countDayWise: aggregateByDate(
             filterFreshsalesData.filter((row) => doesLeadCaptureSourceCorrespondToPerformanceLead(row.leadCaptureSource)),
             "count",
-            dates
+            dates,
         ),
         amountSpentDayWise: aggregateByDate(
             filterAdsData.filter((row) => doesAdsCampaignNameCorrespondToPerformanceLead(row.campaignName)),
             "amountSpent",
-            dates
+            dates,
         ),
         netSalesDayWise: aggregateByDate(
             filterShopifyData.filter((row) => doesLeadCaptureSourceCorrespondToPerformanceLead(row.leadCaptureSource)),
             "netSales",
-            dates
+            dates,
         ),
     };
 
@@ -368,7 +378,7 @@ function LeadsSection({
 
     const performanceLeadsSpl = {
         metaInformation: `Leads Sales / Leads Count | Performance = ${numberToHumanFriendlyString(performanceLeads.netSalesDayWise.reduce(sumReducer))} / ${numberToHumanFriendlyString(
-            performanceLeadsCount.count
+            performanceLeadsCount.count,
         )}`,
         spl: numberToHumanFriendlyString(performanceLeadsCount.count == 0 ? 0 : performanceLeads.netSalesDayWise.reduce(sumReducer) / performanceLeadsCount.count),
         dayWiseSpl: performanceLeads.netSalesDayWise.map((value, index) => (performanceLeads.countDayWise[index] == 0 ? 0 : value / performanceLeads.countDayWise[index])),
@@ -376,9 +386,11 @@ function LeadsSection({
 
     const performanceLeadsAcos = {
         metaInformation: `Amount Spent / Net Sales | Performance = ${numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer))} / ${numberToHumanFriendlyString(
-            performanceLeads.netSalesDayWise.reduce(sumReducer)
+            performanceLeads.netSalesDayWise.reduce(sumReducer),
         )}`,
-        acos: numberToHumanFriendlyString(performanceLeads.netSalesDayWise.reduce(sumReducer) == 0 ? 0 :performanceLeads.amountSpentDayWise.reduce(sumReducer) / performanceLeads.netSalesDayWise.reduce(sumReducer)),
+        acos: numberToHumanFriendlyString(
+            performanceLeads.netSalesDayWise.reduce(sumReducer) == 0 ? 0 : performanceLeads.amountSpentDayWise.reduce(sumReducer) / performanceLeads.netSalesDayWise.reduce(sumReducer),
+        ),
         dayWiseAcos: performanceLeads.amountSpentDayWise.map((value, index) => (performanceLeads.netSalesDayWise[index] == 0 ? 0 : value / performanceLeads.netSalesDayWise[index])),
     };
 
@@ -386,17 +398,17 @@ function LeadsSection({
         countDayWise: aggregateByDate(
             filterFreshsalesData.filter((row) => !doesLeadCaptureSourceCorrespondToPerformanceLead(row.leadCaptureSource)),
             "count",
-            dates
+            dates,
         ),
         amountSpentDayWise: aggregateByDate(
             filterAdsData.filter((row) => !doesAdsCampaignNameCorrespondToPerformanceLead(row.campaignName)),
             "amountSpent",
-            dates
+            dates,
         ),
         netSalesDayWise: aggregateByDate(
             filterShopifyData.filter((row) => !doesLeadCaptureSourceCorrespondToPerformanceLead(row.leadCaptureSource)),
             "netSales",
-            dates
+            dates,
         ),
     };
 
@@ -407,7 +419,7 @@ function LeadsSection({
 
     const facebookLeadsCpl = {
         metaInformation: `Amount Spent / Leads Count | Facebook = ${numberToHumanFriendlyString(facebookLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
-            facebookLeadsCount.count
+            facebookLeadsCount.count,
         )}`,
         metaQuery: adsData.metaQuery,
         cpl: numberToHumanFriendlyString(facebookLeadsCount.count == 0 ? 0 : facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count),
@@ -416,7 +428,7 @@ function LeadsSection({
 
     const facebookLeadsSpl = {
         metaInformation: `Leads Sales / Leads Count | Facebook = ${numberToHumanFriendlyString(facebookLeads.netSalesDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
-            facebookLeadsCount.count
+            facebookLeadsCount.count,
         )}`,
         spl: numberToHumanFriendlyString(facebookLeadsCount.count == 0 ? 0 : facebookLeads.netSalesDayWise.reduce(sumReducer, 0) / facebookLeadsCount.count),
         dayWiseSpl: facebookLeads.netSalesDayWise.map((value, index) => (facebookLeads.countDayWise[index] == 0 ? 0 : value / facebookLeads.countDayWise[index])),
@@ -424,9 +436,11 @@ function LeadsSection({
 
     const facebookLeadsAcos = {
         metaInformation: `Amount Spent / Net Sales | Facebook = ${numberToHumanFriendlyString(facebookLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
-            facebookLeads.netSalesDayWise.reduce(sumReducer, 0)
+            facebookLeads.netSalesDayWise.reduce(sumReducer, 0),
         )}`,
-        acos:  numberToHumanFriendlyString(facebookLeads.netSalesDayWise.reduce(sumReducer, 0) == 0 ? 0 : facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeads.netSalesDayWise.reduce(sumReducer, 0)),
+        acos: numberToHumanFriendlyString(
+            facebookLeads.netSalesDayWise.reduce(sumReducer, 0) == 0 ? 0 : facebookLeads.amountSpentDayWise.reduce(sumReducer, 0) / facebookLeads.netSalesDayWise.reduce(sumReducer, 0),
+        ),
         dayWiseAcos: facebookLeads.amountSpentDayWise.map((value, index) => (facebookLeads.netSalesDayWise[index] == 0 ? 0 : value / facebookLeads.netSalesDayWise[index])),
     };
 
@@ -593,7 +607,7 @@ function LeadsSection({
                 value={performanceLeadsCpl.cpl}
                 target={1 + performanceLeadsCpl.cpl * 1.3}
                 explanation={`(Amount Spent / Leads Count) | Performance = ${numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
-                    performanceLeadsCount.count
+                    performanceLeadsCount.count,
                 )}`}
                 type={ValueDisplayingCardInformationType.float}
                 equivalentQuery={``}
@@ -604,7 +618,7 @@ function LeadsSection({
                 value={performanceLeadsSpl.spl}
                 target={performanceLeadsSpl.spl * 1.3}
                 explanation={`(Leads Sales / Leads Count) | Performance = ${numberToHumanFriendlyString(performanceLeads.netSalesDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
-                    performanceLeadsCount.count
+                    performanceLeadsCount.count,
                 )}`}
                 type={ValueDisplayingCardInformationType.float}
             />
@@ -614,7 +628,7 @@ function LeadsSection({
                 value={performanceLeadsAcos.acos}
                 target={1 + performanceLeadsAcos.acos * 1.3}
                 explanation={`(Amount Spent / Net Sales) | Performance = ${numberToHumanFriendlyString(performanceLeads.amountSpentDayWise.reduce(sumReducer))} / ${numberToHumanFriendlyString(
-                    performanceLeads.netSalesDayWise.reduce(sumReducer)
+                    performanceLeads.netSalesDayWise.reduce(sumReducer),
                 )}`}
                 type={ValueDisplayingCardInformationType.percentage}
             />
@@ -626,7 +640,6 @@ function LeadsSection({
                 explanation="Number of leads recorded through facebook campaigns"
                 type={ValueDisplayingCardInformationType.integer}
                 equivalentQuery={`SELECT COUNT(*) FROM freshsales_leads_to_source_with_information WHERE DATE(lead_created_at)>=${minDate} AND DATE(lead_created_at)<=${maxDate} AND lead_capture_source = 'Facebook Ads'`}
-
             />
 
             <SmallValueDisplayingCardWithTarget
@@ -634,7 +647,7 @@ function LeadsSection({
                 value={facebookLeadsCpl.cpl}
                 target={1 + facebookLeadsCpl.cpl * 1.3}
                 explanation={`(Amount Spent / Leads Count) | Facebook = ${numberToHumanFriendlyString(facebookLeads.amountSpentDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
-                    facebookLeadsCount.count
+                    facebookLeadsCount.count,
                 )}`}
                 type={ValueDisplayingCardInformationType.float}
             />
@@ -644,7 +657,7 @@ function LeadsSection({
                 value={facebookLeadsSpl.spl}
                 target={1 + facebookLeadsSpl.spl * 1.3}
                 explanation={`(Leads Sales / Leads Count) | Facebook = ${numberToHumanFriendlyString(facebookLeads.netSalesDayWise.reduce(sumReducer, 0))} / ${numberToHumanFriendlyString(
-                    facebookLeadsCount.count
+                    facebookLeadsCount.count,
                 )}`}
                 type={ValueDisplayingCardInformationType.float}
             />
@@ -654,17 +667,26 @@ function LeadsSection({
                 value={facebookLeadsAcos.acos}
                 target={1 + facebookLeadsAcos.acos * 1.3}
                 explanation={`(Amount Spent / Net Sales) | Facebook = ${numberToHumanFriendlyString(facebookLeads.amountSpentDayWise.reduce(sumReducer))} / ${numberToHumanFriendlyString(
-                    facebookLeads.netSalesDayWise.reduce(sumReducer)
+                    facebookLeads.netSalesDayWise.reduce(sumReducer),
                 )}`}
                 type={ValueDisplayingCardInformationType.percentage}
             />
 
-            <Tabs.Root defaultValue="1" className="tw-col-span-12">
+            <Tabs.Root
+                defaultValue="1"
+                className="tw-col-span-12"
+            >
                 <Tabs.List>
-                    <Tabs.Trigger value="1" className="lp-tab tw-rounded-tl-md">
+                    <Tabs.Trigger
+                        value="1"
+                        className="lp-tab tw-rounded-tl-md"
+                    >
                         Distribution
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="2" className="lp-tab tw-rounded-tr-md">
+                    <Tabs.Trigger
+                        value="2"
+                        className="lp-tab tw-rounded-tr-md"
+                    >
                         Raw Data
                     </Tabs.Trigger>
                 </Tabs.List>
@@ -675,30 +697,76 @@ function LeadsSection({
                             content={
                                 <div className="tw-grid tw-grid-cols-4">
                                     <div className="tw-row-start-1 tw-col-start-2 tw-col-span-2 tw-grid">
-                                        {showAcos && <Line options={options} data={dayWiseAcos} className="tw-row-start-1 tw-col-start-1" />}
-                                        {showCpl && <Line options={acosDayWiseOptions} data={cplDayWise} className="tw-row-start-1 tw-col-start-1" />}
-                                        {showSpl && <Line options={acosDayWiseOptions} data={splDayWise} className="tw-row-start-1 tw-col-start-1" />}
+                                        {showAcos && (
+                                            <Line
+                                                options={options}
+                                                data={dayWiseAcos}
+                                                className="tw-row-start-1 tw-col-start-1"
+                                            />
+                                        )}
+                                        {showCpl && (
+                                            <Line
+                                                options={acosDayWiseOptions}
+                                                data={cplDayWise}
+                                                className="tw-row-start-1 tw-col-start-1"
+                                            />
+                                        )}
+                                        {showSpl && (
+                                            <Line
+                                                options={acosDayWiseOptions}
+                                                data={splDayWise}
+                                                className="tw-row-start-1 tw-col-start-1"
+                                            />
+                                        )}
 
-                                        <Bar options={options} data={data} className="tw-row-start-1 tw-col-start-1" />
+                                        <Bar
+                                            options={options}
+                                            data={data}
+                                            className="tw-row-start-1 tw-col-start-1"
+                                        />
                                     </div>
 
                                     <div className="tw-row-start-2 tw-col-start-1 tw-col-span-4 tw-flex tw-flex-row tw-justify-center">
-                                        <input type="checkbox" id="acos" checked={showAcos} onChange={(e) => setShowAcos(e.target.checked)} />
-                                        <label htmlFor="acos" className="tw-pl-2">
+                                        <input
+                                            type="checkbox"
+                                            id="acos"
+                                            checked={showAcos}
+                                            onChange={(e) => setShowAcos(e.target.checked)}
+                                        />
+                                        <label
+                                            htmlFor="acos"
+                                            className="tw-pl-2"
+                                        >
                                             ACoS
                                         </label>
 
                                         <HorizontalSpacer className="tw-w-8" />
 
-                                        <input type="checkbox" id="cpl" checked={showCpl} onChange={(e) => setShowCpl(e.target.checked)} />
-                                        <label htmlFor="cpl" className="tw-pl-2">
+                                        <input
+                                            type="checkbox"
+                                            id="cpl"
+                                            checked={showCpl}
+                                            onChange={(e) => setShowCpl(e.target.checked)}
+                                        />
+                                        <label
+                                            htmlFor="cpl"
+                                            className="tw-pl-2"
+                                        >
                                             CPL
                                         </label>
 
                                         <HorizontalSpacer className="tw-w-8" />
 
-                                        <input type="checkbox" id="spl" checked={showSpl} onChange={(e) => setShowSpl(e.target.checked)} />
-                                        <label htmlFor="spl" className="tw-pl-2">
+                                        <input
+                                            type="checkbox"
+                                            id="spl"
+                                            checked={showSpl}
+                                            onChange={(e) => setShowSpl(e.target.checked)}
+                                        />
+                                        <label
+                                            htmlFor="spl"
+                                            className="tw-pl-2"
+                                        >
                                             SPL
                                         </label>
                                     </div>
@@ -859,7 +927,7 @@ function OrdersSection({
         dayWiseCount: aggregateByDate(
             filterShopifyData.filter((row) => row.isAssisted == false),
             "netQuantity",
-            dates
+            dates,
         ),
         dayWiseNetSales: aggregateByDate(directOrdersRevenueGroupByDateAndCategory, "netSales", dates),
     };
@@ -885,7 +953,7 @@ function OrdersSection({
         dayWiseCount: aggregateByDate(
             filterShopifyData.filter((row) => row.isAssisted == true),
             "netQuantity",
-            dates
+            dates,
         ),
         dayWiseNetSales: aggregateByDate(assistedOrdersRevenueGroupByDateAndCategory, "netSales", dates),
     };
@@ -901,7 +969,7 @@ function OrdersSection({
 
     const assistedOrdersDrr = {
         metaInformation: `Total Assisted Orders / Number of Days | Assisted = ${numberToHumanFriendlyString(assistedOrdersTotalCount)} / ${numberToHumanFriendlyString(numberOfSelectedDays)}`,
-        drr: numberOfSelectedDays == 0 ? 0: assistedOrdersTotalCount / numberOfSelectedDays,
+        drr: numberOfSelectedDays == 0 ? 0 : assistedOrdersTotalCount / numberOfSelectedDays,
     };
 
     const dataTableForOrdersDayWise = dates.reduce((result, curDate, index) => {
@@ -919,7 +987,7 @@ function OrdersSection({
     // Total Orders
     const totalOrdersCount = {
         metaInformation: `Direct Orders + Assisted Orders = ${numberToHumanFriendlyString(directOrders.dayWiseCount.reduce(sumReducer, 0))} + ${numberToHumanFriendlyString(
-            assistedOrders.dayWiseCount.reduce(sumReducer, 0)
+            assistedOrders.dayWiseCount.reduce(sumReducer, 0),
         )}`,
         count: directOrdersTotalCount + assistedOrders.dayWiseCount.reduce(sumReducer, 0),
     };
@@ -1022,12 +1090,21 @@ function OrdersSection({
 
             <div className="tw-col-span-2" />
 
-            <Tabs.Root defaultValue="1" className="tw-col-span-12">
+            <Tabs.Root
+                defaultValue="1"
+                className="tw-col-span-12"
+            >
                 <Tabs.List>
-                    <Tabs.Trigger value="1" className="lp-tab tw-rounded-tl-md">
+                    <Tabs.Trigger
+                        value="1"
+                        className="lp-tab tw-rounded-tl-md"
+                    >
                         Distribution
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="2" className="lp-tab tw-rounded-tr-md">
+                    <Tabs.Trigger
+                        value="2"
+                        className="lp-tab tw-rounded-tr-md"
+                    >
                         Raw Data
                     </Tabs.Trigger>
                 </Tabs.List>
@@ -1037,7 +1114,10 @@ function OrdersSection({
                         content={
                             <div className="tw-grid tw-grid-cols-4">
                                 <div className="tw-col-start-2 tw-col-span-2">
-                                    <Line options={options} data={data} />
+                                    <Line
+                                        options={options}
+                                        data={data}
+                                    />
                                 </div>
                             </div>
                         }
@@ -1128,7 +1208,7 @@ function RevenueSection({
         netRevenueDayWise: aggregateByDate(
             directOrdersRevenue.map((row) => ({...row, netRevenue: getNetRevenue(row)})),
             "netRevenue",
-            dates
+            dates,
         ),
     };
 
@@ -1137,7 +1217,7 @@ function RevenueSection({
         netRevenueDayWise: aggregateByDate(
             assistedOrdersRevenueGroupByDateAndCategory.map((row) => ({...row, netRevenue: getNetRevenue(row)})),
             "netRevenue",
-            dates
+            dates,
         ),
     };
     const totalNetRevenue = {
@@ -1269,15 +1349,27 @@ function RevenueSection({
 
             <div className="tw-col-span-2" />
 
-            <Tabs.Root defaultValue="1" className="tw-col-span-12">
+            <Tabs.Root
+                defaultValue="1"
+                className="tw-col-span-12"
+            >
                 <Tabs.List>
-                    <Tabs.Trigger value="1" className="lp-tab tw-rounded-tl-md">
+                    <Tabs.Trigger
+                        value="1"
+                        className="lp-tab tw-rounded-tl-md"
+                    >
                         Gross Revenue
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="2" className="lp-tab">
+                    <Tabs.Trigger
+                        value="2"
+                        className="lp-tab"
+                    >
                         Net Revenue
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="3" className="lp-tab tw-rounded-tr-md">
+                    <Tabs.Trigger
+                        value="3"
+                        className="lp-tab tw-rounded-tr-md"
+                    >
                         Raw Data
                     </Tabs.Trigger>
                 </Tabs.List>
@@ -1287,7 +1379,10 @@ function RevenueSection({
                         content={
                             <div className="tw-grid tw-grid-cols-4">
                                 <div className="tw-col-start-2 tw-col-span-2">
-                                    <Bar options={ordersGrossRevenueOptions} data={ordersGrossRevenueData} />
+                                    <Bar
+                                        options={ordersGrossRevenueOptions}
+                                        data={ordersGrossRevenueData}
+                                    />
                                 </div>
                             </div>
                         }
@@ -1301,7 +1396,10 @@ function RevenueSection({
                         content={
                             <div className="tw-grid tw-grid-cols-4">
                                 <div className="tw-col-start-2 tw-col-span-2">
-                                    <Bar options={ordersNetRevenueOptions} data={ordersNetRevenueData} />
+                                    <Bar
+                                        options={ordersNetRevenueOptions}
+                                        data={ordersNetRevenueData}
+                                    />
                                 </div>
                             </div>
                         }
@@ -1384,12 +1482,12 @@ function SpendSection({
         amountSpentDayWise: aggregateByDate(
             filterAdsData.filter((row) => row.platform == "Google"),
             "amountSpent",
-            dates
+            dates,
         ),
         netSalesDayWise: aggregateByDate(
             filterShopifyData.filter((row) => row.leadGenerationSourceCampaignPlatform == "Google" && row.netSales > 0),
             "netSales",
-            dates
+            dates,
         ),
     };
 
@@ -1412,12 +1510,12 @@ function SpendSection({
         amountSpentDayWise: aggregateByDate(
             filterAdsData.filter((row) => row.platform == "Facebook"),
             "amountSpent",
-            dates
+            dates,
         ),
         netSalesDayWise: aggregateByDate(
             filterShopifyData.filter((row) => row.leadGenerationSourceCampaignPlatform == "Facebook" && row.netSales > 0),
             "netSales",
-            dates
+            dates,
         ),
     };
 
@@ -1566,12 +1664,21 @@ function SpendSection({
                 type={ValueDisplayingCardInformationType.percentage}
             />
 
-            <Tabs.Root defaultValue="1" className="tw-col-span-12">
+            <Tabs.Root
+                defaultValue="1"
+                className="tw-col-span-12"
+            >
                 <Tabs.List>
-                    <Tabs.Trigger value="1" className="lp-tab tw-rounded-tl-md">
+                    <Tabs.Trigger
+                        value="1"
+                        className="lp-tab tw-rounded-tl-md"
+                    >
                         Distribution
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="2" className="lp-tab tw-rounded-tr-md">
+                    <Tabs.Trigger
+                        value="2"
+                        className="lp-tab tw-rounded-tr-md"
+                    >
                         Raw Data
                     </Tabs.Trigger>
                 </Tabs.List>
@@ -1581,7 +1688,10 @@ function SpendSection({
                         content={
                             <div className="tw-grid tw-grid-cols-4">
                                 <div className="tw-col-start-2 tw-col-span-2">
-                                    <Bar options={adsDataSpendsOptions} data={adsDataSpendsData} />
+                                    <Bar
+                                        options={adsDataSpendsOptions}
+                                        data={adsDataSpendsData}
+                                    />
                                 </div>
                             </div>
                         }

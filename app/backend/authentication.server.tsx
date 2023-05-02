@@ -1,4 +1,4 @@
-import { Companies } from "~/utilities/typeDefinitions";
+import {Companies} from "~/utilities/typeDefinitions";
 import jwt, {Jwt} from "jsonwebtoken";
 import {AccessToken} from "~/backend/utilities/cookieSessionsHelper.server";
 import {execute} from "~/backend/utilities/databaseManager.server";
@@ -18,7 +18,7 @@ export async function validateUser(username: string, password: string): Promise<
                 username = $1 AND
                 hashed_password = crypt($2, hashed_password)
         `,
-        [username, password]
+        [username, password],
     );
 
     const row = getSingletonValueOrNull(result.rows);

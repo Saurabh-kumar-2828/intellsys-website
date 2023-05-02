@@ -2,7 +2,7 @@
 // import {json, LinksFunction, LoaderFunction, MetaFunction, redirect} from "@remix-run/node";
 // import {useLoaderData} from "@remix-run/react";
 // import {AgGridReact} from "ag-grid-react";
-// import { Companies } from "~/utilities/typeDefinitions";
+// import {Companies} from "~/utilities/typeDefinitions";
 // import {DateTime, DayNumbers, Info} from "luxon";
 // import {useState} from "react";
 // import {AdsData, AdsDataAggregatedRow, FreshsalesData, getAdsData, getFreshsalesData, getShopifyData, getTimeGranularityFromUnknown, ShopifyData, ShopifyDataAggregatedRow, TimeGranularity} from "~/backend/business-insights";
@@ -12,8 +12,8 @@
 // import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 // import {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 // import {getDates, getNonEmptyStringOrNull, roundOffToTwoDigits, transposeData} from "~/utilities/utilities";
-// import { getAccessTokenFromCookies } from "~/backend/utilities/cookieSessionsHelper.server";
-// import { getUrlFromRequest } from "~/backend/utilities/utilities.server";
+// import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
+// import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 // import "ag-grid-enterprise";
 
 // export const meta: MetaFunction = () => {

@@ -1,6 +1,6 @@
 import Cryptr from "cryptr";
 import {DateTime} from "luxon";
-import { Credentials, getCredentials, storeCredentials, updateCredentials } from "~/backend/utilities/data-management/credentials.server";
+import {Credentials, getCredentials, storeCredentials, updateCredentials} from "~/backend/utilities/data-management/credentials.server";
 import {getRedirectUri} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {CredentialType, Uuid} from "~/utilities/typeDefinitions";
@@ -13,7 +13,7 @@ type GoogleAdsCredentials = {
     accessToken: string;
     refreshToken: string;
     expiryDate: string;
-}
+};
 
 const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
 
@@ -23,14 +23,14 @@ export async function getGoogleCredentials(companyId: string): Promise<GoogleAds
      */
 
     const credentialsRaw = await getCredentials(companyId, CredentialType.googleAds);
-    if(credentialsRaw instanceof Error){
+    if (credentialsRaw instanceof Error) {
         return credentialsRaw;
     } else {
         const credentials: GoogleAdsCredentials = {
             accessToken: credentialsRaw["access_token"] as string,
             expiryDate: credentialsRaw["expiry_date"] as string,
             refreshToken: credentialsRaw["refresh_token"] as string,
-        }
+        };
 
         return credentials;
     }
@@ -47,7 +47,7 @@ async function refreshAccessToken(oldAccessToken: string): Promise<any | Error> 
         `;
 
         const response = await fetch(url, {
-            method: "POST"
+            method: "POST",
         });
 
         const insights = await response.json();
@@ -59,15 +59,14 @@ async function refreshAccessToken(oldAccessToken: string): Promise<any | Error> 
 
 function convertTokenToGoogleCredentialsType(credentials: Credentials): GoogleAdsCredentials | Error {
     try {
-
-        if(credentials.access_token == undefined || credentials.expires_in == undefined){
+        if (credentials.access_token == undefined || credentials.expires_in == undefined) {
             return Error("Google credentials not valid");
         }
 
-        let result : GoogleAdsCredentials= {
+        let result: GoogleAdsCredentials = {
             accessToken: credentials.access_token as string,
-            expiryDate:  credentials.expires_in as string,
-            refreshToken: credentials.refresh_token != undefined ? credentials.refresh_token as string : "",
+            expiryDate: credentials.expires_in as string,
+            refreshToken: credentials.refresh_token != undefined ? (credentials.refresh_token as string) : "",
         };
 
         return result;
@@ -83,11 +82,11 @@ export async function googleOAuthFlow(authorizationCode: Uuid, companyId: Uuid):
      */
 
     try {
-
         const redirectUri = getRedirectUri(companyId, Sources.GoogleAds);
 
         // Post api to retrieve access token by giving authorization code.
-        const url = `https://oauth2.googleapis.com/token?client_id=${process.env.GOOGLE_CLIENT_ID!}&client_secret=${process.env.GOOGLE_CLIENT_SECRET!}&redirect_uri=${redirectUri}&code=${authorizationCode}&grant_type=authorization_code`;
+        const url = `https://oauth2.googleapis.com/token?client_id=${process.env.GOOGLE_CLIENT_ID!}&client_secret=${process.env
+            .GOOGLE_CLIENT_SECRET!}&redirect_uri=${redirectUri}&code=${authorizationCode}&grant_type=authorization_code`;
 
         const response = await fetch(url, {
             method: "POST",
@@ -96,7 +95,7 @@ export async function googleOAuthFlow(authorizationCode: Uuid, companyId: Uuid):
 
         const token = convertTokenToGoogleCredentialsType(rawResponse);
 
-        if(token instanceof Error){
+        if (token instanceof Error) {
             return token;
         }
 
@@ -108,7 +107,7 @@ export async function googleOAuthFlow(authorizationCode: Uuid, companyId: Uuid):
                     expiry_date: DateTime.now()
                         .plus({seconds: parseInt(token.expiryDate)})
                         .toISO(),
-                    refresh_token: cryptr.encrypt(token.refreshToken)
+                    refresh_token: cryptr.encrypt(token.refreshToken),
                 },
                 companyId,
                 Sources.GoogleAds,
@@ -127,23 +126,23 @@ async function getAccessToken(companyId: Uuid): Promise<string | Error> {
     // 1. Retrieve Google credentials stored in database.
     const credentials = await getGoogleCredentials(companyId);
 
-    if(credentials instanceof Error){
-        return credentials
+    if (credentials instanceof Error) {
+        return credentials;
     }
 
     let accessToken = credentials.accessToken as string;
 
     // 2. Check if access token is valid.
-    if(DateTime.now().toISO() > credentials.expiryDate){
+    if (DateTime.now().toISO() > credentials.expiryDate) {
         const rawResponse = await refreshAccessToken(accessToken);
 
-        if(rawResponse instanceof Error){
+        if (rawResponse instanceof Error) {
             return Error("Invalid token");
         }
 
         const token = convertTokenToGoogleCredentialsType(rawResponse);
 
-        if(token instanceof Error){
+        if (token instanceof Error) {
             return token;
         }
 
@@ -155,13 +154,13 @@ async function getAccessToken(companyId: Uuid): Promise<string | Error> {
                     expiry_date: DateTime.now()
                         .plus({seconds: parseInt(token.expiryDate)})
                         .toISO(),
-                    refresh_token: credentials.refreshToken // TODO: Hash refresh token.
+                    refresh_token: credentials.refreshToken, // TODO: Hash refresh token.
                 },
                 companyId,
                 Sources.GoogleAds,
             );
         } else {
-            return Error("Company undefined!")
+            return Error("Company undefined!");
         }
         return token.accessToken;
     }
@@ -172,13 +171,12 @@ async function getAccessToken(companyId: Uuid): Promise<string | Error> {
 export async function getGoogleData(companyId: Uuid) {
     try {
         const accessToken = await getAccessToken(companyId);
-        if(accessToken instanceof Error){
+        if (accessToken instanceof Error) {
             return accessToken;
         }
 
         const data = await callGoogleAdsApi(accessToken);
         console.log("data: ", data);
-
     } catch (e) {
         console.log(e);
     }
@@ -197,7 +195,7 @@ function getGoogleHeaders(accessToken: string) {
 
 function getGoogleQuery() {
     return JSON.stringify({
-        "query": "SELECT campaign.id, campaign.name, campaign.status FROM campaign"
+        query: "SELECT campaign.id, campaign.name, campaign.status FROM campaign",
     });
 }
 
@@ -217,7 +215,6 @@ async function callGoogleAdsApi(accessToken: string) {
 
         const insights = await response.json();
         return insights;
-
     } catch (e) {
         console.log(e);
     }

@@ -16,7 +16,7 @@
 //     get_websitePopupFormResponsesRawDataInformation,
 // } from "~/backend/data-source-information";
 // import {Card, DateDisplayingCard, errorToast} from "~/components/scratchpad";
-// import { TimeZones } from "~/utilities/typeDefinitions";
+// import {TimeZones} from "~/utilities/typeDefinitions";
 // import {dateToMediumNoneEnFormat, numberToHumanFriendlyString} from "~/utilities/utilities";
 
 // export const meta: MetaFunction = () => {
@@ -788,7 +788,5 @@
 // }
 
 export default function () {
-    return (
-        <></>
-    )
+    return <></>;
 }

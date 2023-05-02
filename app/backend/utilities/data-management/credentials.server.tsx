@@ -5,7 +5,7 @@ import {execute} from "~/backend/utilities/databaseManager.server";
 import {Uuid} from "~/utilities/typeDefinitions";
 import {getSingletonValueOrNull} from "~/utilities/utilities";
 import {v4 as uuidv4} from "uuid";
-import {addCredentialsToKms, getCredentialsFromKms, updateCredentialsInKms} from "~/backend/utilities/kms.server";
+import {addCredentialToKms, getCredentialFromKms, updateCredentialInKms} from "~/global-common-typescript/server/kms.server";
 
 export interface Credentials {
     [x: string]: string | number | boolean;
@@ -43,7 +43,7 @@ export async function writeInCredentialsStoreTable(companyId: Uuid, credentialTy
 }
 
 export async function writeInCredentialsTable(credentials: Credentials, credentialId: Uuid): Promise<string | Error> {
-    const response = addCredentialsToKms(credentialId, credentials);
+    const response = addCredentialToKms(credentialId, credentials);
     if (response instanceof Error) {
         return response;
     }
@@ -81,7 +81,7 @@ export async function getCredentialsId(companyId: Uuid, credentialType: Uuid): P
 async function getCredentialsById(credentialId: Uuid): Promise<Credentials | Error> {
     // Returns the credentials associated with a given credential ID.
 
-    const credentialsRaw = await getCredentialsFromKms(credentialId);
+    const credentialsRaw = await getCredentialFromKms(credentialId);
 
     if (credentialsRaw instanceof Error) {
         return credentialsRaw;
@@ -110,7 +110,7 @@ export async function getCredentials(companyId: Uuid, credentialType: Uuid): Pro
 }
 
 async function updateCredentialsById(credentialsId: Uuid, credentials: Credentials) {
-    updateCredentialsInKms(credentialsId, credentials);
+    updateCredentialInKms(credentialsId, credentials);
 }
 
 export async function storeCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid): Promise<string | Error> {

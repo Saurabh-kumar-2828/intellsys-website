@@ -1,3 +1,5 @@
+import type {Uuid as GlobalUuid} from "~/global-common-typescript/typeDefinitions";
+
 // TODO: Add support for the concept of "has field been fetched" for better validation
 export type User = {
     id: Uuid;
@@ -11,7 +13,7 @@ export type Company = {
     pages: Array<string> | null;
 };
 
-export type Uuid = string;
+export type Uuid = GlobalUuid;
 export type Jwt = string;
 
 export type Iso8601Time = string;

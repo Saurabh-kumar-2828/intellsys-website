@@ -4,7 +4,7 @@ import {facebookAdsScope, getRedirectUri} from "~/backend/utilities/data-managem
 import {googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.server";
 import {CredentialType} from "~/utilities/typeDefinitions";
 
-export let action: ActionFunction = async ({request, params}) => {
+export const action: ActionFunction = async ({request, params}) => {
     const body = await request.formData();
     const companyId = params.companyId;
     if (companyId == null) {

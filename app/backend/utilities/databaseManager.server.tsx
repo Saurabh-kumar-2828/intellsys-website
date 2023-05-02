@@ -1,7 +1,6 @@
 import {companyDatabaseCredentialsMap} from "~/utilities/typeDefinitions";
 import {getDatabaseCredentials} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {Pool, QueryResult} from "pg";
-import {getCredentialsFromKms} from "~/backend/utilities/kms.server";
 import {Uuid} from "~/utilities/typeDefinitions";
 
 declare global {

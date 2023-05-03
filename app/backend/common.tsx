@@ -1,5 +1,6 @@
 import {execute} from "~/backend/utilities/databaseManager.server";
-import {Companies, Uuid} from "~/utilities/typeDefinitions";
+import type {Uuid} from "~/utilities/typeDefinitions";
+import {Companies} from "~/utilities/typeDefinitions";
 
 export type ProductInformation = {
     productName: string;

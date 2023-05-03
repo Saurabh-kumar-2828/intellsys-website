@@ -1,8 +1,7 @@
 import Cryptr from "cryptr";
 import {Companies} from "~/utilities/typeDefinitions";
-import {DateTime} from "luxon";
 import {execute} from "~/backend/utilities/databaseManager.server";
-import {Uuid} from "~/utilities/typeDefinitions";
+import type {Uuid} from "~/utilities/typeDefinitions";
 import {getSingletonValueOrNull} from "~/utilities/utilities";
 import {v4 as uuidv4} from "uuid";
 import {addCredentialToKms, getCredentialFromKms, updateCredentialInKms} from "~/global-common-typescript/server/kms.server";
@@ -42,12 +41,11 @@ export async function writeInCredentialsStoreTable(companyId: Uuid, credentialTy
     return Response.Success;
 }
 
-export async function writeInCredentialsTable(credentials: Credentials, credentialId: Uuid): Promise<string | Error> {
+export async function writeInCredentialsTable(credentials: Credentials, credentialId: Uuid): Promise<void | Error> {
     const response = addCredentialToKms(credentialId, credentials);
     if (response instanceof Error) {
         return response;
     }
-    return response;
 }
 
 export async function getCredentialsId(companyId: Uuid, credentialType: Uuid): Promise<Uuid | Error> {
@@ -110,7 +108,7 @@ export async function getCredentials(companyId: Uuid, credentialType: Uuid): Pro
 }
 
 async function updateCredentialsById(credentialsId: Uuid, credentials: Credentials) {
-    updateCredentialInKms(credentialsId, credentials);
+    await updateCredentialInKms(credentialsId, credentials);
 }
 
 export async function storeCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid): Promise<string | Error> {

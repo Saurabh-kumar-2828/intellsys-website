@@ -2,7 +2,8 @@ import {getPostgresDatabaseManager} from "~/global-common-typescript/server/post
 import {getCredentialsId} from "~/backend/utilities/data-management/credentials.server";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {getGranularityQuery} from "~/backend/utilities/utilities.server";
-import {CredentialType, Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
+import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
+import {CredentialType} from "~/utilities/typeDefinitions";
 import {dateToIso8601Date} from "~/utilities/utilities";
 
 export enum TimeGranularity {
@@ -144,7 +145,7 @@ export type FreshsalesDataAggregatedRow = {
 };
 
 export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<FreshsalesData> {
-    console.log(companyId);
+
     const query = `
         SELECT
             ${getGranularityQuery(granularity, "lead_created_at")} AS date,

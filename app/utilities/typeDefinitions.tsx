@@ -82,17 +82,17 @@ export enum CredentialType {
     databaseOld = "ac200d5a-cabf-4484-8d84-f96e05a7bef9"
 }
 
-export enum Companies {
-    Intellsys = "",
-    Livpure = "833e5ca8-249d-4486-97e8-95cc576f0484",
-    Livguard = "84589528-ef5e-46b2-90bd-96b6e2d206ce",
-    Lectrix = "ba3033ba-32a8-49f7-b2bf-16c3be6d331a",
-    IntellsysRaw = "12176c01-616e-4308-b635-2fff6a481f90" // For product and campaign library
+export const Companies:{[key: string]: Uuid} =  {
+    Intellsys: "",
+    Livpure: "833e5ca8-249d-4486-97e8-95cc576f0484" as Uuid,
+    Livguard: "84589528-ef5e-46b2-90bd-96b6e2d206ce" as Uuid,
+    Lectrix: "ba3033ba-32a8-49f7-b2bf-16c3be6d331a" as Uuid,
+    IntellsysRaw: "12176c01-616e-4308-b635-2fff6a481f90" as Uuid // For product and campaign library
 };
 
-export const companyDatabaseCredentialsMap: {[key: string]: string} = {
-    [Companies.Intellsys]: "24292254-f51b-40e5-b450-e70949876332",
-    [Companies.Livpure]:  "f8d430d0-6761-43c0-bf73-c606e37629e1",
-    [Companies.Lectrix]: "1dbe5ecb-6ade-4a38-a46b-502f42d65d73",
-    [Companies.IntellsysRaw]: "4447787a-f311-43e7-b21c-665ce8b9c52e"
+export const companyDatabaseCredentialsMap: {[key: string]: Uuid} = {
+    [Companies.Intellsys]: "24292254-f51b-40e5-b450-e70949876332" as Uuid,
+    [Companies.Livpure]:  "f8d430d0-6761-43c0-bf73-c606e37629e1" as Uuid,
+    [Companies.Lectrix]: "1dbe5ecb-6ade-4a38-a46b-502f42d65d73" as Uuid,
+    [Companies.IntellsysRaw]: "4447787a-f311-43e7-b21c-665ce8b9c52e" as Uuid
 };

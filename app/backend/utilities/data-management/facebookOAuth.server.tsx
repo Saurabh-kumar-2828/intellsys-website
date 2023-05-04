@@ -1,9 +1,10 @@
 import Cryptr from "cryptr";
 import {DateTime} from "luxon";
-import {Credentials, getCredentials, storeCredentials, updateCredentials} from "~/backend/utilities/data-management/credentials.server";
+import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
+import {getCredentials, storeCredentials, updateCredentials} from "~/backend/utilities/data-management/credentials.server";
 import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
-import {CredentialType, Uuid} from "~/utilities/typeDefinitions";
-import {Response} from "~/backend/utilities/data-management/credentials.server";
+import type {Uuid} from "~/utilities/typeDefinitions";
+import {CredentialType} from "~/utilities/typeDefinitions";
 
 const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
 export const facebookAdsScope = "ads_read, ads_management";
@@ -28,60 +29,57 @@ export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Erro
     return Error("Invalid data source!");
 }
 
-export async function facebookOAuthFlow(authorizationCode: string, companyId: string): Promise<string | Error> {
-    /**
-     * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
-     */
 
+/**
+ * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
+ */
+export async function facebookOAuthFlow(authorizationCode: string, companyId: Uuid): Promise<void | Error> {
     const redirectUri = getRedirectUri(companyId, CredentialType.facebookAds);
     if (redirectUri instanceof Error) {
         return redirectUri;
     }
 
-    try {
-        // Post api to retrieve access token by giving authorization code.
-        const url = `
-            ${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/oauth/access_token?
-            client_id=${process.env.FACEBOOK_CLIENT_ID!}&
-            client_secret=${process.env.FACEBOOK_CLIENT_SECRET!}&
-            redirect_uri=${redirectUri}&
-            code=${authorizationCode}
-        `;
+    // Post api to retrieve access token by giving authorization code.
+    const url = `
+        ${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/oauth/access_token?
+        client_id=${process.env.FACEBOOK_CLIENT_ID!}&
+        client_secret=${process.env.FACEBOOK_CLIENT_SECRET!}&
+        redirect_uri=${redirectUri}&
+        code=${authorizationCode}
+    `;
 
-        const response = await fetch(url, {
-            method: "POST",
-        });
-        var token = await response.json();
-        token = convertTokenToFacebookCredentialsType(token);
+    const response = await fetch(url, {
+        method: "POST",
+    });
+    var token = await response.json();
+    const acceseTokenObject = convertTokenToFacebookCredentialsType(token);
 
-        if (token instanceof Error) {
-            return token;
-        }
-
-        if (companyId != undefined) {
-            // Store credentials in database.
-            const response1 = await storeCredentials(
-                {
-                    access_token: cryptr.encrypt(token.accessToken),
-                    expiry_date: DateTime.now()
-                        .plus({seconds: parseInt(token.expiryDate)})
-                        .toISO(),
-                },
-                companyId,
-                CredentialType.facebookAds,
-            );
-
-            if (response1 instanceof Error) {
-                return response1;
-            }
-
-            return Response.Success;
-        }
-    } catch (e) {
-        const error = getErrorFromUnknown(e);
-        return error;
+    if (acceseTokenObject instanceof Error) {
+        return token;
     }
+
+    if (companyId != undefined) {
+
+        // Store credentials in database.
+        const response1 = await storeCredentials(
+            {
+                access_token: cryptr.encrypt(acceseTokenObject.accessToken),
+                expiry_date: DateTime.now()
+                    .plus({seconds: parseInt(acceseTokenObject.expiryDate)})
+                    .toISO(),
+            },
+            companyId,
+            CredentialType.facebookAds,
+        );
+
+        if (response1 instanceof Error) {
+            return response1;
+        }
+
+    }
+
 }
+
 
 function convertTokenToFacebookCredentialsType(token: any): FacebookAdsCredentials | Error {
     try {
@@ -96,11 +94,11 @@ function convertTokenToFacebookCredentialsType(token: any): FacebookAdsCredentia
     }
 }
 
-export async function getFacebookCredentials(companyId: string): Promise<Credentials | Error> {
-    /**
-     * Retrieves the Facebook Ads credentials for a given company ID.
-     */
 
+/**
+ * Retrieves the Facebook Ads credentials for a given company ID.
+ */
+export async function getFacebookCredentials(companyId: Uuid): Promise<Credentials | Error> {
     const credentialsRaw = await getCredentials(companyId, CredentialType.facebookAds);
     if (credentialsRaw instanceof Error) {
         return credentialsRaw;
@@ -114,12 +112,12 @@ export async function getFacebookCredentials(companyId: string): Promise<Credent
     }
 }
 
-export async function refreshAccessToken(expiredAccessToken: Uuid, companyId: Uuid): Promise<Uuid | Error> {
-    /**
-     * Retrieves a new access token from the Facebook API using a provided expired access token.
-     * Updates the credentials in the database for the specified company ID.
-     */
 
+/**
+ * Retrieves a new access token from the Facebook API using a provided expired access token.
+ * Updates the credentials in the database for the specified company ID.
+ */
+export async function refreshAccessToken(expiredAccessToken: string, companyId: Uuid): Promise<Uuid | Error> {
     const url = `
         ${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/oauth/access_token?
         client_id=${process.env.FACEBOOK_CLIENT_ID!}&
@@ -139,7 +137,7 @@ export async function refreshAccessToken(expiredAccessToken: Uuid, companyId: Uu
 
     if (companyId != "undefined") {
         // Update credentials in database.
-        updateCredentials(
+        await updateCredentials(
             {
                 access_token: cryptr.encrypt(token.access_token),
                 expiry_date: DateTime.now()
@@ -154,6 +152,7 @@ export async function refreshAccessToken(expiredAccessToken: Uuid, companyId: Uu
         return Error("Company undefined!");
     }
 }
+
 
 export async function getFacebookData(companyId: Uuid) {
     // 1. Retrieve Facebook credentials stored in database.
@@ -178,6 +177,7 @@ export async function getFacebookData(companyId: Uuid) {
     const data = await callFacbookAdsApi(accessToken);
     console.log("data: ", data);
 }
+
 
 async function callFacbookAdsApi(accessToken: string) {
     try {

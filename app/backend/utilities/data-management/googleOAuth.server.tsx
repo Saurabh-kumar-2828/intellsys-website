@@ -1,9 +1,11 @@
 import Cryptr from "cryptr";
 import {DateTime} from "luxon";
-import {Credentials, getCredentials, storeCredentials, updateCredentials} from "~/backend/utilities/data-management/credentials.server";
+import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
+import {getCredentials, storeCredentials, updateCredentials} from "~/backend/utilities/data-management/credentials.server";
 import {getRedirectUri} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
-import {CredentialType, Uuid} from "~/utilities/typeDefinitions";
+import type {Uuid} from "~/utilities/typeDefinitions";
+import {CredentialType} from "~/utilities/typeDefinitions";
 
 // TODO: Fix timezone in database
 
@@ -17,11 +19,11 @@ type GoogleAdsCredentials = {
 
 const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
 
-export async function getGoogleCredentials(companyId: string): Promise<GoogleAdsCredentials | Error> {
-    /**
-     * Retrieves Google Ads credentials from the database for the given companyId.
-     */
 
+/**
+ * Retrieves Google Ads credentials from the database for the given companyId.
+ */
+export async function getGoogleCredentials(companyId: Uuid): Promise<GoogleAdsCredentials | Error> {
     const credentialsRaw = await getCredentials(companyId, CredentialType.googleAds);
     if (credentialsRaw instanceof Error) {
         return credentialsRaw;
@@ -36,11 +38,11 @@ export async function getGoogleCredentials(companyId: string): Promise<GoogleAds
     }
 }
 
-async function refreshAccessToken(oldAccessToken: string): Promise<any | Error> {
-    /**
-     * Sends a request to the Google Ads OAuth2 API to refresh an access token.
-     */
 
+/**
+ * Sends a request to the Google Ads OAuth2 API to refresh an access token.
+ */
+async function refreshAccessToken(oldAccessToken: string): Promise<any | Error> {
     try {
         let url = `
             https://oauth2.googleapis.com/token?client_id=${process.env.GOOGLE_CLIENT_ID}&client_secret=${process.env.GOOGLE_CLIENT_SECRET}&refresh_token=${oldAccessToken}&grant_type=refresh_token;
@@ -76,13 +78,13 @@ function convertTokenToGoogleCredentialsType(credentials: Credentials): GoogleAd
     }
 }
 
-export async function googleOAuthFlow(authorizationCode: Uuid, companyId: Uuid): Promise<void | Error> {
-    /**
-     *  Handles the OAuth2 flow to authorize the Google Ads API for the given companyId.
-     */
 
+/**
+ *  Handles the OAuth2 flow to authorize the Google Ads API for the given companyId.
+ */
+export async function googleOAuthFlow(authorizationCode: Uuid, companyId: Uuid): Promise<void | Error> {
     try {
-        const redirectUri = getRedirectUri(companyId, Sources.GoogleAds);
+        const redirectUri = getRedirectUri(companyId, CredentialType.GoogleAds);
 
         // Post api to retrieve access token by giving authorization code.
         const url = `https://oauth2.googleapis.com/token?client_id=${process.env.GOOGLE_CLIENT_ID!}&client_secret=${process.env
@@ -110,7 +112,7 @@ export async function googleOAuthFlow(authorizationCode: Uuid, companyId: Uuid):
                     refresh_token: cryptr.encrypt(token.refreshToken),
                 },
                 companyId,
-                Sources.GoogleAds,
+                CredentialType.googleAds
             );
         }
     } catch (e) {
@@ -118,12 +120,12 @@ export async function googleOAuthFlow(authorizationCode: Uuid, companyId: Uuid):
     }
 }
 
-async function getAccessToken(companyId: Uuid): Promise<string | Error> {
-    /**
-     *  Retrieves a valid access token for the Google Ads API for the given companyId, refreshing the token if necessary.
-     */
 
-    // 1. Retrieve Google credentials stored in database.
+/**
+ *  Retrieves a valid access token for the Google Ads API for the given companyId, refreshing the token if necessary.
+ */
+async function getAccessToken(companyId: Uuid): Promise<string | Error> {
+    // 1. Retrieve Google credentials from database.
     const credentials = await getGoogleCredentials(companyId);
 
     if (credentials instanceof Error) {
@@ -148,7 +150,7 @@ async function getAccessToken(companyId: Uuid): Promise<string | Error> {
 
         if (companyId != "undefined") {
             // Update credentials in database.
-            updateCredentials(
+            await updateCredentials(
                 {
                     access_token: cryptr.encrypt(token.accessToken),
                     expiry_date: DateTime.now()
@@ -157,7 +159,7 @@ async function getAccessToken(companyId: Uuid): Promise<string | Error> {
                     refresh_token: credentials.refreshToken, // TODO: Hash refresh token.
                 },
                 companyId,
-                Sources.GoogleAds,
+                CredentialType.googleAds,
             );
         } else {
             return Error("Company undefined!");

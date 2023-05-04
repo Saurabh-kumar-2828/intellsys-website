@@ -107,8 +107,12 @@ export async function getCredentials(companyId: Uuid, credentialType: Uuid): Pro
     return credentials;
 }
 
-async function updateCredentialsById(credentialsId: Uuid, credentials: Credentials) {
-    await updateCredentialInKms(credentialsId, credentials);
+async function updateCredentialsById(credentialsId: Uuid, credentials: Credentials): Promise<void | Error> {
+    const response = await updateCredentialInKms(credentialsId, credentials);
+
+    if (response instanceof Error) {
+        return response
+    }
 }
 
 export async function storeCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid): Promise<string | Error> {
@@ -143,11 +147,15 @@ export async function storeCredentials(credentials: Credentials, companyId: Uuid
     }
 }
 
-export async function updateCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid) {
+export async function updateCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid): Promise<void | Error> {
     const credentialsId = await getCredentialsId(companyId, credentialType);
     if (credentialsId instanceof Error) {
         return credentialsId;
     }
 
-    await updateCredentialsById(credentialsId, credentials);
+    const response = await updateCredentialsById(credentialsId, credentials);
+
+    if (response instanceof Error) {
+        return response;
+    }
 }

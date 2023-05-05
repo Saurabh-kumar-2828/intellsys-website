@@ -1,7 +1,8 @@
 import {companyDatabaseCredentialsMap} from "~/utilities/typeDefinitions";
 import {getDatabaseCredentials} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {Pool, QueryResult} from "pg";
-import {Uuid} from "~/utilities/typeDefinitions";
+import type {QueryResult} from "pg";
+import {Pool} from "pg";
+import type {Uuid} from "~/utilities/typeDefinitions";
 
 declare global {
     var _databaseConnectionPool: {[key: Uuid]: Pool};

@@ -63,8 +63,6 @@ async function getNewDatabaseConnectionPool(companyId: Uuid): Promise<Pool | Err
     const companyDatabaseCredentialsId = companyDatabaseCredentialsMap[companyId];
     const credentials = await getDatabaseCredentials(companyDatabaseCredentialsId);
 
-    console.log(credentials);
-
     if (credentials instanceof Error) {
         return credentials;
     }

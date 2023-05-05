@@ -1,6 +1,6 @@
 import {Companies} from "~/utilities/typeDefinitions";
 import {execute} from "~/backend/utilities/databaseManager.server";
-import {Company, User, Uuid} from "~/utilities/typeDefinitions";
+import type {Company, User, Uuid} from "~/utilities/typeDefinitions";
 import {getSingletonValue} from "~/utilities/utilities";
 
 export async function getNameAndPrivilegesForUser(userId: Uuid): Promise<User> {

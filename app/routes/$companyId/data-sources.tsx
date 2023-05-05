@@ -1,7 +1,9 @@
-import {ActionFunction, redirect} from "@remix-run/node";
+import type {ActionFunction} from "@remix-run/node";
+import {redirect} from "@remix-run/node";
 import {Form} from "@remix-run/react";
 import {facebookAdsScope, getRedirectUri} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.server";
+import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {CredentialType} from "~/utilities/typeDefinitions";
 
 export const action: ActionFunction = async ({request, params}) => {
@@ -11,15 +13,17 @@ export const action: ActionFunction = async ({request, params}) => {
         throw new Response(null, {status: 404});
     }
 
+    const companyIdUuid = getUuidFromUnknown(companyId);
+
     if (body.get("action") == "facebook") {
-        const redirectUri = getRedirectUri(companyId, CredentialType.facebookAds);
+        const redirectUri = getRedirectUri(companyIdUuid, CredentialType.facebookAds);
 
         // TODO: Create function to get env variables
         const authUrl = `https://www.facebook.com/${process.env.FACEBOOK_API_VERSION!}/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID!}&redirect_uri=${redirectUri}&scope=${facebookAdsScope}`;
 
         return redirect(authUrl);
     } else if (body.get("action") == "google") {
-        const redirectUri = getRedirectUri(companyId, CredentialType.googleAds);
+        const redirectUri = getRedirectUri(companyIdUuid, CredentialType.googleAds);
 
         const url = `https://accounts.google.com/o/oauth2/v2/auth?scope=${googleAdsScope}&client_id=${process.env
             .GOOGLE_CLIENT_ID!}&response_type=code&redirect_uri=${redirectUri}&prompt=consent&access_type=offline&state=${companyId}`;

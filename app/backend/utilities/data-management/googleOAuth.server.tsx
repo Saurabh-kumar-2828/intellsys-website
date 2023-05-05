@@ -25,6 +25,7 @@ const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
  */
 export async function getGoogleCredentials(companyId: Uuid): Promise<GoogleAdsCredentials | Error> {
     const credentialsRaw = await getCredentials(companyId, CredentialType.googleAds);
+    console.log(credentialsRaw);
     if (credentialsRaw instanceof Error) {
         return credentialsRaw;
     } else {
@@ -173,6 +174,8 @@ async function getAccessToken(companyId: Uuid): Promise<string | Error> {
 export async function getGoogleData(companyId: Uuid) {
     try {
         const accessToken = await getAccessToken(companyId);
+
+        console.log(accessToken);
         if (accessToken instanceof Error) {
             return accessToken;
         }
@@ -197,7 +200,20 @@ function getGoogleHeaders(accessToken: string) {
 
 function getGoogleQuery() {
     return JSON.stringify({
-        query: "SELECT campaign.id, campaign.name, campaign.status FROM campaign",
+        query: `
+            SELECT
+                ad_group_criterion.keyword.text,
+                ad_group.name,
+                campaign.name,
+                metrics.impressions,
+                metrics.clicks,
+                metrics.ctr,
+                metrics.average_cpc
+            FROM
+                keyword_view
+            WHERE
+                segments.date BETWEEN '2022-01-01' AND '2022-01-31'
+        `
     });
 }
 

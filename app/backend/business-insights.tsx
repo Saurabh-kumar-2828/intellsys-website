@@ -5,6 +5,8 @@ import {getGranularityQuery} from "~/backend/utilities/utilities.server";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {CredentialType} from "~/utilities/typeDefinitions";
 import {dateToIso8601Date} from "~/utilities/utilities";
+import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
 
 export enum TimeGranularity {
     daily = "Daily",
@@ -274,40 +276,42 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
 }
 
 export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData | Error> {
-    const credentialId = await getCredentialsId(companyId, CredentialType.databaseNew);
-    if (credentialId instanceof Error) {
-        return credentialId;
-    }
+    // const credentialId = await getCredentialsId(companyId, CredentialType.databaseNew);
+    // if (credentialId instanceof Error) {
+    //     return credentialId;
+    // }
 
-    const postgresDatabaseManager = await getPostgresDatabaseManager(credentialId);
+    const postgresDatabaseManager = await getPostgresDatabaseManager(getUuidFromUnknown(getRequiredEnvironmentVariableNew("GOOGLE_ADS_CREDENTIAL_ID")));
+
     if (postgresDatabaseManager instanceof Error) {
         return postgresDatabaseManager;
     }
 
     const query = `
-            SELECT
-                DATE_TRUNC('DAY', "__hevo_report_date"::timestamp) AS date,
-                name AS campaign_name,
-                cost_micros/1000000 AS spend,
-                impressions AS impressions,
-                clicks AS clicks
-            FROM
-                google_ads_campaign
-            WHERE
-                DATE(__hevo_report_date) >= '${minDate}'
-                AND DATE(__hevo_report_date) <= '${maxDate}'
-                AND (cost_micros >= 0 OR impressions >= 0 OR clicks >= 0)
-            ORDER BY
-                date
-        `;
+        SELECT
+            DATE((data->'segments'->>'date')) AS date,
+            'Google' AS platform,
+            data->'campaign'->>'name' as campaign_name,
+            data->'metrics'->>'clicks' as clicks,
+            data->'metrics'->>'impressions' as impressions,
+            data->'metrics'->>'averageCost' as amount_spent
+        FROM
+            google_ads_insights
+        WHERE
+            DATE((data->'segments'->>'date')) >= '2023-05-01'
+            AND DATE((data->'segments'->>'date')) <= '2023-05-03'
+        ORDER BY
+            date
+    `;
+
 
     const result = await postgresDatabaseManager.execute(query);
     if (result instanceof Error) {
         return result;
     }
-
     return {
         metaQuery: query,
+        // rows: []
         rows: result.rows.map((row) => rowToAdsDataAggregatedRow(row)),
     };
 }

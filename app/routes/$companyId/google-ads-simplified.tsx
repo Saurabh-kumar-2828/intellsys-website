@@ -42,6 +42,8 @@ import {
     sumReducer,
 } from "~/utilities/utilities";
 import "ag-grid-enterprise";
+import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {googleAdsRawColumnInfos} from "~/backend/utilities/data-management/googleAds.server";
 
 export const meta: MetaFunction = () => {
     return {
@@ -114,7 +116,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         appliedSelectedGranularity: selectedGranularity,
         appliedMinDate: minDate,
         appliedMaxDate: maxDate,
-        googleAdsData: await getGoogleAdsLectrixData(minDate, maxDate, selectedGranularity, companyId),
+        googleAdsData: await getGoogleAdsLectrixData(minDate, maxDate, selectedGranularity, getUuidFromUnknown(companyId)),
         companyId: companyId
     };
 
@@ -138,8 +140,7 @@ type CampaignTargetObject = {
 };
 
 export default function () {
-    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, googleAdsData, companyId} =
-        useLoaderData() as LoaderData;
+    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, googleAdsData,companyId} = useLoaderData() as LoaderData;
 
 
     // TODO: Add additional filtering to ensure this only shows facebook campaigns
@@ -162,6 +163,8 @@ export default function () {
         setSelectedProducts([]);
         setSelectedPlatforms([]);
     }, [selectedCategories]);
+
+    console.log(googleAdsData)
 
     return (
         <>
@@ -194,6 +197,7 @@ export default function () {
                 </div>
             </div>
         </>
+
     );
 }
 

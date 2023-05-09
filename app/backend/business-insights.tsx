@@ -298,8 +298,8 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
         FROM
             google_ads_insights
         WHERE
-            DATE((data->'segments'->>'date')) >= '2023-05-01'
-            AND DATE((data->'segments'->>'date')) <= '2023-05-03'
+            DATE((data->'segments'->>'date')) >= '${minDate}'
+            AND DATE((data->'segments'->>'date')) <= '${maxDate}'
         ORDER BY
             date
     `;

@@ -164,8 +164,6 @@ export default function () {
         setSelectedPlatforms([]);
     }, [selectedCategories]);
 
-    console.log(googleAdsData)
-
     return (
         <>
             <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
@@ -382,24 +380,6 @@ function CampaignsSection({
                                 headerClass: "tw-text-sm tw-font-medium",
                                 resizable: true
                             },
-                            {
-                                headerName: "Leads",
-                                field: "leads",
-                                // cellRenderer: progressCellRendererTarget,
-                                // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.leads},
-                                cellClass: "!tw-px-0.5",
-                                headerClass: "tw-text-sm tw-font-medium",
-                                resizable: true
-                            },
-                            {
-                                headerName: "Orders",
-                                field: "orders",
-                                // cellRenderer: progressCellRendererTarget,
-                                // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.orders},
-                                cellClass: "!tw-px-0.5",
-                                headerClass: "tw-text-sm tw-font-medium",
-                                resizable: true
-                            },
                         ]}
                         defaultColDef={defaultColumnDefinitions}
                         animateRows={true}
@@ -440,22 +420,7 @@ function CampaignsSection({
                         ]}
                         informationClassName={"tw-text-2xl tw-font-semibold"}
                     />
-                    <CustomCard
-                        information={numberToHumanFriendlyString(performanceleadscount.count)}
-                        label="Leads"
-                        metaInformation={performanceleadscount.metaInformation}
-                        className="tw-col-start-4 tw-rounded-lg"
-                        extraLabels={[`CPL = ₹${numberToHumanFriendlyString(campaignsInformation.amountSpent / performanceleadscount.count, true)}`]}
-                        informationClassName={"tw-text-2xl tw-font-semibold"}
-                    />
-                    <CustomCard
-                        information={numberToHumanFriendlyString(sales.count)}
-                        label="Sales"
-                        metaInformation={sales.metaInformation}
-                        className="tw-col-start-5 tw-rounded-lg"
-                        extraLabels={[`CR = ${numberToHumanFriendlyString(sales.count / performanceleadscount.count, true, true, true)}`]}
-                        informationClassName={"tw-text-2xl tw-font-semibold"}
-                    />
+
                 </div>
             </div>
 
@@ -486,24 +451,6 @@ function CampaignsSection({
                         explanation={`Clicks = ${numberToHumanFriendlyString(campaignsInformation.clicks)}`}
                         type={ValueDisplayingCardInformationType.integer}
                         className="tw-col-start-5"
-                        valueClassName="tw-text-lg tw-px-0.2 tw-font-semibold"
-                    />
-                    <SmallValueDisplayingCardWithTarget
-                        label="Leads"
-                        value={performanceleadscount.count}
-                        target={1 + performanceleadscount.count * 1.3}
-                        explanation={`Leads = ${numberToHumanFriendlyString(performanceleadscount.count)}`}
-                        type={ValueDisplayingCardInformationType.integer}
-                        className="tw-col-start-7"
-                        valueClassName="tw-text-lg tw-px-0.2 tw-font-semibold"
-                    />
-                    <SmallValueDisplayingCardWithTarget
-                        label="Orders"
-                        value={sales.count}
-                        target={1 + sales.count * 1.3}
-                        explanation={`Orders = ${numberToHumanFriendlyString(sales.count)}`}
-                        type={ValueDisplayingCardInformationType.integer}
-                        className="tw-col-start-9"
                         valueClassName="tw-text-lg tw-px-0.2 tw-font-semibold"
                     />
                 </div>

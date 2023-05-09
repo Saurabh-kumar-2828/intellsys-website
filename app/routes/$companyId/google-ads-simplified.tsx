@@ -332,11 +332,9 @@ function CampaignsSection({
                         ref={gridRef}
                         rowData={campaigns.map((campaign: string) => ({
                             campaignName: campaign,
-                            impressions: dayWiseCampaignsTrends[campaign].impressions.reduce(sumReducer, 0),
-                            amountSpent: roundOffToTwoDigits(dayWiseCampaignsTrends[campaign].amountSpent.reduce(sumReducer, 0)),
-                            clicks: dayWiseCampaignsTrends[campaign].clicks.reduce(sumReducer, 0),
-                            leads: dayWiseCampaignsTrends[campaign].leads.reduce(sumReducer, 0),
-                            orders: dayWiseCampaignsTrends[campaign].orders.reduce(sumReducer, 0),
+                            impressions: numberToHumanFriendlyString(dayWiseCampaignsTrends[campaign].impressions.reduce(sumReducer, 0)),
+                            amountSpent: numberToHumanFriendlyString(roundOffToTwoDigits(dayWiseCampaignsTrends[campaign].amountSpent.reduce(sumReducer, 0))),
+                            clicks: numberToHumanFriendlyString(dayWiseCampaignsTrends[campaign].clicks.reduce(sumReducer, 0)),
                         }))}
                         columnDefs={[
                             {

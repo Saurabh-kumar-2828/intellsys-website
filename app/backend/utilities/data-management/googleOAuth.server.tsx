@@ -25,7 +25,6 @@ const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
  */
 export async function getGoogleCredentials(companyId: Uuid): Promise<GoogleAdsCredentials | Error> {
     const credentialsRaw = await getCredentials(companyId, CredentialType.googleAds);
-    console.log(credentialsRaw);
     if (credentialsRaw instanceof Error) {
         return credentialsRaw;
     } else {

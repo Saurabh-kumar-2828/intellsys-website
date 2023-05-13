@@ -3,7 +3,6 @@ import {Companies} from "~/utilities/typeDefinitions";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {getSingletonValueOrNull} from "~/utilities/utilities";
-import {v4 as uuidv4} from "uuid";
 import {addCredentialToKms, getCredentialFromKms, updateCredentialInKms} from "~/global-common-typescript/server/kms.server";
 
 export interface Credentials {
@@ -15,7 +14,7 @@ export enum Response {
 }
 const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
 
-export async function writeInCredentialsStoreTable(companyId: Uuid, credentialType: Uuid, credentialId: Uuid): Promise<string | Error> {
+export async function writeInCredentialsStoreTable(companyId: Uuid, credentialType: Uuid, credentialId: Uuid): Promise<void | Error> {
     const response = await execute(
         Companies.Intellsys,
         `
@@ -38,14 +37,10 @@ export async function writeInCredentialsStoreTable(companyId: Uuid, credentialTy
         return response;
     }
 
-    return Response.Success;
 }
 
 export async function writeInCredentialsTable(credentials: Credentials, credentialId: Uuid): Promise<void | Error> {
-    const response = addCredentialToKms(credentialId, credentials);
-    if (response instanceof Error) {
-        return response;
-    }
+
 }
 
 export async function getCredentialsId(companyId: Uuid, credentialType: Uuid): Promise<Uuid | Error> {
@@ -115,32 +110,27 @@ async function updateCredentialsById(credentialsId: Uuid, credentials: Credentia
     }
 }
 
-export async function storeCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid): Promise<string | Error> {
-    /**
-     * Store the credentials of a company's data source.
-     * @param  {Credentials} credentials credentials of a company's data source.
-     * @param  {Uuid} companyId Unique Id of the company
-     * @param  {Uuid} credentialType Unique Id of the data source
-     * @returns  This function does not return anything
-     */
-
+/**
+ * Store the credentials of a company's data source.
+ * @param  {Credentials} credentials credentials of a company's data source.
+ * @param  {Uuid} companyId Unique Id of the company
+ * @param  {Uuid} credentialType Unique Id of the data source
+ * @returns  This function does not return anything
+ */
+export async function storeCredentials(credentialId: Uuid, credentials: Credentials, companyId: Uuid, credentialType: Uuid): Promise<void | Error> {
     try {
-        const credentialId = uuidv4();
-
-        // 1. Store credentials in credentials table.
-        const response = await writeInCredentialsTable(credentials, credentialId);
+        // 1. Store credentials in kms.
+        const response = addCredentialToKms(credentialId, credentials);
         if (response instanceof Error) {
             return response;
         }
 
         // 2. Writes a mapping of company ID, credential type, and credential ID to the `credentials_store` table.
         const response1 = await writeInCredentialsStoreTable(companyId, credentialType, credentialId);
-
         if (response1 instanceof Error) {
             return response1;
         }
 
-        return Response.Success;
     } catch (e) {
         console.log(e);
         throw e;

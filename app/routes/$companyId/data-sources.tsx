@@ -1,7 +1,8 @@
 import type {ActionFunction} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {Form} from "@remix-run/react";
-import {facebookAdsScope, getRedirectUri} from "~/backend/utilities/data-management/facebookOAuth.server";
+import {getRedirectUri} from "~/backend/utilities/data-management/common.server";
+import {facebookAdsScope} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {CredentialType} from "~/utilities/typeDefinitions";
@@ -17,6 +18,7 @@ export const action: ActionFunction = async ({request, params}) => {
 
     if (body.get("action") == "facebook") {
         const redirectUri = getRedirectUri(companyIdUuid, CredentialType.facebookAds);
+        console.log("Redirect Uri", redirectUri);
 
         // TODO: Create function to get env variables
         const authUrl = `https://www.facebook.com/${process.env.FACEBOOK_API_VERSION!}/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID!}&redirect_uri=${redirectUri}&scope=${facebookAdsScope}`;

@@ -17,17 +17,6 @@ type FacebookAdsCredentials = {
 
 const facebookApiBaseUrl = "https://graph.facebook.com";
 
-export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Error {
-    if (dataSource == CredentialType.facebookAds) {
-        return `${process.env.REDIRECT_BASE_URI!}/${companyId}/capture-authorization-code`;
-    }
-
-    if (dataSource == CredentialType.googleAds) {
-        return `${process.env.REDIRECT_BASE_URI!}/capture-authorization-code`;
-    }
-
-    return Error("Invalid data source!");
-}
 
 
 /**
@@ -35,6 +24,7 @@ export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Erro
  */
 export async function facebookOAuthFlow(authorizationCode: string, companyId: Uuid): Promise<void | Error> {
     const redirectUri = getRedirectUri(companyId, CredentialType.facebookAds);
+    console.log(redirectUri);
     if (redirectUri instanceof Error) {
         return redirectUri;
     }

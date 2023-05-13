@@ -97,3 +97,17 @@ export const companyDatabaseCredentialsMap: {[key: string]: Uuid} = {
     [Companies.Lectrix]: "1dbe5ecb-6ade-4a38-a46b-502f42d65d73" as Uuid,
     [Companies.IntellsysRaw]: "4447787a-f311-43e7-b21c-665ce8b9c52e" as Uuid
 };
+
+// Get it from intellsys-connectors
+export enum ConnectorType {
+    Freshsales = "3ec459aa-ecbd-4829-a89a-9d4284887a1a",
+    GoogleAds = "800c28ce-43ea-44b8-b6fc-077f44566296",
+    FacebookAds = "d80731db-155e-4a24-bc58-158a57edabd7"
+};
+
+export enum ConnectorTableType {
+    FreshsalesContacts = "d56fd051-ae14-40b4-ab4b-ec449738d2ff",
+    FreshsalesContactDetails = "b8936660-e580-4ab3-84f6-49b8a2342d0c",
+    GoogleAds = "4cf54b5c-66eb-4eeb-9a84-71dc42635c13",
+    FacebookAds = "169fbcec-811a-4e27-9ace-9087ee8cf3d5"
+};

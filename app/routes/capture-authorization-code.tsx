@@ -15,7 +15,11 @@ export const loader: LoaderFunction = async ({request}) => {
     }
 
     if (authorizationCode != null) {
-        await googleOAuthFlow(authorizationCode, getUuidFromUnknown(companyId));
+        const response = await googleOAuthFlow(authorizationCode, getUuidFromUnknown(companyId));
+        if(response instanceof Error){
+            throw response;
+        }
+
     } else {
         throw Error("Authorization failed!");
     }

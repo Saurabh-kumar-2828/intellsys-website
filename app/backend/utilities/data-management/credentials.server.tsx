@@ -1,9 +1,10 @@
-import Cryptr from "cryptr";
 import {Companies} from "~/utilities/typeDefinitions";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import type {Uuid} from "~/utilities/typeDefinitions";
-import {getSingletonValueOrNull} from "~/utilities/utilities";
+import {getSingletonValue, getSingletonValueOrNull} from "~/utilities/utilities";
 import {addCredentialToKms, getCredentialFromKms, updateCredentialInKms} from "~/global-common-typescript/server/kms.server";
+import {getSystemPostgresDatabaseManager} from "~/backend/utilities/data-management/common.server";
+import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 
 export interface Credentials {
     [x: string]: string | number | boolean;
@@ -12,7 +13,8 @@ export interface Credentials {
 export enum Response {
     Success = "success",
 }
-const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
+
+export type CredentialId = Uuid;
 
 export async function writeInCredentialsStoreTable(companyId: Uuid, credentialType: Uuid, credentialId: Uuid): Promise<void | Error> {
     const response = await execute(
@@ -43,8 +45,13 @@ export async function writeInCredentialsTable(credentials: Credentials, credenti
 
 }
 
-export async function getCredentialsId(companyId: Uuid, credentialType: Uuid): Promise<Uuid | Error> {
+export async function getCredentialId(companyId: Uuid, credentialType: Uuid): Promise<Uuid | Error> {
     // Returns the credential ID associated with a given company Id and credential type.
+
+    const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
+    if(systemPostgresDatabaseManager instanceof Error) {
+        return systemPostgresDatabaseManager;
+    }
 
     const query1 = `
             SELECT
@@ -57,18 +64,22 @@ export async function getCredentialsId(companyId: Uuid, credentialType: Uuid): P
                 credential_type = $2
         `;
 
-    const credentialIdRaw = await execute(Companies.Intellsys, query1, [companyId, credentialType]);
+    const credentialIdRaw = await systemPostgresDatabaseManager.execute(query1, [companyId, credentialType]);
 
     if (credentialIdRaw instanceof Error) {
         return credentialIdRaw;
     }
-    const credentialIdObject = getSingletonValueOrNull(credentialIdRaw.rows);
 
-    if (credentialIdObject.credential_id == null) {
-        return Error("No credentials found!");
-    } else {
-        return credentialIdObject.credential_id;
-    }
+    const row = getSingletonValue(credentialIdRaw.rows);
+
+    return rowToCredentialId(row);
+
+}
+
+function rowToCredentialId(row: {credential_id: Uuid}): CredentialId {
+    const id: CredentialId = getUuidFromUnknown(row.credential_id);
+
+    return id;
 }
 
 async function getCredentialsById(credentialId: Uuid): Promise<Credentials | Error> {
@@ -82,7 +93,7 @@ async function getCredentialsById(credentialId: Uuid): Promise<Credentials | Err
 
     const credential = JSON.parse(credentialsRaw);
     const credentialsResponse = {
-        access_token: cryptr.decrypt(credential.access_token),
+        access_token: credential.access_token,
         expiry_date: credential.expiry_date,
     };
 
@@ -92,7 +103,7 @@ async function getCredentialsById(credentialId: Uuid): Promise<Credentials | Err
 export async function getCredentials(companyId: Uuid, credentialType: Uuid): Promise<Credentials | Error> {
 
     // 1. Get credential id associated with given company and data source.
-    const credentialId = await getCredentialsId(companyId, credentialType);
+    const credentialId = await getCredentialId(companyId, credentialType);
     if (credentialId instanceof Error) {
         return credentialId;
     }
@@ -138,7 +149,7 @@ export async function storeCredentials(credentialId: Uuid, credentials: Credenti
 }
 
 export async function updateCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid): Promise<void | Error> {
-    const credentialsId = await getCredentialsId(companyId, credentialType);
+    const credentialsId = await getCredentialId(companyId, credentialType);
     if (credentialsId instanceof Error) {
         return credentialsId;
     }

@@ -1,5 +1,6 @@
 import Cryptr from "cryptr";
 import {DateTime} from "luxon";
+import {getRedirectUri} from "~/backend/utilities/data-management/common.server";
 import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
 import {getCredentials, storeCredentials, updateCredentials} from "~/backend/utilities/data-management/credentials.server";
 import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
@@ -23,7 +24,7 @@ const facebookApiBaseUrl = "https://graph.facebook.com";
  * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
  */
 export async function facebookOAuthFlow(authorizationCode: string, companyId: Uuid): Promise<void | Error> {
-    const redirectUri = getRedirectUri(companyId, CredentialType.facebookAds);
+    const redirectUri = getRedirectUri(companyId, CredentialType.FacebookAds);
     console.log(redirectUri);
     if (redirectUri instanceof Error) {
         return redirectUri;
@@ -59,7 +60,7 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
                     .toISO(),
             },
             companyId,
-            CredentialType.facebookAds,
+            CredentialType.FacebookAds,
         );
 
         if (response1 instanceof Error) {
@@ -89,7 +90,7 @@ function convertTokenToFacebookCredentialsType(token: any): FacebookAdsCredentia
  * Retrieves the Facebook Ads credentials for a given company ID.
  */
 export async function getFacebookCredentials(companyId: Uuid): Promise<Credentials | Error> {
-    const credentialsRaw = await getCredentials(companyId, CredentialType.facebookAds);
+    const credentialsRaw = await getCredentials(companyId, CredentialType.FacebookAds);
     if (credentialsRaw instanceof Error) {
         return credentialsRaw;
     } else {
@@ -135,7 +136,7 @@ export async function refreshAccessToken(expiredAccessToken: string, companyId: 
                     .toISO(),
             },
             companyId,
-            CredentialType.facebookAds,
+            CredentialType.FacebookAds,
         );
         return token.accessToken;
     } else {

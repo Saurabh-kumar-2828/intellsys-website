@@ -1,5 +1,5 @@
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {getCredentialsId} from "~/backend/utilities/data-management/credentials.server";
+import {getCredentialId} from "~/backend/utilities/data-management/credentials.server";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {getGranularityQuery} from "~/backend/utilities/utilities.server";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
@@ -276,7 +276,7 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
 }
 
 export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData | Error> {
-    // const credentialId = await getCredentialsId(companyId, CredentialType.databaseNew);
+    // const credentialId = await getCredentialId(companyId, CredentialType.DatabaseNew);
     // if (credentialId instanceof Error) {
     //     return credentialId;
     // }
@@ -317,7 +317,7 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
 }
 
 export async function getFacebookAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData | Error> {
-    const credentialId = await getCredentialsId(companyId, CredentialType.databaseNew);
+    const credentialId = await getCredentialId(companyId, CredentialType.DatabaseNew);
     if (credentialId instanceof Error) {
         return credentialId;
     }

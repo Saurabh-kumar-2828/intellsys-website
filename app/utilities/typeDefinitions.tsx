@@ -77,10 +77,10 @@ export function filterToHumanReadableString(filterType: QueryFilterType) {
 
 
 export const CredentialType:{[key: string]: Uuid} = {
-    facebookAds: "c32d8b45-92fe-44f6-8b61-42c2107dfe87" as Uuid,
-    googleAds: "76fc1962-628f-4e53-898b-9c85c362bf11" as Uuid,
-    databaseNew: "adac3858-fab9-4d36-8bb4-1e3a09247f87" as Uuid,
-    databaseOld: "ac200d5a-cabf-4484-8d84-f96e05a7bef9" as Uuid
+    FacebookAds: "c32d8b45-92fe-44f6-8b61-42c2107dfe87" as Uuid,
+    GoogleAds: "76fc1962-628f-4e53-898b-9c85c362bf11" as Uuid,
+    DatabaseNew: "adac3858-fab9-4d36-8bb4-1e3a09247f87" as Uuid,
+    DatabaseOld: "ac200d5a-cabf-4484-8d84-f96e05a7bef9" as Uuid
 }
 
 export const Companies:{[key: string]: Uuid} =  {

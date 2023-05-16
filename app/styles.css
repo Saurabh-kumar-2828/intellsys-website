@@ -4,4 +4,6 @@
     --ag-font-weight: 400;
 }
 
-.ag-root-wrapper { border-radius: 8px }
+.ag-root-wrapper {
+    border-radius: 8px;
+}

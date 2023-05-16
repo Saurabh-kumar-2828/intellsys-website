@@ -1,9 +1,12 @@
-import {Link} from "@remix-run/react";
+import {Link, useNavigate} from "@remix-run/react";
 import {MenuComponent} from "~/components/menuComponent";
-import {Company, User} from "~/utilities/typeDefinitions";
+import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
+import type {Company, User} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
 
 export function HeaderComponent({userDetails, accessibleCompanies, className}: {userDetails: User | null; accessibleCompanies: Array<Company> | null; className?: string}) {
+    const navigate = useNavigate();
+
     return (
         <div className={concatenateNonNullStringsWithSpaces("tw-sticky tw-top-0 tw-h-16 tw-bg-dark-bg-400", className)}>
             <div className="tw-grid tw-grid-cols-[auto_1fr_auto] tw-items-center tw-p-4">
@@ -15,6 +18,16 @@ export function HeaderComponent({userDetails, accessibleCompanies, className}: {
 
                 {userDetails == null ? null : (
                     <div className="tw-col-start-3 tw-flex tw-flex-row tw-gap-x-4">
+                        <select defaultValue={accessibleCompanies[0].id} onChange={(e) => navigate(`/${e.target.value}`)} className="tw-bg-zinc-800 tw-text-white">
+                            <ItemBuilder
+                                items={accessibleCompanies}
+                                itemBuilder={(accessibleCompany, accessibleCompanyIndex) => (
+                                    <option value={accessibleCompany.id} key={accessibleCompanyIndex}>
+                                        {accessibleCompany.name}
+                                    </option>
+                                )}
+                            />
+                        </select>
                         <img className="tw-w-8 tw-h-8 tw-rounded-full" src={`https://images.growthjockey.com/intellsys/users/${userDetails.id}.jpg`} title={userDetails.name} />
                         <MenuComponent className="tw-h-8" userDetails={userDetails} accessibleCompanies={accessibleCompanies} />
                     </div>

@@ -1,4 +1,5 @@
-import {ActionFunction, LoaderFunction, json} from "@remix-run/node";
+import type {ActionFunction, LoaderFunction} from "@remix-run/node";
+import {json} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {Form, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
@@ -54,7 +55,6 @@ export const loader: LoaderFunction = async ({request, params}) => {
     const companyIdUuid = getUuidFromUnknown(companyId);
 
     const response = await doesConnectorIdExists(companyIdUuid, ConnectorType.GoogleAds);
-    console.log(response);
     return json(response);
 }
 

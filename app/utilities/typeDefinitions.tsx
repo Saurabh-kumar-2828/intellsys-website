@@ -111,3 +111,7 @@ export enum ConnectorTableType {
     GoogleAds = "4cf54b5c-66eb-4eeb-9a84-71dc42635c13",
     FacebookAds = "169fbcec-811a-4e27-9ace-9087ee8cf3d5"
 };
+
+export enum dataSourcesAbbreviations {
+    googleAds = "GAD",
+}

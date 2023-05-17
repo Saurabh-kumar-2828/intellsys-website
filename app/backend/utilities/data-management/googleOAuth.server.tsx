@@ -1,8 +1,7 @@
-import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
 import {getCredentialId} from "~/backend/utilities/data-management/credentials.server";
 import {storeCredentials} from "~/backend/utilities/data-management/credentials.server";
-import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import type {Uuid} from "~/utilities/typeDefinitions";
+import {dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import {ConnectorTableType, ConnectorType} from "~/utilities/typeDefinitions";
 import {CredentialType} from "~/utilities/typeDefinitions";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
@@ -12,7 +11,6 @@ import type {Integer} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
-import type {Jwt} from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
 
@@ -27,27 +25,11 @@ export type GoogleAdsCredentials = {
     googleLoginCustomerId: string
 };
 
-/**
- * Sends a request to the Google Ads OAuth2 API to refresh an access token.
- */
-function convertTokenToGoogleCredentialsType(credentials: Credentials): GoogleAdsCredentials | Error {
-    try {
-        if (credentials.access_token == undefined || credentials.expires_in == undefined) {
-            return Error("Google credentials not valid");
-        }
-
-        let result: GoogleAdsCredentials = {
-            refreshToken: credentials.refresh_token != undefined ? (credentials.refresh_token as string) : "",
-        };
-
-        return result;
-    } catch (error_: unknown) {
-        const error = getErrorFromUnknown(error_);
-        return error;
-    }
+export type GoogleAdsAccessToken = {
+    accessToken: string
 }
 
-export async function getGoogleAdsRefreshToken(authorizationCode: string, companyId: Uuid): Promise<any | Error> {
+export async function getGoogleAdsRefreshToken(authorizationCode: string, companyId: Uuid): Promise<string | Error> {
     const redirectUri = getRedirectUri(companyId, CredentialType.GoogleAds);
     if (redirectUri instanceof Error) {
         return redirectUri;
@@ -62,8 +44,11 @@ export async function getGoogleAdsRefreshToken(authorizationCode: string, compan
     });
     const rawResponse = await response.json();
 
-    const token = convertTokenToGoogleCredentialsType(rawResponse);
-    return token;
+    if(rawResponse.refresh_token == undefined) {
+        return Error("Refresh token not found");
+    }
+
+    return rawResponse.refresh_token;
 }
 
 
@@ -90,6 +75,7 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
         // Destination = Company's Database.
         const companyDatabaseCredentialId = await getDestinationCredentialId(companyId);
         if (companyDatabaseCredentialId instanceof Error) {
+
             return companyDatabaseCredentialId;
         }
 
@@ -132,6 +118,11 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
         await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
         await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
 
+        const createTableResponse = await createTable(companyDatabaseCredentialId, credentials);
+        if(createTableResponse instanceof Error){
+            throw Error("Failed to create table!");
+        }
+
         const dataIngestionResponse = await ingestGoogleAdsData(getUuidFromUnknown(connectorId), 15);
         if (dataIngestionResponse instanceof Error) {
             return dataIngestionResponse;
@@ -142,6 +133,33 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
         console.log(e);
     }
 }
+
+
+export async function createTable(databaseCredentialId: Uuid, googleAdsCredentials: GoogleAdsCredentials): Promise<Error | void> {
+    const postgresDatabaseManager = await getPostgresDatabaseManager(databaseCredentialId);
+    if (postgresDatabaseManager instanceof Error) {
+        return postgresDatabaseManager;
+    }
+    // TODO: check if it is right id
+
+    const tableName = `${dataSourcesAbbreviations.googleAds}_${googleAdsCredentials.googleLoginCustomerId}`;
+    const response = await postgresDatabaseManager.execute(
+        `
+            CREATE TABLE ${tableName} (
+                id text NOT NULL,
+                ingested_at timestamp NOT NULL,
+                "data" json NOT NULL,
+                CONSTRAINT ${tableName}_pkey PRIMARY KEY (id)
+            );
+        `
+    )
+
+    if(response instanceof Error){
+        return response;
+    }
+
+}
+
 
 export async function ingestGoogleAdsData(connectorId: Uuid, duration: Integer): Promise<void | Error> {
     const url = `${getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_URL")}/googleads/historical`;

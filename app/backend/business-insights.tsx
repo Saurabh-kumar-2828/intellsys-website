@@ -276,10 +276,7 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
 }
 
 export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData | Error> {
-    // const credentialId = await getCredentialId(companyId, CredentialType.DatabaseNew);
-    // if (credentialId instanceof Error) {
-    //     return credentialId;
-    // }
+    // Get credential id from connector
 
     const postgresDatabaseManager = await getPostgresDatabaseManager(getUuidFromUnknown(getRequiredEnvironmentVariableNew("GOOGLE_ADS_CREDENTIAL_ID")));
 

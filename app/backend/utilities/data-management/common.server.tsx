@@ -5,7 +5,7 @@ import {getPostgresDatabaseManager} from "~/global-common-typescript/server/post
 import type {Iso8601DateTime, Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getCurrentIsoTimestamp} from "~/global-common-typescript/utilities/utilities";
-import type {ConnectorType} from "~/utilities/typeDefinitions";
+import type {ConnectorTableType, ConnectorType} from "~/utilities/typeDefinitions";
 import {CredentialType} from "~/utilities/typeDefinitions";
 import {getSingletonValue, getSingletonValueOrNull} from "~/utilities/utilities";
 
@@ -78,9 +78,7 @@ export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Erro
     }
 
     if (dataSource == CredentialType.GoogleAds) {
-        console.log("in google ads")
         const url =  `${process.env.REDIRECT_BASE_URI!}/capture-authorization-code`;
-        console.log(url);
         return url;
     }
 
@@ -108,13 +106,11 @@ export async function mapCompanyIdToConnectorId(systemPostgresDatabaseManager: P
     }
 }
 
-export async function initializeConnectorAndSubConnector(systemConnectorsDatabaseManager: PostgresDatabaseManager, connectorId: Uuid, sourceCredentialId: Uuid, destinationCredentialId: Uuid, comments: string, connectorTableType: ConnectorTableType, connectorType: ConnectorType, credentialType: Uuid): Promise<void | Error> {
+export async function initializeConnectorAndSubConnector(systemConnectorsDatabaseManager: PostgresDatabaseManager, connectorId: Uuid, sourceCredentialId: Uuid, destinationCredentialId: Uuid, comments: string, connectorTableType: ConnectorTableType, connectorType: ConnectorType): Promise<void | Error> {
 
     const currentTimestamp = getCurrentIsoTimestamp();
 
     const historicalCursorThreshold = DateTime.fromISO(currentTimestamp).minus({days: 15}).toJSDate().toISOString() as Iso8601DateTime;
-
-    console.log(1);
 
     const connectorResponse = await systemConnectorsDatabaseManager.execute(
         `
@@ -133,14 +129,10 @@ export async function initializeConnectorAndSubConnector(systemConnectorsDatabas
         [connectorId, currentTimestamp, currentTimestamp, connectorType, sourceCredentialId, destinationCredentialId, comments]
     );
 
-    console.log(2);
-
     if (connectorResponse instanceof Error) {
-        console.log(3);
         return connectorResponse;
     }
 
-    console.log(4);
     const subConnectorResponse = await systemConnectorsDatabaseManager.execute(
         `
             INSERT INTO
@@ -158,13 +150,9 @@ export async function initializeConnectorAndSubConnector(systemConnectorsDatabas
         [connectorId, connectorTableType, currentTimestamp, currentTimestamp, currentTimestamp, historicalCursorThreshold, comments]
     );
 
-    console.log(5);
     if (subConnectorResponse instanceof Error) {
-        console.log(6);
         return subConnectorResponse;
     }
-
-    console.log(7)
 
 }
 
@@ -227,7 +215,7 @@ export async function getConnectorId(companyId: Uuid, connectorType: ConnectorTy
 /**
  * Retrieves a connector Id associated with a given company Id and connector type.
  */
-export async function doesConnectorIdExists(companyId: Uuid, connectorType: ConnectorType): Promise<bool> {
+export async function doesConnectorIdExists(companyId: Uuid, connectorType: ConnectorType): Promise<boolean> {
     // Remove this function
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
     if(systemPostgresDatabaseManager instanceof Error) {
@@ -323,5 +311,3 @@ export async function deleteConnectorAndSubconnector(connectorId: Uuid): Promise
         return connectorMetadataResponse;
     }
 }
-
-

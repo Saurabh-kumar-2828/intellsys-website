@@ -1,4 +1,3 @@
-import Cryptr from "cryptr";
 import {DateTime} from "luxon";
 import {getRedirectUri} from "~/backend/utilities/data-management/common.server";
 import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
@@ -7,7 +6,6 @@ import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {CredentialType} from "~/utilities/typeDefinitions";
 
-const cryptr = new Cryptr(process.env.ENCRYPTION_KEY!);
 export const facebookAdsScope = "ads_read, ads_management";
 
 type FacebookAdsCredentials = {
@@ -54,7 +52,7 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
         // Store credentials in database.
         const response1 = await storeCredentials(
             {
-                access_token: cryptr.encrypt(acceseTokenObject.accessToken),
+                access_token: acceseTokenObject.accessToken,
                 expiry_date: DateTime.now()
                     .plus({seconds: parseInt(acceseTokenObject.expiryDate)})
                     .toISO(),
@@ -130,7 +128,7 @@ export async function refreshAccessToken(expiredAccessToken: string, companyId: 
         // Update credentials in database.
         await updateCredentials(
             {
-                access_token: cryptr.encrypt(token.access_token),
+                access_token: token.access_token,
                 expiry_date: DateTime.now()
                     .plus({seconds: parseInt(token.expiryDate)})
                     .toISO(),

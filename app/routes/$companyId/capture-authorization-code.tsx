@@ -1,4 +1,5 @@
-import {LoaderFunction, redirect} from "@remix-run/node";
+import type {LoaderFunction} from "@remix-run/node";
+import {redirect} from "@remix-run/node";
 import {facebookOAuthFlow} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";

@@ -9,7 +9,7 @@ import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValid
 import {ConnectorType, CredentialType} from "~/utilities/typeDefinitions";
 
 export const action: ActionFunction = async ({request, params}) => {
-    const body = await request.formData();
+const body = await request.formData();
     const companyId = params.companyId;
     if (companyId == null) {
         throw new Response(null, {status: 404});
@@ -54,14 +54,13 @@ export const loader: LoaderFunction = async ({request, params}) => {
     const companyIdUuid = getUuidFromUnknown(companyId);
 
     const response = await doesConnectorIdExists(companyIdUuid, ConnectorType.GoogleAds);
-
+    console.log(response);
     return json(response);
 }
 
 export default function () {
 
     const googleConnectorExists: boolean = useLoaderData();
-
 
     return (
         <div className="tw-p-8 tw-grid tw-h-32 tw-grid-cols-4 tw-gap-0">

@@ -4,12 +4,14 @@ import type {ActionFunction, LoaderFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
-import {GoogleAdsCredentials, getGoogleAdsRefreshToken, ingestAndStoreGoogleAdsData, storeGoogleAdsOAuthDetails} from "~/backend/utilities/data-management/googleOAuth.server";
+import {GoogleAdsCredentials, checkGoogleAdsConnectorExistsForAccount, getGoogleAdsRefreshToken, ingestAndStoreGoogleAdsData, storeGoogleAdsOAuthDetails} from "~/backend/utilities/data-management/googleOAuth.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 import type {Jwt} from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
+import {generateUuid} from "~/global-common-typescript/utilities/utilities";
+import {google} from "@google-analytics/data/build/protos/protos";
 
 type LoaderData = {
     accessTokenJwt: string
@@ -54,20 +56,37 @@ export const action: ActionFunction = async ({request}) => {
         const body = await request.formData();
 
         const googleAccountId = body.get("googleAccountId") as string;
-
         const googleLoginCustomerId = body.get("googleLoginCustomerId") as string;
-        const googleAdsCredentials = body.get("googleAdsCredentials") as string;
+        const googleAdsRefreshToken = body.get("googleAdsRefreshToken") as string;
 
-        const credentialsDecoded = jwt.verify(googleAdsCredentials, getRequiredEnvironmentVariable("TOKEN_SECRET")) as GoogleAdsCredentials;
+        const refreshTokenDecoded = jwt.verify(googleAdsRefreshToken, getRequiredEnvironmentVariable("TOKEN_SECRET")) as string;
 
-        credentialsDecoded.googleAccountId = googleAccountId;
-        credentialsDecoded.googleLoginCustomerId = googleLoginCustomerId;
+        const accountExists = await checkGoogleAdsConnectorExistsForAccount(googleLoginCustomerId);
+        if(accountExists instanceof Error){
+            return accountExists;
+        }
 
-        const credentialsJwt = jwt.sign(credentialsDecoded, getRequiredEnvironmentVariable("TOKEN_SECRET")) as any as string
+        // Cannot create new connector, if connector with account already exists.
+        if(accountExists){
+            return redirect(`/${companyId}/data-sources`);
+        }
 
-        await ingestAndStoreGoogleAdsData(credentialsJwt, getUuidFromUnknown(companyId));
+        const googleAdsCredentials: GoogleAdsCredentials = {
+            refreshToken: refreshTokenDecoded,
+            googleAccountId: googleAccountId,
+            googleLoginCustomerId: googleLoginCustomerId
+        }
 
-        return redirect(`/${companyId}/data-sources`);
+        const credentialsJwt = jwt.sign(googleAdsCredentials, getRequiredEnvironmentVariable("TOKEN_SECRET")) as any as string
+
+        const connectorId = generateUuid();
+
+        const response = await ingestAndStoreGoogleAdsData(credentialsJwt, getUuidFromUnknown(companyId), connectorId);
+        if(response instanceof Error){
+            throw response;
+        }
+
+        return redirect(`/${companyId}/data-sources/googleAds/${connectorId}`);
 
     } catch (e) {
         console.log(e);
@@ -88,7 +107,7 @@ export default function () {
                             <label>Google Account ID</label>
                         </div>
                         <div className="tw-col-start-2">
-                            <input type="text" name="googleAccountId" required />
+                            <input type="text" name="googleAccountId" className="tw-p-1" required />
                         </div>
                     </div>
 
@@ -99,11 +118,11 @@ export default function () {
                             <label>Google Login Cusotmer ID</label>
                         </div>
                         <div className="tw-col-start-2">
-                            <input type="text" name="googleLoginCustomerId" required />
+                            <input type="text" name="googleLoginCustomerId" className="tw-p-1" required />
 
                             {/* Add toast if accesstoken not available */}
 
-                            <input type="text" name="googleAdsCredentials" value={refreshToken.accessTokenJwt} hidden />
+                            <input type="text" name="googleAdsRefreshToken" value={refreshToken.accessTokenJwt} hidden />
                         </div>
                     </div>
                 </div>

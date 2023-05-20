@@ -1,4 +1,5 @@
 import {DateTime} from "luxon";
+import {Credentials} from "~/backend/utilities/data-management/credentials.server";
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
 import type {PostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
@@ -10,6 +11,11 @@ import {CredentialType} from "~/utilities/typeDefinitions";
 import {getSingletonValue, getSingletonValueOrNull} from "~/utilities/utilities";
 
 export type ConnectorId = Uuid;
+
+export type SourceAndDestinationId = {
+    sourceId: Uuid,
+    destinationId: Uuid
+}
 
 /**
  * Retrives internal Postgres database of the system.
@@ -62,7 +68,7 @@ export async function getDestinationCredentialId(companyId: Uuid): Promise<Uuid 
         [companyId]
     );
 
-    if(response instanceof Error){
+    if (response instanceof Error) {
         return response;
     }
 
@@ -78,7 +84,7 @@ export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Erro
     }
 
     if (dataSource == CredentialType.GoogleAds) {
-        const url =  `${process.env.REDIRECT_BASE_URI!}/capture-authorization-code`;
+        const url = `${process.env.REDIRECT_BASE_URI!}/capture-authorization-code`;
         return url;
     }
 
@@ -106,7 +112,7 @@ export async function mapCompanyIdToConnectorId(systemPostgresDatabaseManager: P
     }
 }
 
-export async function initializeConnectorAndSubConnector(systemConnectorsDatabaseManager: PostgresDatabaseManager, connectorId: Uuid, sourceCredentialId: Uuid, destinationCredentialId: Uuid, comments: string, connectorTableType: ConnectorTableType, connectorType: ConnectorType): Promise<void | Error> {
+export async function initializeConnectorAndSubConnector(systemConnectorsDatabaseManager: PostgresDatabaseManager, connectorId: Uuid, sourceCredentialId: Uuid, destinationCredentialId: Uuid, comments: string, connectorTableType: ConnectorTableType, connectorType: ConnectorType, extraInformation?: string): Promise<void | Error> {
 
     const currentTimestamp = getCurrentIsoTimestamp();
 
@@ -123,10 +129,11 @@ export async function initializeConnectorAndSubConnector(systemConnectorsDatabas
                 $4,
                 $5,
                 $6,
-                $7
+                $7,
+                $8
             )
         `,
-        [connectorId, currentTimestamp, currentTimestamp, connectorType, sourceCredentialId, destinationCredentialId, comments]
+        [connectorId, currentTimestamp, currentTimestamp, connectorType, sourceCredentialId, destinationCredentialId, comments, extraInformation]
     );
 
     if (connectorResponse instanceof Error) {
@@ -156,12 +163,9 @@ export async function initializeConnectorAndSubConnector(systemConnectorsDatabas
 
 }
 
-/**
- * Delete a connector Id associated with a given company Id and connector type.
- */
 export async function deleteCompanyIdToConnectorIdMapping(connectorId: Uuid): Promise<void | Error> {
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
-    if(systemPostgresDatabaseManager instanceof Error) {
+    if (systemPostgresDatabaseManager instanceof Error) {
         throw systemPostgresDatabaseManager;
     }
 
@@ -185,7 +189,7 @@ export async function deleteCompanyIdToConnectorIdMapping(connectorId: Uuid): Pr
  */
 export async function getConnectorId(companyId: Uuid, connectorType: ConnectorType): Promise<Uuid | Error> {
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
-    if(systemPostgresDatabaseManager instanceof Error) {
+    if (systemPostgresDatabaseManager instanceof Error) {
         throw systemPostgresDatabaseManager;
     }
 
@@ -213,12 +217,53 @@ export async function getConnectorId(companyId: Uuid, connectorType: ConnectorTy
 }
 
 /**
+ * Retrieves source and destination ids associated with connector id.
+ */
+export async function getSourceAndDestinationId(connectorId: Uuid): Promise<SourceAndDestinationId | Error> {
+    const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
+    if (systemConnectorsDatabaseManager instanceof Error) {
+        throw systemConnectorsDatabaseManager;
+    }
+
+    const query1 = `
+            SELECT
+                source_credentials_id,
+                destination_credentials_id
+            FROM
+                connectors
+            WHERE
+                id=$1
+        `;
+
+    const connectorResponse = await systemConnectorsDatabaseManager.execute(query1, [connectorId]);
+
+    if (connectorResponse instanceof Error) {
+        return connectorResponse;
+    }
+
+    const row = getSingletonValue(connectorResponse.rows);
+
+    // TODO: Refactor the implementation.
+    return rowToSourceAndDestinationId(row);
+
+}
+
+function rowToSourceAndDestinationId(row: Credentials): SourceAndDestinationId {
+    const result: SourceAndDestinationId = {
+        sourceId: getUuidFromUnknown(row.source_credentials_id),
+        destinationId: getUuidFromUnknown(row.destination_credentials_id)
+    }
+
+    return result;
+}
+
+/**
  * Retrieves a connector Id associated with a given company Id and connector type.
  */
 export async function doesConnectorIdExists(companyId: Uuid, connectorType: ConnectorType): Promise<boolean> {
     // Remove this function
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
-    if(systemPostgresDatabaseManager instanceof Error) {
+    if (systemPostgresDatabaseManager instanceof Error) {
         throw systemPostgresDatabaseManager;
     }
 
@@ -240,7 +285,7 @@ export async function doesConnectorIdExists(companyId: Uuid, connectorType: Conn
     }
 
     const row = getSingletonValueOrNull(credentialIdRaw.rows);
-    if(row == null){
+    if (row == null) {
         return false;
     }
     return true;
@@ -257,7 +302,7 @@ function rowToConnectorId(row: any): ConnectorId {
  */
 export async function deleteCompanyIdToCredentialIdMapping(credentialId: Uuid): Promise<void | Error> {
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
-    if(systemPostgresDatabaseManager instanceof Error) {
+    if (systemPostgresDatabaseManager instanceof Error) {
         throw systemPostgresDatabaseManager;
     }
 
@@ -281,7 +326,7 @@ export async function deleteCompanyIdToCredentialIdMapping(credentialId: Uuid): 
  */
 export async function deleteConnectorAndSubconnector(connectorId: Uuid): Promise<void | Error> {
     const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
-    if(systemConnectorsDatabaseManager instanceof Error) {
+    if (systemConnectorsDatabaseManager instanceof Error) {
         throw systemConnectorsDatabaseManager;
     }
 

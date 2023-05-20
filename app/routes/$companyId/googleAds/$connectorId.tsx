@@ -90,6 +90,9 @@ export const loader: LoaderFunction = async ({request, params}) => {
         throw new Response(null, {status: 404});
     }
 
+    const connectorId = params.connectorId;
+    console.log(connectorId);
+
     const urlSearchParams = new URL(request.url).searchParams;
 
     const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));

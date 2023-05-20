@@ -5,12 +5,13 @@ import {Form, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {doesConnectorIdExists, getConnectorId, getRedirectUri} from "~/backend/utilities/data-management/common.server";
 import {facebookAdsScope} from "~/backend/utilities/data-management/facebookOAuth.server";
-import {deleteCredentialsFromSources, googleAdsScope, ingestGoogleAdsData} from "~/backend/utilities/data-management/googleOAuth.server";
+import {Connector, deleteCredentialsFromSources, getGoogleAdsConnectorsAssociatedWithCompanyId, googleAdsScope, ingestGoogleAdsData} from "~/backend/utilities/data-management/googleOAuth.server";
+import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {ConnectorType, CredentialType} from "~/utilities/typeDefinitions";
+import {ConnectorType, CredentialType, Uuid} from "~/utilities/typeDefinitions";
 
 export const action: ActionFunction = async ({request, params}) => {
-const body = await request.formData();
+    const body = await request.formData();
     const companyId = params.companyId;
     if (companyId == null) {
         throw new Response(null, {status: 404});
@@ -37,10 +38,11 @@ const body = await request.formData();
 
         return redirect(url);
 
-    } else if(body.get("action") == "deleteGoogleAds") {
+    } else if (body.get("action") == "deleteGoogleAds") {
 
-        await deleteCredentialsFromSources(companyIdUuid, CredentialType.GoogleAds, ConnectorType.GoogleAds)
-
+        const connectorId = body.get("connectorId") as Uuid;
+        const loginCustomerId = body.get("loginCustomerId") as Uuid;
+        await deleteCredentialsFromSources(connectorId, loginCustomerId, ConnectorType.GoogleAds)
     }
 
     return null;
@@ -54,17 +56,17 @@ export const loader: LoaderFunction = async ({request, params}) => {
 
     const companyIdUuid = getUuidFromUnknown(companyId);
 
-    const response = await doesConnectorIdExists(companyIdUuid, ConnectorType.GoogleAds);
-    return json(response);
+    const connectorDetails = await getGoogleAdsConnectorsAssociatedWithCompanyId(companyIdUuid);
+
+    return json(connectorDetails);
 }
 
 export default function () {
-
-    const googleConnectorExists: boolean = useLoaderData();
+    const googleAdsConnectors = useLoaderData<Array<Connector>>();
 
     return (
-        <div className="tw-p-8 tw-grid tw-h-32 tw-grid-cols-4 tw-gap-0">
-            <div className="tw-col-start-1">
+        <div className="tw-p-8 tw-grid tw-grid-rows-auto tw-gap-2">
+            <div className="tw-row-start-1">
                 {/* <Form method="post">
                     <input
                         type="hidden"
@@ -73,28 +75,51 @@ export default function () {
                     />
                     <button className="tw-lp-button tw-bg-blue-500">Authorize Facebook Account</button>
                 </Form> */}
-                    <Form method="post">
-                        <input
-                            type="hidden"
-                            name="action"
-                            value="google"
-                        />
-                        <button className="tw-lp-button tw-bg-blue-700 disabled:opacity-25" disabled={googleConnectorExists}>Authorize Google Account</button>
-                    </Form>
-                    {
-                        googleConnectorExists ? <div className="tw-text-[1rem] tw-text-center">Connected</div> : <div></div>
-
-                    }
-            </div>
-            <div className="tw-col-start-2">
                 <Form method="post">
                     <input
                         type="hidden"
                         name="action"
-                        value="deleteGoogleAds"
+                        value="google"
                     />
-                    <button className="tw-lp-button tw-bg-red-500 disabled:opacity-25" disabled={!googleConnectorExists}>Delete Connector</button>
+                    <button className="tw-lp-button tw-bg-blue-700 disabled:opacity-25" disabled={googleConnectorExists}>Authorize Google Account</button>
                 </Form>
+                {
+                    googleConnectorExists ? <div className="tw-text-[1rem] tw-text-center">Connected</div> : <div></div>
+                }
+            </div>
+            <div className="tw-row-start-2">
+                <div className="tw-grid tw-grid-rows-auto tw-gap-2">
+                    <div className="tw-flex tw-flex-col tw-gap-y-4">
+                        <div className="tw-flex tw-flex-row tw-flex-auto tw-gap-x-8">
+                            <div className="tw-font-bold tw-font-sans">Connector Id</div>
+                            <div className="tw-font-bold tw-font-sans">Account Id</div>
+                            <div className="tw-font-bold tw-font-sans">Actions</div>
+                        </div>
+                        <ItemBuilder
+                            items={googleAdsConnectors}
+                            itemBuilder={(connector, connectorIndex) => (
+                                <Form method="post" className="tw-flex tw-flex-row tw-flex-auto tw-gap-x-8">
+                                    <input
+                                        type="hidden"
+                                        name="action"
+                                        value="deleteGoogleAds"
+                                    />
+                                    <input
+                                        name="connectorId"
+                                        value={connector.id}
+                                        readOnly
+                                    />
+                                    <input
+                                        name="loginCustomerId"
+                                        value={connector.loginCustomerId}
+                                        readOnly
+                                    />
+                                    <button className="tw-lp-button tw-bg-red-500 disabled:opacity-25" >Delete Connector</button>
+                                </Form>
+                            )}
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -10,6 +10,8 @@ import {HeaderComponent} from "~/components/headerComponent";
 import {LoaderComponent} from "~/components/loaderComponent";
 import tailwindStylesheet from "~/tailwind.css";
 import type {Company, User} from "~/utilities/typeDefinitions";
+import {getCookieSession } from "./backend/utilities/cookieSessions.server";
+import { getRequiredEnvironmentVariable } from "./backend/utilities/utilities.server";
 
 type LoaderData = {
     userDetails: User | null;
@@ -18,6 +20,10 @@ type LoaderData = {
 
 export const loader: LoaderFunction = async ({request}) => {
     // TODO: Remove all this from here
+
+    console.log(getRequiredEnvironmentVariable("SESSION_SECRET"));
+    const session = await getCookieSession(request.headers.get("Cookie"));
+    console.log(session.get("accessToken"));
 
     const accessToken = await getAccessTokenFromCookies(request);
 

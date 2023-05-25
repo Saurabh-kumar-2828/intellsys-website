@@ -2,13 +2,14 @@ import type {ActionFunction, LoaderFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {Form, useLoaderData} from "@remix-run/react";
-import {useState} from "react";
-import {doesConnectorIdExists, getConnectorId, getRedirectUri} from "~/backend/utilities/data-management/common.server";
+import {getRedirectUri} from "~/backend/utilities/data-management/common.server";
 import {facebookAdsScope} from "~/backend/utilities/data-management/facebookOAuth.server";
-import {Connector, deleteCredentialsFromSources, getGoogleAdsConnectorsAssociatedWithCompanyId, googleAdsScope, ingestGoogleAdsData} from "~/backend/utilities/data-management/googleOAuth.server";
+import type {Connector} from "~/backend/utilities/data-management/googleOAuth.server";
+import {deleteCredentialsFromSources, getGoogleAdsConnectorsAssociatedWithCompanyId, googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {ConnectorType, CredentialType, Uuid} from "~/utilities/typeDefinitions";
+import type {Uuid} from "~/utilities/typeDefinitions";
+import {ConnectorType, CredentialType} from "~/utilities/typeDefinitions";
 
 export const action: ActionFunction = async ({request, params}) => {
     const body = await request.formData();
@@ -81,16 +82,13 @@ export default function () {
                         name="action"
                         value="google"
                     />
-                    <button className="tw-lp-button tw-bg-blue-700 disabled:opacity-25" disabled={googleConnectorExists}>Authorize Google Account</button>
+                    <button className="tw-lp-button tw-bg-blue-700 disabled:opacity-25" >Authorize Google Account</button>
                 </Form>
-                {
-                    googleConnectorExists ? <div className="tw-text-[1rem] tw-text-center">Connected</div> : <div></div>
-                }
             </div>
             <div className="tw-row-start-2">
                 <div className="tw-grid tw-grid-rows-auto tw-gap-2">
-                    <div className="tw-flex tw-flex-col tw-gap-y-4">
-                        <div className="tw-flex tw-flex-row tw-flex-auto tw-gap-x-8">
+                    <div className="tw-flex tw-flex-col tw-w-auto tw-gap-y-4">
+                        <div className="tw-flex tw-flex-row tw-flex-auto tw-gap-x-8 tw-items-center tw-justify-center">
                             <div className="tw-font-bold tw-font-sans">Connector Id</div>
                             <div className="tw-font-bold tw-font-sans">Account Id</div>
                             <div className="tw-font-bold tw-font-sans">Actions</div>
@@ -98,7 +96,7 @@ export default function () {
                         <ItemBuilder
                             items={googleAdsConnectors}
                             itemBuilder={(connector, connectorIndex) => (
-                                <Form method="post" className="tw-flex tw-flex-row tw-flex-auto tw-gap-x-8">
+                                <Form method="post" className="tw-bg-dark-bg-400 tw-p-4 tw-flex tw-flex-row tw-gap-x-8 tw-flex-1 tw-items-center tw-justify-center">
                                     <input
                                         type="hidden"
                                         name="action"
@@ -122,5 +120,6 @@ export default function () {
                 </div>
             </div>
         </div>
+
     );
 }

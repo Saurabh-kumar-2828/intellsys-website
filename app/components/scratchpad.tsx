@@ -2,13 +2,15 @@ import {Listbox} from "@headlessui/react";
 import {Link} from "@remix-run/react";
 import {ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
 import {DateTime, Info} from "luxon";
+import {RadioGroup, Switch} from "@headlessui/react";
 import {useId} from "react";
-import {Clipboard, Funnel, FunnelFill, InfoCircle} from "react-bootstrap-icons";
+import {CheckCircle, Circle, Clipboard, Funnel, FunnelFill, InfoCircle} from "react-bootstrap-icons";
 import {Doughnut} from "react-chartjs-2";
 import {toast} from "react-toastify";
-import {TimeGranularity} from "~/backend/business-insights";
+import type {TimeGranularity} from "~/backend/business-insights";
 import {filterToHumanReadableString, filterToTextColor, TimeZones, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithAmpersand, concatenateNonNullStringsWithSpaces, numberToHumanFriendlyString} from "~/utilities/utilities";
+import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 
 export function FancySearchableSelect(props: {className?: string; options: Array<string>; label: string; selectedOption; setSelectedOption}) {
     return (
@@ -388,6 +390,34 @@ export function GenericCard(props: {content: JSX.Element; label?: string; classN
             {props.content}
             {props.label == null ? null : <div className="tw-font-bold">{props.label}</div>}
         </div>
+    );
+}
+
+export function IntellsysRadioButtons<T>({items, selectedItem, setSelectedItem}: {items: Array<T>; selectedItem: T; setSelectedItem: (items: T) => void}) {
+    return (
+        <RadioGroup
+            value={selectedItem}
+            onChange={setSelectedItem}
+            className="tw-w-full tw-grid tw-grid-flow-row tw-content-center tw-gap-y-4"
+        >
+            <ItemBuilder
+                items={items}
+                itemBuilder={(item, itemIndex) => (
+                    <RadioGroup.Option
+                        value={item}
+                        key={itemIndex}
+                    >
+                        {({checked}) => (
+                            <div className="tw-pl-4 tw-pr-8 tw-py-[0.9375rem] tw-rounded-full tw-border-[0.0625rem] tw-border-solid gj-border-foreground-900 gj-text-foreground-900 tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
+                                {checked ? <CheckCircle className="tw-w-6 tw-h-6 gj-text-primary-500" /> : <Circle className="tw-w-6 tw-h-6 gj-text-foreground-500" />}
+
+                                {item}
+                            </div>
+                        )}
+                    </RadioGroup.Option>
+                )}
+            />
+        </RadioGroup>
     );
 }
 

@@ -4,17 +4,24 @@ import type {ActionFunction, LoaderFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
-import {GoogleAdsCredentials, checkGoogleAdsConnectorExistsForAccount, getGoogleAdsRefreshToken, ingestAndStoreGoogleAdsData, storeGoogleAdsOAuthDetails} from "~/backend/utilities/data-management/googleOAuth.server";
+import type {AccessibleAccount, GoogleAdsCredentials} from "~/backend/utilities/data-management/googleOAuth.server";
+import {getAccessibleAccounts} from "~/backend/utilities/data-management/googleOAuth.server";
+import {checkGoogleAdsConnectorExistsForAccount, getGoogleAdsRefreshToken, ingestAndStoreGoogleAdsData} from "~/backend/utilities/data-management/googleOAuth.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 import type {Jwt} from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
-import {google} from "@google-analytics/data/build/protos/protos";
+import {useState} from 'react'
+import {RadioGroup, Switch} from "@headlessui/react";
+import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
+import {CheckCircle, Circle} from "react-bootstrap-icons";
+
 
 type LoaderData = {
-    accessTokenJwt: string
+    refreshTokenJwt: string,
+    accessibleAccounts: Array<AccessibleAccount>
 };
 
 export const loader: LoaderFunction = async ({request}) => {
@@ -27,7 +34,7 @@ export const loader: LoaderFunction = async ({request}) => {
         throw new Response(null, {status: 404});
     }
 
-    if(authorizationCode == null){
+    if (authorizationCode == null) {
         throw Error("Authorization failed!");
     }
 
@@ -36,9 +43,12 @@ export const loader: LoaderFunction = async ({request}) => {
         return refreshToken;
     }
 
+    const accessibleAccounts = await getAccessibleAccounts(refreshToken);
+
     // TODO: Get multiple accounts
     return json({
-        accessTokenJwt: jwt.sign(refreshToken, getRequiredEnvironmentVariable("TOKEN_SECRET")) as any as Jwt,
+        refreshTokenJwt: jwt.sign(refreshToken, getRequiredEnvironmentVariable("TOKEN_SECRET")) as any as Jwt,
+        accessibleAccounts: accessibleAccounts
     });
 
 };
@@ -62,12 +72,12 @@ export const action: ActionFunction = async ({request}) => {
         const refreshTokenDecoded = jwt.verify(googleAdsRefreshToken, getRequiredEnvironmentVariable("TOKEN_SECRET")) as string;
 
         const accountExists = await checkGoogleAdsConnectorExistsForAccount(googleLoginCustomerId);
-        if(accountExists instanceof Error){
-            return accountExists;
+        if (accountExists instanceof Error) {
+            return Error("Account already exists");
         }
 
         // Cannot create new connector, if connector with account already exists.
-        if(accountExists){
+        if (accountExists) {
             return redirect(`/${companyId}/data-sources`);
         }
 
@@ -82,7 +92,7 @@ export const action: ActionFunction = async ({request}) => {
         const connectorId = generateUuid();
 
         const response = await ingestAndStoreGoogleAdsData(credentialsJwt, getUuidFromUnknown(companyId), connectorId);
-        if(response instanceof Error){
+        if (response instanceof Error) {
             throw response;
         }
 
@@ -96,37 +106,39 @@ export const action: ActionFunction = async ({request}) => {
 }
 
 export default function () {
-    const refreshToken = useLoaderData<LoaderData>();
+    const {refreshTokenJwt, accessibleAccounts} = useLoaderData<LoaderData>();
+    const [selectedAccount, setSelectedAccount] = useState<AccessibleAccount>()
 
     return (
         <div>
-            <form method="post" className="tw-grid tw-grid-rows-auto tw-gap-y-2 tw-p-10">
+            <form method="post" className="tw-relative tw-grid tw-row-auto tw-w-full tw-h-auto tw-gap-8 tw-p-10">
                 <div className="tw-row-start-1">
-                    <div className="tw-grid tw-grid-cols-2 tw-gap-[1px]">
-                        <div className="tw-col-start-1">
-                            <label>Google Account ID</label>
-                        </div>
-                        <div className="tw-col-start-2">
-                            <input type="text" name="googleAccountId" className="tw-p-1" required />
-                        </div>
-                    </div>
+                    <RadioGroup
+                        value={selectedAccount}
+                        onChange={setSelectedAccount}
+                        className="tw-absolute tw-left-16 tw-right-16 tw-w-full tw-grid tw-grid-flow-row tw-content-center tw-gap-y-4"
+                    >
+                        <ItemBuilder
+                            items={accessibleAccounts}
+                            itemBuilder={(item, itemIndex) => (
+                                <RadioGroup.Option
+                                    value={item.customerClientName}
+                                    key={itemIndex}
+                                >
+                                    {({checked}) => (
+                                        <div className="tw-pl-4 tw-pr-8 tw-py-[0.9375rem] tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
+                                            {checked ? <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" /> : <Circle className="tw-w-6 tw-h-6 tw-text-blue-500" />}
 
+                                            {`${item.customerClientName}, ${item.customerClientId}`}
+                                        </div>
+                                    )}
+                                </RadioGroup.Option>
+                            )}
+                        />
+                    </RadioGroup>
+                    <input type="text" name="googleAdsRefreshToken" value={refreshTokenJwt} hidden readOnly />
                 </div>
                 <div className="tw-row-start-2">
-                    <div className="tw-grid tw-grid-cols-2 tw-gap-default">
-                        <div className="tw-col-start-1">
-                            <label>Google Login Cusotmer ID</label>
-                        </div>
-                        <div className="tw-col-start-2">
-                            <input type="text" name="googleLoginCustomerId" className="tw-p-1" required />
-
-                            {/* Add toast if accesstoken not available */}
-
-                            <input type="text" name="googleAdsRefreshToken" value={refreshToken.accessTokenJwt} hidden />
-                        </div>
-                    </div>
-                </div>
-                <div className="tw-row-start-3">
                     <button type="submit" className="tw-lp-button">Submit</button>
                 </div>
             </form>

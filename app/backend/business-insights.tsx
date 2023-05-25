@@ -289,7 +289,7 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
             DATE((data->'segments'->>'date')) AS date,
             'Google' AS platform,
             data->'campaign'->>'name' as campaign_name,
-            data->'metrics'->>'clicks' as clicks,
+        data->'metrics'->>'clicks' as clicks,
             data->'metrics'->>'impressions' as impressions,
             data->'metrics'->>'averageCost' as amount_spent
         FROM

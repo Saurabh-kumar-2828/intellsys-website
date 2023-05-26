@@ -36,6 +36,7 @@ export async function validateUser(username: string, password: string): Promise<
     };
 
     return {
+        // TODO: Use createAuthenticationToken instead
         accessTokenJwt: jwt.sign(accessToken, getRequiredEnvironmentVariable("JWT_SECRET")) as any as Jwt,
         userId: userId,
     };

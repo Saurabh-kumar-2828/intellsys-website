@@ -14,10 +14,8 @@ type ActionData = null | {
 };
 
 export const action: ActionFunction = async ({request}) => {
-    console.log("100");
     const body = await request.formData();
 
-    console.log(200);
     const username = getNonEmptyStringOrNull(body.get("username") as string);
     const password = getNonEmptyStringOrNull(body.get("password") as string);
 
@@ -31,8 +29,6 @@ export const action: ActionFunction = async ({request}) => {
         return json(actionData);
     }
 
-    console.log(1);
-
     const response = await validateUser(username, password);
     if (response == null) {
         const actionData = {
@@ -42,18 +38,10 @@ export const action: ActionFunction = async ({request}) => {
         return json(actionData);
     }
 
-    console.log(2);
-
     const cookieSession = await getCookieSession(request.headers.get("Cookie"));
-
-    console.log(3);
 
     cookieSession.set("accessToken", response.accessTokenJwt);
     // session.set("refreshToken", response.refreshTokenJwt);
-
-    console.log(4);
-
-    console.log(response.accessTokenJwt);
 
     // return redirect(coalesce(redirectTo, "/"), {
     return redirect("/", {

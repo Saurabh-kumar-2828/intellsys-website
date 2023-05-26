@@ -65,8 +65,8 @@ export async function getGoogleAdsRefreshToken(authorizationCode: string, compan
 
 
 export async function ingestAndStoreGoogleAdsData(credentials: string, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
-
-    const credentialsDecoded = jwt.verify(credentials, getRequiredEnvironmentVariableNew("TOKEN_SECRET")) as GoogleAdsCredentials;
+    // TODO: Remove jwt thingy
+    const credentialsDecoded = jwt.verify(credentials, getRequiredEnvironmentVariableNew("JWT_SECRET")) as GoogleAdsCredentials;
 
     const response = await storeGoogleAdsOAuthDetails(credentialsDecoded, companyId, connectorId);
     if (response instanceof Error) {

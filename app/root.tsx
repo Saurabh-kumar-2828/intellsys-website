@@ -21,10 +21,6 @@ type LoaderData = {
 export const loader: LoaderFunction = async ({request}) => {
     // TODO: Remove all this from here
 
-    console.log(getRequiredEnvironmentVariable("SESSION_SECRET"));
-    const session = await getCookieSession(request.headers.get("Cookie"));
-    console.log(session.get("accessToken"));
-
     const accessToken = await getAccessTokenFromCookies(request);
 
     if (accessToken == null) {

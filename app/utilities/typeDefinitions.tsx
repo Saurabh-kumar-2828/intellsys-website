@@ -14,6 +14,7 @@ export type Company = {
 };
 
 export type Uuid = GlobalUuid;
+// TODO: Rename type
 export type Jwt = string;
 
 export type Iso8601Time = string;

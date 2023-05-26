@@ -23,7 +23,6 @@ export const action: ActionFunction = async ({request, params}) => {
     if (body.get("action") == "facebook") {
 
         const redirectUri = getRedirectUri(companyIdUuid, CredentialType.facebookAds);
-        console.log("Redirect Uri", redirectUri);
 
         // TODO: Create function to get env variables
         const authUrl = `https://www.facebook.com/${process.env.FACEBOOK_API_VERSION!}/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID!}&redirect_uri=${redirectUri}&scope=${facebookAdsScope}`;

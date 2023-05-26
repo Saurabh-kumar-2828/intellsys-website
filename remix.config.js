@@ -42,5 +42,7 @@ module.exports = {
         "d3-transitionbrush",
         "d3-zoombrush",
         "d3-color",
+        "d3-time",
+        "d3-path"
     ],
 };

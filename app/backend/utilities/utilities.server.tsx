@@ -1,4 +1,6 @@
 import {TimeGranularity} from "~/backend/business-insights";
+import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
+import jwt from "jsonwebtoken";
 
 export function getGranularityQuery(timeGranularity: TimeGranularity, columnName: string): string {
     switch (timeGranularity) {
@@ -49,3 +51,13 @@ export function getUrlFromRequest(request: Request) {
         return request.url;
     }
 }
+
+export function encrypt(data: string): string {
+    // TODO: Do this correctly
+    return data;
+};
+
+export function decrypt(data: string): string {
+    // TODO: Do this correctly
+    return data;
+};

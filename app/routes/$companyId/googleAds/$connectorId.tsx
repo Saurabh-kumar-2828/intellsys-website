@@ -91,7 +91,6 @@ export const loader: LoaderFunction = async ({request, params}) => {
     }
 
     const connectorId = params.connectorId;
-    console.log(connectorId);
 
     const urlSearchParams = new URL(request.url).searchParams;
 

@@ -4,7 +4,7 @@ import {json, redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
-import type {AccessibleAccount, GoogleAdsCredentials} from "~/backend/utilities/data-management/googleOAuth.server";
+import {AccessibleAccount, GoogleAdsCredentials, getGoogleAdsRefreshToken} from "~/backend/utilities/data-management/googleOAuth.server";
 import {checkGoogleAdsConnectorExistsForAccount, getAccessibleAccounts, ingestAndStoreGoogleAdsData} from "~/backend/utilities/data-management/googleOAuth.server";
 import {decrypt, encrypt, getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
@@ -33,20 +33,21 @@ export const loader: LoaderFunction = async ({request}) => {
         throw Error("Authorization failed!");
     }
 
-    const refreshToken = "1//0gn4awgQ5Ht5gCgYIARAAGBASNwF-L9Ir3fFP9-9QPpcxSW4eqZMkkmHKdsPfnTAN1t2uoO2-lmigeL7J5NK5HFcb0NJSQMBrbaE";
-    // const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId));
-    // if (refreshToken instanceof Error) {
-    //     return refreshToken;
-    // }
+    const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId));
+    if (refreshToken instanceof Error) {
+        return refreshToken;
+    }
 
+    
     const accessibleAccounts = await getAccessibleAccounts(refreshToken);
+    console.log(accessibleAccounts);
     if (accessibleAccounts instanceof Error) {
         return accessibleAccounts;
     }
 
     // TODO: Get multiple accounts
     const loaderData: LoaderData = {
-        data: encrypt(refreshToken),
+        data: encrypt(refreshToken) as unknown as string,
         accessibleAccounts: accessibleAccounts,
     };
 
@@ -55,17 +56,19 @@ export const loader: LoaderFunction = async ({request}) => {
 
 export const action: ActionFunction = async ({request}) => {
     try {
+
         const urlSearchParams = new URL(request.url).searchParams;
-
-        const companyId = getNonEmptyStringOrNull(urlSearchParams.get("pstate"));
-
+        
+        const companyId = getNonEmptyStringOrNull(urlSearchParams.get("state"));
+        
         if (companyId == null) {
             throw new Response(null, {status: 404});
         }
 
-        const body = await request.formData();
+        const body = await request.formData();        
 
         const data = body.get("data") as string;
+
         const selectedAccount = JSON.parse(body.get("selectedAccount") as string);
 
         // TODO: type validation
@@ -73,31 +76,31 @@ export const action: ActionFunction = async ({request}) => {
 
         const accountExists = await checkGoogleAdsConnectorExistsForAccount(selectedAccount.managerId);
         if (accountExists instanceof Error) {
+            
             return Error("Account already exists");
         }
-
+        
         // Cannot create new connector, if connector with account already exists.
+        
         if (accountExists) {
+            
             return redirect(`/${companyId}/data-sources`);
         }
 
         const googleAdsCredentials: GoogleAdsCredentials = {
-            refreshToken: refreshTokenDecoded,
+            refreshToken: refreshTokenDecoded as string,
             googleAccountId: selectedAccount.customerClientId,
             googleLoginCustomerId: selectedAccount.managerId,
         };
-
-        // TODO: Remove jwt thingy
-        const credentialsJwt = jwt.sign(googleAdsCredentials, getRequiredEnvironmentVariable("JWT_SECRET")) as any as string;
-
+        
         const connectorId = generateUuid();
 
-        const response = await ingestAndStoreGoogleAdsData(credentialsJwt, getUuidFromUnknown(companyId), connectorId);
+        const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, getUuidFromUnknown(companyId), connectorId);
         if (response instanceof Error) {
             throw response;
         }
 
-        return redirect(`/${companyId}/data-sources/googleAds/${connectorId}`);
+        return redirect(`/${companyId}/googleAds/${connectorId}`);
     } catch (e) {
         console.log(e);
     }
@@ -106,15 +109,15 @@ export const action: ActionFunction = async ({request}) => {
 };
 
 export default function () {
-    const {data, accessibleAccounts} = useLoaderData<LoaderData>();
-    const [selectedAccount, setSelectedAccount] = useState<AccessibleAccount>();
+    const {data, accessibleAccounts} = useLoaderData() as LoaderData;
+    const [selectedAccount, setSelectedAccount] = useState<AccessibleAccount | null>(null);
 
     return (
         <div>
             <RadioGroup
                 name="selectedAccount"
                 value={selectedAccount}
-                onChange={setSelectedAccount}
+                onChange={(e) => setSelectedAccount(e)}
                 className="tw-row-start-1 tw-w-full tw-grid tw-grid-flow-row tw-content-center tw-gap-y-4"
             >
                 <ItemBuilder
@@ -138,12 +141,11 @@ export default function () {
 
             <form
                 method="post"
-                className="tw-relative tw-grid tw-w-full tw-h-auto tw-gap-8 tw-p-10"
             >
                 <input
                     type="text"
                     name="selectedAccount"
-                    value={JSON.stringify(selectedAccount)}
+                    value={selectedAccount ? JSON.stringify(selectedAccount) : ''}
                     hidden
                     readOnly
                 />

@@ -5,7 +5,18 @@ import {dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import {ConnectorTableType, ConnectorType} from "~/utilities/typeDefinitions";
 import {CredentialType} from "~/utilities/typeDefinitions";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
-import {deleteCompanyIdToConnectorIdMapping, deleteCompanyIdToCredentialIdMapping, deleteConnectorAndSubconnector, getDestinationCredentialId, getRedirectUri, getSourceAndDestinationId, getSystemConnectorsDatabaseManager, getSystemPostgresDatabaseManager, initializeConnectorAndSubConnector, mapCompanyIdToConnectorId} from "~/backend/utilities/data-management/common.server";
+import {
+    deleteCompanyIdToConnectorIdMapping,
+    deleteCompanyIdToCredentialIdMapping,
+    deleteConnectorAndSubconnector,
+    getDestinationCredentialId,
+    getRedirectUri,
+    getSourceAndDestinationId,
+    getSystemConnectorsDatabaseManager,
+    getSystemPostgresDatabaseManager,
+    initializeConnectorAndSubConnector,
+    mapCompanyIdToConnectorId,
+} from "~/backend/utilities/data-management/common.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
 import type {Integer} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
@@ -18,29 +29,28 @@ import {getSingletonValueOrNull} from "~/utilities/utilities";
 // TODO: Fix timezone in database
 
 export type AccessibleAccount = {
-    customerClientId: string,
-    customerClientName: string,
-    managerId: string,
-    managerName: string,
-}
+    customerClientId: string;
+    customerClientName: string;
+    managerId: string;
+    managerName: string;
+};
 
 export const googleAdsScope = "https://www.googleapis.com/auth/adwords";
 
 export type GoogleAdsCredentials = {
-    refreshToken: string,
-    googleAccountId: string,
-    googleLoginCustomerId: string
+    refreshToken: string;
+    googleAccountId: string;
+    googleLoginCustomerId: string;
 };
 
 export type GoogleAdsAccessToken = {
-    accessToken: string
-}
+    accessToken: string;
+};
 
 export type Connector = {
-    id: Uuid
-    loginCustomerId: string
-}
-
+    id: Uuid;
+    loginCustomerId: string;
+};
 
 export async function getGoogleAdsRefreshToken(authorizationCode: string, companyId: Uuid): Promise<string | Error> {
     const redirectUri = getRedirectUri(companyId, CredentialType.GoogleAds);
@@ -49,7 +59,9 @@ export async function getGoogleAdsRefreshToken(authorizationCode: string, compan
     }
 
     // Post api to retrieve access token by giving authorization code.
-    const url = `https://oauth2.googleapis.com/token?client_id=${getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_ID")}&client_secret=${getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_SECRET")}&redirect_uri=${redirectUri}&code=${authorizationCode}&grant_type=authorization_code`;
+    const url = `https://oauth2.googleapis.com/token?client_id=${getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_ID")}&client_secret=${getRequiredEnvironmentVariableNew(
+        "GOOGLE_CLIENT_SECRET",
+    )}&redirect_uri=${redirectUri}&code=${authorizationCode}&grant_type=authorization_code`;
 
     const response = await fetch(url, {
         method: "POST",
@@ -63,12 +75,8 @@ export async function getGoogleAdsRefreshToken(authorizationCode: string, compan
     return rawResponse.refresh_token;
 }
 
-
-export async function ingestAndStoreGoogleAdsData(credentials: string, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
-    // TODO: Remove jwt thingy
-    const credentialsDecoded = jwt.verify(credentials, getRequiredEnvironmentVariableNew("JWT_SECRET")) as GoogleAdsCredentials;
-
-    const response = await storeGoogleAdsOAuthDetails(credentialsDecoded, companyId, connectorId);
+export async function ingestAndStoreGoogleAdsData(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
+    const response = await storeGoogleAdsOAuthDetails(credentials, companyId, connectorId);
     if (response instanceof Error) {
         return response;
     }
@@ -79,46 +87,61 @@ export async function ingestAndStoreGoogleAdsData(credentials: string, companyId
  */
 export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
     try {
-
+        console.log(1);
         const sourceCredentialId = generateUuid();
 
         // Destination = Company's Database.
         const companyDatabaseCredentialId = await getDestinationCredentialId(companyId);
+        console.log(2);
         if (companyDatabaseCredentialId instanceof Error) {
-
             return companyDatabaseCredentialId;
         }
 
+        console.log(3);
+
         const companyDatabaseManager = await getPostgresDatabaseManager(companyDatabaseCredentialId);
         if (companyDatabaseManager instanceof Error) {
+            console.log(4);
             return companyDatabaseManager;
         }
+
+        console.log(5);
 
         const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
         if (systemConnectorsDatabaseManager instanceof Error) {
             return systemConnectorsDatabaseManager;
         }
 
+        console.log(6);
+
         const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
         if (systemPostgresDatabaseManager instanceof Error) {
             return systemPostgresDatabaseManager;
         }
 
+        console.log(7);
+
         // Store credentials in KMS.
-        const response = await storeCredentials(
-            getUuidFromUnknown(sourceCredentialId),
-            credentials,
-            companyId,
-            CredentialType.GoogleAds
-        );
+        const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, CredentialType.GoogleAds);
         if (response instanceof Error) {
             return response;
         }
 
+        console.log(8);
+
         await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
         await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
 
-        const connectorInitializationResponse = await initializeConnectorAndSubConnector(systemConnectorsDatabaseManager, connectorId, sourceCredentialId, companyDatabaseCredentialId, "Google Ads", ConnectorTableType.GoogleAds, ConnectorType.GoogleAds, `{"loginCustomerId": "${credentials.googleLoginCustomerId}"}`);
+        const connectorInitializationResponse = await initializeConnectorAndSubConnector(
+            systemConnectorsDatabaseManager,
+            connectorId,
+            sourceCredentialId,
+            companyDatabaseCredentialId,
+            "Google Ads",
+            ConnectorTableType.GoogleAds,
+            ConnectorType.GoogleAds,
+            `{"loginCustomerId": "${credentials.googleLoginCustomerId}"}`,
+        );
 
         const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.GoogleAds, "Google Ads");
 
@@ -133,16 +156,21 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
         await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
         await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
 
+        console.log(9);
+
         const createTableResponse = await createTable(companyDatabaseManager, credentials);
         if (createTableResponse instanceof Error) {
             return createTableResponse;
         }
+
+        console.log(10);
 
         const dataIngestionResponse = await ingestGoogleAdsData(getUuidFromUnknown(connectorId), 45);
         if (dataIngestionResponse instanceof Error) {
             return dataIngestionResponse;
         }
 
+        console.log(11);
     } catch (e) {
         console.log(e);
     }
@@ -156,18 +184,19 @@ export async function getAccessibleAccounts(refreshToken: string): Promise<Array
     formdata.append("refresh_token", refreshToken);
 
     var requestOptions = {
-        method: 'POST',
+        method: "POST",
         body: formdata,
     };
 
-    const rawResponse = await fetch(`${process.env.INTELLSYS_GOOGLE_ADS_HELPER}/get_accessible_accounts`, requestOptions);
+    const rawResponse = await fetch(`${process.env.INTELLSYS_GOOGLE_ADS_HELPER_URL}/get_accessible_accounts`, requestOptions);
 
     if (!rawResponse.ok) {
         return Error("Request to get accessible account failed");
     }
 
-    const response = await rawResponse.json()
+    const response = await rawResponse.json();
 
+    console.log("response", response);
     const accessbileAccounts: Array<AccessibleAccount> = response.map((row) => convertToAccessbileAccount(row));
 
     return accessbileAccounts;
@@ -178,11 +207,10 @@ export function convertToAccessbileAccount(row: Credentials) {
         customerClientId: row.customer_client_id as string,
         customerClientName: row.customer_client_name as string,
         managerId: row.manager_id as string,
-        managerName: row.manager_name as string
-    }
+        managerName: row.manager_name as string,
+    };
 
     return result;
-
 }
 
 export async function createTable(postgresDatabaseManager: PostgresDatabaseManager, googleAdsCredentials: GoogleAdsCredentials): Promise<Error | void> {
@@ -196,14 +224,13 @@ export async function createTable(postgresDatabaseManager: PostgresDatabaseManag
                 "data" json NOT NULL,
                 CONSTRAINT ${tableName}_pkey PRIMARY KEY (id)
             );
-        `
-    )
+        `,
+    );
 
     if (response instanceof Error) {
         return response;
     }
 }
-
 
 export async function ingestGoogleAdsData(connectorId: Uuid, duration: Integer): Promise<void | Error> {
     const url = `${getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_URL")}/googleads/historical`;
@@ -213,13 +240,13 @@ export async function ingestGoogleAdsData(connectorId: Uuid, duration: Integer):
     body.set("duration", duration.toString());
 
     const headers = new Headers();
-    headers.append("Authorization", getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_TOKEN"))
+    headers.append("Authorization", getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_TOKEN"));
 
     const response = await fetch(url, {
         method: "POST",
         headers: headers,
         body: body,
-        redirect: 'follow'
+        redirect: "follow",
     });
 
     if (!response.ok) {
@@ -230,9 +257,7 @@ export async function ingestGoogleAdsData(connectorId: Uuid, duration: Integer):
     console.log(ingestionResult);
 }
 
-
 export async function deleteCredentialsFromSources(connectorId: Uuid, googleAdsLoginCustomerId: string, connectorType: ConnectorType) {
-
     // TODO: Add transactions
 
     const connector = await getSourceAndDestinationId(connectorId);
@@ -255,7 +280,6 @@ export async function deleteCredentialsFromSources(connectorId: Uuid, googleAdsL
     // Delete data from google ads data
     await dropGoogleAdsTable(googleAdsLoginCustomerId, connector.destinationId);
 }
-
 
 export async function dropGoogleAdsTable(accountId: string, destinationDatabaseCredentialId: Uuid) {
     const databaseManager = await getPostgresDatabaseManager(destinationDatabaseCredentialId);
@@ -281,7 +305,8 @@ export async function checkGoogleAdsConnectorExistsForAccount(googleLoginCustome
         return connectorDatabaseManager;
     }
 
-    const response = await connectorDatabaseManager.execute(`
+    const response = await connectorDatabaseManager.execute(
+        `
         SELECT
             *
         FROM
@@ -290,7 +315,8 @@ export async function checkGoogleAdsConnectorExistsForAccount(googleLoginCustome
             connector_type = $1
             AND
             extra_information->>'loginCustomerId' = $2
-    `, [ConnectorType.GoogleAds, googleLoginCustomerId]
+    `,
+        [ConnectorType.GoogleAds, googleLoginCustomerId],
     );
 
     const row = getSingletonValueOrNull(response.rows);
@@ -302,7 +328,6 @@ export async function checkGoogleAdsConnectorExistsForAccount(googleLoginCustome
     return false;
 }
 
-
 export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: Uuid): Promise<Array<Connector> | Error> {
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
     if (systemPostgresDatabaseManager instanceof Error) {
@@ -312,10 +337,8 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
     const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
 
     if (systemConnectorsDatabaseManager instanceof Error) {
-
         return systemConnectorsDatabaseManager;
     }
-
 
     const connectorIdsResponse = await systemPostgresDatabaseManager.execute(
         `
@@ -325,23 +348,19 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
                 company_to_connector_mapping
             WHERE
                 company_id = $1
-        `, [companyId]
-    )
-
+        `,
+        [companyId],
+    );
 
     if (connectorIdsResponse instanceof Error) {
         return connectorIdsResponse;
     }
 
-
     if (connectorIdsResponse.rows.length == 0) {
-
-        return Error("Connector Ids not found!")
+        return Error("Connector Ids not found!");
     }
 
-
     const connectorIds: Array<Uuid> = connectorIdsResponse.rows.map((row) => getUuidFromUnknown(row.connector_id));
-
 
     const connectorDetails = await systemConnectorsDatabaseManager.execute(
         `
@@ -354,12 +373,11 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
                 id IN (${connectorIds.map((item) => `'${item}'`).join(", ")})
                 AND
                 connector_type = $1
-        `, [ConnectorType.GoogleAds]
+        `,
+        [ConnectorType.GoogleAds],
     );
 
-
     if (connectorDetails instanceof Error) {
-
         return connectorDetails;
     }
 
@@ -370,7 +388,7 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
 function rowToConnector(row: Credentials): Connector {
     const result: Connector = {
         id: getUuidFromUnknown(row.id),
-        loginCustomerId: row.logincustomerid as string
-    }
+        loginCustomerId: row.logincustomerid as string,
+    };
     return result;
 }

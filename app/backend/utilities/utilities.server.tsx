@@ -52,12 +52,13 @@ export function getUrlFromRequest(request: Request) {
     }
 }
 
-export function encrypt(data: string): string {
-    // TODO: Do this correctly
-    return data;
+export function encrypt(data: string): CryptoJS.lib.CipherParams {
+    const encryptedData = CryptoJS.AES.encrypt(data, getRequiredEnvironmentVariableNew("JWT_TOKEN"));
+    console.log(encryptedData);
+    return encryptedData;
 };
 
-export function decrypt(data: string): string {
-    // TODO: Do this correctly
-    return data;
+export function decrypt(data: string): unknown{
+    const decryptedData = CryptoJS.AES.decrypt(data, getRequiredEnvironmentVariableNew("JWT_TOKEN"));
+    return decryptedData;
 };

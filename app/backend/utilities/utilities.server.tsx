@@ -1,6 +1,9 @@
 import {TimeGranularity} from "~/backend/business-insights";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
-import jwt from "jsonwebtoken";
+import Cryptr from "cryptr";
+
+const cryptr = new Cryptr(getRequiredEnvironmentVariableNew("JWT_SECRET"));
+
 
 export function getGranularityQuery(timeGranularity: TimeGranularity, columnName: string): string {
     switch (timeGranularity) {
@@ -52,13 +55,12 @@ export function getUrlFromRequest(request: Request) {
     }
 }
 
-export function encrypt(data: string): CryptoJS.lib.CipherParams {
-    const encryptedData = CryptoJS.AES.encrypt(data, getRequiredEnvironmentVariableNew("JWT_TOKEN"));
-    console.log(encryptedData);
+export function encrypt(data: string): string {
+    const encryptedData = cryptr.encrypt(data);
     return encryptedData;
 };
 
-export function decrypt(data: string): unknown{
-    const decryptedData = CryptoJS.AES.decrypt(data, getRequiredEnvironmentVariableNew("JWT_TOKEN"));
+export function decrypt(data: string): string {
+    const decryptedData = cryptr.decrypt(data);
     return decryptedData;
 };

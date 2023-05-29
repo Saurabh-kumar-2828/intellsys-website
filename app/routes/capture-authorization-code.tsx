@@ -4,9 +4,10 @@ import {json, redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
-import {AccessibleAccount, GoogleAdsCredentials, getGoogleAdsRefreshToken} from "~/backend/utilities/data-management/googleOAuth.server";
+import type {AccessibleAccount, GoogleAdsCredentials} from "~/backend/utilities/data-management/googleOAuth.server";
+import {getGoogleAdsRefreshToken} from "~/backend/utilities/data-management/googleOAuth.server";
 import {checkGoogleAdsConnectorExistsForAccount, getAccessibleAccounts, ingestAndStoreGoogleAdsData} from "~/backend/utilities/data-management/googleOAuth.server";
-import {decrypt, encrypt, getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
+import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
@@ -38,12 +39,14 @@ export const loader: LoaderFunction = async ({request}) => {
         return refreshToken;
     }
 
-    
+
     const accessibleAccounts = await getAccessibleAccounts(refreshToken);
     console.log(accessibleAccounts);
     if (accessibleAccounts instanceof Error) {
         return accessibleAccounts;
     }
+
+    // TODO: Filter accessible account
 
     // TODO: Get multiple accounts
     const loaderData: LoaderData = {
@@ -58,14 +61,14 @@ export const action: ActionFunction = async ({request}) => {
     try {
 
         const urlSearchParams = new URL(request.url).searchParams;
-        
+
         const companyId = getNonEmptyStringOrNull(urlSearchParams.get("state"));
-        
+
         if (companyId == null) {
             throw new Response(null, {status: 404});
         }
 
-        const body = await request.formData();        
+        const body = await request.formData();
 
         const data = body.get("data") as string;
 
@@ -76,14 +79,14 @@ export const action: ActionFunction = async ({request}) => {
 
         const accountExists = await checkGoogleAdsConnectorExistsForAccount(selectedAccount.managerId);
         if (accountExists instanceof Error) {
-            
+
             return Error("Account already exists");
         }
-        
+
         // Cannot create new connector, if connector with account already exists.
-        
+
         if (accountExists) {
-            
+
             return redirect(`/${companyId}/data-sources`);
         }
 
@@ -92,7 +95,7 @@ export const action: ActionFunction = async ({request}) => {
             googleAccountId: selectedAccount.customerClientId,
             googleLoginCustomerId: selectedAccount.managerId,
         };
-        
+
         const connectorId = generateUuid();
 
         const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, getUuidFromUnknown(companyId), connectorId);

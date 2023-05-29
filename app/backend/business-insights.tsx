@@ -276,9 +276,11 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
 }
 
 export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData | Error> {
-    // Get credential id from connector
+
+    // TODO: Get credential id from connector and from credential id get table name
 
     const postgresDatabaseManager = await getPostgresDatabaseManager(getUuidFromUnknown(getRequiredEnvironmentVariableNew("GOOGLE_ADS_CREDENTIAL_ID")));
+    console.log(postgresDatabaseManager);
 
     if (postgresDatabaseManager instanceof Error) {
         return postgresDatabaseManager;
@@ -289,11 +291,11 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
             DATE((data->'segments'->>'date')) AS date,
             'Google' AS platform,
             data->'campaign'->>'name' as campaign_name,
-        data->'metrics'->>'clicks' as clicks,
+            data->'metrics'->>'clicks' as clicks,
             data->'metrics'->>'impressions' as impressions,
             data->'metrics'->>'averageCost' as amount_spent
         FROM
-            google_ads_insights
+            gad_7238868599
         WHERE
             DATE((data->'segments'->>'date')) >= '${minDate}'
             AND DATE((data->'segments'->>'date')) <= '${maxDate}'
@@ -306,6 +308,8 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
     if (result instanceof Error) {
         return result;
     }
+
+    console.log(result);
     return {
         metaQuery: query,
         // rows: []

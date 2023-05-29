@@ -1,13 +1,13 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import {json, LinksFunction, LoaderFunction, MetaFunction, redirect} from "@remix-run/node";
+import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
+import {json, redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {AgGridReact} from "ag-grid-react";
 import styles from "app/styles.css";
-import {max} from "d3";
 import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
+import type {AdsDataAggregatedRow} from "~/backend/business-insights";
 import {
-    AdsDataAggregatedRow,
     // FreshsalesData,
     // FreshsalesDataAggregatedRow,
     // getFreshsalesData,
@@ -17,23 +17,21 @@ import {
     // ShopifyDataAggregatedRow,
     TimeGranularity,
 } from "~/backend/business-insights";
-import {CampaignInformation, getCampaignLibrary, getProductLibrary, ProductInformation} from "~/backend/common";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {ComposedChart} from "~/components/d3Componenets/composedChartComponent";
 import {LineGraphComponent} from "~/components/d3Componenets/lineGraphComponent";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
-import {CustomCard, DateFilterSection, FancySearchableMultiSelect, GenericCard, SmallValueDisplayingCardWithTarget} from "~/components/scratchpad";
-import {Iso8601Date, QueryFilterType, Uuid, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
+import {CustomCard, DateFilterSection, GenericCard, SmallValueDisplayingCardWithTarget} from "~/components/scratchpad";
+import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
+import {ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
     aggregateByDate,
     agGridDateComparator,
-    campaignsColorPalette,
     columnWiseSummationOfMatrix,
     createGroupByReducer,
     dateToMediumNoneEnFormat,
     defaultColumnDefinitions,
-    distinct,
     getDates,
     getNonEmptyStringOrNull,
     numberToHumanFriendlyString,
@@ -42,8 +40,7 @@ import {
     sumReducer,
 } from "~/utilities/utilities";
 import "ag-grid-enterprise";
-import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {googleAdsRawColumnInfos} from "~/backend/utilities/data-management/googleAds.server";
+import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -75,6 +72,7 @@ type LoaderData = {
     //     rows: Array<ShopifyDataAggregatedRow>;
     // };
     companyId: Uuid;
+    connectorId: Uuid
 };
 
 export const loader: LoaderFunction = async ({request, params}) => {
@@ -113,13 +111,19 @@ export const loader: LoaderFunction = async ({request, params}) => {
         maxDate = maxDateRaw;
     }
 
+    const googleAdsData = await getGoogleAdsLectrixData(getStringFromUnknown(minDate), getStringFromUnknown(maxDate), selectedGranularity, getUuidFromUnknown(companyId));
+    if(googleAdsData instanceof Error){
+        return googleAdsData;
+    }
+
     // TODO: Add filters
     const loaderData: LoaderData = {
         appliedSelectedGranularity: selectedGranularity,
-        appliedMinDate: minDate,
-        appliedMaxDate: maxDate,
-        googleAdsData: await getGoogleAdsLectrixData(minDate, maxDate, selectedGranularity, getUuidFromUnknown(companyId)),
-        companyId: companyId
+        appliedMinDate: minDate as string,
+        appliedMaxDate: maxDate as string,
+        googleAdsData: googleAdsData,
+        companyId: getUuidFromUnknown(companyId),
+        connectorId: getUuidFromUnknown(connectorId)
     };
 
     return json(loaderData);
@@ -142,7 +146,7 @@ type CampaignTargetObject = {
 };
 
 export default function () {
-    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, googleAdsData,companyId} = useLoaderData() as LoaderData;
+    const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, googleAdsData, companyId, connectorId} = useLoaderData() as LoaderData;
 
 
     // TODO: Add additional filtering to ensure this only shows facebook campaigns
@@ -177,7 +181,7 @@ export default function () {
                     setSelectedMinDate={setSelectedMinDate}
                     selectedMaxDate={selectedMaxDate}
                     setSelectedMaxDate={setSelectedMaxDate}
-                    page={`/${companyId}/google-ads-simplified`}
+                    page={`/${companyId}/googleAds/${connectorId}`}
                 />
             </div>
 

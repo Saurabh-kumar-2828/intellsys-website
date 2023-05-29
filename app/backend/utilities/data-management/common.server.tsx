@@ -80,11 +80,11 @@ export async function getDestinationCredentialId(companyId: Uuid): Promise<Uuid 
 
 export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Error {
     if (dataSource == CredentialType.FacebookAds) {
-        return `${process.env.REDIRECT_BASE_URI!}/${companyId}/capture-authorization-code`;
+        return `${process.env.REDIRECT_BASE_URI!}/${companyId}/capture-google-ads-authorization-code`;
     }
 
     if (dataSource == CredentialType.GoogleAds) {
-        const url = `${process.env.REDIRECT_BASE_URI!}/capture-authorization-code`;
+        const url = `${process.env.REDIRECT_BASE_URI!}/capture-google-ads-authorization-code`;
         return url;
     }
 

@@ -39,9 +39,7 @@ export const loader: LoaderFunction = async ({request}) => {
         return refreshToken;
     }
 
-
     const accessibleAccounts = await getAccessibleAccounts(refreshToken);
-    console.log(accessibleAccounts);
     if (accessibleAccounts instanceof Error) {
         return accessibleAccounts;
     }
@@ -59,7 +57,6 @@ export const loader: LoaderFunction = async ({request}) => {
 
 export const action: ActionFunction = async ({request}) => {
     try {
-
         const urlSearchParams = new URL(request.url).searchParams;
 
         const companyId = getNonEmptyStringOrNull(urlSearchParams.get("state"));
@@ -79,14 +76,12 @@ export const action: ActionFunction = async ({request}) => {
 
         const accountExists = await checkGoogleAdsConnectorExistsForAccount(selectedAccount.managerId);
         if (accountExists instanceof Error) {
-
             return Error("Account already exists");
         }
 
         // Cannot create new connector, if connector with account already exists.
 
         if (accountExists) {
-
             return redirect(`/${companyId}/data-sources`);
         }
 
@@ -142,13 +137,11 @@ export default function () {
                 />
             </RadioGroup>
 
-            <form
-                method="post"
-            >
+            <form method="post">
                 <input
                     type="text"
                     name="selectedAccount"
-                    value={selectedAccount ? JSON.stringify(selectedAccount) : ''}
+                    value={selectedAccount ? JSON.stringify(selectedAccount) : ""}
                     hidden
                     readOnly
                 />

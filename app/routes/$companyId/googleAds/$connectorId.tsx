@@ -153,9 +153,6 @@ export default function () {
     //     .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
     //     .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform));
 
-    useEffect(() => {
-        console.log(selectedGranularity);
-    }, [selectedGranularity]);
 
     return (
         <>

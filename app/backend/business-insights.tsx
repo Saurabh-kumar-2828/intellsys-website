@@ -280,8 +280,7 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
     // TODO: Get credential id from connector and from credential id get table name
 
     const postgresDatabaseManager = await getPostgresDatabaseManager(getUuidFromUnknown(getRequiredEnvironmentVariableNew("GOOGLE_ADS_CREDENTIAL_ID")));
-    console.log(postgresDatabaseManager);
-
+  
     if (postgresDatabaseManager instanceof Error) {
         return postgresDatabaseManager;
     }

@@ -9,19 +9,8 @@ import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineEl
 import {DateTime} from "luxon";
 import {useEffect, useState} from "react";
 import {Bar, Line} from "react-chartjs-2";
-import type {
-    AdsData,
-    AdsDataAggregatedRow,
-    FreshsalesData,
-    ShopifyData,
-    ShopifyDataAggregatedRow} from "~/backend/business-insights";
-import {
-    getAdsData,
-    getFreshsalesData,
-    getShopifyData,
-    getTimeGranularityFromUnknown,
-    TimeGranularity,
-} from "~/backend/business-insights";
+import type {AdsData, AdsDataAggregatedRow, FreshsalesData, ShopifyData, ShopifyDataAggregatedRow} from "~/backend/business-insights";
+import {getAdsData, getFreshsalesData, getShopifyData, getTimeGranularityFromUnknown, TimeGranularity} from "~/backend/business-insights";
 import type {ProductInformation, CampaignInformation} from "~/backend/common";
 import {getCampaignLibrary, getProductLibrary} from "~/backend/common";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
@@ -29,14 +18,7 @@ import {aggregateByDate, createGroupByReducer, doesAdsCampaignNameCorrespondToPe
 import {progressCellRenderer} from "~/components/progressCellRenderer";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import "ag-grid-enterprise";
-import {
-    DateFilterSection,
-    FancySearchableMultiSelect,
-    GenericCard,
-    LargeValueDisplayingCardWithTarget,
-    SectionHeader,
-    SmallValueDisplayingCardWithTarget,
-} from "~/components/scratchpad";
+import {DateFilterSection, FancySearchableMultiSelect, FancySearchableSelect, GenericCard, LargeValueDisplayingCardWithTarget, SectionHeader, SmallValueDisplayingCardWithTarget} from "~/components/scratchpad";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
@@ -233,6 +215,7 @@ export default function () {
                     setSelectedOptions={setSelectedCampaigns}
                     filterType={QueryFilterType.campaign}
                 />
+
             </div>
 
             {/* <button type="button" onClick={() => csvDownload(shopifyDataToExportAsCsv)} className="tw-lp-button">

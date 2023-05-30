@@ -13,7 +13,7 @@ import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {ComposedChart} from "~/components/d3Componenets/composedChartComponent";
 import {LineGraphComponent} from "~/components/d3Componenets/lineGraphComponent";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
-import {CustomCard, DateFilterSection, GenericCard, SmallValueDisplayingCardWithTarget} from "~/components/scratchpad";
+import {CustomCard, DateFilterSection, FancySearchableSelect, GenericCard, SmallValueDisplayingCardWithTarget} from "~/components/scratchpad";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
@@ -33,6 +33,7 @@ import {
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getDestinationCredentialId} from "~/backend/utilities/data-management/common.server";
+import {object} from "zod";
 
 export const meta: MetaFunction = () => {
     return {
@@ -118,17 +119,18 @@ export const loader: LoaderFunction = async ({request, params}) => {
 type DayWiseDistributionPerCampaignObject = {
     impressions: Array<number>;
     clicks: Array<number>;
-    amountSpent: Array<number>;
-    leads: Array<number>;
-    orders: Array<number>;
+    averageCost: Array<number>;
+    // amountSpent: Array<number>;
+    // leads: Array<number>;
+    // orders: Array<number>;
 };
 
 type CampaignTargetObject = {
     impressions: number;
     clicks: number;
-    amountSpent: number;
-    leads: number;
-    orders: number;
+    averageCost: number;
+    // leads: number;
+    // orders: number;
 };
 
 export default function () {
@@ -137,28 +139,29 @@ export default function () {
     // TODO: Add additional filtering to ensure this only shows facebook campaigns
     // TODO: Add additional filtering to remove on form fb leads
 
-    const [selectedCategories, setSelectedCategories] = useState<Array<string>>([]);
-    const [selectedProducts, setSelectedProducts] = useState<Array<string>>([]);
-    const [selectedPlatforms, setSelectedPlatforms] = useState<Array<string>>([]);
+    // const [selectedCategories, setSelectedCategories] = useState<Array<string>>([]);
+    // const [selectedProducts, setSelectedProducts] = useState<Array<string>>([]);
+    // const [selectedPlatforms, setSelectedPlatforms] = useState<Array<string>>([]);
     const [selectedGranularity, setSelectedGranularity] = useState<TimeGranularity>(appliedSelectedGranularity);
     const [selectedMinDate, setSelectedMinDate] = useState<Iso8601Date>(appliedMinDate);
     const [selectedMaxDate, setSelectedMaxDate] = useState<Iso8601Date>(appliedMaxDate);
-    const [hoverOnImpressionsCard, setHoverOnImpressionsCard] = useState(false);
+    // const [hoverOnImpressionsCard, setHoverOnImpressionsCard] = useState(false);
 
-    const filterAdsData = googleAdsData.rows
-        .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
-        .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform));
+    const granularities = [TimeGranularity.daily, TimeGranularity.monthly, TimeGranularity.yearly, TimeGranularity.hourly];
+
+    // const filterAdsData = googleAdsData.rows
+    //     .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
+    //     .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform));
 
     useEffect(() => {
-        setSelectedProducts([]);
-        setSelectedPlatforms([]);
-    }, [selectedCategories]);
+        console.log(selectedGranularity);
+    }, [selectedGranularity]);
 
     return (
         <>
             <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
                 <DateFilterSection
-                    granularities={[""]}
+                    granularities={granularities}
                     selectedGranularity={selectedGranularity}
                     setSelectedGranularity={setSelectedGranularity}
                     selectedMinDate={selectedMinDate}
@@ -167,12 +170,18 @@ export default function () {
                     setSelectedMaxDate={setSelectedMaxDate}
                     page={`/${companyId}/googleAds/${connectorId}`}
                 />
+                {/* <FancySearchableSelect
+                    label="Granularity"
+                    options={granularities}
+                    selectedOption={selectedGranularity}
+                    setSelectedOption={setSelectedGranularity}
+                /> */}
             </div>
 
             <div className="tw-gap-x-5 tw-px-4 tw-py-4">
                 <CampaignsSection
                     adsData={googleAdsData.rows}
-                    // adsData={filterAdsData}
+                    granularity={selectedGranularity}
                     minDate={appliedMinDate}
                     maxDate={appliedMaxDate}
                 />
@@ -212,7 +221,7 @@ export default function () {
     );
 }
 
-function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<GoogleAdsDataAggregatedRow>; minDate: Iso8601Date; maxDate: Iso8601Date}) {
+function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Array<GoogleAdsDataAggregatedRow>; granularity: TimeGranularity; minDate: Iso8601Date; maxDate: Iso8601Date}) {
     // const gridRef = useRef(null);
 
     // const [selectedCampaigns, setSelectedCampaigns] = useState([]);
@@ -220,7 +229,12 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<GoogleAds
     // const [showClicks, setShowClicks] = useState(false);
     // const [showImpressions, setShowImpressions] = useState(false);
 
-    // const dates = getDates(minDate, maxDate);
+    const dates = getDates(minDate, maxDate);
+
+    if (granularity == TimeGranularity.daily) {
+        const dailyDistributionOfData = aggregateHourlyData(adsData);
+        adsData = Object.values(dailyDistributionOfData);
+    }
 
     // const onSelectionChanged = useCallback(() => {
     //     var selectedRows = gridRef.current.api.getSelectedRows();
@@ -233,6 +247,9 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<GoogleAds
     // }, []);
 
     // const dayWiseCampaignsTrends = getDayWiseCampaignsTrends(adsData, minDate, maxDate);
+    // const campaigns = Object.keys(dayWiseCampaignsTrends);
+
+    // console.log(dayWiseCampaignsTrends);
 
     // const campaigns = Object.keys(dayWiseCampaignsTrends);
 
@@ -259,7 +276,7 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<GoogleAds
     // // Targets
     // const targetForCampaigns = getTargets(campaigns);
 
-    // // Leads and orders group by date and campaign
+    // Leads and orders group by date and campaign
     // const leadsAndOrdersGroupByCampaignNameAndDate = getMetricsGroupByDateAndCampaignName(adsData, campaigns, minDate, maxDate);
 
     // // Data for lineChartComponent
@@ -330,7 +347,7 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<GoogleAds
     };
 
     return (
-        <div className="tw-grid tw-grid-cols-1 tw-gap-y-8">
+        <div className="tw-grid tw-grid-cols-1 tw-p-2">
             {/* <div className="tw-row-start-1">
                 <div className="tw-h-[410px] ag-theme-alpine-dark ag-root-wrapper">
                     <AgGridReact
@@ -467,7 +484,7 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<GoogleAds
                         value="1"
                         className="lp-tab tw-rounded-tl-md"
                     >
-                        Hourly Distribution
+                        {granularity} Distribution
                     </Tabs.Trigger>
                     <Tabs.Trigger
                         value="2"
@@ -572,7 +589,7 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<GoogleAds
                             }
                             // metaQuery={shopifyData.metaQuery}
                         /> */}
-                        Hello
+                        Sample
                     </div>
                 </Tabs.Content>
                 <Tabs.Content value="1">
@@ -709,28 +726,114 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<GoogleAds
 //     return dayWiseDistributionPerCampaign;
 // }
 
-// function getMetricsGroupByDateAndCampaignName(adsData: Array<AdsDataAggregatedRow>, campaigns: Array<string>, minDate: Iso8601Date, maxDate: Iso8601Date) {
-//     const dates = getDates(minDate, maxDate);
+function getDayWiseCampaignsTrends(adsData: Array<GoogleAdsDataAggregatedRow>, minDate: Iso8601Date, maxDate: Iso8601Date) {
+    const dates = getDates(minDate, maxDate);
 
-//     let leadsAndOrdersGroupByCampaignNameAndDate: {[key: string]: any} = {};
-//     for (const campaign of campaigns) {
-//         let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
-//         let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
+    const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
 
-//         //map leads to date
-//         let leadsToDate: {[key: string]: number} = {};
-//         let ordersToDate: {[key: string]: number} = {};
-//         dates.forEach((key, i) => (leadsToDate[key] = dayWiseLeads[i]));
-//         dates.forEach((key, i) => (ordersToDate[key] = dayWiseOrders[i]));
+    // Datatable
+    const dayWiseDistributionPerCampaign: {[key: string]: DayWiseDistributionPerCampaignObject} = {};
+    for (const campaign in adsDataGroupByCampaign) {
+        //     let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
+        //     let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
+        let dayWiseImpressions: Array<number> = new Array(dates.length).fill(0);
+        let dayWiseClicks: Array<number> = new Array(dates.length).fill(0);
+        let dayWiseAverageCost: Array<number> = new Array(dates.length).fill(0);
 
-//         leadsAndOrdersGroupByCampaignNameAndDate[campaign] = {
-//             leads: leadsToDate,
-//             orders: ordersToDate,
-//         };
-//     }
+        dayWiseImpressions = aggregateByDate(adsDataGroupByCampaign[campaign], "impressions", dates);
+        dayWiseClicks = aggregateByDate(adsDataGroupByCampaign[campaign], "clicks", dates);
+        dayWiseAverageCost = aggregateByDate(adsDataGroupByCampaign[campaign], "averageCost", dates);
+        dayWiseDistributionPerCampaign[campaign] = {
+            impressions: dayWiseImpressions,
+            clicks: dayWiseClicks,
+            averageCost: dayWiseAverageCost,
+        };
+    }
 
-//     return leadsAndOrdersGroupByCampaignNameAndDate;
-// }
+    return dayWiseDistributionPerCampaign;
+}
+
+function getMetricsGroupByDateAndCampaignName(adsData: Array<AdsDataAggregatedRow>, campaigns: Array<string>, minDate: Iso8601Date, maxDate: Iso8601Date) {
+    const dates = getDates(minDate, maxDate);
+
+    let leadsAndOrdersGroupByCampaignNameAndDate: {[key: string]: any} = {};
+    for (const campaign of campaigns) {
+        let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
+        let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
+
+        //map leads to date
+        let leadsToDate: {[key: string]: number} = {};
+        let ordersToDate: {[key: string]: number} = {};
+        dates.forEach((key, i) => (leadsToDate[key] = dayWiseLeads[i]));
+        dates.forEach((key, i) => (ordersToDate[key] = dayWiseOrders[i]));
+
+        leadsAndOrdersGroupByCampaignNameAndDate[campaign] = {
+            leads: leadsToDate,
+            orders: ordersToDate,
+        };
+    }
+
+    return leadsAndOrdersGroupByCampaignNameAndDate;
+}
+
+function aggregateHourlyData(adsData: Array<GoogleAdsDataAggregatedRow>) {
+    var result = Object.values(adsData);
+    var response = result.reduce((acc: {[key: string]: GoogleAdsDataAggregatedRow}, obj) => {
+        var key = `${obj.date}_${obj.campaignName}`;
+
+        if (!acc[key]) {
+            const googleAdsRow: GoogleAdsDataAggregatedRow = {
+                date: "",
+                hour: 0,
+                campaignId: "",
+                campaignName: "",
+                averageCost: 0,
+                impressions: 0,
+                clicks: 0,
+                interactionEventTypes: 0,
+                valuePerAllConversions: 0,
+                videoViewRate: 0,
+                videoViews: 0,
+                viewThroughConversions: 0,
+                conversionsFromInteractionsRate: 0,
+                conversionsValue: 0,
+                conversions: 0,
+                costMicros: 0,
+                costPerAllConversions: 0,
+                ctr: 0,
+                engagementRate: 0,
+                engagements: 0,
+                activeViewImpressions: 0,
+                activeViewMeasurability: 0,
+                activeViewMeasurableCostMicros: 0,
+                activeViewMeasurableImpressions: 0,
+                allConversionsFromInteractionsRate: 0,
+                allConversionsValue: 0,
+                averageCpc: 0,
+                allConversions: 0,
+                averageCpe: 0,
+                averageCpm: 0,
+                averageCpv: 0,
+                interactionRate: 0,
+                interactions: 0,
+                allConversionsByConversionDate: 0,
+                valuePerAllConversionsByConversionDate: 0,
+            };
+            acc[key] = googleAdsRow;
+        }
+
+        acc[key].campaignId = obj.campaignId;
+        acc[key].date = obj.date;
+        acc[key].campaignName = obj.campaignName;
+        acc[key].clicks = parseInt(acc[key].clicks) + parseInt(obj.clicks);
+        acc[key].impressions += parseInt(obj.impressions);
+        acc[key].averageCost += parseInt(obj.averageCost);
+
+        return acc;
+    }, {});
+
+    return response;
+}
 
 // function getTargets(campaigns: Array<string>) {
 //     campaigns.length > 0

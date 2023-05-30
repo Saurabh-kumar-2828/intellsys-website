@@ -14,6 +14,7 @@ export enum TimeGranularity {
     weekly = "Weekly",
     monthly = "Monthly",
     // quarterly = "Quarterly",
+    hourly = "Hourly",
     yearly = "Yearly",
 }
 

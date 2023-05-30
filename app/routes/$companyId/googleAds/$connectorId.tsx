@@ -8,13 +8,8 @@ import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
 import type {AdsDataAggregatedRow} from "~/backend/business-insights";
 import {
-    // FreshsalesData,
-    // FreshsalesDataAggregatedRow,
-    // getFreshsalesData,
     getGoogleAdsLectrixData,
-    // getShopifyData,
     getTimeGranularityFromUnknown,
-    // ShopifyDataAggregatedRow,
     TimeGranularity,
 } from "~/backend/business-insights";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
@@ -41,6 +36,7 @@ import {
 } from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import { getDestinationCredentialId } from "~/backend/utilities/data-management/common.server";
 
 export const meta: MetaFunction = () => {
     return {
@@ -60,17 +56,10 @@ type LoaderData = {
     appliedMinDate: Iso8601Date;
     appliedMaxDate: Iso8601Date;
     appliedSelectedGranularity: TimeGranularity;
-    // allProductInformation: Array<ProductInformation>;
-    // allCampaignInformation: Array<CampaignInformation>;
-    // freshsalesLeadsData: FreshsalesData;
     googleAdsData: {
         metaQuery: string;
         rows: Array<AdsDataAggregatedRow>;
     };
-    // shopifyData: {
-    //     metaQuery: string;
-    //     rows: Array<ShopifyDataAggregatedRow>;
-    // };
     companyId: Uuid;
     connectorId: Uuid
 };
@@ -89,6 +78,9 @@ export const loader: LoaderFunction = async ({request, params}) => {
     }
 
     const connectorId = params.connectorId;
+    console.log(1);
+    const destinationDatabaseCredentialId = getDestinationCredentialId(getUuidFromUnknown(companyId));
+    console.log(2);
 
     const urlSearchParams = new URL(request.url).searchParams;
 
@@ -111,7 +103,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         maxDate = maxDateRaw;
     }
 
-    const googleAdsData = await getGoogleAdsLectrixData(getStringFromUnknown(minDate), getStringFromUnknown(maxDate), selectedGranularity, getUuidFromUnknown(companyId));
+    const googleAdsData = await getGoogleAdsLectrixData(getStringFromUnknown(minDate), getStringFromUnknown(maxDate), selectedGranularity, getUuidFromUnknown(destinationDatabaseCredentialId));
     if(googleAdsData instanceof Error){
         return googleAdsData;
     }

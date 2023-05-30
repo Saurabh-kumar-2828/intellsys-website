@@ -1,43 +1,44 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import {LinksFunction, LoaderFunction, MetaFunction, redirect} from "@remix-run/node";
+import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
+import {redirect} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import "ag-grid-enterprise";
 import {AgGridReact} from "ag-grid-react";
 import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
-import {Companies} from "~/utilities/typeDefinitions";
 import {DateTime} from "luxon";
 import {useEffect, useState} from "react";
 import {Bar, Line} from "react-chartjs-2";
-import {
+import type {
     AdsData,
     AdsDataAggregatedRow,
     FreshsalesData,
+    ShopifyData,
+    ShopifyDataAggregatedRow} from "~/backend/business-insights";
+import {
     getAdsData,
     getFreshsalesData,
     getShopifyData,
     getTimeGranularityFromUnknown,
-    ShopifyData,
-    ShopifyDataAggregatedRow,
     TimeGranularity,
 } from "~/backend/business-insights";
-import {getCampaignLibrary, getProductLibrary, ProductInformation, CampaignInformation} from "~/backend/common";
+import type {ProductInformation, CampaignInformation} from "~/backend/common";
+import {getCampaignLibrary, getProductLibrary} from "~/backend/common";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {aggregateByDate, createGroupByReducer, doesAdsCampaignNameCorrespondToPerformanceLead, doesLeadCaptureSourceCorrespondToPerformanceLead, sumReducer} from "~/utilities/utilities";
 import {progressCellRenderer} from "~/components/progressCellRenderer";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import "ag-grid-enterprise";
 import {
-    Card,
     DateFilterSection,
     FancySearchableMultiSelect,
     GenericCard,
     LargeValueDisplayingCardWithTarget,
     SectionHeader,
     SmallValueDisplayingCardWithTarget,
-    ValueDisplayingCard,
 } from "~/components/scratchpad";
-import {Iso8601Date, QueryFilterType, Uuid, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
+import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
+import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
     adsColorPalette,
     agGridDateComparator,

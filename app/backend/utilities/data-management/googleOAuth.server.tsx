@@ -23,7 +23,6 @@ import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValid
 import type {PostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
-import jwt from "jsonwebtoken";
 import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 // TODO: Fix timezone in database
@@ -87,47 +86,34 @@ export async function ingestAndStoreGoogleAdsData(credentials: GoogleAdsCredenti
  */
 export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
     try {
-        console.log(1);
         const sourceCredentialId = generateUuid();
 
         // Destination = Company's Database.
         const companyDatabaseCredentialId = await getDestinationCredentialId(companyId);
-        console.log(2);
         if (companyDatabaseCredentialId instanceof Error) {
             return companyDatabaseCredentialId;
         }
 
-        console.log(3);
-
         const companyDatabaseManager = await getPostgresDatabaseManager(companyDatabaseCredentialId);
         if (companyDatabaseManager instanceof Error) {
-            console.log(4);
             return companyDatabaseManager;
         }
-
-        console.log(5);
 
         const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
         if (systemConnectorsDatabaseManager instanceof Error) {
             return systemConnectorsDatabaseManager;
         }
 
-        console.log(6);
-
         const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
         if (systemPostgresDatabaseManager instanceof Error) {
             return systemPostgresDatabaseManager;
         }
-
-        console.log(7);
 
         // Store credentials in KMS.
         const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, CredentialType.GoogleAds);
         if (response instanceof Error) {
             return response;
         }
-
-        console.log(8);
 
         await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
         await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
@@ -156,26 +142,24 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
         await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
         await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
 
-        console.log(9);
-
         const createTableResponse = await createTable(companyDatabaseManager, credentials);
         if (createTableResponse instanceof Error) {
             return createTableResponse;
         }
-
-        console.log(10);
 
         const dataIngestionResponse = await ingestGoogleAdsData(getUuidFromUnknown(connectorId), 45);
         if (dataIngestionResponse instanceof Error) {
             return dataIngestionResponse;
         }
 
-        console.log(11);
     } catch (e) {
         console.log(e);
     }
 }
 
+/**
+ * Retrieves a list of all Google Ads accounts that you are able to act upon directly given your current credentials.
+ */
 export async function getAccessibleAccounts(refreshToken: string): Promise<Array<AccessibleAccount> | Error> {
     var formdata = new FormData();
     formdata.append("developer_token", getRequiredEnvironmentVariableNew("GOOGLE_DEVELOPER_TOKEN"));
@@ -232,6 +216,12 @@ export async function createTable(postgresDatabaseManager: PostgresDatabaseManag
     }
 }
 
+/**
+ * Store the Google Ads data in the company's database.
+ * @param connectorId: Unique id of the connector object.
+ * @param duration: Duration to ingest data.
+ * @returns : No. of rows deleted and inserted.
+ */
 export async function ingestGoogleAdsData(connectorId: Uuid, duration: Integer): Promise<void | Error> {
     const url = `${getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_URL")}/googleads/historical`;
 
@@ -257,6 +247,7 @@ export async function ingestGoogleAdsData(connectorId: Uuid, duration: Integer):
     console.log(ingestionResult);
 }
 
+// TODO: Rename
 export async function deleteCredentialsFromSources(connectorId: Uuid, googleAdsLoginCustomerId: string, connectorType: ConnectorType) {
     // TODO: Add transactions
 
@@ -299,6 +290,9 @@ export async function dropGoogleAdsTable(accountId: string, destinationDatabaseC
     }
 }
 
+/**
+ * Checks if Google Ads connector already exists for given login-customer-id.
+ */
 export async function checkGoogleAdsConnectorExistsForAccount(googleLoginCustomerId: string): Promise<boolean | Error> {
     const connectorDatabaseManager = await getSystemConnectorsDatabaseManager();
     if (connectorDatabaseManager instanceof Error) {
@@ -340,6 +334,7 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
         return systemConnectorsDatabaseManager;
     }
 
+    // Query to get the array of connector Ids.
     const connectorIdsResponse = await systemPostgresDatabaseManager.execute(
         `
             SELECT
@@ -362,6 +357,7 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
 
     const connectorIds: Array<Uuid> = connectorIdsResponse.rows.map((row) => getUuidFromUnknown(row.connector_id));
 
+    // Query to extract the information for each connector Id.
     const connectorDetails = await systemConnectorsDatabaseManager.execute(
         `
             SELECT

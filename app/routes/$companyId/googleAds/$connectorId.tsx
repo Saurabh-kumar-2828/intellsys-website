@@ -7,11 +7,7 @@ import styles from "app/styles.css";
 import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
 import type {AdsDataAggregatedRow} from "~/backend/business-insights";
-import {
-    getGoogleAdsLectrixData,
-    getTimeGranularityFromUnknown,
-    TimeGranularity,
-} from "~/backend/business-insights";
+import {getGoogleAdsLectrixData, getTimeGranularityFromUnknown, TimeGranularity} from "~/backend/business-insights";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {ComposedChart} from "~/components/d3Componenets/composedChartComponent";
@@ -36,7 +32,7 @@ import {
 } from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import { getDestinationCredentialId } from "~/backend/utilities/data-management/common.server";
+import {getDestinationCredentialId} from "~/backend/utilities/data-management/common.server";
 
 export const meta: MetaFunction = () => {
     return {
@@ -61,7 +57,7 @@ type LoaderData = {
         rows: Array<AdsDataAggregatedRow>;
     };
     companyId: Uuid;
-    connectorId: Uuid
+    connectorId: Uuid;
 };
 
 export const loader: LoaderFunction = async ({request, params}) => {
@@ -79,7 +75,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
 
     const connectorId = params.connectorId;
     console.log(1);
-    const destinationDatabaseCredentialId = getDestinationCredentialId(getUuidFromUnknown(companyId));
+    const destinationDatabaseCredentialId = await getDestinationCredentialId(getUuidFromUnknown(companyId));
     console.log(2);
 
     const urlSearchParams = new URL(request.url).searchParams;
@@ -104,7 +100,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
     }
 
     const googleAdsData = await getGoogleAdsLectrixData(getStringFromUnknown(minDate), getStringFromUnknown(maxDate), selectedGranularity, getUuidFromUnknown(destinationDatabaseCredentialId));
-    if(googleAdsData instanceof Error){
+    if (googleAdsData instanceof Error) {
         return googleAdsData;
     }
 
@@ -115,7 +111,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         appliedMaxDate: maxDate as string,
         googleAdsData: googleAdsData,
         companyId: getUuidFromUnknown(companyId),
-        connectorId: getUuidFromUnknown(connectorId)
+        connectorId: getUuidFromUnknown(connectorId),
     };
 
     return json(loaderData);
@@ -140,7 +136,6 @@ type CampaignTargetObject = {
 export default function () {
     const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, googleAdsData, companyId, connectorId} = useLoaderData() as LoaderData;
 
-
     // TODO: Add additional filtering to ensure this only shows facebook campaigns
     // TODO: Add additional filtering to remove on form fb leads
 
@@ -151,7 +146,6 @@ export default function () {
     const [selectedMinDate, setSelectedMinDate] = useState<Iso8601Date>(appliedMinDate);
     const [selectedMaxDate, setSelectedMaxDate] = useState<Iso8601Date>(appliedMaxDate);
     const [hoverOnImpressionsCard, setHoverOnImpressionsCard] = useState(false);
-
 
     const filterAdsData = googleAdsData.rows
         .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
@@ -179,7 +173,11 @@ export default function () {
 
             <div className="tw-grid tw-grid-cols-2 tw-gap-x-5 tw-px-4 tw-py-4">
                 <div className="tw-grid-col-start-1">
-                    <CampaignsSection adsData={filterAdsData} minDate={appliedMinDate} maxDate={appliedMaxDate} />
+                    <CampaignsSection
+                        adsData={filterAdsData}
+                        minDate={appliedMinDate}
+                        maxDate={appliedMaxDate}
+                    />
                 </div>
 
                 <div className="tw-grid-col-start-1">
@@ -193,19 +191,10 @@ export default function () {
                 </div>
             </div>
         </>
-
     );
 }
 
-function CampaignsSection({
-    adsData,
-    minDate,
-    maxDate,
-}: {
-    adsData: Array<AdsDataAggregatedRow>;
-    minDate: Iso8601Date;
-    maxDate: Iso8601Date;
-}) {
+function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<AdsDataAggregatedRow>; minDate: Iso8601Date; maxDate: Iso8601Date}) {
     const gridRef = useRef(null);
 
     const [selectedCampaigns, setSelectedCampaigns] = useState([]);
@@ -356,7 +345,7 @@ function CampaignsSection({
                                 // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.impressions},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
-                                resizable: true
+                                resizable: true,
                             },
                             {
                                 headerName: "Amount Spent",
@@ -365,7 +354,7 @@ function CampaignsSection({
                                 // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.amountSpent},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
-                                resizable: true
+                                resizable: true,
                             },
                             {
                                 headerName: "Clicks",
@@ -374,7 +363,7 @@ function CampaignsSection({
                                 // cellRendererParams: {target: targetForCampaigns, color: campaignsColorPalette.clicks},
                                 cellClass: "!tw-px-0.5",
                                 headerClass: "tw-text-sm tw-font-medium",
-                                resizable: true
+                                resizable: true,
                             },
                         ]}
                         defaultColDef={defaultColumnDefinitions}
@@ -416,7 +405,6 @@ function CampaignsSection({
                         ]}
                         informationClassName={"tw-text-2xl tw-font-semibold"}
                     />
-
                 </div>
             </div>
 
@@ -452,12 +440,21 @@ function CampaignsSection({
                 </div>
             </div>
 
-            <Tabs.Root defaultValue="1" className="tw-row-start-4">
+            <Tabs.Root
+                defaultValue="1"
+                className="tw-row-start-4"
+            >
                 <Tabs.List>
-                    <Tabs.Trigger value="1" className="lp-tab tw-rounded-tl-md">
+                    <Tabs.Trigger
+                        value="1"
+                        className="lp-tab tw-rounded-tl-md"
+                    >
                         Distribution
                     </Tabs.Trigger>
-                    <Tabs.Trigger value="2" className="lp-tab tw-rounded-tr-md">
+                    <Tabs.Trigger
+                        value="2"
+                        className="lp-tab tw-rounded-tr-md"
+                    >
                         Raw Data
                     </Tabs.Trigger>
                 </Tabs.List>
@@ -474,11 +471,26 @@ function CampaignsSection({
                                             title={"Day-on-day distribution of selected campaigns"}
                                             className="tw-row-start-1 tw-col-start-1"
                                         >
-                                            {showAmountSpent && <LineGraphComponent data={salesLineData} scale={Scale.dataDriven} />}
+                                            {showAmountSpent && (
+                                                <LineGraphComponent
+                                                    data={salesLineData}
+                                                    scale={Scale.dataDriven}
+                                                />
+                                            )}
 
-                                            {showClicks && <LineGraphComponent data={clicksLineData} scale={Scale.dataDriven} />}
+                                            {showClicks && (
+                                                <LineGraphComponent
+                                                    data={clicksLineData}
+                                                    scale={Scale.dataDriven}
+                                                />
+                                            )}
 
-                                            {showImpressions && <LineGraphComponent data={impressionsLineData} scale={Scale.dataDriven} />}
+                                            {showImpressions && (
+                                                <LineGraphComponent
+                                                    data={impressionsLineData}
+                                                    scale={Scale.dataDriven}
+                                                />
+                                            )}
                                         </ComposedChart>
                                     </div>
 
@@ -632,15 +644,10 @@ function CampaignsSection({
     );
 }
 
-function getDayWiseCampaignsTrends(
-    adsData: Array<AdsDataAggregatedRow>,
-    minDate: Iso8601Date,
-    maxDate: Iso8601Date,
-) {
+function getDayWiseCampaignsTrends(adsData: Array<AdsDataAggregatedRow>, minDate: Iso8601Date, maxDate: Iso8601Date) {
     const dates = getDates(minDate, maxDate);
 
     const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
-
 
     // Datatable
     const dayWiseDistributionPerCampaign: {[key: string]: DayWiseDistributionPerCampaignObject} = {};
@@ -666,12 +673,7 @@ function getDayWiseCampaignsTrends(
     return dayWiseDistributionPerCampaign;
 }
 
-function getMetricsGroupByDateAndCampaignName(
-    adsData: Array<AdsDataAggregatedRow>,
-    campaigns: Array<string>,
-    minDate: Iso8601Date,
-    maxDate: Iso8601Date,
-) {
+function getMetricsGroupByDateAndCampaignName(adsData: Array<AdsDataAggregatedRow>, campaigns: Array<string>, minDate: Iso8601Date, maxDate: Iso8601Date) {
     const dates = getDates(minDate, maxDate);
 
     let leadsAndOrdersGroupByCampaignNameAndDate: {[key: string]: any} = {};

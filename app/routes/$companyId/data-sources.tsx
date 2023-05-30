@@ -32,6 +32,7 @@ export const action: ActionFunction = async ({request, params}) => {
     } else if (body.get("action") == "google") {
 
         const redirectUri = getRedirectUri(companyIdUuid, CredentialType.GoogleAds);
+        console.log(redirectUri);
 
         const url = `https://accounts.google.com/o/oauth2/v2/auth?scope=${googleAdsScope}&client_id=${process.env
             .GOOGLE_CLIENT_ID!}&response_type=code&redirect_uri=${redirectUri}&prompt=consent&access_type=offline&state=${companyId}`;

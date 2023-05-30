@@ -53,6 +53,7 @@ export type Connector = {
 
 export async function getGoogleAdsRefreshToken(authorizationCode: string, companyId: Uuid): Promise<string | Error> {
     const redirectUri = getRedirectUri(companyId, CredentialType.GoogleAds);
+    console.log(redirectUri);
     if (redirectUri instanceof Error) {
         return redirectUri;
     }

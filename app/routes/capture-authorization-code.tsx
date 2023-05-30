@@ -34,10 +34,12 @@ export const loader: LoaderFunction = async ({request}) => {
         throw Error("Authorization failed!");
     }
 
+    console.log(1);
     const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId));
     if (refreshToken instanceof Error) {
         return refreshToken;
     }
+    console.log(2);
 
     const accessibleAccounts = await getAccessibleAccounts(refreshToken);
     if (accessibleAccounts instanceof Error) {

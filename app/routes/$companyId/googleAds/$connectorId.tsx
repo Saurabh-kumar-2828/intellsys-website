@@ -6,7 +6,7 @@ import {AgGridReact} from "ag-grid-react";
 import styles from "app/styles.css";
 import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
-import type {AdsDataAggregatedRow} from "~/backend/business-insights";
+import type {AdsDataAggregatedRow, GoogleAdsDataAggregatedRow} from "~/backend/business-insights";
 import {getGoogleAdsLectrixData, getTimeGranularityFromUnknown, TimeGranularity} from "~/backend/business-insights";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
@@ -54,7 +54,7 @@ type LoaderData = {
     appliedSelectedGranularity: TimeGranularity;
     googleAdsData: {
         metaQuery: string;
-        rows: Array<AdsDataAggregatedRow>;
+        rows: Array<GoogleAdsDataAggregatedRow>;
     };
     companyId: Uuid;
     connectorId: Uuid;
@@ -74,9 +74,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
     }
 
     const connectorId = params.connectorId;
-    console.log(1);
     const destinationDatabaseCredentialId = await getDestinationCredentialId(getUuidFromUnknown(companyId));
-    console.log(2);
 
     const urlSearchParams = new URL(request.url).searchParams;
 
@@ -171,140 +169,160 @@ export default function () {
                 />
             </div>
 
-            <div className="tw-grid tw-grid-cols-2 tw-gap-x-5 tw-px-4 tw-py-4">
-                <div className="tw-grid-col-start-1">
-                    <CampaignsSection
-                        adsData={filterAdsData}
-                        minDate={appliedMinDate}
-                        maxDate={appliedMaxDate}
-                    />
-                </div>
+            <div className="tw-gap-x-5 tw-px-4 tw-py-4">
+                <CampaignsSection
+                    adsData={googleAdsData.rows}
+                    // adsData={filterAdsData}
+                    minDate={appliedMinDate}
+                    maxDate={appliedMaxDate}
+                />
 
-                <div className="tw-grid-col-start-1">
+                {/* <div className="tw-grid-col-start-1">
                     <CampaignsSection
-                        adsData={filterAdsData}
+                        // adsData={filterAdsData}
                         minDate={appliedMinDate}
                         maxDate={appliedMaxDate}
                         hoverOnImpressionCard={hoverOnImpressionsCard}
                         setHoverOnImpressionCard={setHoverOnImpressionsCard}
                     />
-                </div>
+                </div> */}
             </div>
+
+            {/* <div className="tw-grid tw-grid-cols-2 tw-gap-x-5 tw-px-4 tw-py-4">
+                <div className="tw-grid-col-start-1">
+                    <CampaignsSection
+                        adsData={googleAdsData.rows}
+                        // adsData={filterAdsData}
+                        minDate={appliedMinDate}
+                        maxDate={appliedMaxDate}
+                    />
+                </div>
+
+                {/* <div className="tw-grid-col-start-1">
+                    <CampaignsSection
+                        // adsData={filterAdsData}
+                        minDate={appliedMinDate}
+                        maxDate={appliedMaxDate}
+                        hoverOnImpressionCard={hoverOnImpressionsCard}
+                        setHoverOnImpressionCard={setHoverOnImpressionsCard}
+                    />
+                </div> */}
+            {/* </div> */}
         </>
     );
 }
 
-function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<AdsDataAggregatedRow>; minDate: Iso8601Date; maxDate: Iso8601Date}) {
-    const gridRef = useRef(null);
+function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<GoogleAdsDataAggregatedRow>; minDate: Iso8601Date; maxDate: Iso8601Date}) {
+    // const gridRef = useRef(null);
 
-    const [selectedCampaigns, setSelectedCampaigns] = useState([]);
-    const [showAmountSpent, setShowAmountSpent] = useState(true);
-    const [showClicks, setShowClicks] = useState(false);
-    const [showImpressions, setShowImpressions] = useState(false);
+    // const [selectedCampaigns, setSelectedCampaigns] = useState([]);
+    // const [showAmountSpent, setShowAmountSpent] = useState(true);
+    // const [showClicks, setShowClicks] = useState(false);
+    // const [showImpressions, setShowImpressions] = useState(false);
 
-    const dates = getDates(minDate, maxDate);
+    // const dates = getDates(minDate, maxDate);
 
-    const onSelectionChanged = useCallback(() => {
-        var selectedRows = gridRef.current.api.getSelectedRows();
-        const campaigns = selectedRows.map((row: {campaignName: any}) => row.campaignName);
-        setSelectedCampaigns(campaigns);
-    }, []);
+    // const onSelectionChanged = useCallback(() => {
+    //     var selectedRows = gridRef.current.api.getSelectedRows();
+    //     const campaigns = selectedRows.map((row: {campaignName: any}) => row.campaignName);
+    //     setSelectedCampaigns(campaigns);
+    // }, []);
 
-    const onDataFirstRendered = useCallback((params) => {
-        gridRef.current.api.forEachNode((node) => node.setSelected(true));
-    }, []);
+    // const onDataFirstRendered = useCallback((params) => {
+    //     gridRef.current.api.forEachNode((node) => node.setSelected(true));
+    // }, []);
 
-    const dayWiseCampaignsTrends = getDayWiseCampaignsTrends(adsData, minDate, maxDate);
+    // const dayWiseCampaignsTrends = getDayWiseCampaignsTrends(adsData, minDate, maxDate);
 
-    const campaigns = Object.keys(dayWiseCampaignsTrends);
+    // const campaigns = Object.keys(dayWiseCampaignsTrends);
 
-    const performanceleadscount = {
-        count: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign!].leads.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
-        metaInformation: "Number of leads created",
-    };
+    // const performanceleadscount = {
+    //     count: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign!].leads.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
+    //     metaInformation: "Number of leads created",
+    // };
 
-    // TODO: net quantity or count?
-    const sales = {
-        count: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign!].orders.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
-        metaInformation: "Number of units sold",
-    };
+    // // TODO: net quantity or count?
+    // const sales = {
+    //     count: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign!].orders.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
+    //     metaInformation: "Number of units sold",
+    // };
 
-    const campaignsInformation = {
-        impressions: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign].impressions.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
-        amountSpent: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign].amountSpent.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
-        clicks: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign].clicks.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
-    };
+    // const campaignsInformation = {
+    //     impressions: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign].impressions.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
+    //     amountSpent: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign].amountSpent.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
+    //     clicks: selectedCampaigns.map((campaign) => (campaign in dayWiseCampaignsTrends == true ? dayWiseCampaignsTrends[campaign].clicks.reduce(sumReducer, 0) : 0)).reduce(sumReducer, 0),
+    // };
 
     // Graphs
-    const labels = getDates(minDate, maxDate);
+    // const labels = getDates(minDate, maxDate);
 
-    // Targets
-    const targetForCampaigns = getTargets(campaigns);
+    // // Targets
+    // const targetForCampaigns = getTargets(campaigns);
 
-    // Leads and orders group by date and campaign
-    const leadsAndOrdersGroupByCampaignNameAndDate = getMetricsGroupByDateAndCampaignName(adsData, campaigns, minDate, maxDate);
+    // // Leads and orders group by date and campaign
+    // const leadsAndOrdersGroupByCampaignNameAndDate = getMetricsGroupByDateAndCampaignName(adsData, campaigns, minDate, maxDate);
 
-    // Data for lineChartComponent
+    // // Data for lineChartComponent
 
-    const amountSpent =
-        selectedCampaigns.length > 0
-            ? columnWiseSummationOfMatrix(
-                  selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
-                      campaign in dayWiseCampaignsTrends == true ? result.push(dayWiseCampaignsTrends[campaign].amountSpent) : result.push(new Array(dates.length).fill(0));
-                      return result;
-                  }, []),
-              )
-            : [];
+    // const amountSpent =
+    //     selectedCampaigns.length > 0
+    //         ? columnWiseSummationOfMatrix(
+    //               selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
+    //                   campaign in dayWiseCampaignsTrends == true ? result.push(dayWiseCampaignsTrends[campaign].amountSpent) : result.push(new Array(dates.length).fill(0));
+    //                   return result;
+    //               }, []),
+    //           )
+    //         : [];
 
-    const clicks =
-        selectedCampaigns.length > 0
-            ? columnWiseSummationOfMatrix(
-                  selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
-                      campaign in dayWiseCampaignsTrends == true ? result.push(dayWiseCampaignsTrends[campaign].clicks) : result.push(new Array(dates.length).fill(0));
-                      return result;
-                  }, []),
-              )
-            : [];
+    // const clicks =
+    //     selectedCampaigns.length > 0
+    //         ? columnWiseSummationOfMatrix(
+    //               selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
+    //                   campaign in dayWiseCampaignsTrends == true ? result.push(dayWiseCampaignsTrends[campaign].clicks) : result.push(new Array(dates.length).fill(0));
+    //                   return result;
+    //               }, []),
+    //           )
+    //         : [];
 
-    const impressions =
-        selectedCampaigns.length > 0
-            ? columnWiseSummationOfMatrix(
-                  selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
-                      campaign in dayWiseCampaignsTrends == true ? result.push(dayWiseCampaignsTrends[campaign].impressions) : result.push(new Array(dates.length).fill(0));
-                      return result;
-                  }, []),
-              )
-            : [];
+    // const impressions =
+    //     selectedCampaigns.length > 0
+    //         ? columnWiseSummationOfMatrix(
+    //               selectedCampaigns.reduce((result: Array<Array<number>>, campaign) => {
+    //                   campaign in dayWiseCampaignsTrends == true ? result.push(dayWiseCampaignsTrends[campaign].impressions) : result.push(new Array(dates.length).fill(0));
+    //                   return result;
+    //               }, []),
+    //           )
+    //         : [];
 
-    const impressionsLineData = {
-        series: {
-            name: "Impressions",
-            color: "#FF9F47",
-            values: impressions.map((d, index) => ({date: labels[index], value: d})),
-        },
-        dates: labels,
-        yMax: impressions.length > 0 ? Math.max(...impressions) : 100,
-    };
+    // const impressionsLineData = {
+    //     series: {
+    //         name: "Impressions",
+    //         color: "#FF9F47",
+    //         values: impressions.map((d, index) => ({date: labels[index], value: d})),
+    //     },
+    //     dates: labels,
+    //     yMax: impressions.length > 0 ? Math.max(...impressions) : 100,
+    // };
 
-    const clicksLineData = {
-        series: {
-            name: "Clicks",
-            color: "#a5b4fc",
-            values: clicks.map((d, index) => ({date: labels[index], value: d})),
-        },
-        dates: labels,
-        yMax: clicks.length > 0 ? Math.max(...clicks) : 100,
-    };
+    // const clicksLineData = {
+    //     series: {
+    //         name: "Clicks",
+    //         color: "#a5b4fc",
+    //         values: clicks.map((d, index) => ({date: labels[index], value: d})),
+    //     },
+    //     dates: labels,
+    //     yMax: clicks.length > 0 ? Math.max(...clicks) : 100,
+    // };
 
-    const salesLineData = {
-        series: {
-            name: "Net amount spent",
-            color: "#fbbf24",
-            values: amountSpent.map((d, index) => ({date: labels[index], value: d})),
-        },
-        dates: labels,
-        yMax: amountSpent.length > 0 ? Math.max(...amountSpent) : 100,
-    };
+    // const salesLineData = {
+    //     series: {
+    //         name: "Net amount spent",
+    //         color: "#fbbf24",
+    //         values: amountSpent.map((d, index) => ({date: labels[index], value: d})),
+    //     },
+    //     dates: labels,
+    //     yMax: amountSpent.length > 0 ? Math.max(...amountSpent) : 100,
+    // };
 
     const canvasDimensions = {
         height: 533,
@@ -313,7 +331,7 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<AdsDataAg
 
     return (
         <div className="tw-grid tw-grid-cols-1 tw-gap-y-8">
-            <div className="tw-row-start-1">
+            {/* <div className="tw-row-start-1">
                 <div className="tw-h-[410px] ag-theme-alpine-dark ag-root-wrapper">
                     <AgGridReact
                         ref={gridRef}
@@ -438,7 +456,7 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<AdsDataAg
                         valueClassName="tw-text-lg tw-px-0.2 tw-font-semibold"
                     />
                 </div>
-            </div>
+            </div> */}
 
             <Tabs.Root
                 defaultValue="1"
@@ -449,7 +467,7 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<AdsDataAg
                         value="1"
                         className="lp-tab tw-rounded-tl-md"
                     >
-                        Distribution
+                        Hourly Distribution
                     </Tabs.Trigger>
                     <Tabs.Trigger
                         value="2"
@@ -458,9 +476,9 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<AdsDataAg
                         Raw Data
                     </Tabs.Trigger>
                 </Tabs.List>
-                <Tabs.Content value="1">
+                <Tabs.Content value="2">
                     <div className="tw-grid tw-overflow-auto">
-                        <GenericCard
+                        {/* <GenericCard
                             content={
                                 <div className="tw-grid tw-grid-cols-1 tw-overflow-auto tw-gap-y-2 tw-py-4">
                                     <div className="tw-row-start-1">
@@ -553,23 +571,54 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<AdsDataAg
                                 </div>
                             }
                             // metaQuery={shopifyData.metaQuery}
-                        />
+                        /> */}
+                        Hello
                     </div>
                 </Tabs.Content>
-                <Tabs.Content value="2">
+                <Tabs.Content value="1">
                     <GenericCard
                         className="tw-rounded-tl-none"
                         content={
                             <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
                                 <AgGridReact
                                     rowData={adsData.map((object) => ({
-                                        campaignName: object.campaignName,
                                         date: object.date,
+                                        hour: object.hour,
+                                        campaignId: object.campaignId,
+                                        campaignName: object.campaignName,
+                                        averageCost: object.averageCost,
                                         impressions: object.impressions,
                                         clicks: object.clicks,
-                                        amountSpent: object.amountSpent,
-                                        leads: leadsAndOrdersGroupByCampaignNameAndDate[object.campaignName].leads[object.date],
-                                        orders: leadsAndOrdersGroupByCampaignNameAndDate[object.campaignName].orders[object.date],
+                                        // leads: leadsAndOrdersGroupByCampaignNameAndDate[object.campaignName].leads[object.date],
+                                        // orders: leadsAndOrdersGroupByCampaignNameAndDate[object.campaignName].orders[object.date],
+                                        interactionEventTypes: object.interactionEventTypes,
+                                        valuePerAllConversions: object.valuePerAllConversions,
+                                        videoViewRate: object.videoViewRate,
+                                        videoViews: object.videoViews,
+                                        viewThroughConversions: object.viewThroughConversions,
+                                        conversionsFromInteractionsRate: object.conversionsFromInteractionsRate,
+                                        conversionsValue: object.conversionsValue,
+                                        conversions: object.conversions,
+                                        costMicros: object.costMicros,
+                                        costPerAllConversions: object.costPerAllConversions,
+                                        ctr: object.ctr,
+                                        engagementRate: object.engagementRate,
+                                        engagements: object.engagements,
+                                        activeViewImpressions: object.activeViewImpressions,
+                                        activeViewMeasurability: object.activeViewMeasurability,
+                                        activeViewMeasurableCostMicros: object.activeViewMeasurableCostMicros,
+                                        activeViewMeasurableImpressions: object.activeViewMeasurableImpressions,
+                                        allConversionsFromInteractionsRate: object.allConversionsFromInteractionsRate,
+                                        allConversionsValue: object.allConversionsValue,
+                                        allConversions: object.allConversions,
+                                        averageCpc: object.averageCpc,
+                                        averageCpe: object.averageCpe,
+                                        averageCpm: object.averageCpm,
+                                        averageCpv: object.averageCpv,
+                                        interactionRate: object.interactionRate,
+                                        interactions: object.interactions,
+                                        allConversionsByConversionDate: object.allConversionsByConversionDate,
+                                        valuePerAllConversionsByConversionDate: object.valuePerAllConversionsByConversionDate,
                                     }))}
                                     columnDefs={[
                                         {
@@ -579,54 +628,41 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<AdsDataAg
                                             comparator: agGridDateComparator,
                                             resizable: true,
                                         },
-                                        {
-                                            headerName: "Campaign Name",
-                                            field: "campaignName",
-                                            // cellRenderer: "progressCellRenderer",
-                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCount},
-                                            cellClass: "!tw-px-0",
-                                            resizable: true,
-                                        },
-                                        {
-                                            headerName: "Clicks",
-                                            field: "clicks",
-                                            // cellRenderer: "progressCellRenderer",
-                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCount},
-                                            cellClass: "!tw-px-0",
-                                            resizable: true,
-                                        },
-                                        {
-                                            headerName: "Impressions",
-                                            field: "impressions",
-                                            // cellRenderer: "progressCellRenderer",
-                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
-                                            cellClass: "!tw-px-0",
-                                            resizable: true,
-                                        },
-                                        {
-                                            headerName: "Amount Spent",
-                                            field: "amountSpent",
-                                            // cellRenderer: "progressCellRenderer",
-                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
-                                            cellClass: "!tw-px-0",
-                                            resizable: true,
-                                        },
-                                        {
-                                            headerName: "Leads",
-                                            field: "leads",
-                                            // cellRenderer: "progressCellRenderer",
-                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
-                                            cellClass: "!tw-px-0",
-                                            resizable: true,
-                                        },
-                                        {
-                                            headerName: "Orders",
-                                            field: "orders",
-                                            // cellRenderer: "progressCellRenderer",
-                                            // cellRendererParams: {target: targetForLeadsDayWise, color: adsColorPalette.performanceCpl},
-                                            cellClass: "!tw-px-0",
-                                            resizable: true,
-                                        },
+                                        {headerName: "hour", field: "hour", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "CampaignId", field: "campaignId", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "campaignName", field: "campaignName", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "averageCost", field: "averageCost", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "impressions", field: "impressions", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "clicks", field: "clicks", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "amountSpent", field: "amountSpent", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "interactionEventTypes", field: "interactionEventTypes", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "valuePerAllConversions", field: "valuePerAllConversions", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "videoViewRate", field: "videoViewRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "videoViews", field: "videoViews", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "viewThroughConversions", field: "viewThroughConversions", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "conversionsFromInteractionsRate", field: "conversionsFromInteractionsRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "conversionsValue", field: "conversionsValue", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "conversions", field: "conversions", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "costMicros", field: "costMicros", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "costPerAllConversions", field: "costPerAllConversions", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "ctr", field: "ctr", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "engagementRate", field: "engagementRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "engagements", field: "engagements", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "activeViewImpressions", field: "activeViewImpressions", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "activeViewMeasurability", field: "activeViewMeasurability", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "activeViewMeasurableCostMicros", field: "activeViewMeasurableCostMicros", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "activeViewMeasurableImpressions", field: "activeViewMeasurableImpressions", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "allConversionsFromInteractionsRate", field: "allConversionsFromInteractionsRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "allConversionsValue", field: "allConversionsValue", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "allConversions", field: "allConversions", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "averageCpc", field: "averageCpc", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "averageCpe", field: "averageCpe", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "averageCpm", field: "averageCpm", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "averageCpv", field: "averageCpv", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "interactionRate", field: "interactionRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "interactions", field: "interactions", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "allConversionsByConversionDate", field: "allConversionsByConversionDate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "valuePerAllConversionsByConversionDate", field: "valuePerAllConversionsByConversionDate", cellClass: "!tw-px-0", resizable: true},
                                     ]}
                                     defaultColDef={defaultColumnDefinitions}
                                     animateRows={true}
@@ -644,69 +680,69 @@ function CampaignsSection({adsData, minDate, maxDate}: {adsData: Array<AdsDataAg
     );
 }
 
-function getDayWiseCampaignsTrends(adsData: Array<AdsDataAggregatedRow>, minDate: Iso8601Date, maxDate: Iso8601Date) {
-    const dates = getDates(minDate, maxDate);
+// function getDayWiseCampaignsTrends(adsData: Array<AdsDataAggregatedRow>, minDate: Iso8601Date, maxDate: Iso8601Date) {
+//     const dates = getDates(minDate, maxDate);
 
-    const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
+//     const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
 
-    // Datatable
-    const dayWiseDistributionPerCampaign: {[key: string]: DayWiseDistributionPerCampaignObject} = {};
-    for (const campaign in adsDataGroupByCampaign) {
-        let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
-        let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
-        let dayWiseImpressions: Array<number> = new Array(dates.length).fill(0);
-        let dayWiseClicks: Array<number> = new Array(dates.length).fill(0);
-        let dayWiseAmountSpent: Array<number> = new Array(dates.length).fill(0);
+//     // Datatable
+//     const dayWiseDistributionPerCampaign: {[key: string]: DayWiseDistributionPerCampaignObject} = {};
+//     for (const campaign in adsDataGroupByCampaign) {
+//         let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
+//         let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
+//         let dayWiseImpressions: Array<number> = new Array(dates.length).fill(0);
+//         let dayWiseClicks: Array<number> = new Array(dates.length).fill(0);
+//         let dayWiseAmountSpent: Array<number> = new Array(dates.length).fill(0);
 
-        dayWiseImpressions = aggregateByDate(adsDataGroupByCampaign[campaign], "impressions", dates);
-        dayWiseClicks = aggregateByDate(adsDataGroupByCampaign[campaign], "clicks", dates);
-        dayWiseAmountSpent = aggregateByDate(adsDataGroupByCampaign[campaign], "amountSpent", dates);
-        dayWiseDistributionPerCampaign[campaign] = {
-            impressions: dayWiseImpressions,
-            clicks: dayWiseClicks,
-            amountSpent: dayWiseAmountSpent,
-            leads: dayWiseLeads,
-            orders: dayWiseOrders,
-        };
-    }
+//         dayWiseImpressions = aggregateByDate(adsDataGroupByCampaign[campaign], "impressions", dates);
+//         dayWiseClicks = aggregateByDate(adsDataGroupByCampaign[campaign], "clicks", dates);
+//         dayWiseAmountSpent = aggregateByDate(adsDataGroupByCampaign[campaign], "amountSpent", dates);
+//         dayWiseDistributionPerCampaign[campaign] = {
+//             impressions: dayWiseImpressions,
+//             clicks: dayWiseClicks,
+//             amountSpent: dayWiseAmountSpent,
+//             leads: dayWiseLeads,
+//             orders: dayWiseOrders,
+//         };
+//     }
 
-    return dayWiseDistributionPerCampaign;
-}
+//     return dayWiseDistributionPerCampaign;
+// }
 
-function getMetricsGroupByDateAndCampaignName(adsData: Array<AdsDataAggregatedRow>, campaigns: Array<string>, minDate: Iso8601Date, maxDate: Iso8601Date) {
-    const dates = getDates(minDate, maxDate);
+// function getMetricsGroupByDateAndCampaignName(adsData: Array<AdsDataAggregatedRow>, campaigns: Array<string>, minDate: Iso8601Date, maxDate: Iso8601Date) {
+//     const dates = getDates(minDate, maxDate);
 
-    let leadsAndOrdersGroupByCampaignNameAndDate: {[key: string]: any} = {};
-    for (const campaign of campaigns) {
-        let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
-        let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
+//     let leadsAndOrdersGroupByCampaignNameAndDate: {[key: string]: any} = {};
+//     for (const campaign of campaigns) {
+//         let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
+//         let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
 
-        //map leads to date
-        let leadsToDate: {[key: string]: number} = {};
-        let ordersToDate: {[key: string]: number} = {};
-        dates.forEach((key, i) => (leadsToDate[key] = dayWiseLeads[i]));
-        dates.forEach((key, i) => (ordersToDate[key] = dayWiseOrders[i]));
+//         //map leads to date
+//         let leadsToDate: {[key: string]: number} = {};
+//         let ordersToDate: {[key: string]: number} = {};
+//         dates.forEach((key, i) => (leadsToDate[key] = dayWiseLeads[i]));
+//         dates.forEach((key, i) => (ordersToDate[key] = dayWiseOrders[i]));
 
-        leadsAndOrdersGroupByCampaignNameAndDate[campaign] = {
-            leads: leadsToDate,
-            orders: ordersToDate,
-        };
-    }
+//         leadsAndOrdersGroupByCampaignNameAndDate[campaign] = {
+//             leads: leadsToDate,
+//             orders: ordersToDate,
+//         };
+//     }
 
-    return leadsAndOrdersGroupByCampaignNameAndDate;
-}
+//     return leadsAndOrdersGroupByCampaignNameAndDate;
+// }
 
-function getTargets(campaigns: Array<string>) {
-    campaigns.length > 0
-        ? campaigns.reduce((result: {[key: string]: CampaignTargetObject}, currentCampaign) => {
-              result[currentCampaign] = {
-                  impressions: 400000,
-                  clicks: 20000,
-                  amountSpent: 200000,
-                  leads: 2000,
-                  orders: 100,
-              };
-              return result;
-          }, {})
-        : {};
-}
+// function getTargets(campaigns: Array<string>) {
+//     campaigns.length > 0
+//         ? campaigns.reduce((result: {[key: string]: CampaignTargetObject}, currentCampaign) => {
+//               result[currentCampaign] = {
+//                   impressions: 400000,
+//                   clicks: 20000,
+//                   amountSpent: 200000,
+//                   leads: 2000,
+//                   orders: 100,
+//               };
+//               return result;
+//           }, {})
+//         : {};
+// }

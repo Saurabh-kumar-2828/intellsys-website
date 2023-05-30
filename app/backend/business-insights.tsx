@@ -7,6 +7,7 @@ import {CredentialType} from "~/utilities/typeDefinitions";
 import {dateToIso8601Date} from "~/utilities/utilities";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
+import { Integer } from "~/global-common-typescript/typeDefinitions";
 
 export enum TimeGranularity {
     daily = "Daily",
@@ -208,6 +209,11 @@ export type AdsData = {
     rows: Array<AdsDataAggregatedRow>;
 };
 
+export type GoogleAdsData = {
+    metaQuery: string;
+    rows: Array<GoogleAdsDataAggregatedRow>;
+};
+
 export type AdsDataAggregatedRow = {
     date: Iso8601Date;
     amountSpent: number;
@@ -217,6 +223,44 @@ export type AdsDataAggregatedRow = {
     platform: string;
     category: string;
 };
+
+export type GoogleAdsDataAggregatedRow = {
+    date: Iso8601Date;
+    hour: Integer;
+    campaignId: string;
+    campaignName: string;
+    averageCost: any;
+    impressions: any;
+    clicks: any;
+    interactionEventTypes: any;
+    valuePerAllConversions: any;
+    videoViewRate: any;
+    videoViews: any;
+    viewThroughConversions: any;
+    conversionsFromInteractionsRate: any;
+    conversionsValue: any;
+    conversions: any;
+    costMicros: any;
+    costPerAllConversions: any;
+    ctr: any;
+    engagementRate: any;
+    engagements: any;
+    activeViewImpressions: any;
+    activeViewMeasurability: any;
+    activeViewMeasurableCostMicros: any;
+    activeViewMeasurableImpressions: any;
+    allConversionsFromInteractionsRate: any;
+    allConversionsValue: any;
+    allConversions: any;
+    averageCpc: any;
+    averageCpe: any;
+    averageCpm: any;
+    averageCpv: any;
+    interactionRate: any;
+    interactions: any;
+    allConversionsByConversionDate: any;
+    valuePerAllConversionsByConversionDate: any;
+}
 
 // TODO: Remove? At the very least, refactor to use getGoogleAdsData and getFacebookAdsData.
 // Metrics: amountSpent, impressions, clicks
@@ -243,6 +287,48 @@ function rowToAdsDataAggregatedRow(row: unknown): AdsDataAggregatedRow {
         platform: row.platform,
         campaignName: row.campaign_name,
         category: row.category,
+    };
+
+    return adsDataAggregatedRow;
+}
+
+function rowToGoogleAdsDataAggregatedRow(row: unknown): GoogleAdsDataAggregatedRow {
+    const adsDataAggregatedRow: GoogleAdsDataAggregatedRow = {
+        date: row.date,
+        hour: row.hour,
+        campaignId: row.campaignid,
+        campaignName: row.campaignname,
+        averageCost: row.averagecost,
+        impressions: row.impressions,
+        clicks: row.clicks,
+        interactionEventTypes: row.interactioneventtypes,
+        valuePerAllConversions: row.valueperallconversions,
+        videoViewRate: row.videoviewrate,
+        videoViews: row.videoviews,
+        viewThroughConversions: row.viewthroughconversions,
+        conversionsFromInteractionsRate: row.conversionsfrominteractionsrate,
+        conversionsValue: row.conversionsvalue,
+        conversions: row.conversions,
+        costMicros: row.costmicros,
+        costPerAllConversions: row.costperallconversions,
+        ctr: row.ctr,
+        engagementRate: row.engagementrate,
+        engagements: row.engagements,
+        activeViewImpressions: row.activeviewimpressions,
+        activeViewMeasurability: row.activeviewmeasurability,
+        activeViewMeasurableCostMicros: row.activeviewmeasurablecostmicros,
+        activeViewMeasurableImpressions: row.activeviewmeasurableimpressions,
+        allConversionsFromInteractionsRate: row.allconversionsfrominteractionsrate,
+        allConversionsValue: row.allconversionsvalue,
+        allConversions: row.allconversions,
+        averageCpc: row.averagecpc,
+        averageCpe: row.averagecpe,
+        averageCpm: row.averagecpm,
+        averageCpv: row.averagecpv,
+        interactionRate: row.interactionrate,
+        interactions: row.interactions,
+        allConversionsByConversionDate: row.allconversionsbyconversiondate,
+        valuePerAllConversionsByConversionDate: row.valueperallconversionsbyconversiondate,
     };
 
     return adsDataAggregatedRow;
@@ -275,23 +361,55 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
     };
 }
 
-export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid): Promise<AdsData | Error> {
+export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid): Promise<GoogleAdsData | Error> {
 
     const postgresDatabaseManager = await getPostgresDatabaseManager(destinationDatabaseId);
-    console.log(postgresDatabaseManager)
 
     if (postgresDatabaseManager instanceof Error) {
         return postgresDatabaseManager;
     }
 
+    // TODO: Fix the name of the table
+
     const query = `
         SELECT
+            data->'campaign'->>'id' as campaignId,
+            data->'campaign'->>'name' as campaignName,
+            data->'campaign'->>'resourceName' as resourceName,
+            data->'metrics'->>'interactionEventTypes' as interactionEventTypes,
+            data->'metrics'->>'valuePerAllConversions' as valuePerAllConversions,
+            data->'metrics'->>'videoViewRate' as videoViewRate,
+            data->'metrics'->>'videoViews' as videoViews,
+            data->'metrics'->>'viewThroughConversions' as viewThroughConversions,
+            data->'metrics'->>'conversionsFromInteractionsRate' as conversionsFromInteractionsRate,
+            data->'metrics'->>'conversionsValue' as conversionsValue,
+            data->'metrics'->>'conversions' as conversions,
+            data->'metrics'->>'costMicros' as costMicros,
+            data->'metrics'->>'costPerAllConversions' as costPerAllConversions,
+            data->'metrics'->>'ctr' as ctr,
+            data->'metrics'->>'engagementRate' as engagementRate,
+            data->'metrics'->>'engagements' as engagements,
+            data->'metrics'->>'activeViewImpressions' as activeViewImpressions,
+            data->'metrics'->>'activeViewMeasurability' as activeViewMeasurability,
+            data->'metrics'->>'activeViewMeasurableCostMicros' as activeViewMeasurableCostMicros,
+            data->'metrics'->>'activeViewMeasurableImpressions' as activeViewMeasurableImpressions,
+            data->'metrics'->>'allConversionsFromInteractionsRate' as allConversionsFromInteractionsRate,
+            data->'metrics'->>'allConversionsValue' as allConversionsValue,
+            data->'metrics'->>'allConversions' as allConversions,
+            data->'metrics'->>'averageCpc' as averageCpc,
+            data->'metrics'->>'averageCpe' as averageCpe,
+            data->'metrics'->>'averageCpm' as averageCpm,
+            data->'metrics'->>'averageCpv' as averageCpv,
+            data->'metrics'->>'interactionRate' as interactionRate,
+            data->'metrics'->>'interactions' as interactions,
+            data->'metrics'->>'allConversionsByConversionDate' as allConversionsByConversionDate,
+            data->'metrics'->>'valuePerAllConversionsByConversionDate' as valuePerAllConversionsByConversionDate,
             DATE((data->'segments'->>'date')) AS date,
+            data->'segments'->>'hour' AS hour,
             'Google' AS platform,
-            data->'campaign'->>'name' as campaign_name,
             data->'metrics'->>'clicks' as clicks,
             data->'metrics'->>'impressions' as impressions,
-            data->'metrics'->>'averageCost' as amount_spent
+            data->'metrics'->>'averageCost' as averageCost
         FROM
             gad_7238868599
         WHERE
@@ -307,11 +425,11 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
         return result;
     }
 
-    console.log(result);
     return {
         metaQuery: query,
+        rows: result.rows.map((row) => rowToGoogleAdsDataAggregatedRow(row)),
         // rows: []
-        rows: result.rows.map((row) => rowToAdsDataAggregatedRow(row)),
+        // rows: result.rows.map((row) => rowToAdsDataAggregatedRow(row)),
     };
 }
 

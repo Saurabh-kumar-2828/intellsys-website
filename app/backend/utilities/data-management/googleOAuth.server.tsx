@@ -83,7 +83,7 @@ export async function ingestAndStoreGoogleAdsData(credentials: GoogleAdsCredenti
 }
 
 /**
- *  Handles the OAuth2 flow to authorize the Google Ads API for the given companyId and stores the credentials in KMS table, connectors table, subconnecter table and companyToConnectorTable
+ *  Handles the OAuth2 flow to authorize the Google Ads API for the given companyId and stores the credentials in KMS table, connectors table, subconnecter table and companyToConnectorTable.
  */
 export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
     try {
@@ -152,7 +152,6 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
         if (dataIngestionResponse instanceof Error) {
             return dataIngestionResponse;
         }
-
     } catch (e) {
         console.log(e);
     }
@@ -329,12 +328,6 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
         return systemPostgresDatabaseManager;
     }
 
-    const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
-
-    if (systemConnectorsDatabaseManager instanceof Error) {
-        return systemConnectorsDatabaseManager;
-    }
-
     // Query to get the array of connector Ids.
     const connectorIdsResponse = await systemPostgresDatabaseManager.execute(
         `
@@ -344,8 +337,10 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
                 company_to_connector_mapping
             WHERE
                 company_id = $1
+            AND
+                connector_type = $2
         `,
-        [companyId],
+        [companyId, ConnectorType.GoogleAds],
     );
 
     if (connectorIdsResponse instanceof Error) {
@@ -358,7 +353,23 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
 
     const connectorIds: Array<Uuid> = connectorIdsResponse.rows.map((row) => getUuidFromUnknown(row.connector_id));
 
-    // Query to extract the information for each connector Id.
+    const connectors = getLoginCustomerIdForConnector(connectorIds);
+    if (connectors instanceof Error) {
+        return connectors;
+    }
+    return connectors;
+}
+
+/**
+ * Retrieves the login customer id associated with given connector.
+ */
+export async function getLoginCustomerIdForConnector(connectorIds: Array<Uuid>): Promise<Array<Connector> | Error> {
+    const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
+
+    if (systemConnectorsDatabaseManager instanceof Error) {
+        return systemConnectorsDatabaseManager;
+    }
+
     const connectorDetails = await systemConnectorsDatabaseManager.execute(
         `
             SELECT

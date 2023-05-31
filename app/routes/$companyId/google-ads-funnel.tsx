@@ -43,6 +43,7 @@ import {
     sumReducer,
 } from "~/utilities/utilities";
 import "ag-grid-enterprise";
+import { getUuidFromUnknown } from "~/global-common-typescript/utilities/typeValidationUtilities";
 
 export const meta: MetaFunction = () => {
     return {
@@ -84,7 +85,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         return redirect(`/sign-in?redirectTo=${getUrlFromRequest(request)}`);
     }
 
-    const companyId = params.companyId;
+    const companyId = getUuidFromUnknown(params.companyId);
     if (companyId == null) {
         throw new Response(null, {status: 404});
     }
@@ -95,15 +96,15 @@ export const loader: LoaderFunction = async ({request, params}) => {
     const selectedGranularity: TimeGranularity = selectedGranularityRaw == null ? TimeGranularity.daily : getTimeGranularityFromUnknown(selectedGranularityRaw);
 
     const minDateRaw = urlSearchParams.get("min_date");
-    let minDate;
-    if (minDateRaw == null || minDateRaw.length == 0) {
+    let minDate=null;
+    if (minDateRaw == null || minDateRaw.length == 0 || !minDate) {
         minDate = DateTime.now().startOf("month").toISODate();
     } else {
         minDate = minDateRaw;
     }
 
     const maxDateRaw = urlSearchParams.get("max_date");
-    let maxDate;
+    let maxDate=null;
     if (maxDateRaw == null || maxDateRaw.length == 0) {
         maxDate = DateTime.now().toISODate();
     } else {
@@ -118,7 +119,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         allProductInformation: await getProductLibrary(companyId),
         allCampaignInformation: await getCampaignLibrary(companyId),
         freshsalesLeadsData: await getFreshsalesData(minDate, maxDate, selectedGranularity, companyId),
-        googleAdsData: await getGoogleAdsData(minDate, maxDate, selectedGranularity, companyId),
+        googleAdsData: await getGoogleAdsData(minDate!, maxDate!, selectedGranularity, companyId),
         shopifyData: await getShopifyData(minDate, maxDate, selectedGranularity, companyId),
         companyId: companyId,
     };

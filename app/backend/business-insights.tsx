@@ -2,12 +2,14 @@ import {getPostgresDatabaseManager} from "~/global-common-typescript/server/post
 import {getCredentialId} from "~/backend/utilities/data-management/credentials.server";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {getGranularityQuery} from "~/backend/utilities/utilities.server";
-import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
+import {Iso8601Date, Uuid, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import {CredentialType} from "~/utilities/typeDefinitions";
-import {dateToIso8601Date} from "~/utilities/utilities";
+import {dateToIso8601Date, getSingletonValue} from "~/utilities/utilities";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
 import { Integer } from "~/global-common-typescript/typeDefinitions";
+import { getCredentialFromKms } from "~/global-common-typescript/server/kms.server";
+import { getLoginCustomerIdForConnector } from "./utilities/data-management/googleOAuth.server";
 
 export enum TimeGranularity {
     daily = "Daily",
@@ -362,13 +364,22 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
     };
 }
 
-export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid): Promise<GoogleAdsData | Error> {
+export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<GoogleAdsData | Error> {
 
     const postgresDatabaseManager = await getPostgresDatabaseManager(destinationDatabaseId);
 
     if (postgresDatabaseManager instanceof Error) {
         return postgresDatabaseManager;
     }
+
+    const loginCustomerIdRaw = await getLoginCustomerIdForConnector([connectorId]);
+    if (loginCustomerIdRaw instanceof Error) {
+        return loginCustomerIdRaw;
+    }
+
+    const loginCustomerId = getSingletonValue(loginCustomerIdRaw);
+
+    const tableName = `${dataSourcesAbbreviations.googleAds}_${loginCustomerId.loginCustomerId}`;
 
     // TODO: Fix the name of the table
 
@@ -412,14 +423,13 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
             data->'metrics'->>'impressions' as impressions,
             data->'metrics'->>'averageCost' as averageCost
         FROM
-            gad_7238868599
+            ${tableName}
         WHERE
             DATE((data->'segments'->>'date')) >= '${minDate}'
             AND DATE((data->'segments'->>'date')) <= '${maxDate}'
         ORDER BY
             date
     `;
-
 
     const result = await postgresDatabaseManager.execute(query);
     if (result instanceof Error) {
@@ -429,9 +439,9 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
     return {
         metaQuery: query,
         rows: result.rows.map((row) => rowToGoogleAdsDataAggregatedRow(row)),
-        // rows: []
-        // rows: result.rows.map((row) => rowToAdsDataAggregatedRow(row)),
     };
+
+
 }
 
 export async function getFacebookAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData | Error> {

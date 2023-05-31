@@ -32,8 +32,7 @@ import {
 } from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {getDestinationCredentialId} from "~/backend/utilities/data-management/common.server";
-import {object} from "zod";
+import {getDestinationCredentialId, getSourceAndDestinationId} from "~/backend/utilities/data-management/common.server";
 
 export const meta: MetaFunction = () => {
     return {
@@ -75,6 +74,10 @@ export const loader: LoaderFunction = async ({request, params}) => {
     }
 
     const connectorId = params.connectorId;
+    if(connectorId == undefined){
+        throw new Response("Connector undefined!");
+    }
+
     const destinationDatabaseCredentialId = await getDestinationCredentialId(getUuidFromUnknown(companyId));
 
     const urlSearchParams = new URL(request.url).searchParams;
@@ -98,7 +101,13 @@ export const loader: LoaderFunction = async ({request, params}) => {
         maxDate = maxDateRaw;
     }
 
-    const googleAdsData = await getGoogleAdsLectrixData(getStringFromUnknown(minDate), getStringFromUnknown(maxDate), selectedGranularity, getUuidFromUnknown(destinationDatabaseCredentialId));
+    const googleAdsData = await getGoogleAdsLectrixData(
+        getStringFromUnknown(minDate),
+        getStringFromUnknown(maxDate),
+        selectedGranularity,
+        getUuidFromUnknown(destinationDatabaseCredentialId),
+        getUuidFromUnknown(connectorId),
+    );
     if (googleAdsData instanceof Error) {
         return googleAdsData;
     }
@@ -152,7 +161,6 @@ export default function () {
     // const filterAdsData = googleAdsData.rows
     //     .filter((row) => selectedCategories.length == 0 || selectedCategories.includes(row.category))
     //     .filter((row) => selectedPlatforms.length == 0 || selectedPlatforms.includes(row.platform));
-
 
     return (
         <>
@@ -722,33 +730,6 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
 
 //     return dayWiseDistributionPerCampaign;
 // }
-
-function getDayWiseCampaignsTrends(adsData: Array<GoogleAdsDataAggregatedRow>, minDate: Iso8601Date, maxDate: Iso8601Date) {
-    const dates = getDates(minDate, maxDate);
-
-    const adsDataGroupByCampaign = adsData.reduce(createGroupByReducer("campaignName"), {});
-
-    // Datatable
-    const dayWiseDistributionPerCampaign: {[key: string]: DayWiseDistributionPerCampaignObject} = {};
-    for (const campaign in adsDataGroupByCampaign) {
-        //     let dayWiseLeads: Array<number> = new Array(dates.length).fill(0);
-        //     let dayWiseOrders: Array<number> = new Array(dates.length).fill(0);
-        let dayWiseImpressions: Array<number> = new Array(dates.length).fill(0);
-        let dayWiseClicks: Array<number> = new Array(dates.length).fill(0);
-        let dayWiseAverageCost: Array<number> = new Array(dates.length).fill(0);
-
-        dayWiseImpressions = aggregateByDate(adsDataGroupByCampaign[campaign], "impressions", dates);
-        dayWiseClicks = aggregateByDate(adsDataGroupByCampaign[campaign], "clicks", dates);
-        dayWiseAverageCost = aggregateByDate(adsDataGroupByCampaign[campaign], "averageCost", dates);
-        dayWiseDistributionPerCampaign[campaign] = {
-            impressions: dayWiseImpressions,
-            clicks: dayWiseClicks,
-            averageCost: dayWiseAverageCost,
-        };
-    }
-
-    return dayWiseDistributionPerCampaign;
-}
 
 function getMetricsGroupByDateAndCampaignName(adsData: Array<AdsDataAggregatedRow>, campaigns: Array<string>, minDate: Iso8601Date, maxDate: Iso8601Date) {
     const dates = getDates(minDate, maxDate);

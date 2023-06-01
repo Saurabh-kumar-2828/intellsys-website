@@ -5,6 +5,7 @@ import {dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import {ConnectorTableType, ConnectorType} from "~/utilities/typeDefinitions";
 import {CredentialType} from "~/utilities/typeDefinitions";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
+import type {ConnectorId} from "~/backend/utilities/data-management/common.server";
 import {
     deleteCompanyIdToConnectorIdMapping,
     deleteCompanyIdToCredentialIdMapping,
@@ -53,7 +54,7 @@ export type Connector = {
 
 export async function getGoogleAdsRefreshToken(authorizationCode: string, companyId: Uuid): Promise<string | Error> {
     const redirectUri = getRedirectUri(companyId, CredentialType.GoogleAds);
-    console.log(redirectUri);
+
     if (redirectUri instanceof Error) {
         return redirectUri;
     }
@@ -180,7 +181,6 @@ export async function getAccessibleAccounts(refreshToken: string): Promise<Array
 
     const response = await rawResponse.json();
 
-    console.log("response", response);
     const accessbileAccounts: Array<AccessibleAccount> = response.map((row) => convertToAccessbileAccount(row));
 
     return accessbileAccounts;
@@ -248,7 +248,7 @@ export async function ingestGoogleAdsData(connectorId: Uuid, duration: Integer):
 }
 
 // TODO: Rename
-export async function deleteCredentialsFromSources(connectorId: Uuid, googleAdsLoginCustomerId: string, connectorType: ConnectorType) {
+export async function deleteConnector(connectorId: Uuid, googleAdsLoginCustomerId: string, connectorType: ConnectorType) {
     // TODO: Add transactions
 
     const connector = await getSourceAndDestinationId(connectorId);
@@ -261,6 +261,7 @@ export async function deleteCredentialsFromSources(connectorId: Uuid, googleAdsL
         return systemPostgresDatabaseManager;
     }
 
+    // TODO: Discuss if this is required.
     await deleteCompanyIdToCredentialIdMapping(connector.sourceId);
 
     await deleteCredentialFromKms(connector.sourceId);
@@ -278,7 +279,6 @@ export async function dropGoogleAdsTable(accountId: string, destinationDatabaseC
         return databaseManager;
     }
 
-    // Change it to DROP
     const query = `
         DROP TABLE ${dataSourcesAbbreviations.googleAds}_${accountId}
     `;
@@ -313,13 +313,17 @@ export async function checkGoogleAdsConnectorExistsForAccount(googleLoginCustome
         [ConnectorType.GoogleAds, googleLoginCustomerId],
     );
 
-    const row = getSingletonValueOrNull(response.rows);
-
-    if (row != null) {
-        return true;
+    if(response instanceof Error){
+        return response;
     }
 
-    return false;
+    const row = getSingletonValueOrNull(response.rows);
+
+    if (row == null) {
+        return false;
+    }
+
+    return true;
 }
 
 export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: Uuid): Promise<Array<Connector> | Error> {
@@ -337,7 +341,7 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
                 company_to_connector_mapping
             WHERE
                 company_id = $1
-            AND
+                AND
                 connector_type = $2
         `,
         [companyId, ConnectorType.GoogleAds],
@@ -351,7 +355,7 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
         return Error("Connector Ids not found!");
     }
 
-    const connectorIds: Array<Uuid> = connectorIdsResponse.rows.map((row) => getUuidFromUnknown(row.connector_id));
+    const connectorIds: Array<ConnectorId> = connectorIdsResponse.rows.map((row) => getUuidFromUnknown(row.connector_id));
 
     const connectors = getLoginCustomerIdForConnector(connectorIds);
     if (connectors instanceof Error) {
@@ -363,7 +367,7 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
 /**
  * Retrieves the login customer id associated with given connector.
  */
-export async function getLoginCustomerIdForConnector(connectorIds: Array<Uuid>): Promise<Array<Connector> | Error> {
+export async function getLoginCustomerIdForConnector(connectorIds: Array<ConnectorId>): Promise<Array<Connector> | Error> {
     const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
 
     if (systemConnectorsDatabaseManager instanceof Error) {
@@ -389,7 +393,7 @@ export async function getLoginCustomerIdForConnector(connectorIds: Array<Uuid>):
         return connectorDetails;
     }
 
-    const result: Array<Connector> = connectorDetails.rows.map((row) => rowToConnector(row));
+    const result: Array<Connector> = connectorDetails.rows.map((row) => rowToConnector(row as Credentials));
     return result;
 }
 

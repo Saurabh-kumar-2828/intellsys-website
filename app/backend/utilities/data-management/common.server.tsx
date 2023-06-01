@@ -1,5 +1,5 @@
 import {DateTime} from "luxon";
-import {Credentials} from "~/backend/utilities/data-management/credentials.server";
+import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
 import type {PostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";

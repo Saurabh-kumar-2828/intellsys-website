@@ -5,7 +5,7 @@ import {Form, useLoaderData} from "@remix-run/react";
 import {getRedirectUri} from "~/backend/utilities/data-management/common.server";
 import {facebookAdsScope} from "~/backend/utilities/data-management/facebookOAuth.server";
 import type {Connector} from "~/backend/utilities/data-management/googleOAuth.server";
-import {deleteCredentialsFromSources, getGoogleAdsConnectorsAssociatedWithCompanyId, googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.server";
+import {deleteConnector, getGoogleAdsConnectorsAssociatedWithCompanyId, googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
@@ -35,7 +35,6 @@ export const action: ActionFunction = async ({request, params}) => {
         return redirect(authUrl);
     } else if (body.get("action") == "google") {
         const redirectUri = getRedirectUri(companyIdUuid, CredentialType.GoogleAds);
-        console.log(redirectUri);
 
         const url = `https://accounts.google.com/o/oauth2/v2/auth?scope=${googleAdsScope}&client_id=${process.env
             .GOOGLE_CLIENT_ID!}&response_type=code&redirect_uri=${redirectUri}&prompt=consent&access_type=offline&state=${companyId}`;
@@ -44,7 +43,7 @@ export const action: ActionFunction = async ({request, params}) => {
     } else if (body.get("action") == "deleteGoogleAds") {
         const connectorId = body.get("connectorId") as Uuid;
         const loginCustomerId = body.get("loginCustomerId") as Uuid;
-        await deleteCredentialsFromSources(connectorId, loginCustomerId, ConnectorType.GoogleAds);
+        await deleteConnector(connectorId, loginCustomerId, ConnectorType.GoogleAds);
     }
 
     return null;
@@ -72,7 +71,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
 export default function () {
     const loaderData = useLoaderData() as LoaderData;
     // Fix this
-    if(loaderData instanceof Error){
+    if (loaderData instanceof Error) {
         return loaderData;
     }
 

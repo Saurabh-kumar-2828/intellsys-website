@@ -10,6 +10,7 @@ import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/serv
 import { Integer } from "~/global-common-typescript/typeDefinitions";
 import { getCredentialFromKms } from "~/global-common-typescript/server/kms.server";
 import { getLoginCustomerIdForConnector } from "./utilities/data-management/googleOAuth.server";
+import { renderToStaticMarkup } from "react-dom/server";
 
 export enum TimeGranularity {
     daily = "Daily",
@@ -365,7 +366,6 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
 }
 
 export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<GoogleAdsData | Error> {
-
     const postgresDatabaseManager = await getPostgresDatabaseManager(destinationDatabaseId);
 
     if (postgresDatabaseManager instanceof Error) {
@@ -373,8 +373,9 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
     }
 
     const loginCustomerIdRaw = await getLoginCustomerIdForConnector([connectorId]);
-    if (loginCustomerIdRaw instanceof Error) {
-        return loginCustomerIdRaw;
+
+    if (loginCustomerIdRaw instanceof Error || loginCustomerIdRaw.length==0) {
+        return Error("Google account undefined!");
     }
 
     const loginCustomerId = getSingletonValue(loginCustomerIdRaw);
@@ -432,6 +433,7 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
     `;
 
     const result = await postgresDatabaseManager.execute(query);
+
     if (result instanceof Error) {
         return result;
     }

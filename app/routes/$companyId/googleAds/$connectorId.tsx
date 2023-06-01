@@ -96,8 +96,13 @@ export const loader: LoaderFunction = async ({request, params}) => {
         getUuidFromUnknown(destinationDatabaseCredentialId),
         getUuidFromUnknown(connectorId),
     );
+
     if (googleAdsData instanceof Error) {
-        return googleAdsData;
+        throw new Response(null, {status: 402});
+    }
+
+    if(!googleAdsData){
+        throw new Response(null, {status: 402});
     }
 
     // TODO: Add filters
@@ -295,8 +300,6 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                         averageCost: object.averageCost,
                                         impressions: object.impressions,
                                         clicks: object.clicks,
-                                        // leads: leadsAndOrdersGroupByCampaignNameAndDate[object.campaignName].leads[object.date],
-                                        // orders: leadsAndOrdersGroupByCampaignNameAndDate[object.campaignName].orders[object.date],
                                         interactionEventTypes: object.interactionEventTypes,
                                         valuePerAllConversions: object.valuePerAllConversions,
                                         videoViewRate: object.videoViewRate,

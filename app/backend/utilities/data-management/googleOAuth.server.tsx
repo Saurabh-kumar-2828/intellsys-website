@@ -101,6 +101,7 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
             return companyDatabaseManager;
         }
 
+        // System Database
         const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
         if (systemConnectorsDatabaseManager instanceof Error) {
             return systemConnectorsDatabaseManager;
@@ -111,7 +112,7 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
             return systemPostgresDatabaseManager;
         }
 
-        // Store credentials in KMS.
+        // Store source credentials in KMS.
         const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, CredentialType.GoogleAds);
         if (response instanceof Error) {
             return response;
@@ -144,6 +145,7 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
         await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
         await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
 
+        // Creates a source table in company's database.
         const createTableResponse = await createTable(companyDatabaseManager, credentials);
         if (createTableResponse instanceof Error) {
             return createTableResponse;
@@ -197,7 +199,7 @@ export function convertToAccessbileAccount(row: Credentials) {
     return result;
 }
 
-export async function createTable(postgresDatabaseManager: PostgresDatabaseManager, googleAdsCredentials: GoogleAdsCredentials): Promise<Error | void> {
+async function createTable(postgresDatabaseManager: PostgresDatabaseManager, googleAdsCredentials: GoogleAdsCredentials): Promise<Error | void> {
     const tableName = `${dataSourcesAbbreviations.googleAds}_${googleAdsCredentials.googleLoginCustomerId}`;
 
     const response = await postgresDatabaseManager.execute(
@@ -217,7 +219,7 @@ export async function createTable(postgresDatabaseManager: PostgresDatabaseManag
 }
 
 /**
- * Store the Google Ads data in the company's database.
+ * Store the Google Ads data in the company's database through intellsys-connectors.
  * @param connectorId: Unique id of the connector object.
  * @param duration: Duration to ingest data.
  * @returns : No. of rows deleted and inserted.

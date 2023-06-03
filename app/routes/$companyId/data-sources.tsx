@@ -3,7 +3,7 @@ import {json} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {Form, useLoaderData} from "@remix-run/react";
 import {getRedirectUri} from "~/backend/utilities/data-management/common.server";
-import {facebookAdsScope} from "~/backend/utilities/data-management/facebookOAuth.server";
+import { getFacebookAuthorizationCodeUrl } from "~/backend/utilities/data-management/facebookOAuth.server";
 import type {Connector} from "~/backend/utilities/data-management/googleOAuth.server";
 import {deleteConnector, getGoogleAdsConnectorsAssociatedWithCompanyId, googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
@@ -27,22 +27,33 @@ export const action: ActionFunction = async ({request, params}) => {
     const companyIdUuid = getUuidFromUnknown(companyId);
 
     if (body.get("action") == "facebook") {
-        const redirectUri = getRedirectUri(companyIdUuid, CredentialType.facebookAds);
 
-        // TODO: Create function to get env variables
-        const authUrl = `https://www.facebook.com/${process.env.FACEBOOK_API_VERSION!}/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID!}&redirect_uri=${redirectUri}&scope=${facebookAdsScope}`;
+        const redirectUri = getRedirectUri(companyIdUuid, CredentialType.FacebookAds);
+        if(redirectUri instanceof Error){
+            return "Facebook Ads redirect uri not defined!"
+        }
+
+        const authUrl = getFacebookAuthorizationCodeUrl(redirectUri);
 
         return redirect(authUrl);
+
     } else if (body.get("action") == "google") {
+
         const redirectUri = getRedirectUri(companyIdUuid, CredentialType.GoogleAds);
+        if(redirectUri instanceof Error){
+            return "Google Ads redirect uri not defined!"
+        }
 
         const url = `https://accounts.google.com/o/oauth2/v2/auth?scope=${googleAdsScope}&client_id=${process.env
             .GOOGLE_CLIENT_ID!}&response_type=code&redirect_uri=${redirectUri}&prompt=consent&access_type=offline&state=${companyId}`;
 
         return redirect(url);
+
     } else if (body.get("action") == "deleteGoogleAds") {
+
         const connectorId = body.get("connectorId") as Uuid;
         const loginCustomerId = body.get("loginCustomerId") as Uuid;
+
         await deleteConnector(connectorId, loginCustomerId, ConnectorType.GoogleAds);
     }
 
@@ -78,14 +89,14 @@ export default function () {
     return (
         <div className="tw-p-8 tw-grid tw-grid-rows-auto tw-gap-2">
             <div className="tw-row-start-1">
-                {/* <Form method="post">
+                <Form method="post">
                     <input
                         type="hidden"
                         name="action"
                         value="facebook"
                     />
                     <button className="tw-lp-button tw-bg-blue-500">Authorize Facebook Account</button>
-                </Form> */}
+                </Form>
                 <Form method="post">
                     <input
                         type="hidden"

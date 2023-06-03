@@ -115,4 +115,5 @@ export enum ConnectorTableType {
 
 export enum dataSourcesAbbreviations {
     googleAds = "gad",
+    facebookAds = "fad"
 }

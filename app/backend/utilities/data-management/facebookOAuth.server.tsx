@@ -1,38 +1,44 @@
-import {DateTime} from "luxon";
-import {getRedirectUri} from "~/backend/utilities/data-management/common.server";
-import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
-import {getCredentials, storeCredentials, updateCredentials} from "~/backend/utilities/data-management/credentials.server";
-import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
+import {
+    getDestinationCredentialId,
+    getRedirectUri,
+    getSystemConnectorsDatabaseManager,
+    getSystemPostgresDatabaseManager,
+    initializeConnectorAndSubConnector,
+    mapCompanyIdToConnectorId,
+} from "~/backend/utilities/data-management/common.server";
+import {storeCredentials} from "~/backend/utilities/data-management/credentials.server";
+import {ingestHistoricalDataFromConnectorsApi, intellsysConnectors} from "~/global-common-typescript/server/connectors.server";
+import type {PostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
+import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
+import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
+import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
+import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import {CredentialType} from "~/utilities/typeDefinitions";
 
 export const facebookAdsScope = "ads_read, ads_management";
 
-type FacebookAdsCredentials = {
-    accessToken: string;
-    expiryDate: string;
-    tokenType?: string;
+type FacebookAdsSourceCredentials = {
+    facebookExchangeToken: string;
+    adAccountId?: string;
 };
 
 const facebookApiBaseUrl = "https://graph.facebook.com";
 
-
-
 /**
- * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
+ * Post API to get access token.
+ * @returns FacebookAdsSourceCredentials
  */
-export async function facebookOAuthFlow(authorizationCode: string, companyId: Uuid): Promise<void | Error> {
-    const redirectUri = getRedirectUri(companyId, CredentialType.FacebookAds);
-    console.log(redirectUri);
-    if (redirectUri instanceof Error) {
-        return redirectUri;
-    }
+async function getFacebookAdsAccessToken(redirectUri: string, authorizationCode: string): Promise<FacebookAdsSourceCredentials | Error> {
+    const apiVersion = getRequiredEnvironmentVariableNew("FACEBOOK_API_VERSION");
+    const clientId = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_ID");
+    const clientSecret = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_SECRET");
 
-    // Post api to retrieve access token by giving authorization code.
     const url = `
-        ${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/oauth/access_token?
-        client_id=${process.env.FACEBOOK_CLIENT_ID!}&
-        client_secret=${process.env.FACEBOOK_CLIENT_SECRET!}&
+        ${facebookApiBaseUrl}/${apiVersion}/oauth/access_token?
+        client_id=${clientId}&
+        client_secret=${clientSecret}&
         redirect_uri=${redirectUri}&
         code=${authorizationCode}
     `;
@@ -40,151 +46,136 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
     const response = await fetch(url, {
         method: "POST",
     });
-    var token = await response.json();
-    const acceseTokenObject = convertTokenToFacebookCredentialsType(token);
 
-    if (acceseTokenObject instanceof Error) {
-        return token;
-    }
+    const responseJson = await response.json();
+    const acceseToken = mapTokenToFacebookAdsSourceCredentialsType(responseJson);
 
-    if (companyId != undefined) {
-
-        // Store credentials in database.
-        const response1 = await storeCredentials(
-            {
-                access_token: acceseTokenObject.accessToken,
-                expiry_date: DateTime.now()
-                    .plus({seconds: parseInt(acceseTokenObject.expiryDate)})
-                    .toISO(),
-            },
-            companyId,
-            CredentialType.FacebookAds,
-        );
-
-        if (response1 instanceof Error) {
-            return response1;
-        }
-
-    }
-
+    return acceseToken;
 }
-
-
-function convertTokenToFacebookCredentialsType(token: any): FacebookAdsCredentials | Error {
-    try {
-        let result: FacebookAdsCredentials = {
-            accessToken: token.access_token,
-            expiryDate: token.expires_in,
-        };
-        return result;
-    } catch (error_: unknown) {
-        const error = getErrorFromUnknown(error_);
-        return error;
-    }
-}
-
 
 /**
- * Retrieves the Facebook Ads credentials for a given company ID.
+ * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
  */
-export async function getFacebookCredentials(companyId: Uuid): Promise<Credentials | Error> {
-    const credentialsRaw = await getCredentials(companyId, CredentialType.FacebookAds);
-    if (credentialsRaw instanceof Error) {
-        return credentialsRaw;
-    } else {
-        const credentials: FacebookAdsCredentials = {
-            accessToken: credentialsRaw["access_token"] as string,
-            expiryDate: credentialsRaw["expiry_date"] as string,
-        };
-
-        return credentials;
-    }
-}
-
-
-/**
- * Retrieves a new access token from the Facebook API using a provided expired access token.
- * Updates the credentials in the database for the specified company ID.
- */
-export async function refreshAccessToken(expiredAccessToken: string, companyId: Uuid): Promise<Uuid | Error> {
-    const url = `
-        ${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/oauth/access_token?
-        client_id=${process.env.FACEBOOK_CLIENT_ID!}&
-        client_secret=${process.env.FACEBOOK_CLIENT_SECRET!}&
-        grant_type=fb_exchange_token&
-        fb_exchange_token=${expiredAccessToken}
-    `;
-    const response = await fetch(url, {
-        method: "GET",
-    });
-    var token = await response.json();
-    token = convertTokenToFacebookCredentialsType(token);
-
-    if (token instanceof Error) {
-        return token;
+export async function facebookOAuthFlow(authorizationCode: string, companyId: Uuid): Promise<void | Error> {
+    const redirectUri = getRedirectUri(companyId, CredentialType.FacebookAds);
+    if (redirectUri instanceof Error) {
+        return redirectUri;
     }
 
-    if (companyId != "undefined") {
-        // Update credentials in database.
-        await updateCredentials(
-            {
-                access_token: token.access_token,
-                expiry_date: DateTime.now()
-                    .plus({seconds: parseInt(token.expiryDate)})
-                    .toISO(),
-            },
-            companyId,
-            CredentialType.FacebookAds,
-        );
-        return token.accessToken;
-    } else {
-        return Error("Company undefined!");
-    }
-}
-
-
-export async function getFacebookData(companyId: Uuid) {
-    // 1. Retrieve Facebook credentials stored in database.
-    const credentials = await getFacebookCredentials(companyId);
+    // TODO: Rename
+    const credentials = await getFacebookAdsAccessToken(redirectUri, authorizationCode);
     if (credentials instanceof Error) {
         return credentials;
     }
 
-    let accessToken = credentials.accessToken as string;
+    const sourceCredentialId = generateUuid();
 
-    // 2. If access token is expired, refresh the token.
-    if (credentials.expiryDate < DateTime.now().toISO()) {
-        const newAccessToken = await refreshAccessToken(credentials.accessToken as string, companyId);
-        if (newAccessToken instanceof Error) {
-            return newAccessToken;
-        }
+    const connectorId = generateUuid();
 
-        accessToken = newAccessToken as string;
+    // Destination = Company's Database.
+    const companyDatabaseCredentialId = await getDestinationCredentialId(companyId);
+    if (companyDatabaseCredentialId instanceof Error) {
+        return companyDatabaseCredentialId;
     }
 
-    // 3. Get data from the facebook ads source.
-    const data = await callFacbookAdsApi(accessToken);
-    console.log("data: ", data);
+    const companyDatabaseManager = await getPostgresDatabaseManager(companyDatabaseCredentialId);
+    if (companyDatabaseManager instanceof Error) {
+        return companyDatabaseManager;
+    }
+
+    // System Database
+    const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
+    if (systemConnectorsDatabaseManager instanceof Error) {
+        return systemConnectorsDatabaseManager;
+    }
+
+    const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
+    if (systemPostgresDatabaseManager instanceof Error) {
+        return systemPostgresDatabaseManager;
+    }
+
+    // Store source credentials in KMS.
+    const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, CredentialType.GoogleAds);
+    if (response instanceof Error) {
+        return response;
+    }
+
+    await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
+    await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
+
+    const connectorInitializationResponse = await initializeConnectorAndSubConnector(
+        systemConnectorsDatabaseManager,
+        connectorId,
+        sourceCredentialId,
+        companyDatabaseCredentialId,
+        "Facebook Ads",
+        ConnectorTableType.FacebookAds,
+        ConnectorType.FacebookAds,
+        `{"adAccountId": "${credentials.adAccountId}"}`,
+    );
+
+    const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.FacebookAds, "Facebook Ads");
+
+    if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {
+        await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
+        await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
+
+        console.log("All transactions rollbacked");
+        return connectorInitializationResponse;
+    }
+
+    await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
+    await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
+
+    // Creates a source table in company's database.
+    const createTableResponse = await createTable(companyDatabaseManager, credentials);
+    if (createTableResponse instanceof Error) {
+        return createTableResponse;
+    }
+
+    const dataIngestionResponse = await ingestHistoricalDataFromConnectorsApi(getUuidFromUnknown(connectorId), 45, intellsysConnectors.FacebookAds);
+    if (dataIngestionResponse instanceof Error) {
+        return dataIngestionResponse;
+    }
 }
 
+async function createTable(postgresDatabaseManager: PostgresDatabaseManager, facebookAdsCredentials: FacebookAdsSourceCredentials): Promise<Error | void> {
+    const tableName = `${dataSourcesAbbreviations.facebookAds}_${facebookAdsCredentials.adAccountId}`;
 
-async function callFacbookAdsApi(accessToken: string) {
-    try {
-        const fields = "campaign_id,campaign_name";
-        const level = "campaign";
-        let url = `
-            ${facebookApiBaseUrl}/${process.env.FACEBOOK_API_VERSION!}/act_${process.env.FACEBOOK_ACCOUNT_ID!}/insights?
-            fields=${fields}&
-            level=${level}&
-            access_token=${accessToken}
-        `;
-        const response = await fetch(url, {
-            method: "GET",
-        });
+    const response = await postgresDatabaseManager.execute(
+        `
+            CREATE TABLE ${tableName} (
+                id text NOT NULL,
+                ingested_at timestamp NOT NULL,
+                "data" json NOT NULL,
+                CONSTRAINT ${tableName}_pkey PRIMARY KEY (id)
+            );
+        `,
+    );
 
-        const insights = await response.json();
-        return insights;
-    } catch (e) {
-        console.log(e);
+    if (response instanceof Error) {
+        return response;
     }
+}
+
+function mapTokenToFacebookAdsSourceCredentialsType(credentials: any): FacebookAdsSourceCredentials | Error {
+    if (credentials.access_token == undefined) {
+        return Error("Invalid Facebook Ads credentials");
+    }
+
+    let result: FacebookAdsSourceCredentials = {
+        facebookExchangeToken: credentials.access_token,
+        adAccountId: getRequiredEnvironmentVariableNew("FACEBOOK_ACCOUNT_ID"), // TODO: make function to get accessible accounts
+    };
+
+    return result;
+}
+
+export function getFacebookAuthorizationCodeUrl(redirectUri: string) {
+    const apiVersion = getRequiredEnvironmentVariableNew("FACEBOOK_API_VERSION");
+    const clientId = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_ID");
+
+    const url = `https://www.facebook.com/${apiVersion}/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${facebookAdsScope}`;
+
+    return url;
 }

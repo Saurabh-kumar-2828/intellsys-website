@@ -8,7 +8,6 @@ import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 export const loader: LoaderFunction = async ({request, params}) => {
 
     const urlSearchParams = new URL(request.url).searchParams;
-
     const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
 
     const companyId = getUuidFromUnknown(params.companyId);

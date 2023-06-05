@@ -10,7 +10,7 @@ import {deleteConnector, googleAdsScope} from "~/backend/utilities/data-manageme
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import type {Uuid} from "~/utilities/typeDefinitions";
+import {Uuid, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import {ConnectorType, CredentialType} from "~/utilities/typeDefinitions";
 
 type LoaderData = {
@@ -50,7 +50,13 @@ export const action: ActionFunction = async ({request, params}) => {
         const connectorId = body.get("connectorId") as Uuid;
         const loginCustomerId = body.get("loginCustomerId") as Uuid;
 
-        await deleteConnector(connectorId, loginCustomerId, ConnectorType.GoogleAds);
+        await deleteConnector(connectorId, loginCustomerId, dataSourcesAbbreviations.googleAds);
+
+    } else if (body.get("action") == "deleteFacebookAds") {
+        const connectorId = body.get("connectorId") as Uuid;
+        const adAccountId = body.get("adAccountId") as Uuid;
+
+        await deleteConnector(connectorId, adAccountId, dataSourcesAbbreviations.facebookAds);
     }
 
     return null;
@@ -174,20 +180,20 @@ export default function () {
                                         <input
                                             type="hidden"
                                             name="action"
-                                            value="deleteGoogleAds"
-                                            className="tw-bg-dark-bg-500 tw-w-auto"
+                                            value="deleteFacebookAds"
+                                            className="tw-bg-dark-bg-500"
                                         />
                                         <input
                                             name="connectorId"
                                             value={connector.id}
                                             readOnly
-                                            className="tw-bg-dark-bg-500 tw-w-auto"
+                                            className="tw-bg-dark-bg-500"
                                         />
                                         <input
-                                            name="loginCustomerId"
+                                            name="adAccountId"
                                             value={connector.accountId}
                                             readOnly
-                                            className="tw-bg-dark-bg-500 tw-w-auto"
+                                            className="tw-bg-dark-bg-500"
                                         />
                                         <button className="tw-lp-button tw-bg-red-500 disabled:opacity-25">Delete Connector</button>
                                     </Form>

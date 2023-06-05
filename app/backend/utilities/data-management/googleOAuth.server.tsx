@@ -248,7 +248,7 @@ export async function ingestGoogleAdsData(connectorId: Uuid, duration: Integer):
 }
 
 // TODO: Rename
-export async function deleteConnector(connectorId: Uuid, googleAdsLoginCustomerId: string, connectorType: ConnectorType) {
+export async function deleteConnector(connectorId: Uuid, accountId: string, tablePrefix: string) {
     // TODO: Add transactions
 
     const connector = await getSourceAndDestinationId(connectorId);
@@ -270,17 +270,17 @@ export async function deleteConnector(connectorId: Uuid, googleAdsLoginCustomerI
     await deleteConnectorAndSubconnector(connectorId);
 
     // Delete data from google ads data
-    await dropGoogleAdsTable(googleAdsLoginCustomerId, connector.destinationId);
+    await dropConnectorTable(accountId, connector.destinationId, tablePrefix);
 }
 
-export async function dropGoogleAdsTable(accountId: string, destinationDatabaseCredentialId: Uuid) {
+async function dropConnectorTable(accountId: string, destinationDatabaseCredentialId: Uuid, tablePrefix: string) {
     const databaseManager = await getPostgresDatabaseManager(destinationDatabaseCredentialId);
     if (databaseManager instanceof Error) {
         return databaseManager;
     }
 
     const query = `
-        DROP TABLE ${dataSourcesAbbreviations.googleAds}_${accountId}
+        DROP TABLE ${tablePrefix}_${accountId}
     `;
 
     const response = await databaseManager.execute(query);

@@ -112,7 +112,16 @@ export async function mapCompanyIdToConnectorId(systemPostgresDatabaseManager: P
     }
 }
 
-export async function initializeConnectorAndSubConnector(systemConnectorsDatabaseManager: PostgresDatabaseManager, connectorId: Uuid, sourceCredentialId: Uuid, destinationCredentialId: Uuid, comments: string, connectorTableType: ConnectorTableType, connectorType: ConnectorType, extraInformation?: string): Promise<void | Error> {
+export async function initializeConnectorAndSubConnector(
+    systemConnectorsDatabaseManager: PostgresDatabaseManager,
+    connectorId: Uuid,
+    sourceCredentialId: Uuid,
+    destinationCredentialId: Uuid,
+    comments: string,
+    connectorTableType: ConnectorTableType,
+    connectorType: ConnectorType,
+    extraInformation?: string
+    ): Promise<void | Error> {
 
     const currentTimestamp = getCurrentIsoTimestamp();
 

@@ -108,7 +108,7 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
         connectorId,
         sourceCredentialId,
         companyDatabaseCredentialId,
-        "Facebook Ads",
+        `Facebook Ads: ${credentials.adAccountId}`,
         ConnectorTableType.FacebookAds,
         ConnectorType.FacebookAds,
         `{"adAccountId": "${credentials.adAccountId}"}`,

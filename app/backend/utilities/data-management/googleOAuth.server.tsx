@@ -334,7 +334,6 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
         return systemPostgresDatabaseManager;
     }
 
-    // Query to get the array of connector Ids.
     const connectorIdsResponse = await systemPostgresDatabaseManager.execute(
         `
             SELECT
@@ -352,9 +351,8 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
     if (connectorIdsResponse instanceof Error) {
         return connectorIdsResponse;
     }
-
-    if (connectorIdsResponse.rows.length == 0) {
-        return Error("Connector Ids not found!");
+    if(connectorIdsResponse.rowCount == 0){
+        return [];
     }
 
     const connectorIds: Array<ConnectorId> = connectorIdsResponse.rows.map((row) => getUuidFromUnknown(row.connector_id));
@@ -363,6 +361,7 @@ export async function getGoogleAdsConnectorsAssociatedWithCompanyId(companyId: U
     if (connectors instanceof Error) {
         return connectors;
     }
+
     return connectors;
 }
 
@@ -396,6 +395,7 @@ export async function getLoginCustomerIdForConnector(connectorIds: Array<Connect
     }
 
     const result: Array<Connector> = connectorDetails.rows.map((row) => rowToConnector(row as Credentials));
+
     return result;
 }
 

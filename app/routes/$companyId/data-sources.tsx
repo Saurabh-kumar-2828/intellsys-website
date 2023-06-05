@@ -76,35 +76,43 @@ export const loader: LoaderFunction = async ({request, params}) => {
     const response: LoaderData = {
         googleAdsConnectors: connectorDetails,
     };
+
     return json(response);
 };
 
 export default function () {
     const loaderData = useLoaderData() as LoaderData;
+
     // Fix this
     if (loaderData instanceof Error) {
         return loaderData;
     }
 
+    console.log(loaderData.googleAdsConnectors);
+
     return (
         <div className="tw-p-8 tw-grid tw-grid-rows-auto tw-gap-2">
-            <div className="tw-row-start-1">
-                <Form method="post">
-                    <input
-                        type="hidden"
-                        name="action"
-                        value="facebook"
-                    />
-                    <button className="tw-lp-button tw-bg-blue-500">Authorize Facebook Account</button>
-                </Form>
-                <Form method="post">
-                    <input
-                        type="hidden"
-                        name="action"
-                        value="google"
-                    />
-                    <button className="tw-lp-button tw-bg-blue-700 disabled:opacity-25">Authorize Google Account</button>
-                </Form>
+            <div className="tw-flex tw-flex-row tw-row-start-1">
+                <div className="tw-basis-1/4">
+                    <Form method="post">
+                        <input
+                            type="hidden"
+                            name="action"
+                            value="facebook"
+                        />
+                        <button className="tw-lp-button tw-bg-blue-500">Authorize Facebook Account</button>
+                    </Form>
+                </div>
+                <div className="tw-basis-1/4">
+                    <Form method="post">
+                        <input
+                            type="hidden"
+                            name="action"
+                            value="google"
+                        />
+                        <button className="tw-lp-button tw-bg-blue-700 disabled:opacity-25">Authorize Google Account</button>
+                    </Form>
+                </div>
             </div>
             <div className="tw-row-start-2">
                 <div className="tw-grid tw-grid-rows-auto tw-gap-2">
@@ -114,32 +122,35 @@ export default function () {
                             <div className="tw-font-bold tw-font-sans">Account Id</div>
                             <div className="tw-font-bold tw-font-sans">Actions</div>
                         </div>
-                        <ItemBuilder
-                            items={loaderData.googleAdsConnectors}
-                            itemBuilder={(connector, connectorIndex) => (
-                                <Form
-                                    method="post"
-                                    className="tw-bg-dark-bg-400 tw-p-4 tw-flex tw-flex-row tw-gap-x-8 tw-flex-1 tw-items-center tw-justify-center"
-                                >
-                                    <input
-                                        type="hidden"
-                                        name="action"
-                                        value="deleteGoogleAds"
-                                    />
-                                    <input
-                                        name="connectorId"
-                                        value={connector.id}
-                                        readOnly
-                                    />
-                                    <input
-                                        name="loginCustomerId"
-                                        value={connector.loginCustomerId}
-                                        readOnly
-                                    />
-                                    <button className="tw-lp-button tw-bg-red-500 disabled:opacity-25">Delete Connector</button>
-                                </Form>
-                            )}
-                        />
+                        {
+                            loaderData.googleAdsConnectors.length > 0 ?
+                            <ItemBuilder
+                                items={loaderData.googleAdsConnectors}
+                                itemBuilder={(connector, connectorIndex) => (
+                                    <Form
+                                        method="post"
+                                        className="tw-bg-dark-bg-400 tw-p-4 tw-flex tw-flex-row tw-gap-x-8 tw-flex-1 tw-items-center tw-justify-center"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="action"
+                                            value="deleteGoogleAds"
+                                        />
+                                        <input
+                                            name="connectorId"
+                                            value={connector.id}
+                                            readOnly
+                                        />
+                                        <input
+                                            name="loginCustomerId"
+                                            value={connector.loginCustomerId}
+                                            readOnly
+                                        />
+                                        <button className="tw-lp-button tw-bg-red-500 disabled:opacity-25">Delete Connector</button>
+                                    </Form>
+                                )}
+                            /> : <></>
+                        }
                     </div>
                 </div>
             </div>

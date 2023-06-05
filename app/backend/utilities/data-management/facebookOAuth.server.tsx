@@ -7,6 +7,7 @@ import {
     mapCompanyIdToConnectorId,
 } from "~/backend/utilities/data-management/common.server";
 import {storeCredentials} from "~/backend/utilities/data-management/credentials.server";
+import {ingestHistoricalDataFromConnectorsApi, intellsysConnectors} from "~/global-common-typescript/server/connectors.server";
 import type {PostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
@@ -55,7 +56,7 @@ async function getFacebookAdsAccessToken(redirectUri: string, authorizationCode:
 /**
  * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
  */
-export async function facebookOAuthFlow(authorizationCode: string, companyId: Uuid): Promise<void | Error> {
+export async function facebookOAuthFlow(authorizationCode: string, companyId: Uuid, adAccountId: string): Promise<void | Error> {
     const redirectUri = getRedirectUri(companyId, CredentialType.FacebookAds);
     if (redirectUri instanceof Error) {
         return redirectUri;
@@ -67,14 +68,14 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
         return credentials;
     }
 
+    credentials["adAccountId"] = adAccountId;
+
     const sourceCredentialId = generateUuid();
 
     const connectorId = generateUuid();
 
     // Destination = Company's Database.
     const companyDatabaseCredentialId = await getDestinationCredentialId(companyId);
-
-    console.log("Database credential id", companyDatabaseCredentialId);
 
     if (companyDatabaseCredentialId instanceof Error) {
         return companyDatabaseCredentialId;
@@ -135,10 +136,10 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
         return createTableResponse;
     }
 
-    // const dataIngestionResponse = await ingestHistoricalDataFromConnectorsApi(getUuidFromUnknown(connectorId), 45, intellsysConnectors.FacebookAds);
-    // if (dataIngestionResponse instanceof Error) {
-    //     return dataIngestionResponse;
-    // }
+    const dataIngestionResponse = await ingestHistoricalDataFromConnectorsApi(getUuidFromUnknown(connectorId), 45, intellsysConnectors.FacebookAds);
+    if (dataIngestionResponse instanceof Error) {
+        return dataIngestionResponse;
+    }
 }
 
 async function createTable(postgresDatabaseManager: PostgresDatabaseManager, facebookAdsCredentials: FacebookAdsSourceCredentials): Promise<Error | void> {
@@ -167,7 +168,6 @@ function mapTokenToFacebookAdsSourceCredentialsType(credentials: any): FacebookA
 
     let result: FacebookAdsSourceCredentials = {
         facebookExchangeToken: credentials.access_token,
-        adAccountId: getRequiredEnvironmentVariableNew("FACEBOOK_ACCOUNT_ID"), // TODO: make function to get accessible accounts
     };
 
     return result;
@@ -180,4 +180,8 @@ export function getFacebookAuthorizationCodeUrl(redirectUri: string) {
     const url = `https://www.facebook.com/${apiVersion}/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${facebookAdsScope}`;
 
     return url;
+}
+
+export function checkIfFacebookAdsConnectorExistsForAccount(adAccountId: string) {
+
 }

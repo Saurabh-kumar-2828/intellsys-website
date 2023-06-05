@@ -3,7 +3,7 @@ import {json} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {Form, useLoaderData} from "@remix-run/react";
 import {getRedirectUri} from "~/backend/utilities/data-management/common.server";
-import { getFacebookAuthorizationCodeUrl } from "~/backend/utilities/data-management/facebookOAuth.server";
+import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/data-management/facebookOAuth.server";
 import type {Connector} from "~/backend/utilities/data-management/googleOAuth.server";
 import {deleteConnector, getGoogleAdsConnectorsAssociatedWithCompanyId, googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
@@ -88,10 +88,8 @@ export default function () {
         return loaderData;
     }
 
-    console.log(loaderData.googleAdsConnectors);
-
     return (
-        <div className="tw-p-8 tw-grid tw-grid-rows-auto tw-gap-2">
+        <div className="tw-p-8 tw-grid tw-grid-rows-auto tw-gap-8">
             <div className="tw-flex tw-flex-row tw-row-start-1">
                 <div className="tw-basis-1/4">
                     <Form method="post">

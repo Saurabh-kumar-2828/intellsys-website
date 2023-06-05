@@ -7,7 +7,6 @@ import {
     mapCompanyIdToConnectorId,
 } from "~/backend/utilities/data-management/common.server";
 import {storeCredentials} from "~/backend/utilities/data-management/credentials.server";
-import {ingestHistoricalDataFromConnectorsApi, intellsysConnectors} from "~/global-common-typescript/server/connectors.server";
 import type {PostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
@@ -74,6 +73,9 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
 
     // Destination = Company's Database.
     const companyDatabaseCredentialId = await getDestinationCredentialId(companyId);
+
+    console.log("Database credential id", companyDatabaseCredentialId);
+
     if (companyDatabaseCredentialId instanceof Error) {
         return companyDatabaseCredentialId;
     }
@@ -133,10 +135,10 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
         return createTableResponse;
     }
 
-    const dataIngestionResponse = await ingestHistoricalDataFromConnectorsApi(getUuidFromUnknown(connectorId), 45, intellsysConnectors.FacebookAds);
-    if (dataIngestionResponse instanceof Error) {
-        return dataIngestionResponse;
-    }
+    // const dataIngestionResponse = await ingestHistoricalDataFromConnectorsApi(getUuidFromUnknown(connectorId), 45, intellsysConnectors.FacebookAds);
+    // if (dataIngestionResponse instanceof Error) {
+    //     return dataIngestionResponse;
+    // }
 }
 
 async function createTable(postgresDatabaseManager: PostgresDatabaseManager, facebookAdsCredentials: FacebookAdsSourceCredentials): Promise<Error | void> {

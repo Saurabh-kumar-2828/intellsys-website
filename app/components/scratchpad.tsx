@@ -293,7 +293,7 @@ export function LargeValueDisplayingCardWithTarget({
             explanation={explanation}
             equivalentQuery={equivalentQuery}
             className={concatenateNonNullStringsWithSpaces(className, "!tw-bg-dark-bg-400 tw-row-span-2 tw-col-span-4")}
-            doughnutClassName="tw-bg-dark-bg-500 tw-p-8 tw-rounded-full -tw-m-8"
+            doughnutClassName="tw-bg-dark-bg-500 tw-p-8 tw-rounded-full tw-m-8"
             valueClassName="tw-font-4rem"
             labelClassName="tw-pt-12 tw-font-2rem"
             type={type}

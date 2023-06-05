@@ -12,12 +12,7 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {
-    agGridDateComparator,
-    dateToMediumNoneEnFormat,
-    defaultColumnDefinitions,
-    getNonEmptyStringOrNull,
-} from "~/utilities/utilities";
+import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getNonEmptyStringOrNull} from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getDestinationCredentialId} from "~/backend/utilities/data-management/common.server";
@@ -62,7 +57,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
     }
 
     const connectorId = params.connectorId;
-    if(connectorId == undefined){
+    if (connectorId == undefined) {
         throw new Response("Connector undefined!");
     }
 
@@ -101,7 +96,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         throw new Response(null, {status: 402});
     }
 
-    if(!googleAdsData){
+    if (!googleAdsData) {
         throw new Response(null, {status: 402});
     }
 

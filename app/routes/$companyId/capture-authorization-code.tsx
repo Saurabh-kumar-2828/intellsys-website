@@ -49,6 +49,7 @@ export const action: ActionFunction = async ({request, params}) => {
 
     // const dataDecoded = decrypt(data);
 
+    // TODO: Confirm its implementation.
     // const accountExists = await checkIfFacebookAdsConnectorExistsForAccount(data);
     // if (accountExists instanceof Error) {
     //     return Error("Account already exists");
@@ -79,13 +80,14 @@ export default function () {
     const [selectedAccount, setSelectedAccount] = useState("");
 
     return (
-        <div>
+        <div className="tw-m-4 tw-flex tw-flex-row ">
             <form method="post">
                 <input
                     type="text"
                     name="id"
                     value={selectedAccount}
                     onChange={(e) => setSelectedAccount(e.target.value)}
+                    className="tw-p-2 tw-basis-1/4"
                 />
 
                 <input
@@ -98,7 +100,7 @@ export default function () {
 
                 <button
                     type="submit"
-                    className="tw-row-start-2 tw-lp-button"
+                    className="tw-row-start-2 tw-lp-button tw-basis-1/4"
                 >
                     Submit
                 </button>

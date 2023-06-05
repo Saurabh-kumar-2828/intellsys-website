@@ -2,15 +2,13 @@ import {getPostgresDatabaseManager} from "~/global-common-typescript/server/post
 import {getCredentialId} from "~/backend/utilities/data-management/credentials.server";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {getGranularityQuery} from "~/backend/utilities/utilities.server";
-import {Iso8601Date, Uuid, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
+import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
+import {ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import {CredentialType} from "~/utilities/typeDefinitions";
 import {dateToIso8601Date, getSingletonValue} from "~/utilities/utilities";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
-import { Integer } from "~/global-common-typescript/typeDefinitions";
-import { getCredentialFromKms } from "~/global-common-typescript/server/kms.server";
-import { getLoginCustomerIdForConnector } from "./utilities/data-management/googleOAuth.server";
-import { renderToStaticMarkup } from "react-dom/server";
+import type {Integer} from "~/global-common-typescript/typeDefinitions";
+import {getAccountIdForConnector} from "./utilities/data-management/googleOAuth.server";
 
 export enum TimeGranularity {
     daily = "Daily",
@@ -372,15 +370,15 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
         return postgresDatabaseManager;
     }
 
-    const loginCustomerIdRaw = await getLoginCustomerIdForConnector([connectorId]);
+    const loginCustomerIdRaw = await getAccountIdForConnector([connectorId], getUuidFromUnknown(ConnectorType.GoogleAds));
 
-    if (loginCustomerIdRaw instanceof Error || loginCustomerIdRaw.length==0) {
+    if (loginCustomerIdRaw instanceof Error || loginCustomerIdRaw.length == 0) {
         return Error("Google account undefined!");
     }
 
     const loginCustomerId = getSingletonValue(loginCustomerIdRaw);
 
-    const tableName = `${dataSourcesAbbreviations.googleAds}_${loginCustomerId.loginCustomerId}`;
+    const tableName = `${dataSourcesAbbreviations.googleAds}_${loginCustomerId.accountId}`;
 
     // TODO: Fix the name of the table
 

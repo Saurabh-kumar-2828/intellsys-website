@@ -98,7 +98,7 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
     }
 
     // Store source credentials in KMS.
-    const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, CredentialType.GoogleAds);
+    const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, CredentialType.FacebookAds);
     if (response instanceof Error) {
         return response;
     }
@@ -114,7 +114,7 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
         `Facebook Ads: ${credentials.adAccountId}`,
         ConnectorTableType.FacebookAds,
         ConnectorType.FacebookAds,
-        `{"adAccountId": "${credentials.adAccountId}"}`,
+        `{"accountId": "${credentials.adAccountId}"}`,
     );
 
     const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.FacebookAds, "Facebook Ads");
@@ -182,6 +182,4 @@ export function getFacebookAuthorizationCodeUrl(redirectUri: string) {
     return url;
 }
 
-export function checkIfFacebookAdsConnectorExistsForAccount(adAccountId: string) {
-
-}
+export function checkIfFacebookAdsConnectorExistsForAccount(adAccountId: string) {}

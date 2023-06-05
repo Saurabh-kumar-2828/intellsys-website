@@ -1,13 +1,13 @@
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {getCredentialId} from "~/backend/utilities/data-management/credentials.server";
+import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import {getGranularityQuery} from "~/backend/utilities/utilities.server";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
-import {CredentialType} from "~/utilities/typeDefinitions";
 import {dateToIso8601Date, getSingletonValue} from "~/utilities/utilities";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {Integer} from "~/global-common-typescript/typeDefinitions";
+import type {Connector} from "./utilities/data-management/googleOAuth.server";
 import {getAccountIdForConnector} from "./utilities/data-management/googleOAuth.server";
 
 export enum TimeGranularity {
@@ -216,6 +216,11 @@ export type GoogleAdsData = {
     rows: Array<GoogleAdsDataAggregatedRow>;
 };
 
+export type FacebookAdsData = {
+    metaQuery: string;
+    rows: Array<FacebookAdsAggregatedRow>;
+};
+
 export type AdsDataAggregatedRow = {
     date: Iso8601Date;
     amountSpent: number;
@@ -262,6 +267,22 @@ export type GoogleAdsDataAggregatedRow = {
     interactions: any;
     allConversionsByConversionDate: any;
     valuePerAllConversionsByConversionDate: any;
+}
+
+export type FacebookAdsAggregatedRow = {
+    accountCurrency: string,
+    accountId: string,
+    accountName: string,
+    clicks: string,
+    createdTime: string,
+    dateStart: string,
+    dateStop: string,
+    frequency: string,
+    impressions: string,
+    reach: string,
+    spend: string,
+    campaignId: string,
+    campaignName: string,
 }
 
 // TODO: Remove? At the very least, refactor to use getGoogleAdsData and getFacebookAdsData.
@@ -334,6 +355,25 @@ function rowToGoogleAdsDataAggregatedRow(row: unknown): GoogleAdsDataAggregatedR
     };
 
     return adsDataAggregatedRow;
+}
+
+function rowToFacebookAdsDataAggregatedRow(row: Credentials): FacebookAdsAggregatedRow {
+    const facebookAdsAggregatedRow: FacebookAdsAggregatedRow = {
+        accountCurrency: row.accountcurrency as string,
+        accountId: row.accountid as string,
+        accountName: row.accountname as string,
+        clicks: row.clicks as string,
+        createdTime: row.createdtime as string,
+        dateStart: row.datestart as string,
+        dateStop: row.datestop as string,
+        frequency: row.frequency as string,
+        impressions: row.impressions as string,
+        reach: row.reach as string,
+        spend: row.spend as string,
+        campaignId: row.campaignid as string,
+        campaignName: row.campaignname as string
+    }
+    return facebookAdsAggregatedRow
 }
 
 export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
@@ -444,39 +484,61 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
 
 }
 
-export async function getFacebookAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData | Error> {
-    const credentialId = await getCredentialId(companyId, CredentialType.DatabaseNew);
-    if (credentialId instanceof Error) {
-        return credentialId;
-    }
+export async function getFacebookAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<FacebookAdsData | Error> {
 
-    const postgresDatabaseManager = await getPostgresDatabaseManager(credentialId);
+    // FacebookAdsData | Error
+
+    const postgresDatabaseManager = await getPostgresDatabaseManager(destinationDatabaseId);
+
     if (postgresDatabaseManager instanceof Error) {
         return postgresDatabaseManager;
     }
 
+    const accountIdRaw = await getAccountIdForConnector([connectorId], getUuidFromUnknown(ConnectorType.FacebookAds));
+    if (accountIdRaw instanceof Error || accountIdRaw.length == 0) {
+        return Error("Facebook account undefined!");
+    }
+
+    const connector = getSingletonValue(accountIdRaw) as Connector;
+
+    const tableName = `${dataSourcesAbbreviations.facebookAds}_${connector.accountId}`;
+
     const query = `
         SELECT
-            DATE_TRUNC('DAY', "date_start"::timestamp) AS date,
-            campaign_name,
-            spend AS spend,
-            impressions AS impressions,
-            inline_link_clicks AS clicks
+            data->>'account_currency' as accountCurrency,
+            data->>'account_id' as accountId,
+            data->>'account_name' as accountName,
+            data->>'clicks' as clicks,
+            data->>'created_time' as createdTime,
+            DATE((data->>'date_start')::date) as dateStart,
+            data->>'date_stop' as dateStop,
+            data->>'frequency' as frequency,
+            data->>'impressions' as impressions,
+            data->>'reach' as reach,
+            data->>'spend' as spend,
+            data->>'campaign_id' as campaignId,
+            data->>'campaign_name' as campaignName
         FROM
-            facebook_ads_ad_insights
+            ${tableName}
         WHERE
-            DATE(date_start) >= '${minDate}'
-            AND DATE(date_start) <= '${maxDate}'
-            AND (spend > 0 OR impressions > 0 OR inline_link_clicks > 0)
+            DATE((data->>'date_start')::date) >= '${minDate}'
+            AND DATE((data->>'date_stop')::date) <= '${maxDate}'
         ORDER BY
-            date
+            dateStart
     `;
+
     const result = await postgresDatabaseManager.execute(query);
 
+    if (result instanceof Error) {
+        return result;
+    }
+
     return {
-        metaQuery: query,
-        rows: result.rows.map((row) => rowToAdsDataAggregatedRow(row)),
+        metaQuery: "",
+        rows: result.rows.map((row) => rowToFacebookAdsDataAggregatedRow(row)),
     };
+
+
 }
 
 export async function getFacebookAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {

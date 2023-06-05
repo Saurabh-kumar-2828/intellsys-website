@@ -6,6 +6,7 @@ import {useState} from "react";
 import {facebookOAuthFlow} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {decrypt} from "~/backend/utilities/utilities.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import { generateUuid } from "~/global-common-typescript/utilities/utilities";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 type LoaderData = {
@@ -60,11 +61,11 @@ export const action: ActionFunction = async ({request, params}) => {
     //     return redirect(`/${companyId}/data-sources`);
     // }
 
+    const connectorId = generateUuid();
     if (code != null) {
-        await facebookOAuthFlow(code, companyId, data);
+        await facebookOAuthFlow(code, companyId, data, connectorId);
     }
 
-    // const connectorId = generateUuid();
 
     // if (response instanceof Error) {
     //     throw response;

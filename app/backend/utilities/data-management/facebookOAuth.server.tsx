@@ -56,7 +56,7 @@ async function getFacebookAdsAccessToken(redirectUri: string, authorizationCode:
 /**
  * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
  */
-export async function facebookOAuthFlow(authorizationCode: string, companyId: Uuid, adAccountId: string): Promise<void | Error> {
+export async function facebookOAuthFlow(authorizationCode: string, companyId: Uuid, adAccountId: string, connectorId: Uuid): Promise<void | Error> {
     const redirectUri = getRedirectUri(companyId, CredentialType.FacebookAds);
     if (redirectUri instanceof Error) {
         return redirectUri;
@@ -71,8 +71,6 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
     credentials["adAccountId"] = adAccountId;
 
     const sourceCredentialId = generateUuid();
-
-    const connectorId = generateUuid();
 
     // Destination = Company's Database.
     const companyDatabaseCredentialId = await getDestinationCredentialId(companyId);

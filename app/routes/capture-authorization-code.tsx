@@ -26,6 +26,8 @@ export const loader: LoaderFunction = async ({request}) => {
     const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
     const companyId = getNonEmptyStringOrNull(urlSearchParams.get("state"));
 
+    console.log("Google ads authorization code: ",authorizationCode);
+
     if (companyId == null) {
         throw new Response(null, {status: 400});
     }

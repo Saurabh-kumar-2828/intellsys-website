@@ -58,6 +58,10 @@ export function MenuComponent({userDetails, accessibleCompanies, className}: {us
             url: `/${companyId}/pnl-view`,
             displayName: "P&L View",
         },
+        {
+            url: `/${companyId}/data-sources`,
+            displayName: "Data Sources",
+        },
         // null,
         // {
         //     url: "/data-management",

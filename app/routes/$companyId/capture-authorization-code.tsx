@@ -63,15 +63,15 @@ export const action: ActionFunction = async ({request, params}) => {
 
     const connectorId = generateUuid();
     if (code != null) {
-        await facebookOAuthFlow(code, companyId, data, connectorId);
+        console.log("Facebobook Authorization code: ", code);
+        const response = await facebookOAuthFlow(code, companyId, data, connectorId);
+
+        if (response instanceof Error) {
+            throw response;
+        }
+
+        return redirect(`/${companyId}/facebookAds/${connectorId}`);
     }
-
-
-    // if (response instanceof Error) {
-    //     throw response;
-    // }
-
-    // return redirect(`/${companyId}/googleAds/${connectorId}`);
 
     return null;
 };

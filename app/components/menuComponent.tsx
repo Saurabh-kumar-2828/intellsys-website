@@ -1,6 +1,5 @@
 import {Link, useLocation, useParams} from "@remix-run/react";
 import React, {useState} from "react";
-
 import {List, XLg} from "react-bootstrap-icons";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
@@ -35,29 +34,30 @@ export function MenuComponent({userDetails, accessibleCompanies, className}: {us
         },
         null,
         {
-            url: `/${companyId}/business-insights`,
+            url: `/${companyId}/business-insights?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
             displayName: "Business Insights",
         },
         {
-            url: `/${companyId}/google-ads-funnel`,
+            url: `/${companyId}/google-ads-funnel?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
             displayName: "Google Ads Funnel",
         },
         {
-            url: `/${companyId}/facebook-ads-funnel`,
+            url: `/${companyId}/facebook-ads-funnel?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
             displayName: "Facebook Ads Funnel",
         },
         {
-            url: `/${companyId}/sales-report`,
+            url: `/${companyId}/sales-report?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
             displayName: "Sales Report",
         },
         {
-            url: `/${companyId}/leads-report`,
+            url: `/${companyId}/leads-report?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
             displayName: "Leads Report",
         },
-        {
-            url: `/${companyId}/pnl-view`,
-            displayName: "P&L View",
-        },
+        // {
+        //     url: `/${companyId}/pnl-view?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
+        //     displayName: "P&L View",
+        // },
+        null,
         {
             url: `/${companyId}/data-sources`,
             displayName: "Data Sources",
@@ -79,6 +79,23 @@ export function MenuComponent({userDetails, accessibleCompanies, className}: {us
         //     url: "/table-management",
         //     displayName: "Table Management",
         // },
+        null,
+        {
+            url: "/livguard/contact-us-leads?startDate=2023-06-01",
+            displayName: "Contact Us Leads",
+        },
+        {
+            url: "/livguard/search-queries?startDate=2023-06-01",
+            displayName: "Search Queries",
+        },
+        {
+            url: "/livguard/server-latencies?startDate=2023-06-01",
+            displayName: "Server Latencies",
+        },
+        {
+            url: "/livguard/google-analytics?startDate=2023-06-01",
+            displayName: "Google Analytics",
+        },
     ];
 
     // return (
@@ -138,7 +155,8 @@ export function MenuComponent({userDetails, accessibleCompanies, className}: {us
                                         to={item.url}
                                         className={concatenateNonNullStringsWithSpaces(
                                             "tw-py-2 hover:tw-underline",
-                                            currentUrl == item.url || currentUrl.startsWith(`${item.url}?`) ? "tw-font-bold" : null
+                                            currentUrl == item.url || currentUrl.startsWith(`${item.url}?`) ? "tw-font-bold" : null,
+                                            !item.url.includes("/livguard") || currentUrl.includes("/livguard") || currentUrl.includes("/84589528-ef5e-46b2-90bd-96b6e2d206ce") ? null : "tw-hidden",
                                         )}
                                         toggleMenu={toggleMenu}
                                         key={itemIndex}
@@ -148,22 +166,6 @@ export function MenuComponent({userDetails, accessibleCompanies, className}: {us
                                 );
                             }}
                         />
-
-                        <VerticalSpacer className="tw-h-6" />
-
-                        <Divider />
-
-                        <div className="tw-flex-grow" />
-
-                        <Divider />
-
-                        <VerticalSpacer className="tw-h-6" />
-
-                        <MenuClosingLink to="/sign-out" className="hover:tw-underline" toggleMenu={toggleMenu}>
-                            Sign Out
-                        </MenuClosingLink>
-
-                        <VerticalSpacer className="tw-h-2" />
                     </div>
                 </div>
             </div>

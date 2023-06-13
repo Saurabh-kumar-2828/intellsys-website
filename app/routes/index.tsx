@@ -1,4 +1,5 @@
-import {LoaderFunction, redirect} from "@remix-run/node";
+import type {LoaderFunction} from "@remix-run/node";
+import {redirect} from "@remix-run/node";
 import {getNameAndPrivilegesForUser} from "~/backend/userDetails.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";

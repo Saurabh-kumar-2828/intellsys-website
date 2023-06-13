@@ -4,7 +4,6 @@ import Cryptr from "cryptr";
 
 const cryptr = new Cryptr(getRequiredEnvironmentVariableNew("JWT_SECRET"));
 
-
 export function getGranularityQuery(timeGranularity: TimeGranularity, columnName: string): string {
     switch (timeGranularity) {
         case TimeGranularity.daily: {
@@ -36,6 +35,9 @@ export function getOptionalEnvironmentVariable(variable: string): string | null 
     return value;
 }
 
+/**
+ * @deprecated
+ */
 export function getRequiredEnvironmentVariable(variable: string): string {
     const value = process.env[variable];
 

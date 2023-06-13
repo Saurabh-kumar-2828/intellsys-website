@@ -463,7 +463,7 @@ function LeadsSection({
         return result;
     }, {});
 
-    //chartjs graphs
+    // chartjs graphs
     ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement);
 
     const options = {

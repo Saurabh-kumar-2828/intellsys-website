@@ -4,7 +4,7 @@ import {ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineEl
 import {DateTime, Info} from "luxon";
 import {RadioGroup, Switch} from "@headlessui/react";
 import {useId} from "react";
-import {CheckCircle, Circle, Clipboard, Funnel, FunnelFill, InfoCircle} from "react-bootstrap-icons";
+import {CheckCircle, ChevronDown, Circle, Clipboard, Funnel, FunnelFill, InfoCircle} from "react-bootstrap-icons";
 import {Doughnut} from "react-chartjs-2";
 import {toast} from "react-toastify";
 import type {TimeGranularity} from "~/backend/business-insights";
@@ -538,4 +538,24 @@ export function errorToast(content: any) {
 
 export function successToast(content: any) {
     toast.success(content);
+}
+
+export function IntellsysHeaderDropdownTrigger({content, isOpen, className}: {content: string; isOpen: boolean; className?: string}) {
+    return (
+        <div
+            className={concatenateNonNullStringsWithSpaces(
+                "tw-dark-bg-500 tw-text-fg hover:tw-text-primary tw-underline-offset-2 tw-relative tw-grid tw-grid-flow-col tw-items-center tw-gap-x-1.5 tw-whitespace-nowrap tw-duration-200",
+                className,
+            )}
+        >
+            {content}
+
+            <ChevronDown
+                className="tw-w-4 tw-h-4 tw-duration-200 tw-transition-transform"
+                style={{
+                    transform: isOpen ? "rotateX(180deg)" : "rotateX(0deg)",
+                }}
+            />
+        </div>
+    );
 }

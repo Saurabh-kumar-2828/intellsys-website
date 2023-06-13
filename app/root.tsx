@@ -10,8 +10,6 @@ import {HeaderComponent} from "~/components/headerComponent";
 import {LoaderComponent} from "~/components/loaderComponent";
 import tailwindStylesheet from "~/tailwind.css";
 import type {Company, User} from "~/utilities/typeDefinitions";
-import {getCookieSession } from "./backend/utilities/cookieSessions.server";
-import { getRequiredEnvironmentVariable } from "./backend/utilities/utilities.server";
 
 type LoaderData = {
     userDetails: User | null;

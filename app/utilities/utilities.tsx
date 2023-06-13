@@ -5,6 +5,9 @@ import {Iso8601Date} from "./typeDefinitions";
 //     return `${process.env.NEXT_PUBLIC_FRONTEND_URL}/resources/${resourceRelativePath}`;
 // }
 
+/**
+ * @deprecated
+ */
 export function getUrlForCdnResource(imageId, imageVariant) {
     // if (imageId == null || imageVariant == null) {
     //     throw new Exception("Incorrect usage of getUrlForCdnResource!");
@@ -13,6 +16,9 @@ export function getUrlForCdnResource(imageId, imageVariant) {
     return `https://imagedelivery.net/${cloudflareImagesAccountHash}/${imageId}/${imageVariant}`;
 }
 
+/**
+ * @deprecated
+ */
 export function getNonEmptyStringOrNull(str): string | null {
     if (str?.length == 0) {
         return null;
@@ -21,6 +27,9 @@ export function getNonEmptyStringOrNull(str): string | null {
     return str;
 }
 
+/**
+ * @deprecated
+ */
 export async function postJson(url, data) {
     return await fetch(url, {
         method: "POST",
@@ -31,11 +40,17 @@ export async function postJson(url, data) {
     });
 }
 
+/**
+ * @deprecated
+ */
 export function concatenateNonNullStringsWithSpaces(...strs: Array<string | null | undefined>): string {
     // TODO: Do this properly
     return strs.join(" ");
 }
 
+/**
+ * @deprecated
+ */
 export function concatenateNonNullStringsWithAmpersand(...strs: Array<string | null | undefined>): string {
     // TODO: Merge implementations
     let concatenatedString = null;
@@ -55,6 +70,9 @@ export function concatenateNonNullStringsWithAmpersand(...strs: Array<string | n
     return concatenatedString;
 }
 
+/**
+ * @deprecated
+ */
 export function getHumanReadableMonth(month: number): string {
     return month == 1
         ? "January"
@@ -83,10 +101,16 @@ export function getHumanReadableMonth(month: number): string {
         : "";
 }
 
+/**
+ * @deprecated
+ */
 export function getHumanReadableShortDay(day: number): string {
     return day == 0 ? "Sun" : day == 1 ? "Mon" : day == 2 ? "Tue" : day == 3 ? "Wed" : day == 4 ? "Thu" : day == 5 ? "Fri" : day == 6 ? "Sat" : "";
 }
 
+/**
+ * @deprecated
+ */
 export function getHumanReadable12HourString(hours: number, minutes: number): string {
     let hours2 = hours % 12;
     hours2 = hours2 ? hours2 : 12; // the hour `0` should be `12`
@@ -95,10 +119,16 @@ export function getHumanReadable12HourString(hours: number, minutes: number): st
     return strTime;
 }
 
+/**
+ * @deprecated
+ */
 export function convertDateTimeToTimestamp(dateTime: DateTime) {
     return Math.trunc(dateTime.toMillis() / 1000);
 }
 
+/**
+ * @deprecated
+ */
 export function coalesce(...args) {
     for (let i = 0; i < args.length; i++) {
         if (args[i] != null) {
@@ -108,6 +138,9 @@ export function coalesce(...args) {
     return null;
 }
 
+/**
+ * @deprecated
+ */
 export function distinct(arr) {
     function onlyUnique(value, index, self) {
         return self.indexOf(value) === index;
@@ -116,6 +149,9 @@ export function distinct(arr) {
     return arr.filter(onlyUnique);
 }
 
+/**
+ * @deprecated
+ */
 export function dateToMediumNoneEnFormat(date: string) {
     if (date == null) {
         return null;
@@ -124,6 +160,9 @@ export function dateToMediumNoneEnFormat(date: string) {
     return new Intl.DateTimeFormat("en", {timeZone: "Asia/Kolkata", dateStyle: "medium"}).format(new Date(date));
 }
 
+/**
+ * @deprecated
+ */
 export function dateToMediumEnFormat(date: string) {
     if (date == null) {
         return null;
@@ -132,6 +171,9 @@ export function dateToMediumEnFormat(date: string) {
     return new Intl.DateTimeFormat("en", {timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short", hour12: true}).format(new Date(date));
 }
 
+/**
+ * @deprecated
+ */
 export function dateToNoneMediumEnFormat(date: string) {
     if (date == null) {
         return null;
@@ -245,6 +287,9 @@ export function getSingletonValue<T>(arr: Array<T>): T {
     return arr[0];
 }
 
+/**
+ * @deprecated
+ */
 export function getSingletonValueOrNull<T>(arr: Array<T>): T | null {
     if (arr.length == 0) {
         return null;

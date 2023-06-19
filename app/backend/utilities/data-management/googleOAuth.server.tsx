@@ -3,7 +3,6 @@ import {storeCredentials} from "~/backend/utilities/data-management/credentials.
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import {ConnectorTableType, ConnectorType} from "~/utilities/typeDefinitions";
-import {CredentialType} from "~/utilities/typeDefinitions";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import type {ConnectorId} from "~/backend/utilities/data-management/common.server";
 import {
@@ -28,7 +27,7 @@ import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 // TODO: Fix timezone in database
 
-export type AccessibleAccount = {
+export type GoogleAdsAccessibleAccount = {
     customerClientId: string;
     customerClientName: string;
     managerId: string;
@@ -36,6 +35,7 @@ export type AccessibleAccount = {
 };
 
 export const googleAdsScope = "https://www.googleapis.com/auth/adwords";
+export const googleAnalyticsScope = "https://www.googleapis.com/auth/analytics.readonly";
 
 export type GoogleAdsCredentials = {
     refreshToken: string;
@@ -52,9 +52,16 @@ export type Connector = {
     accountId: string;
 };
 
-export async function getGoogleAdsRefreshToken(authorizationCode: string, companyId: Uuid): Promise<string | Error> {
-    const redirectUri = getRedirectUri(companyId, CredentialType.GoogleAds);
+export function getGoogleAuthorizationCodeUrl(redirectUri: string, companyId: Uuid, scope: string) {
+    const clientId = getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_ID");
 
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?scope=${scope}&client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&prompt=consent&access_type=offline&state=${companyId}`;
+
+    return url;
+}
+
+export async function getGoogleAdsRefreshToken(authorizationCode: string, companyId: Uuid): Promise<string | Error> {
+    const redirectUri = getRedirectUri(companyId, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
     if (redirectUri instanceof Error) {
         return redirectUri;
     }
@@ -111,7 +118,7 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
         }
 
         // Store source credentials in KMS.
-        const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, CredentialType.GoogleAds);
+        const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, getUuidFromUnknown(ConnectorType.GoogleAds));
         if (response instanceof Error) {
             return response;
         }
@@ -161,7 +168,9 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
 /**
  * Retrieves a list of all Google Ads accounts that you are able to act upon directly given your current credentials.
  */
-export async function getAccessibleAccounts(refreshToken: string): Promise<Array<AccessibleAccount> | Error> {
+export async function getAccessibleAccounts(refreshToken: string): Promise<Array<GoogleAdsAccessibleAccount> | Error> {
+    const googleAdsHelperUrl = getRequiredEnvironmentVariableNew("INTELLSYS_GOOGLE_ADS_HELPER_URL");
+
     var formdata = new FormData();
     formdata.append("developer_token", getRequiredEnvironmentVariableNew("GOOGLE_DEVELOPER_TOKEN"));
     formdata.append("client_id", getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_ID"));
@@ -173,7 +182,7 @@ export async function getAccessibleAccounts(refreshToken: string): Promise<Array
         body: formdata,
     };
 
-    const rawResponse = await fetch(`${process.env.INTELLSYS_GOOGLE_ADS_HELPER_URL}/get_accessible_accounts`, requestOptions);
+    const rawResponse = await fetch(`${googleAdsHelperUrl}/get_accessible_accounts`, requestOptions);
 
     if (!rawResponse.ok) {
         return Error("Request to get accessible account failed");
@@ -181,13 +190,13 @@ export async function getAccessibleAccounts(refreshToken: string): Promise<Array
 
     const response = await rawResponse.json();
 
-    const accessbileAccounts: Array<AccessibleAccount> = response.map((row) => convertToAccessbileAccount(row));
+    const accessbileAccounts: Array<GoogleAdsAccessibleAccount> = response.map((row) => convertToAccessbileAccount(row));
 
     return accessbileAccounts;
 }
 
 export function convertToAccessbileAccount(row: Credentials) {
-    const result: AccessibleAccount = {
+    const result: GoogleAdsAccessibleAccount = {
         customerClientId: row.customer_client_id as string,
         customerClientName: row.customer_client_name as string,
         managerId: row.manager_id as string,

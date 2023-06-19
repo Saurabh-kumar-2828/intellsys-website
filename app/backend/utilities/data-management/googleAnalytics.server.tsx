@@ -1,6 +1,37 @@
 import {BetaAnalyticsDataClient} from "@google-analytics/data";
-import {Iso8601Date} from "~/utilities/typeDefinitions";
-import {createObjectFromKeyValueArray, toDateHourFormat} from "../utilities";
+import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
+import type {Iso8601Date} from "~/utilities/typeDefinitions";
+
+
+/**
+ * Retrieves a list of all Google Ads accounts that you are able to act upon directly given your current credentials.
+ */
+export async function getAccessibleAccounts(refreshToken: string): Promise<Array<GoogleAdsAccessibleAccount> | Error> {
+    const googleAdsHelperUrl = getRequiredEnvironmentVariableNew("INTELLSYS_GOOGLE_ADS_HELPER_URL");
+
+    var formdata = new FormData();
+    formdata.append("client_id", getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_ID"));
+    formdata.append("client_secret", getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_SECRET"));
+    formdata.append("refresh_token", refreshToken);
+
+    var requestOptions = {
+        method: "POST",
+        body: formdata,
+    };
+
+    const rawResponse = await fetch(`${googleAdsHelperUrl}/gget_google_analytics_property_ids`, requestOptions);
+
+    if (!rawResponse.ok) {
+        return Error("Request to get accessible account failed");
+    }
+
+    const response = await rawResponse.json();
+
+    const accessbileAccounts: Array<GoogleAdsAccessibleAccount> = response.map((row) => convertToAccessbileAccount(row));
+
+    return accessbileAccounts;
+}
+
 
 // export async function ingestDataFromRealTimeGoogleAnalyticsApi(startMinutesAgo: number, endMinutesAgo: 0) {
 //     const analyticsDataClient = new BetaAnalyticsDataClient();
@@ -203,7 +234,11 @@ function getMetricsRetrievedFromGoogleAnalytics(metricHeaders: Array<string>, me
  * @param accumulatedData : Accumulated data of previous Google Analytics API requests
  * @param resultFromGoogleAnalyticsApi : Data fetched from Google Analytics API from current request
  */
-function accumulateData(accumulatedData: {[dimensions: string]: metricObject}, resultFromGoogleAnalyticsApi: any, metrics: Array<string>): {[dimensions: string]: metricObject} {
+function accumulateData(
+    accumulatedData: {[dimensions: string]: metricObject},
+    resultFromGoogleAnalyticsApi: any,
+    metrics: Array<string>
+): {[dimensions: string]: metricObject} {
     let metricHeaders = resultFromGoogleAnalyticsApi.metricHeaders.map((obj: {name: string; type: string}) => obj.name);
     resultFromGoogleAnalyticsApi.rows.forEach((row: {dimensionValues: Array<googleAnalyticObject>; metricValues: Array<googleAnalyticObject>}) => {
         const dimesionValuesAsKey = getValues(row.dimensionValues);

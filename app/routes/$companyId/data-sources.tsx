@@ -5,13 +5,16 @@ import {Form, useLoaderData} from "@remix-run/react";
 import {getRedirectUri} from "~/backend/utilities/data-management/common.server";
 import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/data-management/facebookOAuth.server";
 import type {Connector} from "~/backend/utilities/data-management/googleOAuth.server";
+import {googleAnalyticsScope} from "~/backend/utilities/data-management/googleOAuth.server";
+import {getGoogleAuthorizationCodeUrl} from "~/backend/utilities/data-management/googleOAuth.server";
 import {getConnectorsAssociatedWithCompanyId} from "~/backend/utilities/data-management/googleOAuth.server";
 import {deleteConnector, googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {Uuid, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
-import {ConnectorType, CredentialType} from "~/utilities/typeDefinitions";
+import type {Uuid} from "~/utilities/typeDefinitions";
+import {dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
+import {ConnectorType} from "~/utilities/typeDefinitions";
 
 type LoaderData = {
     googleAdsConnectors: Array<Connector>;
@@ -28,7 +31,7 @@ export const action: ActionFunction = async ({request, params}) => {
     const companyIdUuid = getUuidFromUnknown(companyId);
 
     if (body.get("action") == "facebook") {
-        const redirectUri = getRedirectUri(companyIdUuid, CredentialType.FacebookAds);
+        const redirectUri = getRedirectUri(companyIdUuid, getUuidFromUnknown(ConnectorType.FacebookAds));
         if (redirectUri instanceof Error) {
             return "Facebook Ads redirect uri not defined!";
         }
@@ -36,22 +39,29 @@ export const action: ActionFunction = async ({request, params}) => {
         const authUrl = getFacebookAuthorizationCodeUrl(redirectUri);
 
         return redirect(authUrl);
-    } else if (body.get("action") == "google") {
-        const redirectUri = getRedirectUri(companyIdUuid, CredentialType.GoogleAds);
+    } else if (body.get("action") == "googleAds") {
+        const redirectUri = getRedirectUri(companyIdUuid, getUuidFromUnknown(ConnectorType.GoogleAds));
         if (redirectUri instanceof Error) {
             return "Google Ads redirect uri not defined!";
         }
 
-        const url = `https://accounts.google.com/o/oauth2/v2/auth?scope=${googleAdsScope}&client_id=${process.env
-            .GOOGLE_CLIENT_ID!}&response_type=code&redirect_uri=${redirectUri}&prompt=consent&access_type=offline&state=${companyId}`;
+        const authUrl = getGoogleAuthorizationCodeUrl(redirectUri, companyIdUuid, googleAdsScope);
 
-        return redirect(url);
+        return redirect(authUrl);
+    } else if (body.get("action") == "googleAnalytics") {
+        const redirectUri = getRedirectUri(companyIdUuid, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
+        if (redirectUri instanceof Error) {
+            return "Google Analytics redirect uri not defined!";
+        }
+
+        const authUrl = getGoogleAuthorizationCodeUrl(redirectUri, companyIdUuid, googleAnalyticsScope);
+
+        return redirect(authUrl);
     } else if (body.get("action") == "deleteGoogleAds") {
         const connectorId = body.get("connectorId") as Uuid;
         const loginCustomerId = body.get("loginCustomerId") as Uuid;
 
         await deleteConnector(connectorId, loginCustomerId, dataSourcesAbbreviations.googleAds);
-
     } else if (body.get("action") == "deleteFacebookAds") {
         const connectorId = body.get("connectorId") as Uuid;
         const adAccountId = body.get("adAccountId") as Uuid;
@@ -101,7 +111,7 @@ export default function () {
                             name="action"
                             value="facebook"
                         />
-                        <button className="tw-lp-button tw-bg-blue-500">Authorize Facebook Account</button>
+                        <button className="tw-lp-button tw-bg-blue-500">Facebook Ads</button>
                     </Form>
                 </div>
                 <div className="tw-basis-1/4">
@@ -109,9 +119,19 @@ export default function () {
                         <input
                             type="hidden"
                             name="action"
-                            value="google"
+                            value="googleAds"
                         />
-                        <button className="tw-lp-button tw-bg-blue-700 disabled:opacity-25">Authorize Google Account</button>
+                        <button className="tw-lp-button tw-bg-blue-600 disabled:opacity-25">Google Ads</button>
+                    </Form>
+                </div>
+                <div className="tw-basis-1/4">
+                    <Form method="post">
+                        <input
+                            type="hidden"
+                            name="action"
+                            value="googleAnalytics"
+                        />
+                        <button className="tw-lp-button tw-bg-blue-700 disabled:opacity-25">Google Analytics</button>
                     </Form>
                 </div>
             </div>

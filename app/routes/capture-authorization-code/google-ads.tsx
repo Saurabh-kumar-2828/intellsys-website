@@ -4,7 +4,7 @@ import {json, redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
-import type {AccessibleAccount, GoogleAdsCredentials} from "~/backend/utilities/data-management/googleOAuth.server";
+import type {GoogleAdsAccessibleAccount, GoogleAdsCredentials} from "~/backend/utilities/data-management/googleOAuth.server";
 import {getGoogleAdsRefreshToken} from "~/backend/utilities/data-management/googleOAuth.server";
 import {checkGoogleAdsConnectorExistsForAccount, getAccessibleAccounts, ingestAndStoreGoogleAdsData} from "~/backend/utilities/data-management/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
@@ -17,7 +17,7 @@ import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 type LoaderData = {
     data: string;
-    accessibleAccounts: Array<AccessibleAccount>;
+    accessibleAccounts: Array<GoogleAdsAccessibleAccount>;
 };
 
 export const loader: LoaderFunction = async ({request}) => {
@@ -25,9 +25,6 @@ export const loader: LoaderFunction = async ({request}) => {
 
     const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
     const companyId = getNonEmptyStringOrNull(urlSearchParams.get("state"));
-
-    console.log("Google ads authorization code: ",authorizationCode);
-
     if (companyId == null) {
         throw new Response(null, {status: 400});
     }
@@ -101,6 +98,7 @@ export const action: ActionFunction = async ({request}) => {
         }
 
         return redirect(`/${companyId}/googleAds/${connectorId}`);
+
     } catch (e) {
         console.log(e);
     }
@@ -110,7 +108,7 @@ export const action: ActionFunction = async ({request}) => {
 
 export default function () {
     const {data, accessibleAccounts} = useLoaderData() as LoaderData;
-    const [selectedAccount, setSelectedAccount] = useState<AccessibleAccount | null>(null);
+    const [selectedAccount, setSelectedAccount] = useState<GoogleAdsAccessibleAccount | null>(null);
 
     return (
         <div>

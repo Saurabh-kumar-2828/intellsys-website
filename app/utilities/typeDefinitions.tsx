@@ -76,14 +76,6 @@ export function filterToHumanReadableString(filterType: QueryFilterType) {
     }
 }
 
-
-export const CredentialType:{[key: string]: Uuid} = {
-    FacebookAds: "c32d8b45-92fe-44f6-8b61-42c2107dfe87" as Uuid,
-    GoogleAds: "76fc1962-628f-4e53-898b-9c85c362bf11" as Uuid,
-    DatabaseNew: "adac3858-fab9-4d36-8bb4-1e3a09247f87" as Uuid,
-    DatabaseOld: "ac200d5a-cabf-4484-8d84-f96e05a7bef9" as Uuid
-}
-
 export const Companies:{[key: string]: Uuid} =  {
     Intellsys: "",
     Livpure: "833e5ca8-249d-4486-97e8-95cc576f0484" as Uuid,
@@ -103,17 +95,22 @@ export const companyDatabaseCredentialsMap: {[key: string]: Uuid} = {
 export enum ConnectorType {
     Freshsales = "3ec459aa-ecbd-4829-a89a-9d4284887a1a",
     GoogleAds = "800c28ce-43ea-44b8-b6fc-077f44566296",
-    FacebookAds = "d80731db-155e-4a24-bc58-158a57edabd7"
+    FacebookAds = "d80731db-155e-4a24-bc58-158a57edabd7",
+    GoogleAnalytics = "cc991d2b-dc83-458e-8e8d-9b47164c735f"
 };
 
+// Get it from intellsys-connectors
 export enum ConnectorTableType {
     FreshsalesContacts = "d56fd051-ae14-40b4-ab4b-ec449738d2ff",
     FreshsalesContactDetails = "b8936660-e580-4ab3-84f6-49b8a2342d0c",
     GoogleAds = "4cf54b5c-66eb-4eeb-9a84-71dc42635c13",
-    FacebookAds = "169fbcec-811a-4e27-9ace-9087ee8cf3d5"
+    FacebookAds = "169fbcec-811a-4e27-9ace-9087ee8cf3d5",
+    GoogleAnalytics = "c9d5f4f9-630b-4e89-a886-23a6271d54c9"
 };
 
+// Get it from intellsys-connectors
 export enum dataSourcesAbbreviations {
     googleAds = "gad",
-    facebookAds = "fad"
+    facebookAds = "fad",
+    googleAnalytics = "ga"
 }

@@ -3,11 +3,12 @@ import type {Credentials} from "~/backend/utilities/data-management/credentials.
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
 import type {PostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
+import { getRequiredEnvironmentVariableNew } from "~/global-common-typescript/server/utilities.server";
 import type {Iso8601DateTime, Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getCurrentIsoTimestamp} from "~/global-common-typescript/utilities/utilities";
-import type {ConnectorTableType, ConnectorType} from "~/utilities/typeDefinitions";
-import {CredentialType} from "~/utilities/typeDefinitions";
+import {ConnectorType} from "~/utilities/typeDefinitions";
+import type {ConnectorTableType} from "~/utilities/typeDefinitions";
 import {getSingletonValue, getSingletonValueOrNull} from "~/utilities/utilities";
 
 export type ConnectorId = Uuid;
@@ -79,12 +80,19 @@ export async function getDestinationCredentialId(companyId: Uuid): Promise<Uuid 
 }
 
 export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Error {
-    if (dataSource == CredentialType.FacebookAds) {
-        return `${process.env.REDIRECT_BASE_URI!}/${companyId}/capture-authorization-code`;
+    const redirectBaseUri = getRequiredEnvironmentVariableNew("REDIRECT_BASE_URI");
+
+    if (dataSource == ConnectorType.FacebookAds) {
+        return `${redirectBaseUri}/${companyId}/capture-authorization-code`;
     }
 
-    if (dataSource == CredentialType.GoogleAds) {
-        const url = `${process.env.REDIRECT_BASE_URI!}/capture-authorization-code`;
+    if (dataSource == ConnectorType.GoogleAds) {
+        const url = `${redirectBaseUri}/capture-authorization-code/google-ads`;
+        return url;
+    }
+
+    if (dataSource == ConnectorType.GoogleAnalytics) {
+        const url = `${redirectBaseUri}/capture-authorization-code/google-analytics`;
         return url;
     }
 

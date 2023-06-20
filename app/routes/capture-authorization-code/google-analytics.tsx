@@ -1,21 +1,26 @@
 import {RadioGroup} from "@headlessui/react";
 import type {ActionFunction, LoaderFunction} from "@remix-run/node";
-import {json, redirect} from "@remix-run/node";
+import {redirect} from "@remix-run/node";
+import {json} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
-import { checkGoogleAdsConnectorExistsForAccount, getAccessibleAccounts, getGoogleAdsRefreshToken } from "~/backend/utilities/data-management/googleOAuth.server";
+import {GoogleAnalyticsAccessiblePropertyIds, GoogleAnalyticsCredentials, ingestAndStoreGoogleAnalyticsData} from "~/backend/utilities/data-management/googleAnalytics.server";
+import {getAccessiblePropertyIds} from "~/backend/utilities/data-management/googleAnalytics.server";
+import type {GoogleAdsAccessibleAccount} from "~/backend/utilities/data-management/googleOAuth.server";
+import {getGoogleAdsRefreshToken} from "~/backend/utilities/data-management/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
-import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
+import { ItemBuilder } from "~/components/reusableComponents/itemBuilder";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
+import {ConnectorType} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 // TODO: Keep only code part
 
 type LoaderData = {
     data: string;
-    accessibleAccounts: Array<GoogleAdsAccessibleAccount>;
+    accessiblePropertyIds: Array<GoogleAnalyticsAccessiblePropertyIds>;
 };
 
 export const loader: LoaderFunction = async ({request}) => {
@@ -30,26 +35,25 @@ export const loader: LoaderFunction = async ({request}) => {
         throw Error("Authorization failed!");
     }
 
-    const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId));
+    const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAnalytics));
     if (refreshToken instanceof Error) {
         return refreshToken;
     }
 
-    const accessibleAccounts = await getAccessibleAccounts(refreshToken);
-    if (accessibleAccounts instanceof Error) {
-        return accessibleAccounts;
+    const accessiblePropertyIds = await getAccessiblePropertyIds(refreshToken);
+    if (accessiblePropertyIds instanceof Error) {
+        return accessiblePropertyIds;
     }
 
-    // // TODO: Filter accessible account
+    // TODO: Filter accessible account
 
-    // // TODO: Get multiple accounts
-    // const loaderData: LoaderData = {
-    //     data: encrypt(refreshToken) as unknown as string,
-    //     accessibleAccounts: accessibleAccounts,
-    // };
+    // TODO: Get multiple accounts
+    const loaderData: LoaderData = {
+        data: encrypt(refreshToken) as unknown as string,
+        accessiblePropertyIds: accessiblePropertyIds,
+    };
 
-    // return json(loaderData);
-    return null;
+    return json(loaderData);
 };
 
 export const action: ActionFunction = async ({request}) => {
@@ -70,32 +74,30 @@ export const action: ActionFunction = async ({request}) => {
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);
 
-        const accountExists = await checkGoogleAdsConnectorExistsForAccount(selectedAccount.managerId);
-        if (accountExists instanceof Error) {
-            return Error("Account already exists");
-        }
+        // const accountExists = await checkGoogleAdsConnectorExistsForAccount(selectedAccount.managerId);
+        // if (accountExists instanceof Error) {
+        //     return Error("Account already exists");
+        // }
 
         // Cannot create new connector, if connector with account already exists.
 
-        if (accountExists) {
-            return redirect(`/${companyId}/data-sources`);
-        }
+        // if (accountExists) {
+        //     return redirect(`/${companyId}/data-sources`);
+        // }
 
-        const googleAdsCredentials: GoogleAdsCredentials = {
-            refreshToken: refreshTokenDecoded as string,
-            googleAccountId: selectedAccount.customerClientId,
-            googleLoginCustomerId: selectedAccount.managerId,
+        const googleAnalyticsCredentials: GoogleAnalyticsCredentials = {
+            propertyId: selectedAccount.propertyId,
+            refreshToken: refreshTokenDecoded,
         };
 
         const connectorId = generateUuid();
 
-        const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, getUuidFromUnknown(companyId), connectorId);
+        const response = await ingestAndStoreGoogleAnalyticsData(googleAnalyticsCredentials, getUuidFromUnknown(companyId), connectorId);
         if (response instanceof Error) {
             throw response;
         }
 
-        return redirect(`/${companyId}/googleAds/${connectorId}`);
-
+        return redirect(`/${companyId}/googleAnalytics/${connectorId}`);
     } catch (e) {
         console.log(e);
     }
@@ -104,7 +106,7 @@ export const action: ActionFunction = async ({request}) => {
 };
 
 export default function () {
-    const {data, accessibleAccounts} = useLoaderData() as LoaderData;
+    const {data, accessiblePropertyIds} = useLoaderData() as LoaderData;
     const [selectedAccount, setSelectedAccount] = useState<GoogleAdsAccessibleAccount | null>(null);
 
     return (
@@ -116,7 +118,7 @@ export default function () {
                 className="tw-row-start-1 tw-w-full tw-grid tw-grid-flow-row tw-content-center tw-gap-y-4"
             >
                 <ItemBuilder
-                    items={accessibleAccounts}
+                    items={accessiblePropertyIds}
                     itemBuilder={(item, itemIndex) => (
                         <RadioGroup.Option
                             value={item}
@@ -126,7 +128,7 @@ export default function () {
                                 <div className="tw-pl-4 tw-pr-8 tw-py-[0.9375rem] tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
                                     {checked ? <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" /> : <Circle className="tw-w-6 tw-h-6 tw-text-blue-500" />}
 
-                                    {`${item.customerClientName}, ${item.customerClientId}`}
+                                    {`${item.propertyId}, ${item.displayName}`}
                                 </div>
                             )}
                         </RadioGroup.Option>

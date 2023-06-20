@@ -15,7 +15,6 @@ import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValid
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
-import {ConnectorType} from "~/utilities/typeDefinitions";
 
 export const facebookAdsScope = "ads_read, ads_management, email, public_profile, business_management";
 
@@ -57,7 +56,7 @@ async function getFacebookAdsAccessToken(redirectUri: string, authorizationCode:
  * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
  */
 export async function facebookOAuthFlow(authorizationCode: string, companyId: Uuid, adAccountId: string, connectorId: Uuid): Promise<void | Error> {
-    const redirectUri = getRedirectUri(companyId, ConnectorType.FacebookAds);
+    const redirectUri = getRedirectUri(companyId, getUuidFromUnknown(ConnectorType.FacebookAds));
     if (redirectUri instanceof Error) {
         return redirectUri;
     }
@@ -96,7 +95,7 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
     }
 
     // Store source credentials in KMS.
-    const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, ConnectorType.FacebookAds);
+    const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, getUuidFromUnknown(ConnectorType.FacebookAds));
     if (response instanceof Error) {
         return response;
     }

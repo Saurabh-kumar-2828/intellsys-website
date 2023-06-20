@@ -1,12 +1,36 @@
 import {BetaAnalyticsDataClient} from "@google-analytics/data";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
-import type {Iso8601Date} from "~/utilities/typeDefinitions";
+import {generateUuid} from "~/global-common-typescript/utilities/utilities";
+import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
+import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
+import {
+    createTable,
+    getDestinationCredentialId,
+    getSystemConnectorsDatabaseManager,
+    getSystemPostgresDatabaseManager,
+    initializeConnectorAndSubConnector,
+    mapCompanyIdToConnectorId,
+} from "./common.server";
+import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
+import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {storeCredentials} from "./credentials.server";
+import {createObjectFromKeyValueArray, toDateHourFormat} from "~/utilities/utilities";
+import type {Integer} from "~/global-common-typescript/typeDefinitions";
 
+export type GoogleAnalyticsCredentials = {
+    propertyId: string;
+    refreshToken: string;
+};
+
+export type GoogleAnalyticsAccessiblePropertyIds = {
+    displayName: string;
+    propertyId: string;
+};
 
 /**
  * Retrieves a list of all Google Ads accounts that you are able to act upon directly given your current credentials.
  */
-export async function getAccessibleAccounts(refreshToken: string): Promise<Array<GoogleAdsAccessibleAccount> | Error> {
+export async function getAccessiblePropertyIds(refreshToken: string): Promise<Array<GoogleAnalyticsAccessiblePropertyIds> | Error> {
     const googleAdsHelperUrl = getRequiredEnvironmentVariableNew("INTELLSYS_GOOGLE_ADS_HELPER_URL");
 
     var formdata = new FormData();
@@ -19,7 +43,7 @@ export async function getAccessibleAccounts(refreshToken: string): Promise<Array
         body: formdata,
     };
 
-    const rawResponse = await fetch(`${googleAdsHelperUrl}/gget_google_analytics_property_ids`, requestOptions);
+    const rawResponse = await fetch(`${googleAdsHelperUrl}/get_google_analytics_property_ids`, requestOptions);
 
     if (!rawResponse.ok) {
         return Error("Request to get accessible account failed");
@@ -27,11 +51,141 @@ export async function getAccessibleAccounts(refreshToken: string): Promise<Array
 
     const response = await rawResponse.json();
 
-    const accessbileAccounts: Array<GoogleAdsAccessibleAccount> = response.map((row) => convertToAccessbileAccount(row));
+    const accessbileAccounts: Array<GoogleAnalyticsAccessiblePropertyIds> = response.map((row) => convertToAccessbilePropertyIds(row));
 
     return accessbileAccounts;
 }
 
+export async function ingestAndStoreGoogleAnalyticsData(credentials: GoogleAnalyticsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
+    const response = await storeGoogleAnalyticsOAuthDetails(credentials, companyId, connectorId);
+    if (response instanceof Error) {
+        return response;
+    }
+}
+
+/**
+ *  Handles the OAuth2 flow to authorize the Google Ads API for the given companyId and stores the credentials in KMS table, connectors table, subconnecter table and companyToConnectorTable.
+ */
+export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyticsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
+    try {
+        const sourceCredentialId = generateUuid();
+
+        // Destination = Company's Database.
+        const companyDatabaseCredentialId = await getDestinationCredentialId(companyId);
+        if (companyDatabaseCredentialId instanceof Error) {
+            return companyDatabaseCredentialId;
+        }
+
+        const companyDatabaseManager = await getPostgresDatabaseManager(companyDatabaseCredentialId);
+        if (companyDatabaseManager instanceof Error) {
+            return companyDatabaseManager;
+        }
+
+        // System Database
+        const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
+        if (systemConnectorsDatabaseManager instanceof Error) {
+            return systemConnectorsDatabaseManager;
+        }
+
+        const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
+        if (systemPostgresDatabaseManager instanceof Error) {
+            return systemPostgresDatabaseManager;
+        }
+
+        // Store source credentials in KMS.
+        const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
+        if (response instanceof Error) {
+            return response;
+        }
+
+        await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
+        await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
+
+        const connectorInitializationResponse = await initializeConnectorAndSubConnector(
+            systemConnectorsDatabaseManager,
+            connectorId,
+            sourceCredentialId,
+            companyDatabaseCredentialId,
+            "Google Analytics",
+            ConnectorTableType.GoogleAnalytics,
+            ConnectorType.GoogleAnalytics,
+            `{"accountId": "${credentials.propertyId}"}`,
+        );
+
+        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.GoogleAnalytics, "Google Analytics");
+
+        if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {
+            await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
+            await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
+
+            console.log("All transactions rollbacked");
+            return connectorInitializationResponse;
+        }
+
+        await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
+        await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
+
+        // Creates a source table in company's database.
+        const tableName = `${dataSourcesAbbreviations.googleAnalytics}_${credentials.propertyId}`;
+        const createTableResponse = await createTable(companyDatabaseManager, tableName);
+        if (createTableResponse instanceof Error) {
+            return createTableResponse;
+        }
+
+        console.log(1);
+        const dataIngestionResponse = await ingestGoogleAnalyticsData(getUuidFromUnknown(connectorId), 45);
+        if (dataIngestionResponse instanceof Error) {
+            return dataIngestionResponse;
+        }
+        console.log(2)
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+/**
+ * Store the Google Analytics data in the company's database through intellsys-connectors.
+ * @param connectorId: Unique id of the connector object.
+ * @param duration: Duration to ingest data.
+ * @returns : No. of rows deleted and inserted.
+ */
+export async function ingestGoogleAnalyticsData(connectorId: Uuid, duration: Integer, connector?: string): Promise<void | Error> {
+    try {
+        const url = `${getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_URL")}/googleAnalytics/historical`;
+
+        const body = new FormData();
+        body.set("connectorId", connectorId);
+        body.set("duration", duration.toString());
+
+        const headers = new Headers();
+        headers.append("Authorization", getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_TOKEN"));
+
+        const response = await fetch(url, {
+            method: "POST",
+            headers: headers,
+            body: body,
+            redirect: "follow",
+        });
+
+        if (!response.ok) {
+            return Error(await response.text());
+        }
+
+        const ingestionResult = await response.json();
+        console.log(ingestionResult);
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+function convertToAccessbilePropertyIds(row: any) {
+    const result: GoogleAnalyticsAccessiblePropertyIds = {
+        propertyId: row.property_id as string,
+        displayName: row.display_name as string,
+    };
+
+    return result;
+}
 
 // export async function ingestDataFromRealTimeGoogleAnalyticsApi(startMinutesAgo: number, endMinutesAgo: 0) {
 //     const analyticsDataClient = new BetaAnalyticsDataClient();
@@ -234,11 +388,7 @@ function getMetricsRetrievedFromGoogleAnalytics(metricHeaders: Array<string>, me
  * @param accumulatedData : Accumulated data of previous Google Analytics API requests
  * @param resultFromGoogleAnalyticsApi : Data fetched from Google Analytics API from current request
  */
-function accumulateData(
-    accumulatedData: {[dimensions: string]: metricObject},
-    resultFromGoogleAnalyticsApi: any,
-    metrics: Array<string>
-): {[dimensions: string]: metricObject} {
+function accumulateData(accumulatedData: {[dimensions: string]: metricObject}, resultFromGoogleAnalyticsApi: any, metrics: Array<string>): {[dimensions: string]: metricObject} {
     let metricHeaders = resultFromGoogleAnalyticsApi.metricHeaders.map((obj: {name: string; type: string}) => obj.name);
     resultFromGoogleAnalyticsApi.rows.forEach((row: {dimensionValues: Array<googleAnalyticObject>; metricValues: Array<googleAnalyticObject>}) => {
         const dimesionValuesAsKey = getValues(row.dimensionValues);
@@ -281,7 +431,7 @@ export async function getDataFromGoogleAnalyticsApi(dimensions: Array<string>, m
         ],
         dimensions: getArrayAccordingToGoogleAnalyticsFormat(dimensions),
         metrics: getArrayAccordingToGoogleAnalyticsFormat(metrics),
-        returnPropertyQuota: true
+        returnPropertyQuota: true,
     });
 
     return response;

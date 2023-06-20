@@ -1,15 +1,19 @@
 import {DateTime} from "luxon";
 import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
+import {storeCredentials} from "~/backend/utilities/data-management/credentials.server";
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
 import type {PostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
+import {TransactionCommand} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import { getRequiredEnvironmentVariableNew } from "~/global-common-typescript/server/utilities.server";
-import type {Iso8601DateTime, Uuid} from "~/global-common-typescript/typeDefinitions";
+import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
+import type {Integer, Iso8601DateTime, Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {getCurrentIsoTimestamp} from "~/global-common-typescript/utilities/utilities";
+import {generateUuid, getCurrentIsoTimestamp} from "~/global-common-typescript/utilities/utilities";
 import {ConnectorType} from "~/utilities/typeDefinitions";
-import type {ConnectorTableType} from "~/utilities/typeDefinitions";
+import {ConnectorTableType} from "~/utilities/typeDefinitions";
 import {getSingletonValue, getSingletonValueOrNull} from "~/utilities/utilities";
+import type {GoogleAdsCredentials} from "./googleOAuth.server";
+import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
 
 export type ConnectorId = Uuid;
 
@@ -372,4 +376,239 @@ export async function deleteConnectorAndSubconnector(connectorId: Uuid): Promise
     if (connectorMetadataResponse instanceof Error) {
         return connectorMetadataResponse;
     }
+}
+
+export async function ingestAndStoreGoogleAdsData(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
+    const response = await storeGoogleAdsOAuthDetails(credentials, companyId, connectorId);
+    if (response instanceof Error) {
+        return response;
+    }
+}
+
+/**
+ *  Handles the OAuth2 flow to authorize the Google Ads API for the given companyId and stores the credentials in KMS table, connectors table, subconnecter table and companyToConnectorTable.
+ */
+export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
+    try {
+        const sourceCredentialId = generateUuid();
+
+        // Destination = Company's Database.
+        const companyDatabaseCredentialId = await getDestinationCredentialId(companyId);
+        if (companyDatabaseCredentialId instanceof Error) {
+            return companyDatabaseCredentialId;
+        }
+
+        const companyDatabaseManager = await getPostgresDatabaseManager(companyDatabaseCredentialId);
+        if (companyDatabaseManager instanceof Error) {
+            return companyDatabaseManager;
+        }
+
+        // System Database
+        const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
+        if (systemConnectorsDatabaseManager instanceof Error) {
+            return systemConnectorsDatabaseManager;
+        }
+
+        const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
+        if (systemPostgresDatabaseManager instanceof Error) {
+            return systemPostgresDatabaseManager;
+        }
+
+        // Store source credentials in KMS.
+        const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, getUuidFromUnknown(ConnectorType.GoogleAds));
+        if (response instanceof Error) {
+            return response;
+        }
+
+        await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
+        await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
+
+        const connectorInitializationResponse = await initializeConnectorAndSubConnector(
+            systemConnectorsDatabaseManager,
+            connectorId,
+            sourceCredentialId,
+            companyDatabaseCredentialId,
+            "Google Ads",
+            ConnectorTableType.GoogleAds,
+            ConnectorType.GoogleAds,
+            `{"accountId": "${credentials.googleLoginCustomerId}"}`,
+        );
+
+        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.GoogleAds, "Google Ads");
+
+        if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {
+            await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
+            await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
+
+            console.log("All transactions rollbacked");
+            return connectorInitializationResponse;
+        }
+
+        await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
+        await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
+
+        // Creates a source table in company's database.
+        const createTableResponse = await createTable(companyDatabaseManager, credentials);
+        if (createTableResponse instanceof Error) {
+            return createTableResponse;
+        }
+
+        const dataIngestionResponse = await ingestGoogleAdsData(getUuidFromUnknown(connectorId), 45);
+        if (dataIngestionResponse instanceof Error) {
+            return dataIngestionResponse;
+        }
+
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+/**
+ * Store the Google Ads data in the company's database through intellsys-connectors.
+ * @param connectorId: Unique id of the connector object.
+ * @param duration: Duration to ingest data.
+ * @returns : No. of rows deleted and inserted.
+ */
+export async function ingestGoogleAdsData(connectorId: Uuid, duration: Integer, connector?: string): Promise<void | Error> {
+    try {
+        const url = `${getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_URL")}/googleads/historical`;
+
+        const body = new FormData();
+        body.set("connectorId", connectorId);
+        body.set("duration", duration.toString());
+
+        const headers = new Headers();
+        headers.append("Authorization", getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_TOKEN"));
+
+        const response = await fetch(url, {
+            method: "POST",
+            headers: headers,
+            body: body,
+            redirect: "follow",
+        });
+
+        if (!response.ok) {
+            return Error(await response.text());
+        }
+
+        const ingestionResult = await response.json();
+        console.log(ingestionResult);
+
+    } catch(e) {
+        console.log(e);
+    }
+}
+
+// export async function createTable(postgresDatabaseManager: PostgresDatabaseManager, googleAdsCredentials: GoogleAdsCredentials): Promise<Error | void> {
+//     const tableName = `${dataSourcesAbbreviations.googleAds}_${googleAdsCredentials.googleLoginCustomerId}`;
+
+//     const response = await postgresDatabaseManager.execute(
+//         `
+//             CREATE TABLE ${tableName} (
+//                 id text NOT NULL,
+//                 ingested_at timestamp NOT NULL,
+//                 "data" json NOT NULL,
+//                 CONSTRAINT ${tableName}_pkey PRIMARY KEY (id)
+//             );
+//         `,
+//     );
+
+//     if (response instanceof Error) {
+//         return response;
+//     }
+// }
+
+export async function createTable(postgresDatabaseManager: PostgresDatabaseManager, tableName: string): Promise<Error | void> {
+
+    const response = await postgresDatabaseManager.execute(
+        `
+            CREATE TABLE ${tableName} (
+                id text NOT NULL,
+                ingested_at timestamp NOT NULL,
+                "data" json NOT NULL,
+                CONSTRAINT ${tableName}_pkey PRIMARY KEY (id)
+            );
+        `,
+    );
+
+    if (response instanceof Error) {
+        return response;
+    }
+}
+
+export async function deleteConnector(connectorId: Uuid, accountId: string, tablePrefix: string) {
+    // TODO: Add transactions
+
+    const connector = await getSourceAndDestinationId(connectorId);
+    if (connector instanceof Error) {
+        return connector;
+    }
+
+    const systemPostgresDatabaseManager = getSystemPostgresDatabaseManager();
+    if (systemPostgresDatabaseManager instanceof Error) {
+        return systemPostgresDatabaseManager;
+    }
+
+    // TODO: Discuss if this is required.
+    await deleteCompanyIdToCredentialIdMapping(connector.sourceId);
+
+    await deleteCredentialFromKms(connector.sourceId);
+
+    await deleteCompanyIdToConnectorIdMapping(connectorId);
+    await deleteConnectorAndSubconnector(connectorId);
+
+    // Delete data from google ads data
+    await dropConnectorTable(accountId, connector.destinationId, tablePrefix);
+}
+
+async function dropConnectorTable(accountId: string, destinationDatabaseCredentialId: Uuid, tablePrefix: string) {
+    const databaseManager = await getPostgresDatabaseManager(destinationDatabaseCredentialId);
+    if (databaseManager instanceof Error) {
+        return databaseManager;
+    }
+
+    const query = `
+        DROP TABLE ${tablePrefix}_${accountId}
+    `;
+
+    const response = await databaseManager.execute(query);
+
+    if (response instanceof Error) {
+        return response;
+    }
+}
+
+export async function getArrayOfConnectorIdsAssociatedWithCompanyId(
+    companyId: Uuid,
+    connectorType: Uuid
+): Promise<Array<ConnectorId> | Error> {
+    const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
+    if (systemPostgresDatabaseManager instanceof Error) {
+        return systemPostgresDatabaseManager;
+    }
+
+    const connectorIdsResponse = await systemPostgresDatabaseManager.execute(
+        `
+            SELECT
+                connector_id
+            FROM
+                company_to_connector_mapping
+            WHERE
+                company_id = $1
+                AND
+                connector_type = $2
+        `,
+        [companyId, connectorType],
+    );
+
+    if (connectorIdsResponse instanceof Error) {
+        return connectorIdsResponse;
+    }
+    if(connectorIdsResponse.rowCount == 0){
+        return [];
+    }
+
+    const connectorIds: Array<ConnectorId> = connectorIdsResponse.rows.map((row) => getUuidFromUnknown(row.connector_id));
+
+    return connectorIds;
 }

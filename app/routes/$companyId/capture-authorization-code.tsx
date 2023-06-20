@@ -4,9 +4,8 @@ import {redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {facebookOAuthFlow} from "~/backend/utilities/data-management/facebookOAuth.server";
-import {decrypt} from "~/backend/utilities/utilities.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import { generateUuid } from "~/global-common-typescript/utilities/utilities";
+import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 type LoaderData = {

@@ -1,7 +1,7 @@
 import {Companies} from "~/utilities/typeDefinitions";
 import {execute} from "~/backend/utilities/databaseManager.server";
 import type {Uuid} from "~/utilities/typeDefinitions";
-import {getSingletonValue, getSingletonValueOrNull} from "~/utilities/utilities";
+import {getSingletonValue} from "~/utilities/utilities";
 import {addCredentialToKms, getCredentialFromKms, updateCredentialInKms} from "~/global-common-typescript/server/kms.server";
 import {getSystemPostgresDatabaseManager} from "~/backend/utilities/data-management/common.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";

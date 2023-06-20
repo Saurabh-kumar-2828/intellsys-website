@@ -4,13 +4,15 @@ import {json, redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
+import {ingestAndStoreGoogleAdsData} from "~/backend/utilities/data-management/common.server";
 import type {GoogleAdsAccessibleAccount, GoogleAdsCredentials} from "~/backend/utilities/data-management/googleOAuth.server";
 import {getGoogleAdsRefreshToken} from "~/backend/utilities/data-management/googleOAuth.server";
-import {checkGoogleAdsConnectorExistsForAccount, getAccessibleAccounts, ingestAndStoreGoogleAdsData} from "~/backend/utilities/data-management/googleOAuth.server";
+import {checkGoogleAdsConnectorExistsForAccount, getAccessibleAccounts} from "~/backend/utilities/data-management/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
+import {ConnectorType} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 // TODO: Keep only code part
@@ -21,6 +23,7 @@ type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({request}) => {
+
     const urlSearchParams = new URL(request.url).searchParams;
 
     const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
@@ -33,7 +36,7 @@ export const loader: LoaderFunction = async ({request}) => {
         throw Error("Authorization failed!");
     }
 
-    const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId));
+    const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
     if (refreshToken instanceof Error) {
         return refreshToken;
     }
@@ -98,7 +101,6 @@ export const action: ActionFunction = async ({request}) => {
         }
 
         return redirect(`/${companyId}/googleAds/${connectorId}`);
-
     } catch (e) {
         console.log(e);
     }
@@ -154,6 +156,7 @@ export default function () {
                     readOnly
                 />
 
+                {/* TODO: Disable it while loading */}
                 <button
                     type="submit"
                     className="tw-row-start-2 tw-lp-button"

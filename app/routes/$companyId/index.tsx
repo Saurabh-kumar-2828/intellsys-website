@@ -56,7 +56,7 @@ export default function () {
             <div className="tw-col-span-12 tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-y-4">
                 {/* <img src="https://imagedelivery.net/QSJTsX8HH4EtEhHrJthznA/415c8f79-9b37-4af5-2bfd-d68b18264200/h=128" className="tw-h-32" /> */}
                 <div className="tw-text-[4rem]">
-                    Welcome to the <b className="tw-text-[#d9241b]">SAR Group</b> portal
+                    Welcome to Intellsys
                 </div>
             </div>
         </div>

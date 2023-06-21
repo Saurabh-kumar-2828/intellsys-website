@@ -6,7 +6,17 @@ import {IntellsysHeaderDropdownTrigger} from "~/components/scratchpad";
 import type {Company, User} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
 
-export function HeaderComponent({userDetails, accessibleCompanies, className}: {userDetails: User | null; accessibleCompanies: Array<Company> | null; className?: string}) {
+export function HeaderComponent({
+    userDetails,
+    accessibleCompanies,
+    currentCompany,
+    className
+}: {
+    userDetails: User | null;
+    accessibleCompanies: Array<Company> | null;
+    currentCompany: Company | null;
+    className?: string
+}) {
     return (
         <div className={concatenateNonNullStringsWithSpaces("tw-sticky tw-top-0 tw-h-16 tw-bg-dark-bg-400", className)}>
             <div className="tw-grid tw-grid-cols-[auto_1fr_auto] tw-items-center tw-p-4">
@@ -27,7 +37,21 @@ export function HeaderComponent({userDetails, accessibleCompanies, className}: {
                                     <Popover.Button>
                                         <IntellsysHeaderDropdownTrigger
                                             isOpen={isOpen}
-                                            content="Company"
+                                            content={
+                                                currentCompany == null ? (
+                                                    <div>
+                                                        Select Company
+                                                    </div>
+                                                ) : (
+                                                    <div className="tw-grid tw-grid-cols-[auto_auto] tw-items-center tw-gap-x-2">
+                                                        <img className="tw-w-4 tw-h-4 tw-rounded-full" src={`https://intellsys-optimizer.b-cdn.net/intellsys/companies/${currentCompany.id}.png`} />
+
+                                                        <div>
+                                                            {currentCompany.name}
+                                                        </div>
+                                                    </div>
+                                                )
+                                            }
                                         />
                                     </Popover.Button>
 
@@ -88,7 +112,7 @@ export function HeaderComponent({userDetails, accessibleCompanies, className}: {
                             )}
                         </Popover>
 
-                        <MenuComponent className="tw-h-8" userDetails={userDetails} accessibleCompanies={accessibleCompanies} />
+                        <MenuComponent className="tw-h-8" userDetails={userDetails} accessibleCompanies={accessibleCompanies} currentCompany={currentCompany} />
                     </div>
                 )}
             </div>

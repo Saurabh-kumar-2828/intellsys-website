@@ -6,13 +6,23 @@ import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {Company, User, Uuid} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
 
-export function MenuComponent({userDetails, accessibleCompanies, className}: {userDetails: User; accessibleCompanies: Array<Company> | null; className?: string}) {
+export function MenuComponent({
+    userDetails,
+    accessibleCompanies,
+    currentCompany,
+    className
+}: {
+    userDetails: User;
+    accessibleCompanies: Array<Company> | null;
+    currentCompany: Company | null;
+    className?: string
+}) {
     const currentUrl = useLocation().pathname;
     const params = useParams();
 
     const [isMenuExpanded, setIsMenuExpanded] = useState(false);
 
-    const companyId: Uuid = params.companyId;
+    const companyId = currentCompany.id!;
 
     function toggleMenu() {
         const isMenuExpandedOld = isMenuExpanded;
@@ -32,27 +42,27 @@ export function MenuComponent({userDetails, accessibleCompanies, className}: {us
             url: `/${companyId}/`,
             displayName: "Home",
         },
-        null,
-        {
-            url: `/${companyId}/business-insights?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
-            displayName: "Business Insights",
-        },
-        {
-            url: `/${companyId}/google-ads-funnel?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
-            displayName: "Google Ads Funnel",
-        },
-        {
-            url: `/${companyId}/facebook-ads-funnel?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
-            displayName: "Facebook Ads Funnel",
-        },
-        {
-            url: `/${companyId}/sales-report?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
-            displayName: "Sales Report",
-        },
-        {
-            url: `/${companyId}/leads-report?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
-            displayName: "Leads Report",
-        },
+        // null,
+        // {
+        //     url: `/${companyId}/business-insights?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
+        //     displayName: "Business Insights",
+        // },
+        // {
+        //     url: `/${companyId}/google-ads-funnel?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
+        //     displayName: "Google Ads Funnel",
+        // },
+        // {
+        //     url: `/${companyId}/facebook-ads-funnel?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
+        //     displayName: "Facebook Ads Funnel",
+        // },
+        // {
+        //     url: `/${companyId}/sales-report?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
+        //     displayName: "Sales Report",
+        // },
+        // {
+        //     url: `/${companyId}/leads-report?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
+        //     displayName: "Leads Report",
+        // },
         // {
         //     url: `/${companyId}/pnl-view?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
         //     displayName: "P&L View",

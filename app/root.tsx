@@ -14,6 +14,7 @@ import type {Company, User} from "~/utilities/typeDefinitions";
 type LoaderData = {
     userDetails: User | null;
     accessibleCompanies: Array<Company> | null;
+    currentCompany: Company | null;
 };
 
 export const loader: LoaderFunction = async ({request}) => {
@@ -25,6 +26,7 @@ export const loader: LoaderFunction = async ({request}) => {
         const loaderData: LoaderData = {
             userDetails: null,
             accessibleCompanies: null,
+            currentCompany: null,
         };
 
         return json(loaderData);
@@ -33,9 +35,26 @@ export const loader: LoaderFunction = async ({request}) => {
     const userDetails = await getNameAndPrivilegesForUser(accessToken.userId);
     const accessibleCompanies = await getAccessibleCompanies(userDetails);
 
+    let currentCompany: Company | null = null;
+    const currentUrl = request.url;
+    const companyIdExtractorRegex = /https?:\/\/[^/]+($|\/$|\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})(\/.+)?)/;
+    const matches = currentUrl.match(companyIdExtractorRegex);
+    if (matches == null || matches.length != 4 || matches[2] == null) {
+        currentCompany = null;
+    } else {
+        const currentCompanyId = matches[2];
+        for (const company of accessibleCompanies) {
+            if (company.id == currentCompanyId) {
+                currentCompany = company;
+                break;
+            }
+        }
+    }
+
     const loaderData: LoaderData = {
         userDetails: userDetails,
         accessibleCompanies: accessibleCompanies,
+        currentCompany: currentCompany,
     };
 
     return json(loaderData);
@@ -60,7 +79,7 @@ export const links: LinksFunction = () => [
 export default function App() {
     const transition = useTransition();
 
-    const {userDetails, accessibleCompanies} = useLoaderData();
+    const {userDetails, accessibleCompanies, currentCompany} = useLoaderData();
 
     return (
         <html lang="en">
@@ -75,6 +94,7 @@ export default function App() {
                     <HeaderComponent
                         userDetails={userDetails}
                         accessibleCompanies={accessibleCompanies}
+                        currentCompany={currentCompany}
                         className="tw-row-start-1 tw-z-50"
                     />
                     <div className="tw-row-start-2">

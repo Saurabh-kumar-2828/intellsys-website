@@ -132,12 +132,10 @@ export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyt
             return createTableResponse;
         }
 
-        console.log(1);
         const dataIngestionResponse = await ingestGoogleAnalyticsData(getUuidFromUnknown(connectorId), 45);
         if (dataIngestionResponse instanceof Error) {
             return dataIngestionResponse;
         }
-        console.log(2)
     } catch (e) {
         console.log(e);
     }

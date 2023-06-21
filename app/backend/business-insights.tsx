@@ -216,6 +216,11 @@ export type GoogleAdsData = {
     rows: Array<GoogleAdsDataAggregatedRow>;
 };
 
+export type GoogleAnalyticsData = {
+    metaQuery: string;
+    rows: Array<GoogleAnalyticsDataAggregatedRow>;
+};
+
 export type FacebookAdsData = {
     metaQuery: string;
     rows: Array<FacebookAdsAggregatedRow>;
@@ -230,6 +235,25 @@ export type AdsDataAggregatedRow = {
     platform: string;
     category: string;
 };
+
+export type GoogleAnalyticsDataAggregatedRow = {
+    sessionCampaignName: string,
+    source: string,
+    sourceMedium: string,
+    sourcePlatform: string,
+    date: Iso8601Date,
+    audienceId: string,
+    sessions: string,
+    averagePurchaseRevenuePerPayingUser: string,
+    bounceRate: string,
+    cartToViewRate: string,
+    conversions: string,
+    engagedSessions: string,
+    engagementRate: string,
+    eventValue: string,
+    firstTimePurchasers: string,
+    grossPurchaseRevenue: string
+}
 
 export type GoogleAdsDataAggregatedRow = {
     date: Iso8601Date;
@@ -268,6 +292,7 @@ export type GoogleAdsDataAggregatedRow = {
     allConversionsByConversionDate: any;
     valuePerAllConversionsByConversionDate: any;
 }
+
 
 export type FacebookAdsAggregatedRow = {
     accountCurrency: string,
@@ -376,6 +401,29 @@ function rowToFacebookAdsDataAggregatedRow(row: Credentials): FacebookAdsAggrega
     return facebookAdsAggregatedRow
 }
 
+function rowToGoogleAnalyticsDataAggregatedRow(row: unknown): GoogleAnalyticsDataAggregatedRow {
+    const analyticsDataAggregatedRow: GoogleAnalyticsDataAggregatedRow = {
+        sessionCampaignName: row.sessioncampaignname,
+        source: row.source,
+        sourceMedium: row.sourcemedium,
+        sourcePlatform: row.sourceplatform,
+        date: row.date,
+        audienceId: row.audienceid,
+        sessions: row.sessions,
+        averagePurchaseRevenuePerPayingUser: row.averagepurchaserevenueperpayinguser,
+        bounceRate: row.bouncerate,
+        cartToViewRate: row.carttoviewrate,
+        conversions: row.conversions,
+        engagedSessions: row.engagedsessions,
+        engagementRate: row.engagementrate,
+        eventValue: row.eventvalue,
+        firstTimePurchasers: row.firsttimepurchasers,
+        grossPurchaseRevenue: row.grosspurchaserevenue,
+    };
+
+    return analyticsDataAggregatedRow;
+}
+
 export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
     const query = `
         SELECT
@@ -419,8 +467,6 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
     const loginCustomerId = getSingletonValue(loginCustomerIdRaw);
 
     const tableName = `${dataSourcesAbbreviations.googleAds}_${loginCustomerId.accountId}`;
-
-    // TODO: Fix the name of the table
 
     const query = `
         SELECT
@@ -480,8 +526,62 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
         metaQuery: query,
         rows: result.rows.map((row) => rowToGoogleAdsDataAggregatedRow(row)),
     };
+}
 
+export async function getGoogleAnalyticsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<GoogleAnalyticsData | Error> {
+    const postgresDatabaseManager = await getPostgresDatabaseManager(destinationDatabaseId);
 
+    if (postgresDatabaseManager instanceof Error) {
+        return postgresDatabaseManager;
+    }
+
+    const accountIdRaw = await getAccountIdForConnector([connectorId], getUuidFromUnknown(ConnectorType.GoogleAnalytics));
+
+    if (accountIdRaw instanceof Error || accountIdRaw.length == 0) {
+        return Error("Google account undefined!");
+    }
+
+    const data = getSingletonValue(accountIdRaw);
+
+    const tableName = `${dataSourcesAbbreviations.googleAnalytics}_${data.accountId}`;
+
+    const query = `
+        SELECT
+            data->'dimensionValues'->>'sessionCampaignName' AS sessionCampaignName,
+            data->'dimensionValues'->>'source' AS source,
+            data->'dimensionValues'->>'sourceMedium' AS sourceMedium,
+            data->'dimensionValues'->>'sourcePlatform' AS sourcePlatform,
+            DATE((data->'dimensionValues'->>'date')) AS date,
+            data->'dimensionValues'->>'audienceId' AS audienceId,
+            data->'metricValues'->>'sessions' AS sessions,
+            data->'metricValues'->>'averagePurchaseRevenuePerPayingUser' AS averagePurchaseRevenuePerPayingUser,
+            data->'metricValues'->>'bounceRate' AS bounceRate,
+            data->'metricValues'->>'cartToViewRate' AS cartToViewRate,
+            data->'metricValues'->>'conversions' AS conversions,
+            data->'metricValues'->>'engagedSessions' AS engagedSessions,
+            data->'metricValues'->>'engagementRate' AS engagementRate,
+            data->'metricValues'->>'eventValue' AS eventValue,
+            data->'metricValues'->>'firstTimePurchasers' AS firstTimePurchasers,
+            data->'metricValues'->>'grossPurchaseRevenue' AS grossPurchaseRevenu
+        FROM
+            ${tableName}
+        WHERE
+            DATE((data->'dimensionValues'->>'date')) >= '${minDate}'
+            AND DATE((data->'dimensionValues'->>'date')) <= '${maxDate}'
+        ORDER BY
+            date
+    `;
+
+    const result = await postgresDatabaseManager.execute(query);
+
+    if (result instanceof Error) {
+        return result;
+    }
+
+    return {
+        metaQuery: query,
+        rows: result.rows.map((row) => rowToGoogleAnalyticsDataAggregatedRow(row)),
+    };
 }
 
 export async function getFacebookAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<FacebookAdsData | Error> {

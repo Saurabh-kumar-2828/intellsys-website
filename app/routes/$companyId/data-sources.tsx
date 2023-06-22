@@ -149,7 +149,7 @@ export default function () {
                                     <tr key={connectorIndex}>
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                             <Link
-                                                to={`/${companyId}/google-ads/${connector.id}`}
+                                                to={`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connector.id}`}
                                                 className="tw-text-blue-500"
                                             >
                                                 {connector.id}
@@ -243,7 +243,7 @@ export default function () {
                                     >
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                             <Link
-                                                to={`/${companyId}/facebook-ads/${connector.id}`}
+                                                to={`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connector.id}`}
                                                 className="tw-text-blue-500"
                                             >
                                                 {connector.id}
@@ -338,7 +338,7 @@ export default function () {
                                     >
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                             <Link
-                                                to={`/${companyId}/google-analytics/${connector.id}`}
+                                                to={`/${companyId}/6cd015ff-ec2e-412a-a777-f983fbdcb63e/${connector.id}`}
                                                 className="tw-text-blue-500"
                                             >
                                                 {connector.id}

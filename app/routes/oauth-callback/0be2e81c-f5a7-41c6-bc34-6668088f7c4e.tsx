@@ -102,7 +102,7 @@ export const action: ActionFunction = async ({request}) => {
             throw response;
         }
 
-        return redirect(`/${companyId}/google-ads/${connectorId}`);
+        return redirect(`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connectorId}`);
     } catch (e) {
         console.log(e);
     }

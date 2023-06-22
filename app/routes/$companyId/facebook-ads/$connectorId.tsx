@@ -135,7 +135,7 @@ export default function () {
                     setSelectedMinDate={setSelectedMinDate}
                     selectedMaxDate={selectedMaxDate}
                     setSelectedMaxDate={setSelectedMaxDate}
-                    page={`/${companyId}/facebook-ads/${connectorId}`}
+                    page={`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connectorId}`}
                 />
                 {/* <FancySearchableSelect
                     label="Granularity"

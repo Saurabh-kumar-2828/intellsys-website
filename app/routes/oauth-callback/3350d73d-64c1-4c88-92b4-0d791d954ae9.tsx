@@ -72,7 +72,7 @@ export const action: ActionFunction = async ({request, params}) => {
             throw response;
         }
 
-        return redirect(`/${companyId}/facebook-ads/${connectorId}`);
+        return redirect(`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connectorId}`);
     }
 
     return null;

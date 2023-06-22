@@ -99,7 +99,7 @@ export const action: ActionFunction = async ({request}) => {
             throw response;
         }
 
-        return redirect(`/${companyId}/google-analytics/${connectorId}`);
+        return redirect(`/${companyId}/6cd015ff-ec2e-412a-a777-f983fbdcb63e/${connectorId}`);
     } catch (e) {
         console.log(e);
     }

@@ -1,36 +1,37 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import {json, LinksFunction, LoaderFunction, MetaFunction, redirect} from "@remix-run/node";
+import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
+import {json, redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {AgGridReact} from "ag-grid-react";
 import styles from "app/styles.css";
-import {max} from "d3";
 import {DateTime} from "luxon";
 import {useCallback, useEffect, useRef, useState} from "react";
-import {
+import type {
     AdsDataAggregatedRow,
     FreshsalesData,
     FreshsalesDataAggregatedRow,
+    ShopifyDataAggregatedRow} from "~/backend/business-insights";
+import {
     getFreshsalesData,
     getFacebookAdsData,
     getShopifyData,
     getTimeGranularityFromUnknown,
-    ShopifyDataAggregatedRow,
     TimeGranularity,
 } from "~/backend/business-insights";
 import "ag-grid-enterprise";
-import {CampaignInformation, getCampaignLibrary, getProductLibrary, ProductInformation} from "~/backend/common";
+import type {CampaignInformation, ProductInformation} from "~/backend/common";
+import {getCampaignLibrary, getProductLibrary} from "~/backend/common";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {ComposedChart} from "~/components/d3Componenets/composedChartComponent";
 import {LineGraphComponent} from "~/components/d3Componenets/lineGraphComponent";
-import {progressCellRendererTarget} from "~/components/progressCellRenderer";
 import {HorizontalSpacer} from "~/components/reusableComponents/horizontalSpacer";
 import {CustomCard, DateFilterSection, FancySearchableMultiSelect, GenericCard, SmallValueDisplayingCardWithTarget} from "~/components/scratchpad";
-import {Iso8601Date, QueryFilterType, Uuid, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
+import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
+import {QueryFilterType, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {
     aggregateByDate,
     agGridDateComparator,
-    campaignsColorPalette,
     columnWiseSummationOfMatrix,
     createGroupByReducer,
     dateToMediumNoneEnFormat,

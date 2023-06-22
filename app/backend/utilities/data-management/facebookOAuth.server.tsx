@@ -18,9 +18,14 @@ import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/uti
 
 export const facebookAdsScope = "ads_read, ads_management, email, public_profile, business_management";
 
-type FacebookAdsSourceCredentials = {
+export type FacebookAdsSourceCredentials = {
     facebookExchangeToken: string;
     adAccountId?: string;
+};
+
+export type FacebookAccessibleAccount = {
+    accountId: string;
+    businessName: string;
 };
 
 const facebookApiBaseUrl = "https://graph.facebook.com";
@@ -29,7 +34,12 @@ const facebookApiBaseUrl = "https://graph.facebook.com";
  * Post API to get access token.
  * @returns FacebookAdsSourceCredentials
  */
-async function getFacebookAdsAccessToken(redirectUri: string, authorizationCode: string): Promise<FacebookAdsSourceCredentials | Error> {
+export async function getFacebookAdsAccessToken(authorizationCode: string, companyId: Uuid): Promise<FacebookAdsSourceCredentials | Error> {
+    const redirectUri = getRedirectUri(companyId, getUuidFromUnknown(ConnectorType.FacebookAds));
+    if (redirectUri instanceof Error) {
+        return redirectUri;
+    }
+
     const apiVersion = getRequiredEnvironmentVariableNew("FACEBOOK_API_VERSION");
     const clientId = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_ID");
     const clientSecret = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_SECRET");
@@ -47,22 +57,30 @@ async function getFacebookAdsAccessToken(redirectUri: string, authorizationCode:
 }
 
 /**
+ * Generates new access token for facebook ads.
+ * @returns New access token.
+ */
+export async function refreshFacebookAdsAccessToken(oldAccessToken: string): Promise<FacebookAdsSourceCredentials | Error> {
+    const apiVersion = getRequiredEnvironmentVariableNew("FACEBOOK_API_VERSION");
+    const clientId = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_ID");
+    const clientSecret = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_SECRET");
+
+    const url = `${facebookApiBaseUrl}/${apiVersion}/oauth/access_token?client_id=${clientId}&client_secret=${clientSecret}&fb_exchange_token=${oldAccessToken}&grant_type=fb_exchange_token`;
+
+    const response = await fetch(url, {
+        method: "GET",
+    });
+
+    const responseJson = await response.json();
+    const acceseToken = mapTokenToFacebookAdsSourceCredentialsType(responseJson);
+
+    return acceseToken;
+}
+
+/**
  * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
  */
-export async function facebookOAuthFlow(authorizationCode: string, companyId: Uuid, adAccountId: string, connectorId: Uuid): Promise<void | Error> {
-    const redirectUri = getRedirectUri(companyId, getUuidFromUnknown(ConnectorType.FacebookAds));
-    if (redirectUri instanceof Error) {
-        return redirectUri;
-    }
-
-    // TODO: Rename
-    const credentials = await getFacebookAdsAccessToken(redirectUri, authorizationCode);
-    if (credentials instanceof Error) {
-        return credentials;
-    }
-
-    credentials["adAccountId"] = adAccountId;
-
+export async function facebookOAuthFlow(facebookAdsCredentials: FacebookAdsSourceCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
     const sourceCredentialId = generateUuid();
 
     // Destination = Company's Database.
@@ -77,7 +95,7 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
         return companyDatabaseManager;
     }
 
-    // System Database
+    // System Database.
     const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
     if (systemConnectorsDatabaseManager instanceof Error) {
         return systemConnectorsDatabaseManager;
@@ -89,7 +107,7 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
     }
 
     // Store source credentials in KMS.
-    const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, getUuidFromUnknown(ConnectorType.FacebookAds));
+    const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), facebookAdsCredentials, companyId, getUuidFromUnknown(ConnectorType.FacebookAds));
     if (response instanceof Error) {
         return response;
     }
@@ -102,10 +120,10 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
         connectorId,
         sourceCredentialId,
         companyDatabaseCredentialId,
-        `Facebook Ads: ${credentials.adAccountId}`,
+        `Facebook Ads: ${facebookAdsCredentials.adAccountId}`,
         ConnectorTableType.FacebookAds,
         ConnectorType.FacebookAds,
-        `{"accountId": "${credentials.adAccountId}"}`,
+        `{"accountId": "${facebookAdsCredentials.adAccountId}"}`,
     );
 
     const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.FacebookAds, "Facebook Ads");
@@ -122,7 +140,7 @@ export async function facebookOAuthFlow(authorizationCode: string, companyId: Uu
     await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
 
     // Creates a source table in company's database.
-    const createTableResponse = await createTable(companyDatabaseManager, credentials);
+    const createTableResponse = await createTable(companyDatabaseManager, facebookAdsCredentials);
     if (createTableResponse instanceof Error) {
         return createTableResponse;
     }
@@ -174,3 +192,42 @@ export function getFacebookAuthorizationCodeUrl(redirectUri: string, state: stri
 }
 
 export function checkIfFacebookAdsConnectorExistsForAccount(adAccountId: string) {}
+
+export async function getAccessibleAccounts(credentials: FacebookAdsSourceCredentials) {
+    const apiVersion = getRequiredEnvironmentVariableNew("FACEBOOK_API_VERSION");
+    const fields = "account_id%2Caccount_status%2Cbusiness%2Cbusiness_name%2Cusers";
+    let after = "";
+    const accessibleAccounts: Array<FacebookAccessibleAccount> = [];
+
+    while(true){
+        const url = `${facebookApiBaseUrl}/${apiVersion}/me/adaccounts?fields=${fields}&access_token=${credentials.facebookExchangeToken}&after=${after}`;
+
+        const response = await fetch(url, {
+            method: "GET",
+        });
+
+        const responseJson = await response.json();
+        if(!responseJson.paging){
+            break;
+        }
+
+        const data = responseJson.data.map((row) => {
+            return convertToFacebookAccessibleAccount(row);
+        });
+
+        accessibleAccounts.push(...data);
+
+        after = responseJson.paging.cursors.after
+    }
+
+    return accessibleAccounts;
+}
+
+function convertToFacebookAccessibleAccount(row: any): FacebookAccessibleAccount {
+    const result: FacebookAccessibleAccount = {
+        accountId: row.account_id,
+        businessName: row.business_name,
+    };
+
+    return result;
+}

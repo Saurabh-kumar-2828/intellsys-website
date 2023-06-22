@@ -135,7 +135,6 @@ export async function initializeConnectorAndSubConnector(
     connectorType: ConnectorType,
     extraInformation?: string
     ): Promise<void | Error> {
-
     const currentTimestamp = getCurrentIsoTimestamp();
 
     const historicalCursorThreshold = DateTime.fromISO(currentTimestamp).minus({days: 15}).toJSDate().toISOString() as Iso8601DateTime;

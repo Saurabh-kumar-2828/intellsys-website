@@ -15,6 +15,8 @@ import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
+// Google ads
+
 // TODO: Keep only code part
 
 type LoaderData = {
@@ -100,7 +102,7 @@ export const action: ActionFunction = async ({request}) => {
             throw response;
         }
 
-        return redirect(`/${companyId}/googleAds/${connectorId}`);
+        return redirect(`/${companyId}/google-ads/${connectorId}`);
     } catch (e) {
         console.log(e);
     }

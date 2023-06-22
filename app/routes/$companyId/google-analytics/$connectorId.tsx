@@ -131,7 +131,7 @@ export default function () {
                     setSelectedMinDate={setSelectedMinDate}
                     selectedMaxDate={selectedMaxDate}
                     setSelectedMaxDate={setSelectedMaxDate}
-                    page={`/${companyId}/googleAnalytics/${connectorId}`}
+                    page={`/${companyId}/google-analytics/${connectorId}`}
                 />
                 {/* <FancySearchableSelect
                     label="Granularity"

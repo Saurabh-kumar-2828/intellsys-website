@@ -114,3 +114,10 @@ export enum dataSourcesAbbreviations {
     facebookAds = "fad",
     googleAnalytics = "ga"
 }
+
+// TODO: TEMP
+export enum DataSourceIds {
+    googleAds = "0be2e81c-f5a7-41c6-bc34-6668088f7c4e",
+    facebookAds = "3350d73d-64c1-4c88-92b4-0d791d954ae9",
+    googleAnalytics = "6cd015ff-ec2e-412a-a777-f983fbdcb63e"
+}

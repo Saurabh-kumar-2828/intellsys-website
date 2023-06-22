@@ -33,7 +33,7 @@ export const action: ActionFunction = async ({request, params}) => {
             return "Facebook Ads redirect uri not defined!";
         }
 
-        const authUrl = getFacebookAuthorizationCodeUrl(redirectUri);
+        const authUrl = getFacebookAuthorizationCodeUrl(redirectUri, companyIdUuid);
 
         return redirect(authUrl);
     } else if (body.get("action") == "googleAds") {
@@ -146,7 +146,7 @@ export default function () {
                             <ItemBuilder
                                 items={googleAdsConnectors}
                                 itemBuilder={(connector, connectorIndex) => (
-                                    <tr>
+                                    <tr key={connectorIndex}>
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                             <Link
                                                 to={`/${companyId}/google-ads/${connector.id}`}
@@ -163,7 +163,6 @@ export default function () {
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                             <Form
                                                 method="post"
-                                                key={connectorIndex}
                                             >
                                                 <HiddenFormField
                                                     name="action"
@@ -239,7 +238,9 @@ export default function () {
                             <ItemBuilder
                                 items={facebookAdsConnectors}
                                 itemBuilder={(connector, connectorIndex) => (
-                                    <tr>
+                                    <tr
+                                        key={connectorIndex}
+                                    >
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                             <Link
                                                 to={`/${companyId}/facebook-ads/${connector.id}`}
@@ -256,7 +257,6 @@ export default function () {
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                             <Form
                                                 method="post"
-                                                key={connectorIndex}
                                             >
                                                 <HiddenFormField
                                                     name="action"
@@ -333,7 +333,9 @@ export default function () {
                             <ItemBuilder
                                 items={googleAnalyticsConnectors}
                                 itemBuilder={(connector, connectorIndex) => (
-                                    <tr>
+                                    <tr
+                                        key={connectorIndex}
+                                    >
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                             <Link
                                                 to={`/${companyId}/google-analytics/${connector.id}`}
@@ -351,7 +353,6 @@ export default function () {
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                             <Form
                                                 method="post"
-                                                key={connectorIndex}
                                             >
                                                 <HiddenFormField
                                                     name="action"

@@ -4,19 +4,25 @@ import {redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {facebookOAuthFlow} from "~/backend/utilities/data-management/facebookOAuth.server";
+import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
+import {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
+// Facebook ads
+
 type LoaderData = {
-    authorizationCode: string
+    authorizationCode: string;
+    companyId: Uuid;
 }
 
 export const loader: LoaderFunction = async ({request, params}) => {
     const urlSearchParams = new URL(request.url).searchParams;
     const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
+    const state = getNonEmptyStringOrNull(urlSearchParams.get("state"));
 
-    const companyId = getUuidFromUnknown(params.companyId);
+    const companyId = getUuidFromUnknown(state);
     if (companyId == null) {
         throw new Response(null, {status: 404});
     }
@@ -26,7 +32,8 @@ export const loader: LoaderFunction = async ({request, params}) => {
     }
 
     const loaderData: LoaderData = {
-        authorizationCode: authorizationCode
+        authorizationCode: authorizationCode,
+        companyId: companyId,
     }
 
     return json(loaderData);
@@ -35,15 +42,11 @@ export const loader: LoaderFunction = async ({request, params}) => {
 export const action: ActionFunction = async ({request, params}) => {
     const body = await request.formData();
 
-    const companyId = getUuidFromUnknown(params.companyId);
-    if (companyId == null) {
-        throw new Response(null, {status: 404});
-    }
-
-    const data = body.get("id") as string;
+    const accountId = body.get("accountId") as string;
     const code = body.get("authorizationCode") as string;
+    const companyId = body.get("companyId") as string;
 
-    if (data == null || code == null) {
+    if (accountId == null || code == null || companyId == null) {
         throw new Response(null, {status: 404});
     }
 
@@ -63,20 +66,20 @@ export const action: ActionFunction = async ({request, params}) => {
     const connectorId = generateUuid();
     if (code != null) {
         console.log("Facebobook Authorization code: ", code);
-        const response = await facebookOAuthFlow(code, companyId, data, connectorId);
+        const response = await facebookOAuthFlow(code, companyId, accountId, connectorId);
 
         if (response instanceof Error) {
             throw response;
         }
 
-        return redirect(`/${companyId}/facebookAds/${connectorId}`);
+        return redirect(`/${companyId}/facebook-ads/${connectorId}`);
     }
 
     return null;
 };
 
 export default function () {
-    const {authorizationCode} = useLoaderData() as LoaderData;
+    const {authorizationCode, companyId} = useLoaderData() as LoaderData;
     const [selectedAccount, setSelectedAccount] = useState("");
 
     return (
@@ -84,18 +87,20 @@ export default function () {
             <form method="post">
                 <input
                     type="text"
-                    name="id"
+                    name="accountId"
                     value={selectedAccount}
                     onChange={(e) => setSelectedAccount(e.target.value)}
                     className="tw-p-2 tw-basis-1/4"
                 />
 
-                <input
-                    type="text"
+                <HiddenFormField
                     name="authorizationCode"
                     value={authorizationCode}
-                    readOnly
-                    hidden
+                />
+
+                <HiddenFormField
+                    name="companyId"
+                    value={companyId}
                 />
 
                 <button

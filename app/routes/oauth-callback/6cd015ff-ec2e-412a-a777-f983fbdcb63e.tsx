@@ -16,6 +16,8 @@ import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
+// Google analytics
+
 // TODO: Keep only code part
 
 type LoaderData = {
@@ -97,7 +99,7 @@ export const action: ActionFunction = async ({request}) => {
             throw response;
         }
 
-        return redirect(`/${companyId}/googleAnalytics/${connectorId}`);
+        return redirect(`/${companyId}/google-analytics/${connectorId}`);
     } catch (e) {
         console.log(e);
     }

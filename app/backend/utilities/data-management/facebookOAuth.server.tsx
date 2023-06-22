@@ -34,13 +34,7 @@ async function getFacebookAdsAccessToken(redirectUri: string, authorizationCode:
     const clientId = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_ID");
     const clientSecret = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_SECRET");
 
-    const url = `
-        ${facebookApiBaseUrl}/${apiVersion}/oauth/access_token?
-        client_id=${clientId}&
-        client_secret=${clientSecret}&
-        redirect_uri=${redirectUri}&
-        code=${authorizationCode}
-    `;
+    const url = `${facebookApiBaseUrl}/${apiVersion}/oauth/access_token?client_id=${clientId}&client_secret=${clientSecret}&redirect_uri=${redirectUri}&code=${authorizationCode}`;
 
     const response = await fetch(url, {
         method: "POST",
@@ -147,7 +141,7 @@ async function createTable(postgresDatabaseManager: PostgresDatabaseManager, fac
             CREATE TABLE ${tableName} (
                 id text NOT NULL,
                 ingested_at timestamp NOT NULL,
-                "data" json NOT NULL,
+                data json NOT NULL,
                 CONSTRAINT ${tableName}_pkey PRIMARY KEY (id)
             );
         `,
@@ -170,11 +164,11 @@ function mapTokenToFacebookAdsSourceCredentialsType(credentials: any): FacebookA
     return result;
 }
 
-export function getFacebookAuthorizationCodeUrl(redirectUri: string) {
+export function getFacebookAuthorizationCodeUrl(redirectUri: string, state: string) {
     const apiVersion = getRequiredEnvironmentVariableNew("FACEBOOK_API_VERSION");
     const clientId = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_ID");
 
-    const url = `https://www.facebook.com/${apiVersion}/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${facebookAdsScope}`;
+    const url = `https://www.facebook.com/${apiVersion}/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${facebookAdsScope}&state=${state}`;
 
     return url;
 }

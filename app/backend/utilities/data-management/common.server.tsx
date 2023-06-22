@@ -87,16 +87,17 @@ export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Erro
     const redirectBaseUri = getRequiredEnvironmentVariableNew("REDIRECT_BASE_URI");
 
     if (dataSource == ConnectorType.FacebookAds) {
-        return `${redirectBaseUri}/${companyId}/capture-authorization-code`;
+        const url = `${redirectBaseUri}/oauth-callback/3350d73d-64c1-4c88-92b4-0d791d954ae9`;
+        return url;
     }
 
     if (dataSource == ConnectorType.GoogleAds) {
-        const url = `${redirectBaseUri}/capture-authorization-code/google-ads`;
+        const url = `${redirectBaseUri}/oauth-callback/0be2e81c-f5a7-41c6-bc34-6668088f7c4e`;
         return url;
     }
 
     if (dataSource == ConnectorType.GoogleAnalytics) {
-        const url = `${redirectBaseUri}/capture-authorization-code/google-analytics`;
+        const url = `${redirectBaseUri}/oauth-callback/6cd015ff-ec2e-412a-a777-f983fbdcb63e`;
         return url;
     }
 

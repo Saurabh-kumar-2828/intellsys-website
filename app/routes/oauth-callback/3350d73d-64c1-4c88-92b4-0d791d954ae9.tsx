@@ -9,6 +9,7 @@ import type {FacebookAccessibleAccount, FacebookAdsSourceCredentials} from "~/ba
 import {facebookOAuthFlow, getAccessibleAccounts, getFacebookAdsAccessToken} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
+import {SectionHeader} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
@@ -58,16 +59,12 @@ export const action: ActionFunction = async ({request, params}) => {
     const data = body.get("data") as string;
     const companyId = body.get("companyId") as string;
 
-    console.log(1);
-
-
     if (selectedAccount == null || data == null || companyId == null) {
         throw new Response(null, {status: 404});
     }
 
     const dataDecoded = decrypt(data);
 
-    console.log(2);
     // TODO: Confirm its implementation.
     // const accountExists = await checkIfFacebookAdsConnectorExistsForAccount(data);
     // if (accountExists instanceof Error) {
@@ -84,7 +81,6 @@ export const action: ActionFunction = async ({request, params}) => {
         adAccountId: selectedAccount.accountId,
     };
 
-    console.log(3);
     const connectorId = generateUuid();
 
     if (data != null) {
@@ -92,8 +88,6 @@ export const action: ActionFunction = async ({request, params}) => {
         if (response instanceof Error) {
             throw response;
         }
-
-        console.log(4);
 
         return redirect(`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connectorId}`);
     }
@@ -106,55 +100,62 @@ export default function () {
     const [selectedAccount, setSelectedAccount] = useState("");
 
     return (
-        <div>
-            <RadioGroup
-                name="selectedAccount"
-                value={selectedAccount}
-                onChange={(e) => setSelectedAccount(e)}
-                className="tw-row-start-1 tw-w-full tw-grid tw-grid-flow-row tw-content-center tw-gap-y-4"
-            >
-                <ItemBuilder
-                    items={accessibleAccounts}
-                    itemBuilder={(item, itemIndex) => (
-                        <RadioGroup.Option
-                            value={item}
-                            key={itemIndex}
-                        >
-                            {({checked}) => (
-                                <div className="tw-pl-4 tw-pr-8 tw-py-[0.9375rem] tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
-                                    {checked ? <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" /> : <Circle className="tw-w-6 tw-h-6 tw-text-blue-500" />}
-
-                                    {`${item.accountId}, ${item.businessName}`}
-                                </div>
-                            )}
-                        </RadioGroup.Option>
-                    )}
-                />
-            </RadioGroup>
-
-            <form method="post">
-                <HiddenFormField
+        <div className="tw-m-4 tw-grid tw-grid-auto-rows tw-gap-4">
+            <div>
+                <SectionHeader label="Select an Account" />
+            </div>
+            <div>
+                <RadioGroup
                     name="selectedAccount"
-                    value={selectedAccount ? JSON.stringify(selectedAccount) : ""}
-                />
-
-                <HiddenFormField
-                    name="data"
-                    value={data}
-                />
-
-                <HiddenFormField
-                    name="companyId"
-                    value={companyId}
-                />
-
-                <button
-                    type="submit"
-                    className="tw-row-start-2 tw-lp-button tw-basis-1/4"
+                    value={selectedAccount}
+                    onChange={(e) => setSelectedAccount(e)}
+                    className="tw-m-1 tw-row-start-1 tw-grid tw-grid-flow-row tw-content-center tw-gap-y-4"
                 >
-                    Submit
-                </button>
-            </form>
+                    <ItemBuilder
+                        items={accessibleAccounts}
+                        itemBuilder={(item, itemIndex) => (
+                            <RadioGroup.Option
+                                value={item}
+                                key={itemIndex}
+                            >
+                                {({checked}) => (
+                                    <div className="tw-p-4 tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
+                                        {checked ? <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" /> : <Circle className="tw-w-6 tw-h-6 tw-text-blue-500" />}
+
+                                        {`${item.accountId}, ${item.businessName}`}
+                                    </div>
+                                )}
+                            </RadioGroup.Option>
+                        )}
+                    />
+                </RadioGroup>
+            </div>
+
+            <div>
+                <form method="post tw-row-auto">
+                    <HiddenFormField
+                        name="selectedAccount"
+                        value={selectedAccount ? JSON.stringify(selectedAccount) : ""}
+                    />
+
+                    <HiddenFormField
+                        name="data"
+                        value={data}
+                    />
+
+                    <HiddenFormField
+                        name="companyId"
+                        value={companyId}
+                    />
+
+                    <button
+                        type="submit"
+                        className="tw-lp-button tw-items-center"
+                    >
+                        Submit
+                    </button>
+                </form>
+            </div>
         </div>
     );
 }

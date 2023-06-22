@@ -5,7 +5,7 @@ import {useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {facebookOAuthFlow} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
-import {Uuid} from "~/global-common-typescript/typeDefinitions";
+import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";

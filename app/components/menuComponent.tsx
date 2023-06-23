@@ -106,6 +106,11 @@ export function MenuComponent({
             url: "/livguard/google-analytics?startDate=2023-06-01",
             displayName: "Google Analytics",
         },
+        // null,
+        // {
+        //     url: "/settings",
+        //     displayName: "Settings",
+        // },
     ];
 
     // return (

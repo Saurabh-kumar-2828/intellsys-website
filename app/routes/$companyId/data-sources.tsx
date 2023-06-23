@@ -1,7 +1,8 @@
-import type {ActionFunction, LoaderFunction} from "@remix-run/node";
+import type {ActionFunction, LinksFunction, LoaderFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {Form, Link, useLoaderData} from "@remix-run/react";
+import {Facebook, Google} from "react-bootstrap-icons";
 import {deleteConnector, getRedirectUri} from "~/backend/utilities/data-management/common.server";
 import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/data-management/facebookOAuth.server";
 import type {Connector} from "~/backend/utilities/data-management/googleOAuth.server";
@@ -12,6 +13,7 @@ import {googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.se
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
+import {HorizontalSpacer} from "~/global-common-typescript/components/horizontalSpacer";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
@@ -114,6 +116,10 @@ export const loader: LoaderFunction = async ({request, params}) => {
     return json(response);
 };
 
+export const links: LinksFunction = () => [
+    {rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Roboto&display=swap"},
+];
+
 export default function () {
     const {googleAdsConnectors, facebookAdsConnectors, googleAnalyticsConnectors, companyId} = useLoaderData() as LoaderData;
 
@@ -196,17 +202,35 @@ export default function () {
 
                 <VerticalSpacer className="tw-h-4" />
 
-                <Form method="post" className="tw-w-full tw-grid tw-place-items-center">
+                <Form method="post" className="tw-w-full tw-grid tw-grid-cols-[auto_auto] tw-justify-center tw-place-items-center tw-gap-x-4">
                     <HiddenFormField
                         name="action"
                         value="googleAds"
                     />
 
+                    <div>
+                        Add New Source:
+                    </div>
+
                     <button
                         type="submit"
-                        className="tw-lp-button tw-bg-green-700 disabled:tw-bg-gray-600"
+                        className="tw-bg-[#4285f4] tw-text-white tw-flex tw-flex-row tw-rounded-[2px] tw-items-center tw-overflow-hidden"
+                        style={{
+                            fontFamily: "'Roboto', sans-serif",
+                            fontSize: "14px",
+                            border: "1px solid #4285f4",
+                        }}
                     >
-                        Connect New Source
+                        <div className="tw-h-[40px] tw-pt-[11px] tw-pl-2 tw-bg-white tw-flex-none">
+                            <img
+                                src="https://images.growthjockey.com/intellsys/common/google-logo.png"
+                                alt="Google logo"
+                                className="tw-w-[18px] tw-h-[18px]"
+                            />
+                        </div>
+                        <HorizontalSpacer className="tw-w-3 tw-bg-white" />
+                        <HorizontalSpacer className="tw-w-3" />
+                        <div className=" tw-whitespace-nowrap tw-flex-none tw-pr-2">Sign in with Google</div>
                     </button>
                 </Form>
             </div>
@@ -290,18 +314,27 @@ export default function () {
 
                 <VerticalSpacer className="tw-h-4" />
 
-                <Form method="post" className="tw-w-full tw-grid tw-place-items-center">
+                <Form method="post" className="tw-w-full tw-grid tw-grid-cols-[auto_auto] tw-justify-center tw-place-items-center tw-gap-x-4">
                     <input
                         type="hidden"
                         name="action"
                         value="facebook"
                     />
 
+                    <div>
+                        Add New Source:
+                    </div>
+
                     <button
                         type="submit"
-                        className="tw-lp-button tw-bg-green-700 disabled:tw-bg-gray-600"
+                        className="tw-bg-[#1877F2] tw-text-white tw-flex tw-flex-row tw-gap-x-2 tw-rounded-[6px] tw-p-2"
+                        style={{
+                            fontFamily: "Arial",
+                            letterSpacing: "0.04rem",
+                        }}
                     >
-                        Connect New Source
+                        <Facebook className="tw-w-6 tw-h-6 tw-flex-none" />
+                        <div className="tw-whitespace-nowrap tw-flex-none tw-font-bold">Login with Facebook</div>
                     </button>
                 </Form>
             </div>
@@ -386,18 +419,36 @@ export default function () {
 
                 <VerticalSpacer className="tw-h-4" />
 
-                <Form method="post" className="tw-w-full tw-grid tw-place-items-center">
+                <Form method="post" className="tw-w-full tw-grid tw-grid-cols-[auto_auto] tw-justify-center tw-place-items-center tw-gap-x-4">
                     <input
                         type="hidden"
                         name="action"
                         value="googleAnalytics"
                     />
 
+                    <div>
+                        Add New Source:
+                    </div>
+
                     <button
                         type="submit"
-                        className="tw-lp-button tw-bg-green-700 disabled:tw-bg-gray-600"
+                        className="tw-bg-[#4285f4] tw-text-white tw-flex tw-flex-row tw-rounded-[2px] tw-items-center tw-overflow-hidden"
+                        style={{
+                            fontFamily: "'Roboto', sans-serif",
+                            fontSize: "14px",
+                            border: "1px solid #4285f4",
+                        }}
                     >
-                        Connect New Source
+                        <div className="tw-h-[40px] tw-pt-[11px] tw-pl-2 tw-bg-white tw-flex-none">
+                            <img
+                                src="https://images.growthjockey.com/intellsys/common/google-logo.png"
+                                alt="Google logo"
+                                className="tw-w-[18px] tw-h-[18px]"
+                            />
+                        </div>
+                        <HorizontalSpacer className="tw-w-3 tw-bg-white" />
+                        <HorizontalSpacer className="tw-w-3" />
+                        <div className=" tw-whitespace-nowrap tw-flex-none tw-pr-2">Sign in with Google</div>
                     </button>
                 </Form>
             </div>

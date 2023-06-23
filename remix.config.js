@@ -5,8 +5,8 @@ module.exports = {
     // assetsBuildDirectory: "public/build",
     // serverBuildPath: "build/index.js",
     // publicPath: "/build/",
+    tailwind: true,
     future: {
-        unstable_tailwind: true,
         v2_errorBoundary: true,
     },
     serverDependenciesToBundle: [

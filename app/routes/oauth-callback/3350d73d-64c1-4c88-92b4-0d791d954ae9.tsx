@@ -14,6 +14,7 @@ import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormF
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
+import {getFromCache, putInCache, removeFromCache} from "~/utilities/timedCache";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 type LoaderData = {
@@ -36,9 +37,21 @@ export const loader: LoaderFunction = async ({request, params}) => {
         throw Error("Authorization failed!");
     }
 
-    const credentials = await getFacebookAdsAccessToken(authorizationCode, getUuidFromUnknown(companyId));
-    if (credentials instanceof Error) {
-        throw new Response(null, {status: 404, statusText: "Invalid credentials!"});
+    let credentials: FacebookAdsSourceCredentials;
+
+    const cacheKey = `3350d73d-64c1-4c88-92b4-0d791d954ae9: ${authorizationCode}`;
+    const cachedValue = getFromCache(cacheKey);
+    if (cachedValue != null) {
+        credentials = {
+            facebookExchangeToken: cachedValue,
+        };
+    } else {
+        const credentials_ = await getFacebookAdsAccessToken(authorizationCode, getUuidFromUnknown(companyId));
+        if (credentials_ instanceof Error) {
+            throw new Response(null, {status: 404, statusText: "Invalid credentials!"});
+        }
+        putInCache(cacheKey, credentials_.facebookExchangeToken);
+        credentials = credentials_;
     }
 
     const accessibleAccounts = await getAccessibleAccounts(credentials);
@@ -53,6 +66,9 @@ export const loader: LoaderFunction = async ({request, params}) => {
 };
 
 export const action: ActionFunction = async ({request, params}) => {
+    const urlSearchParams = new URL(request.url).searchParams;
+    const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
+
     const body = await request.formData();
 
     const selectedAccount: FacebookAccessibleAccount = JSON.parse(body.get("selectedAccount") as string);
@@ -88,6 +104,9 @@ export const action: ActionFunction = async ({request, params}) => {
         if (response instanceof Error) {
             throw response;
         }
+
+        const cacheKey = `3350d73d-64c1-4c88-92b4-0d791d954ae9: ${authorizationCode}`;
+        removeFromCache(cacheKey);
 
         return redirect(`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connectorId}`);
     }
@@ -132,7 +151,7 @@ export default function () {
             </div>
 
             <div>
-                <form method="post tw-row-auto">
+                <form method="post" className="tw-row-auto">
                     <HiddenFormField
                         name="selectedAccount"
                         value={selectedAccount ? JSON.stringify(selectedAccount) : ""}

@@ -2,7 +2,8 @@ import type {ActionFunction, LinksFunction, LoaderFunction} from "@remix-run/nod
 import {json} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {Form, Link, useLoaderData} from "@remix-run/react";
-import {Facebook, Google} from "react-bootstrap-icons";
+import {Facebook} from "react-bootstrap-icons";
+import {Bar, Line} from "react-chartjs-2";
 import {deleteConnector, getRedirectUri} from "~/backend/utilities/data-management/common.server";
 import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/data-management/facebookOAuth.server";
 import type {Connector} from "~/backend/utilities/data-management/googleOAuth.server";
@@ -336,6 +337,7 @@ export default function () {
                         <Facebook className="tw-w-6 tw-h-6 tw-flex-none" />
                         <div className="tw-whitespace-nowrap tw-flex-none tw-font-bold">Login with Facebook</div>
                     </button>
+
                 </Form>
             </div>
 

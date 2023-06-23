@@ -15,6 +15,7 @@ import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValid
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
+import { getConnectorsAssociatedWithCompanyId } from "./googleOAuth.server";
 
 export const facebookAdsScope = "ads_read, ads_management, public_profile, business_management";
 
@@ -26,6 +27,7 @@ export type FacebookAdsSourceCredentials = {
 export type FacebookAccessibleAccount = {
     accountId: string;
     accountName: string;
+    disable: boolean;
 };
 
 const facebookApiBaseUrl = "https://graph.facebook.com";
@@ -191,9 +193,7 @@ export function getFacebookAuthorizationCodeUrl(redirectUri: string, state: stri
     return url;
 }
 
-export function checkIfFacebookAdsConnectorExistsForAccount(adAccountId: string) {}
-
-export async function getAccessibleAccounts(credentials: FacebookAdsSourceCredentials) {
+export async function getAccessibleAccounts(credentials: FacebookAdsSourceCredentials, companyId: Uuid) {
     const apiVersion = getRequiredEnvironmentVariableNew("FACEBOOK_API_VERSION");
     const fields = "account_id,account_status,business,business_name,users,name";
     let after = "";
@@ -220,13 +220,30 @@ export async function getAccessibleAccounts(credentials: FacebookAdsSourceCreden
         after = responseJson.paging.cursors.after
     }
 
-    return accessibleAccounts;
+    // Array of existing facebook connectors.
+    const facebookConnectorDetails = await getConnectorsAssociatedWithCompanyId(companyId, getUuidFromUnknown(ConnectorType.FacebookAds));
+    if (facebookConnectorDetails instanceof Error) {
+        return facebookConnectorDetails;
+    }
+
+    const existingAccountIds = new Set(facebookConnectorDetails.map(obj => obj.accountId));
+    const newAccounts = accessibleAccounts.map((obj) => {
+        if(existingAccountIds.has(obj.accountId)) {
+            obj.disable = true;
+            return obj;
+        } else {
+            return obj;
+        }
+    });
+
+    return newAccounts;
 }
 
 function convertToFacebookAccessibleAccount(row: any): FacebookAccessibleAccount {
     const result: FacebookAccessibleAccount = {
         accountId: row.account_id,
         accountName: row.name,
+        disable: false
     };
 
     return result;

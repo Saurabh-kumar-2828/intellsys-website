@@ -12,11 +12,13 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getNonEmptyStringOrNull} from "~/utilities/utilities";
+import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getDates, getNonEmptyStringOrNull} from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getDestinationCredentialId} from "~/backend/utilities/data-management/common.server";
 import {useState} from "react";
+import {CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
+import {Line} from "react-chartjs-2";
 
 export const meta: MetaFunction = () => {
     return {
@@ -158,12 +160,61 @@ export default function () {
 }
 
 function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Array<FacebookAdsAggregatedRow>; granularity: TimeGranularity; minDate: Iso8601Date; maxDate: Iso8601Date}) {
+    // chartjs graphs
+    ChartJS.register(CategoryScale, LinearScale, Title, Tooltip, Legend, PointElement, LineElement);
+
+    const dates = getDates(minDate, maxDate);
+    const dayWiseSpend = adsData.map((row) => parseInt(row.spend));
+
+    const labels = dates;
+    const data = {
+        labels,
+        datasets: [
+            {
+                label: "Daily Spend",
+                data: dayWiseSpend,
+                borderColor: "rgb(212, 172, 13)",
+                backgroundColor: "rgb(212, 172, 13)",
+            },
+        ],
+    };
+
+    const options = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: "top" as const,
+            },
+            title: {
+                display: true,
+                text: "Day-wise distribution of total spend",
+            },
+        },
+    };
 
     return (
-        <div className="tw-grid tw-grid-cols-1 tw-p-2">
+        <div className="tw-grid tw-grid-cols-1 tw-p-2 tw-gap-5">
+            <div className="tw-row-start-1">
+                <GenericCard
+                    className="tw-rounded-tl-none"
+                    content={
+                        <div className="tw-grid tw-grid-cols-4">
+                            <div className="tw-row-start-1 tw-col-start-2 tw-col-span-2 tw-grid">
+                                <Line
+                                    options={options}
+                                    data={data}
+                                    className="tw-row-start-1 tw-col-start-1"
+                                />
+                            </div>
+                        </div>
+                    }
+                    metaQuery={""}
+                />
+            </div>
+
             <Tabs.Root
                 defaultValue="1"
-                className="tw-row-start-4"
+                className="tw-row-start-2"
             >
                 <Tabs.List>
                     <Tabs.Trigger

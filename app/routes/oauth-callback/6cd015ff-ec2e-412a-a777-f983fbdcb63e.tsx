@@ -2,7 +2,7 @@ import {RadioGroup} from "@headlessui/react";
 import type {ActionFunction, LoaderFunction} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {json} from "@remix-run/node";
-import {useLoaderData} from "@remix-run/react";
+import {Form, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
 import type {GoogleAnalyticsAccessiblePropertyIds, GoogleAnalyticsCredentials} from "~/backend/utilities/data-management/googleAnalytics.server";
@@ -27,8 +27,6 @@ type LoaderData = {
 export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;
 
-    console.log(1);
-
     const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
     const companyId = getNonEmptyStringOrNull(urlSearchParams.get("state"));
     if (companyId == null) {
@@ -38,14 +36,10 @@ export const loader: LoaderFunction = async ({request}) => {
         throw Error("Authorization failed!");
     }
 
-    console.log(2);
-
     const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAnalytics));
     if (refreshToken instanceof Error) {
         return refreshToken;
     }
-
-    console.log(3);
 
     const accessiblePropertyIds = await getAccessiblePropertyIds(refreshToken);
     if (accessiblePropertyIds instanceof Error) {
@@ -54,7 +48,6 @@ export const loader: LoaderFunction = async ({request}) => {
 
     // TODO: Filter accessible account
 
-    console.log(4);
     // TODO: Get multiple accounts
     const loaderData: LoaderData = {
         data: encrypt(refreshToken) as unknown as string,
@@ -143,7 +136,7 @@ export default function () {
                 />
             </RadioGroup>
 
-            <form method="post">
+            <Form method="post">
                 <input
                     type="text"
                     name="selectedAccount"
@@ -164,9 +157,9 @@ export default function () {
                     type="submit"
                     className="tw-row-start-2 tw-lp-button"
                 >
-                    Submit
+                    Proceed
                 </button>
-            </form>
+            </Form>
         </div>
     );
 }

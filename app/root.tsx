@@ -89,6 +89,7 @@ export default function App() {
             </head>
 
             <body className="tw-bg-dark-bg-400 tw-text-base tw-text-fg">
+            <div id="fb-root"></div>
                 <div className="tw-grid tw-grid-rows-[auto_1fr] tw-min-h-screen">
                     {transition.state == "idle" ? null : <LoaderComponent />}
                     <HeaderComponent

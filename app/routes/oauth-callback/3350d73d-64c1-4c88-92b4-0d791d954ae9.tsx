@@ -2,7 +2,7 @@ import {RadioGroup} from "@headlessui/react";
 import type {ActionFunction, LoaderFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
-import {useLoaderData} from "@remix-run/react";
+import {Form, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
 import type {FacebookAccessibleAccount, FacebookAdsSourceCredentials} from "~/backend/utilities/data-management/facebookOAuth.server";
@@ -16,7 +16,7 @@ import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getFromCache, putInCache, removeFromCache} from "~/utilities/timedCache";
-import { ConnectorType } from "~/utilities/typeDefinitions";
+import {ConnectorType} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 type LoaderData = {
@@ -56,7 +56,11 @@ export const loader: LoaderFunction = async ({request, params}) => {
         credentials = credentials_;
     }
 
-    const accessibleAccounts = await getAccessibleAccounts(credentials);
+    const accessibleAccounts = await getAccessibleAccounts(credentials, companyId);
+    if(accessibleAccounts instanceof Error){
+        throw new Response(null, {status: 404, statusText: "No Accessible Accounts!"});
+
+    }
 
     const loaderData: LoaderData = {
         data: encrypt(credentials.facebookExchangeToken),
@@ -138,10 +142,12 @@ export default function () {
                             <RadioGroup.Option
                                 value={item}
                                 key={itemIndex}
+                                disabled={item.disable}
                             >
                                 {({checked}) => (
                                     <div className="tw-p-4 tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
-                                        {checked ? <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" /> : <Circle className="tw-w-6 tw-h-6 tw-text-blue-500" />}
+                                        {checked ? <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" /> :
+                                        <Circle className={`tw-w-6 tw-h-6 tw-text-blue-500 ${item.disable ? 'disabled:tw-text-gray-500' : ''}`} />}
 
                                         {`${item.accountId}, ${item.accountName}`}
                                     </div>
@@ -153,10 +159,14 @@ export default function () {
             </div>
 
             <div>
-                <form method="post" className="tw-row-auto">
+                <Form
+                    method="post"
+                    className="tw-row-auto"
+                >
                     <HiddenFormField
                         name="selectedAccount"
                         value={selectedAccount ? JSON.stringify(selectedAccount) : ""}
+                        required
                     />
 
                     <HiddenFormField
@@ -173,9 +183,9 @@ export default function () {
                         type="submit"
                         className="tw-lp-button tw-items-center"
                     >
-                        Submit
+                        Proceed
                     </button>
-                </form>
+                </Form>
             </div>
         </div>
     );

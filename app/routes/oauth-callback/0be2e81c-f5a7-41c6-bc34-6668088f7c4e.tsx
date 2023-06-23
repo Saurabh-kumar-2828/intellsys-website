@@ -1,7 +1,7 @@
 import {RadioGroup} from "@headlessui/react";
 import type {ActionFunction, LoaderFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
-import {useLoaderData} from "@remix-run/react";
+import {Form, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
 import {ingestAndStoreGoogleAdsData} from "~/backend/utilities/data-management/common.server";
@@ -141,7 +141,7 @@ export default function () {
                 />
             </RadioGroup>
 
-            <form method="post">
+            <Form method="post">
                 <input
                     type="text"
                     name="selectedAccount"
@@ -165,7 +165,7 @@ export default function () {
                 >
                     Submit
                 </button>
-            </form>
+            </Form>
         </div>
     );
 }

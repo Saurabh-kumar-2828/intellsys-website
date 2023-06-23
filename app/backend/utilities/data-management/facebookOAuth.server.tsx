@@ -16,7 +16,7 @@ import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 
-export const facebookAdsScope = "ads_read, ads_management, email, public_profile, business_management";
+export const facebookAdsScope = "ads_read, ads_management, public_profile, business_management";
 
 export type FacebookAdsSourceCredentials = {
     facebookExchangeToken: string;

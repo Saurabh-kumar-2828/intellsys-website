@@ -20,7 +20,7 @@ import {getDestinationCredentialId} from "~/backend/utilities/data-management/co
 
 export const meta: MetaFunction = () => {
     return {
-        title: "Google Ads Funnel - Intellsys",
+        title: "Google Analytics Report - Intellsys",
     };
 };
 

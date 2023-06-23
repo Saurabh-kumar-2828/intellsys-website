@@ -6,6 +6,7 @@ import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
 import {ingestAndStoreGoogleAdsData} from "~/backend/utilities/data-management/common.server";
 import type {GoogleAdsAccessibleAccount, GoogleAdsCredentials} from "~/backend/utilities/data-management/googleOAuth.server";
+import {checkConnectorExistsForAccount} from "~/backend/utilities/data-management/googleOAuth.server";
 import {getGoogleAdsRefreshToken} from "~/backend/utilities/data-management/googleOAuth.server";
 import {getAccessibleAccounts} from "~/backend/utilities/data-management/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
@@ -78,15 +79,14 @@ export const action: ActionFunction = async ({request}) => {
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);
 
-        const accountExists = await checkGoogleAdsConnectorExistsForAccount(selectedAccount.managerId);
+        const accountExists = await checkConnectorExistsForAccount(ConnectorType.GoogleAds, selectedAccount.managerId);
         if (accountExists instanceof Error) {
             return Error("Account already exists");
         }
 
         // Cannot create new connector, if connector with account already exists.
-
         if (accountExists) {
-            return redirect(`/${companyId}/data-sources`);
+            throw new Response(null, {status: 404, statusText: "Account already Exists!"});
         }
 
         const googleAdsCredentials: GoogleAdsCredentials = {

@@ -25,7 +25,7 @@ export type FacebookAdsSourceCredentials = {
 
 export type FacebookAccessibleAccount = {
     accountId: string;
-    businessName: string;
+    accountName: string;
 };
 
 const facebookApiBaseUrl = "https://graph.facebook.com";
@@ -195,7 +195,7 @@ export function checkIfFacebookAdsConnectorExistsForAccount(adAccountId: string)
 
 export async function getAccessibleAccounts(credentials: FacebookAdsSourceCredentials) {
     const apiVersion = getRequiredEnvironmentVariableNew("FACEBOOK_API_VERSION");
-    const fields = "account_id%2Caccount_status%2Cbusiness%2Cbusiness_name%2Cusers";
+    const fields = "account_id,account_status,business,business_name,users,name";
     let after = "";
     const accessibleAccounts: Array<FacebookAccessibleAccount> = [];
 
@@ -226,7 +226,7 @@ export async function getAccessibleAccounts(credentials: FacebookAdsSourceCreden
 function convertToFacebookAccessibleAccount(row: any): FacebookAccessibleAccount {
     const result: FacebookAccessibleAccount = {
         accountId: row.account_id,
-        businessName: row.business_name,
+        accountName: row.name,
     };
 
     return result;

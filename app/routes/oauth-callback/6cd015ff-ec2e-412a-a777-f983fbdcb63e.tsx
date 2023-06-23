@@ -75,7 +75,7 @@ export const action: ActionFunction = async ({request}) => {
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);
 
-        const accountExists = await checkConnectorExistsForAccount(ConnectorType.GoogleAds, selectedAccount.managerId);
+        const accountExists = await checkConnectorExistsForAccount(ConnectorType.GoogleAnalytics, selectedAccount.managerId);
         if (accountExists instanceof Error) {
             return Error("Account already exists");
         }

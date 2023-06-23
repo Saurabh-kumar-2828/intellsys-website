@@ -143,7 +143,7 @@ export default function () {
                                     <div className="tw-p-4 tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
                                         {checked ? <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" /> : <Circle className="tw-w-6 tw-h-6 tw-text-blue-500" />}
 
-                                        {`${item.accountId}, ${item.businessName}`}
+                                        {`${item.accountId}, ${item.accountName}`}
                                     </div>
                                 )}
                             </RadioGroup.Option>

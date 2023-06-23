@@ -7,6 +7,7 @@ import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
 import type {FacebookAccessibleAccount, FacebookAdsSourceCredentials} from "~/backend/utilities/data-management/facebookOAuth.server";
 import {facebookOAuthFlow, getAccessibleAccounts, getFacebookAdsAccessToken} from "~/backend/utilities/data-management/facebookOAuth.server";
+import {checkConnectorExistsForAccount} from "~/backend/utilities/data-management/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
@@ -15,6 +16,7 @@ import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getFromCache, putInCache, removeFromCache} from "~/utilities/timedCache";
+import { ConnectorType } from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 type LoaderData = {
@@ -82,15 +84,15 @@ export const action: ActionFunction = async ({request, params}) => {
     const dataDecoded = decrypt(data);
 
     // TODO: Confirm its implementation.
-    // const accountExists = await checkIfFacebookAdsConnectorExistsForAccount(data);
-    // if (accountExists instanceof Error) {
-    //     return Error("Account already exists");
-    // }
+    const accountExists = await checkConnectorExistsForAccount(ConnectorType.FacebookAds, selectedAccount.accountId);
+    if (accountExists instanceof Error) {
+        return Error("Account already exists");
+    }
 
     // Cannot create new connector, if connector with account already exists.
-    // if (accountExists) {
-    //     return redirect(`/${companyId}/data-sources`);
-    // }
+    if (accountExists) {
+        throw new Response(null, {status: 404, statusText: "Account already Exists!"});
+    }
 
     const facebookAdsCredentials: FacebookAdsSourceCredentials = {
         facebookExchangeToken: dataDecoded,

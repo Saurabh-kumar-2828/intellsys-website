@@ -7,7 +7,7 @@ import {CheckCircle, Circle} from "react-bootstrap-icons";
 import {ingestAndStoreGoogleAdsData} from "~/backend/utilities/data-management/common.server";
 import type {GoogleAdsAccessibleAccount, GoogleAdsCredentials} from "~/backend/utilities/data-management/googleOAuth.server";
 import {getGoogleAdsRefreshToken} from "~/backend/utilities/data-management/googleOAuth.server";
-import {checkGoogleAdsConnectorExistsForAccount, getAccessibleAccounts} from "~/backend/utilities/data-management/googleOAuth.server";
+import {getAccessibleAccounts} from "~/backend/utilities/data-management/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";

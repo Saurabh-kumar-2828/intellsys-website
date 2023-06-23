@@ -9,6 +9,7 @@ import type {GoogleAnalyticsAccessiblePropertyIds, GoogleAnalyticsCredentials} f
 import {ingestAndStoreGoogleAnalyticsData} from "~/backend/utilities/data-management/googleAnalytics.server";
 import {getAccessiblePropertyIds} from "~/backend/utilities/data-management/googleAnalytics.server";
 import type {GoogleAdsAccessibleAccount} from "~/backend/utilities/data-management/googleOAuth.server";
+import {checkConnectorExistsForAccount} from "~/backend/utilities/data-management/googleOAuth.server";
 import {getGoogleAdsRefreshToken} from "~/backend/utilities/data-management/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
@@ -17,10 +18,7 @@ import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
-// Google analytics
-
 // TODO: Keep only code part
-
 type LoaderData = {
     data: string;
     accessiblePropertyIds: Array<GoogleAnalyticsAccessiblePropertyIds>;
@@ -77,16 +75,15 @@ export const action: ActionFunction = async ({request}) => {
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);
 
-        // const accountExists = await checkGoogleAdsConnectorExistsForAccount(selectedAccount.managerId);
-        // if (accountExists instanceof Error) {
-        //     return Error("Account already exists");
-        // }
+        const accountExists = await checkConnectorExistsForAccount(ConnectorType.GoogleAds, selectedAccount.managerId);
+        if (accountExists instanceof Error) {
+            return Error("Account already exists");
+        }
 
         // Cannot create new connector, if connector with account already exists.
-
-        // if (accountExists) {
-        //     return redirect(`/${companyId}/data-sources`);
-        // }
+        if (accountExists) {
+            throw new Response(null, {status: 404, statusText: "Account already Exists!"});
+        }
 
         const googleAnalyticsCredentials: GoogleAnalyticsCredentials = {
             propertyId: selectedAccount.propertyId,

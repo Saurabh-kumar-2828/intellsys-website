@@ -108,9 +108,9 @@ export function convertToAccessbileAccount(row: Credentials) {
 }
 
 /**
- * Checks if Google Ads connector already exists for given accountId.
+ * Checks if connector already exists for given accountId.
  */
-export async function checkGoogleAdsConnectorExistsForAccount(accountId: string): Promise<boolean | Error> {
+export async function checkConnectorExistsForAccount(connectorType: ConnectorType, accountId: string): Promise<boolean | Error> {
     const connectorDatabaseManager = await getSystemConnectorsDatabaseManager();
     if (connectorDatabaseManager instanceof Error) {
         return connectorDatabaseManager;
@@ -127,7 +127,7 @@ export async function checkGoogleAdsConnectorExistsForAccount(accountId: string)
             AND
             extra_information->>'accountId' = $2
     `,
-        [ConnectorType.GoogleAds, accountId],
+        [connectorType, accountId],
     );
 
     if (response instanceof Error) {

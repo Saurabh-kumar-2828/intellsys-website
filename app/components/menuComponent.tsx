@@ -43,14 +43,14 @@ export function MenuComponent({
             displayName: "Home",
         },
         // null,
-        // {
-        //     url: `/${companyId}/business-insights?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
-        //     displayName: "Business Insights",
-        // },
-        // {
-        //     url: `/${companyId}/google-ads-funnel?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
-        //     displayName: "Google Ads Funnel",
-        // },
+        {
+            url: `/${companyId}/business-insights?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
+            displayName: "Business Insights",
+        },
+        {
+            url: `/${companyId}/google-ads-funnel?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
+            displayName: "Google Ads Funnel",
+        },
         // {
         //     url: `/${companyId}/facebook-ads-funnel?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
         //     displayName: "Facebook Ads Funnel",

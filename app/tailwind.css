@@ -23,10 +23,12 @@
         @apply tw-p-4 tw-bg-dark-bg-500 radix-tab-active:tw-font-bold radix-tab-active:tw-text-white radix-tab-active:tw-shadow-[0_-2px_0_#ffffff_inset];
     }
 
+    /* TODO: Fix this, `is` is very ambiguous and confusing */
     .is-button {
         @apply tw-bg-primary-1 tw-text-fg hover:tw-brightness-125 disabled:tw-brightness-50 tw-p-4 disabled:tw-cursor-not-allowed tw-rounded-full;
     }
 
+    /* TODO: Fix this, `is` is very ambiguous and confusing */
     .is-text-input {
         @apply tw-p-4 tw-rounded-full tw-bg-dark-bg-600 tw-text-white disabled:tw-text-neutral-800 disabled:tw-bg-neutral-600 read-only:tw-text-neutral-800 read-only:tw-bg-neutral-600 tw-w-full;
         box-shadow: 0px 9px 13px rgba(0, 0, 0, 0.07);

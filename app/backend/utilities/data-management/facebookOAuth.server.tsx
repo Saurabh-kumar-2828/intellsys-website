@@ -7,6 +7,7 @@ import {
     mapCompanyIdToConnectorId,
 } from "~/backend/utilities/data-management/common.server";
 import {storeCredentials} from "~/backend/utilities/data-management/credentials.server";
+import {getConnectorsAssociatedWithCompanyId} from "~/backend/utilities/data-management/googleOAuth.server";
 import {ingestHistoricalDataFromConnectorsApi, intellsysConnectors} from "~/global-common-typescript/server/connectors.server";
 import type {PostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
@@ -15,7 +16,6 @@ import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValid
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
-import { getConnectorsAssociatedWithCompanyId } from "./googleOAuth.server";
 
 export const facebookAdsScope = "ads_read, ads_management, public_profile, business_management";
 
@@ -199,7 +199,7 @@ export async function getAccessibleAccounts(credentials: FacebookAdsSourceCreden
     let after = "";
     const accessibleAccounts: Array<FacebookAccessibleAccount> = [];
 
-    while(true){
+    while (true) {
         const url = `${facebookApiBaseUrl}/${apiVersion}/me/adaccounts?fields=${fields}&access_token=${credentials.facebookExchangeToken}&after=${after}`;
 
         const response = await fetch(url, {
@@ -207,7 +207,7 @@ export async function getAccessibleAccounts(credentials: FacebookAdsSourceCreden
         });
 
         const responseJson = await response.json();
-        if(!responseJson.paging){
+        if (!responseJson.paging) {
             break;
         }
 
@@ -217,7 +217,7 @@ export async function getAccessibleAccounts(credentials: FacebookAdsSourceCreden
 
         accessibleAccounts.push(...data);
 
-        after = responseJson.paging.cursors.after
+        after = responseJson.paging.cursors.after;
     }
 
     // Array of existing facebook connectors.
@@ -226,9 +226,9 @@ export async function getAccessibleAccounts(credentials: FacebookAdsSourceCreden
         return facebookConnectorDetails;
     }
 
-    const existingAccountIds = new Set(facebookConnectorDetails.map(obj => obj.accountId));
+    const existingAccountIds = new Set(facebookConnectorDetails.map((obj) => obj.accountId));
     const newAccounts = accessibleAccounts.map((obj) => {
-        if(existingAccountIds.has(obj.accountId)) {
+        if (existingAccountIds.has(obj.accountId)) {
             obj.disable = true;
             return obj;
         } else {
@@ -243,7 +243,7 @@ function convertToFacebookAccessibleAccount(row: any): FacebookAccessibleAccount
     const result: FacebookAccessibleAccount = {
         accountId: row.account_id,
         accountName: row.name,
-        disable: false
+        disable: false,
     };
 
     return result;

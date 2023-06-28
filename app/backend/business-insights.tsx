@@ -7,8 +7,8 @@ import {ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitio
 import {dateToIso8601Date, getSingletonValue} from "~/utilities/utilities";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {Integer} from "~/global-common-typescript/typeDefinitions";
-import type {Connector} from "./utilities/data-management/googleOAuth.server";
-import {getAccountIdForConnector} from "./utilities/data-management/googleOAuth.server";
+import type {Connector} from "~/backend/utilities/data-management/googleOAuth.server";
+import {getAccountIdForConnector} from "~/backend/utilities/data-management/googleOAuth.server";
 
 export enum TimeGranularity {
     daily = "Daily",

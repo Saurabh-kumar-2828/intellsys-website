@@ -2,9 +2,9 @@ import {axisBottom, axisLeft, axisRight} from "d3-axis";
 import {NumberValue, scaleBand, scaleLinear, ScaleLinear} from "d3-scale";
 import {select} from "d3-selection";
 import React, {useEffect, useRef} from "react";
-import BarGraphComponent from "./barGraphComponent";
-import {LineGraphComponent} from "./lineGraphComponent";
-import {legend} from "./legend";
+import BarGraphComponent from "~/components/d3Componenets/barGraphComponent";
+import {LineGraphComponent} from "~/components/d3Componenets/lineGraphComponent";
+import {legend} from "~/components/d3Componenets/legend";
 import {plotMargins, Scale} from "~/utilities/utilities";
 
 export type legendObject = {

@@ -1,5 +1,5 @@
 import {DateTime} from "luxon";
-import {Iso8601Date} from "./typeDefinitions";
+import type {Iso8601Date} from "~/utilities/typeDefinitions";
 
 // export function getUrlForResource(resourceRelativePath) {
 //     return `${process.env.NEXT_PUBLIC_FRONTEND_URL}/resources/${resourceRelativePath}`;

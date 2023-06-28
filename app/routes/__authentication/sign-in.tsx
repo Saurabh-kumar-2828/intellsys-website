@@ -1,54 +1,76 @@
 import type {ActionFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
-import {json, redirect} from "@remix-run/node";
+import {redirect} from "@remix-run/node";
 import {Form, useActionData} from "@remix-run/react";
-import {useEffect} from "react";
-import {validateUser} from "~/backend/authentication.server";
+import {useEffect, useState} from "react";
+import {toast} from "react-toastify";
+import {getAccessTokenForUser, getCompanyIdForDomain, sendOtp, verifyOtp} from "~/backend/authentication.server";
 import {commitCookieSession, getCookieSession} from "~/backend/utilities/cookieSessions.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {errorToast} from "~/components/scratchpad";
-import {getNonEmptyStringOrNull} from "~/utilities/utilities";
+import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
+import {getStringFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 
-type ActionData = null | {
-    error: string;
+type ActionData = {
+    otpSent: boolean;
+    error: string | null;
 };
 
 export const action: ActionFunction = async ({request}) => {
     const body = await request.formData();
 
-    const username = getNonEmptyStringOrNull(body.get("username") as string);
-    const password = getNonEmptyStringOrNull(body.get("password") as string);
+    const email = safeParse(getStringFromUnknown, body.get("email") as string);
+    const otp = safeParse(getStringFromUnknown, body.get("otp") as string);
 
     // TODO: Do this properly
 
-    if (username == null || password == null) {
+    if (email == null) {
+        return new Response("Invalid input: 9e692b78-ca87-4c03-877f-1e53a6510523", {
+            status: 400,
+        });
+    }
+
+    if (otp == null) {
+        await sendOtp(email);
+
         const actionData: ActionData = {
-            error: "Username or password cannot be empty!",
+            otpSent: true,
+            error: null,
         };
 
-        return json(actionData);
+        return actionData;
+    } else {
+        const result = await verifyOtp(email, otp);
+
+        if (!result.success) {
+            const actionData: ActionData = {
+                otpSent: false,
+                error: "Invalid OTP",
+            };
+
+            return actionData;
+        } else {
+            const cookieSession = await getCookieSession(request.headers.get("Cookie"));
+
+            const result = await getAccessTokenForUser("2a57cf0e-92ca-4348-bdcd-bfc295553ecc");
+
+            cookieSession.set("accessToken", result.accessTokenJwt);
+
+            const domain = "test.com";
+            const companyId = getCompanyIdForDomain(domain);
+
+            if (companyId == null) {
+                createCompany(domain);
+                // TODO: Create company
+            }
+
+            return redirect("/", {
+                headers: {
+                    "Set-Cookie": await commitCookieSession(cookieSession),
+                },
+            });
+        }
     }
-
-    const response = await validateUser(username, password);
-    if (response == null) {
-        const actionData = {
-            error: "Incorrect username or password!",
-        };
-
-        return json(actionData);
-    }
-
-    const cookieSession = await getCookieSession(request.headers.get("Cookie"));
-
-    cookieSession.set("accessToken", response.accessTokenJwt);
-    // session.set("refreshToken", response.refreshTokenJwt);
-
-    // return redirect(coalesce(redirectTo, "/"), {
-    return redirect("/", {
-        headers: {
-            "Set-Cookie": await commitCookieSession(cookieSession),
-        },
-    });
 };
 
 export const loader: LoaderFunction = async ({request}) => {
@@ -80,6 +102,10 @@ export default function () {
         <div>
             <div className="tw-flex-grow-[999] tw-grid tw-grid-cols-1 md:tw-grid-cols-[1fr_30rem] tw-items-center tw-justify-center tw-px-screen-edge tw-min-h-[calc(100vh-var(--gj-header-height))] tw-gap-x-8 tw-gap-y-8">
                 <div className="tw-flex tw-flex-col tw-justify-center">
+                    <div className="tw-font-h1-400">Intellsys</div>
+
+                    <VerticalSpacer className="tw-h-8" />
+
                     <div className="tw-font-h1-400">Codify Your Coffee</div>
 
                     <div className="tw-font-h1-400">Techify Your Meals</div>
@@ -95,42 +121,91 @@ export default function () {
                     </a>
                 </div>
 
-                <Form method="post" className="tw-flex tw-flex-col tw-bg-dark-bg-500 tw-rounded-2xl tw-p-8">
+                <LoginComponent />
+            </div>
+        </div>
+    );
+}
+
+function LoginComponent() {
+    const [hasOtpBeenSent, setHasOtpBeenSent] = useState(false);
+
+    const [email, setEmail] = useState("");
+    const [otp, setOtp] = useState("");
+
+    const actionData = useActionData() as ActionData | null;
+
+    useEffect(() => {
+        if (actionData == null) {
+            return;
+        }
+
+        if (actionData.error != null) {
+            toast.error(actionData.error);
+            return;
+        }
+
+        setHasOtpBeenSent(true);
+    }, [actionData]);
+
+    return (
+        <Form
+            action="/sign-in"
+            method="post"
+            className="tw-flex tw-flex-col tw-bg-dark-bg-500 tw-rounded-2xl tw-p-8"
+        >
+            {hasOtpBeenSent == false ? (
+                <>
                     <label htmlFor="username">Username</label>
 
                     <VerticalSpacer className="tw-h-2" />
 
                     <input
                         type="text"
-                        id="username"
-                        name="username"
+                        id="email"
+                        name="email"
                         placeholder="Enter your email"
                         required
                         // pattern="[0-9]{10}"
                         className="is-text-input"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                     />
+                </>
+            ) : (
+                <>
+                    <div>
+                        Email: {email}
+                        <HiddenFormField
+                            name="email"
+                            value={email}
+                            required={true}
+                        />
+                    </div>
 
-                    <VerticalSpacer className="tw-h-4" />
+                    <VerticalSpacer className="tw-h-2" />
 
-                    <label htmlFor="password">Password</label>
+                    <label htmlFor="otp">OTP</label>
 
                     <VerticalSpacer className="tw-h-2" />
 
                     <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        placeholder="Enter your password"
+                        type="text"
+                        id="otp"
+                        name="otp"
+                        placeholder="Enter your OTP"
                         required
                         // pattern="[0-9]{10}"
                         className="is-text-input"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
                     />
+                </>
+            )}
 
-                    <VerticalSpacer />
+            <VerticalSpacer />
 
-                    <button className="is-button tw-self-center tw-px-16">Sign In</button>
-                </Form>
-            </div>
-        </div>
+            <button className="is-button tw-self-center tw-px-16">Sign In</button>
+        </Form>
     );
 }

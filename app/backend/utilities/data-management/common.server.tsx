@@ -12,7 +12,7 @@ import {generateUuid, getCurrentIsoTimestamp} from "~/global-common-typescript/u
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import {ConnectorTableType} from "~/utilities/typeDefinitions";
 import {getSingletonValue, getSingletonValueOrNull} from "~/utilities/utilities";
-import type {GoogleAdsCredentials} from "./googleOAuth.server";
+import type {GoogleAdsCredentials} from "~/backend/utilities/data-management/googleOAuth.server";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
 
 export type ConnectorId = Uuid;
@@ -26,7 +26,6 @@ export type SourceAndDestinationId = {
  * Retrives internal Postgres database of the system.
  */
 export async function getSystemPostgresDatabaseManager(): Promise<PostgresDatabaseManager | Error> {
-
     const systemDatabaseCredentialId = getUuidFromUnknown(getRequiredEnvironmentVariable("SYSTEM_DATABASE_CREDENTIAL_ID"));
 
     const postgresDatabaseManager = await getPostgresDatabaseManager(systemDatabaseCredentialId);

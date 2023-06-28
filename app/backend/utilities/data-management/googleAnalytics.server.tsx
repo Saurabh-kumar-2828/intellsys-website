@@ -1,8 +1,12 @@
 import {BetaAnalyticsDataClient} from "@google-analytics/data";
+import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
+import type {Integer} from "~/global-common-typescript/typeDefinitions";
+import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
+import {createObjectFromKeyValueArray, toDateHourFormat} from "~/utilities/utilities";
 import {
     createTable,
     getDestinationCredentialId,
@@ -10,12 +14,8 @@ import {
     getSystemPostgresDatabaseManager,
     initializeConnectorAndSubConnector,
     mapCompanyIdToConnectorId,
-} from "./common.server";
-import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {storeCredentials} from "./credentials.server";
-import {createObjectFromKeyValueArray, toDateHourFormat} from "~/utilities/utilities";
-import type {Integer} from "~/global-common-typescript/typeDefinitions";
+} from "~/backend/utilities/data-management/common.server";
+import {storeCredentials} from "~/backend/utilities/data-management/credentials.server";
 
 export type GoogleAnalyticsCredentials = {
     propertyId: string;
@@ -33,12 +33,12 @@ export type GoogleAnalyticsAccessiblePropertyIds = {
 export async function getAccessiblePropertyIds(refreshToken: string): Promise<Array<GoogleAnalyticsAccessiblePropertyIds> | Error> {
     const googleAdsHelperUrl = getRequiredEnvironmentVariableNew("INTELLSYS_GOOGLE_ADS_HELPER_URL");
 
-    var formdata = new FormData();
+    const formdata = new FormData();
     formdata.append("client_id", getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_ID"));
     formdata.append("client_secret", getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_SECRET"));
     formdata.append("refresh_token", refreshToken);
 
-    var requestOptions = {
+    const requestOptions = {
         method: "POST",
         body: formdata,
     };

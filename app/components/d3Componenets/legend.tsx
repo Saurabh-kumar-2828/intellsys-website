@@ -1,11 +1,6 @@
-import React from "react";
-import {plotMargins, YAxisDisplay} from "~/backend/utilities/utilities.server";
-import {legendObject} from "./composedChartComponent";
+import type {legendObject} from "~/components/d3Componenets/composedChartComponent";
 
-export const legend = (
-    container: any,
-    props: {data: Array<{color: string, name: string}>, x: number, y: number}
-) => {
+export const legend = (container: any, props: {data: Array<{color: string; name: string}>; x: number; y: number}) => {
     const {data, x, y} = props;
 
     const legendBoxWidth = 169;
@@ -23,7 +18,7 @@ export const legend = (
 
     legendNode.append("rect").attr("width", legendBoxWidth).attr("height", legendBoxHeight).attr("class", "tw-fill-[#191919] tw-opacity-0.7").attr("rx", 12).attr("ry", 12);
 
-    var legendGroup = legendNode.append("g").attr("transform", `translate(${legendBoxLeftMargin}, ${legendBoxTopMargin})`)
+    var legendGroup = legendNode.append("g").attr("transform", `translate(${legendBoxLeftMargin}, ${legendBoxTopMargin})`);
     data.forEach((d: legendObject, groupIndex: number) => {
         // Add legend
         legendGroup

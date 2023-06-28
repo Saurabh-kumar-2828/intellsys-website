@@ -1,11 +1,9 @@
-import {axisLeft, axisRight} from "d3-axis";
-import {ScaleBand, scaleBand, ScaleLinear, scaleLinear, scaleOrdinal} from "d3-scale";
+import type {ScaleBand, ScaleLinear} from "d3-scale";
+import {scaleBand, scaleLinear} from "d3-scale";
 import {select} from "d3-selection";
 import {line} from "d3-shape";
-import React, { useEffect, useRef } from "react";
-import {legend} from "./legend";
-import {bisector} from "d3-array";
-import {plotMargins, Scale} from "~/utilities/utilities";
+import {useEffect, useRef} from "react";
+import {Scale, plotMargins} from "~/utilities/utilities";
 
 type lineDataObject = {
     dates: Array<string>;
@@ -24,7 +22,16 @@ interface props {
     padding?: number | 0;
 }
 
-export function LineGraphComponent(props: {data: lineDataObject; className: string; container: string | null; xScale: ScaleBand<string>; scale: string; width: number; height: number; padding: number}) {
+export function LineGraphComponent(props: {
+    data: lineDataObject;
+    className: string;
+    container: string | null;
+    xScale: ScaleBand<string>;
+    scale: string;
+    width: number;
+    height: number;
+    padding: number;
+}) {
     const ref = useRef(null);
 
     var data: lineDataObject = props.data;
@@ -102,8 +109,5 @@ export function LineGraphComponent(props: {data: lineDataObject; className: stri
             .style("stroke-width", "1");
     }, [props.data, props.className, props.container, props.xScale, props.scale, props.width, props.height, props.padding]);
 
-
-    return (
-        <g ref={ref} />
-    )
+    return <g ref={ref} />;
 }

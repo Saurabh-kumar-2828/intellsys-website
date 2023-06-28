@@ -66,6 +66,7 @@ export const action: ActionFunction = async ({request}) => {
                 if (company instanceof Error) {
                     return company;
                 }
+
                 // wasCompanyJustCreated = true;
             }
 

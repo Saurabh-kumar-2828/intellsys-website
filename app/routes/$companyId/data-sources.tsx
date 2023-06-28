@@ -4,6 +4,8 @@ import {redirect} from "@remix-run/node";
 import {Form, Link, useLoaderData} from "@remix-run/react";
 import {Facebook} from "react-bootstrap-icons";
 import {Bar, Line} from "react-chartjs-2";
+import {getAccessibleCompanies, getUser} from "~/backend/userDetails.server";
+import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {deleteConnector, getRedirectUri} from "~/backend/utilities/data-management/common.server";
 import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/data-management/facebookOAuth.server";
 import type {Connector} from "~/backend/utilities/data-management/googleOAuth.server";
@@ -11,15 +13,18 @@ import {googleAnalyticsScope} from "~/backend/utilities/data-management/googleOA
 import {getGoogleAuthorizationCodeUrl} from "~/backend/utilities/data-management/googleOAuth.server";
 import {getConnectorsAssociatedWithCompanyId} from "~/backend/utilities/data-management/googleOAuth.server";
 import {googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.server";
+import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
+import {PageScaffold} from "~/components/pageScaffold";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
 import {HorizontalSpacer} from "~/global-common-typescript/components/horizontalSpacer";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import type {Uuid} from "~/utilities/typeDefinitions";
+import type {Company, User, Uuid} from "~/utilities/typeDefinitions";
 import {dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import {ConnectorType} from "~/utilities/typeDefinitions";
+import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 export const action: ActionFunction = async ({request, params}) => {
     const body = await request.formData();
@@ -78,52 +83,94 @@ export const action: ActionFunction = async ({request, params}) => {
 };
 
 type LoaderData = {
+    user: User;
+    accessibleCompanies: Array<Company>;
+    currentCompany: Company;
     googleAdsConnectors: Array<Connector>;
     facebookAdsConnectors: Array<Connector>;
     googleAnalyticsConnectors: Array<Connector>;
-    companyId: Uuid;
 };
 
 export const loader: LoaderFunction = async ({request, params}) => {
+    const accessToken = await getAccessTokenFromCookies(request);
+
+    if (accessToken == null) {
+        // TODO: Add message in login page
+        return redirect(`/sign-in?redirectTo=${getUrlFromRequest(request)}`);
+    }
+
+    const user = await getUser(accessToken.userId);
+    const accessibleCompanies = await getAccessibleCompanies(user);
+
     const companyId = params.companyId;
     if (companyId == null) {
         throw new Response(null, {status: 404});
     }
 
-    const companyIdUuid = getUuidFromUnknown(companyId);
+    const company = getSingletonValueOrNull(accessibleCompanies.filter((company) => company.id == companyId));
+    if (company == null) {
+        throw new Response(null, {status: 404});
+    }
 
-    const googleConnectorDetails = await getConnectorsAssociatedWithCompanyId(companyIdUuid, getUuidFromUnknown(ConnectorType.GoogleAds));
+    const googleConnectorDetails = await getConnectorsAssociatedWithCompanyId(companyId, getUuidFromUnknown(ConnectorType.GoogleAds));
     if (googleConnectorDetails instanceof Error) {
         return googleConnectorDetails;
     }
 
-    const facebookConnectorDetails = await getConnectorsAssociatedWithCompanyId(companyIdUuid, getUuidFromUnknown(ConnectorType.FacebookAds));
+    const facebookConnectorDetails = await getConnectorsAssociatedWithCompanyId(companyId, getUuidFromUnknown(ConnectorType.FacebookAds));
     if (facebookConnectorDetails instanceof Error) {
         return facebookConnectorDetails;
     }
 
-    const googleAnalyticsDetails = await getConnectorsAssociatedWithCompanyId(companyIdUuid, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
+    const googleAnalyticsDetails = await getConnectorsAssociatedWithCompanyId(companyId, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
     if (googleAnalyticsDetails instanceof Error) {
         return googleAnalyticsDetails;
     }
 
     const response: LoaderData = {
+        user: user,
+        accessibleCompanies: accessibleCompanies,
+        currentCompany: company,
         googleAdsConnectors: googleConnectorDetails,
         facebookAdsConnectors: facebookConnectorDetails,
         googleAnalyticsConnectors: googleAnalyticsDetails,
-        companyId: companyIdUuid,
     };
 
     return json(response);
 };
 
-export const links: LinksFunction = () => [
-    {rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Roboto&display=swap"},
-];
+export const links: LinksFunction = () => [{rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Roboto&display=swap"}];
 
 export default function () {
-    const {googleAdsConnectors, facebookAdsConnectors, googleAnalyticsConnectors, companyId} = useLoaderData() as LoaderData;
+    const {user, accessibleCompanies, currentCompany, googleAdsConnectors, facebookAdsConnectors, googleAnalyticsConnectors} = useLoaderData() as LoaderData;
 
+    return (
+        <PageScaffold
+            userDetails={user}
+            accessibleCompanies={accessibleCompanies}
+            currentCompany={currentCompany}
+        >
+            <DataSources
+                googleAdsConnectors={googleAdsConnectors}
+                facebookAdsConnectors={facebookAdsConnectors}
+                googleAnalyticsConnectors={googleAnalyticsConnectors}
+                companyId={currentCompany.id}
+            />
+        </PageScaffold>
+    );
+}
+
+function DataSources({
+    googleAdsConnectors,
+    facebookAdsConnectors,
+    googleAnalyticsConnectors,
+    companyId,
+}: {
+    googleAdsConnectors: Array<Connector>;
+    facebookAdsConnectors: Array<Connector>;
+    googleAnalyticsConnectors: Array<Connector>;
+    companyId: Uuid;
+}) {
     return (
         <div className="tw-p-8 tw-grid tw-grid-rows-auto tw-gap-8">
             <div className="tw-row-start-2 tw-bg-dark-bg-500 tw-p-8 tw-m-4">
@@ -133,21 +180,13 @@ export default function () {
 
                 <div className="tw-grid tw-grid-rows-auto tw-gap-2">
                     {googleAdsConnectors.length == 0 ? (
-                        <div>
-                            No connected account!
-                        </div>
+                        <div>No connected account!</div>
                     ) : (
                         <table className="tw-w-full tw-border tw-border-solid tw-border-white">
                             <tr className="tw-w-full tw-border tw-border-solid tw-border-white">
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">
-                                    Source Id
-                                </th>
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">
-                                    Account Id
-                                </th>
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">
-                                    Actions
-                                </th>
+                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Source Id</th>
+                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account Id</th>
+                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Actions</th>
                             </tr>
 
                             <ItemBuilder
@@ -163,14 +202,10 @@ export default function () {
                                             </Link>
                                         </td>
 
-                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                            {connector.accountId}
-                                        </td>
+                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.accountId}</td>
 
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                            <Form
-                                                method="post"
-                                            >
+                                            <Form method="post">
                                                 <HiddenFormField
                                                     name="action"
                                                     value="deleteGoogleAds"
@@ -203,15 +238,16 @@ export default function () {
 
                 <VerticalSpacer className="tw-h-4" />
 
-                <Form method="post" className="tw-w-full tw-grid tw-grid-cols-[auto_auto] tw-justify-center tw-place-items-center tw-gap-x-4">
+                <Form
+                    method="post"
+                    className="tw-w-full tw-grid tw-grid-cols-[auto_auto] tw-justify-center tw-place-items-center tw-gap-x-4"
+                >
                     <HiddenFormField
                         name="action"
                         value="googleAds"
                     />
 
-                    <div>
-                        Add New Source:
-                    </div>
+                    <div>Add New Source:</div>
 
                     <button
                         type="submit"
@@ -243,29 +279,19 @@ export default function () {
 
                 <div className="tw-grid tw-grid-rows-auto tw-gap-2">
                     {facebookAdsConnectors.length == 0 ? (
-                        <div>
-                            No connected account!
-                        </div>
+                        <div>No connected account!</div>
                     ) : (
                         <table className="tw-w-full tw-border tw-border-solid tw-border-white">
                             <tr className="tw-w-full tw-border tw-border-solid tw-border-white">
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">
-                                    Source Id
-                                </th>
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">
-                                    Account Id
-                                </th>
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">
-                                    Actions
-                                </th>
+                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Source Id</th>
+                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account Id</th>
+                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Actions</th>
                             </tr>
 
                             <ItemBuilder
                                 items={facebookAdsConnectors}
                                 itemBuilder={(connector, connectorIndex) => (
-                                    <tr
-                                        key={connectorIndex}
-                                    >
+                                    <tr key={connectorIndex}>
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                             <Link
                                                 to={`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connector.id}`}
@@ -275,14 +301,10 @@ export default function () {
                                             </Link>
                                         </td>
 
-                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                            {connector.accountId}
-                                        </td>
+                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.accountId}</td>
 
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                            <Form
-                                                method="post"
-                                            >
+                                            <Form method="post">
                                                 <HiddenFormField
                                                     name="action"
                                                     value="deleteFacebookAds"
@@ -315,16 +337,17 @@ export default function () {
 
                 <VerticalSpacer className="tw-h-4" />
 
-                <Form method="post" className="tw-w-full tw-grid tw-grid-cols-[auto_auto] tw-justify-center tw-place-items-center tw-gap-x-4">
+                <Form
+                    method="post"
+                    className="tw-w-full tw-grid tw-grid-cols-[auto_auto] tw-justify-center tw-place-items-center tw-gap-x-4"
+                >
                     <input
                         type="hidden"
                         name="action"
                         value="facebook"
                     />
 
-                    <div>
-                        Add New Source:
-                    </div>
+                    <div>Add New Source:</div>
 
                     <button
                         type="submit"
@@ -337,7 +360,6 @@ export default function () {
                         <Facebook className="tw-w-6 tw-h-6 tw-flex-none" />
                         <div className="tw-whitespace-nowrap tw-flex-none tw-font-bold">Login with Facebook</div>
                     </button>
-
                 </Form>
             </div>
 
@@ -348,29 +370,19 @@ export default function () {
 
                 <div className="tw-grid tw-grid-rows-auto tw-gap-2">
                     {googleAnalyticsConnectors.length == 0 ? (
-                        <div>
-                            No connected account!
-                        </div>
+                        <div>No connected account!</div>
                     ) : (
                         <table className="tw-w-full tw-border tw-border-solid tw-border-white">
                             <tr className="tw-w-full tw-border tw-border-solid tw-border-white">
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">
-                                    Source Id
-                                </th>
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">
-                                    Account Id
-                                </th>
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">
-                                    Actions
-                                </th>
+                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Source Id</th>
+                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account Id</th>
+                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Actions</th>
                             </tr>
 
                             <ItemBuilder
                                 items={googleAnalyticsConnectors}
                                 itemBuilder={(connector, connectorIndex) => (
-                                    <tr
-                                        key={connectorIndex}
-                                    >
+                                    <tr key={connectorIndex}>
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                             <Link
                                                 to={`/${companyId}/6cd015ff-ec2e-412a-a777-f983fbdcb63e/${connector.id}`}
@@ -378,17 +390,12 @@ export default function () {
                                             >
                                                 {connector.id}
                                             </Link>
-
                                         </td>
 
-                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                            {connector.accountId}
-                                        </td>
+                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.accountId}</td>
 
                                         <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                            <Form
-                                                method="post"
-                                            >
+                                            <Form method="post">
                                                 <HiddenFormField
                                                     name="action"
                                                     value="deleteGoogleAnalytics"
@@ -421,16 +428,17 @@ export default function () {
 
                 <VerticalSpacer className="tw-h-4" />
 
-                <Form method="post" className="tw-w-full tw-grid tw-grid-cols-[auto_auto] tw-justify-center tw-place-items-center tw-gap-x-4">
+                <Form
+                    method="post"
+                    className="tw-w-full tw-grid tw-grid-cols-[auto_auto] tw-justify-center tw-place-items-center tw-gap-x-4"
+                >
                     <input
                         type="hidden"
                         name="action"
                         value="googleAnalytics"
                     />
 
-                    <div>
-                        Add New Source:
-                    </div>
+                    <div>Add New Source:</div>
 
                     <button
                         type="submit"

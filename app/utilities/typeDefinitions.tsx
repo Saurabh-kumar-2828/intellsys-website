@@ -3,14 +3,17 @@ import type {Uuid as GlobalUuid} from "~/global-common-typescript/typeDefinition
 // TODO: Add support for the concept of "has field been fetched" for better validation
 export type User = {
     id: Uuid;
+    email: string;
     name: string;
-    privileges: Array<Uuid>;
+    // Mapping from companyId to sourceId
+    privileges: {[companyId: Uuid]: Array<Uuid>};
 }
 
 export type Company = {
     id: Uuid;
     name: string;
-    pages: Array<string> | null;
+    domain: string;
+    databaseCredentialId: string;
 };
 
 export type Uuid = GlobalUuid;

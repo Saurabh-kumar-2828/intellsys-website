@@ -46,12 +46,13 @@ export function SignedInHeaderComponent({
                                         isOpen={isOpen}
                                         content={
                                             <div className="tw-grid tw-grid-cols-[auto_auto] tw-items-center tw-gap-x-2">
-                                                <img
+                                                {/* <img
                                                     className="tw-w-4 tw-h-4 tw-rounded-full"
                                                     src={`https://intellsys-optimizer.b-cdn.net/intellsys/companies/${currentCompany.id}.png`}
-                                                />
+                                                /> */}
+                                                <div className="tw-w-4 tw-h-4 tw-rounded-full tw-bg-red-400" />
 
-                                                <div>{currentCompany.name}</div>
+                                                <div>{currentCompany.domain}</div>
                                             </div>
                                         }
                                     />
@@ -68,11 +69,12 @@ export function SignedInHeaderComponent({
                                                     onClick={close}
                                                     key={accessibleCompanyIndex}
                                                 >
-                                                    <img
+                                                    {/* <img
                                                         className="tw-w-4 tw-h-4 tw-rounded-full"
                                                         src={`https://intellsys-optimizer.b-cdn.net/intellsys/companies/${accessibleCompany.id}.png`}
-                                                    />
-                                                    {accessibleCompany.name}
+                                                    /> */}
+                                                    <div className="tw-w-4 tw-h-4 tw-rounded-full tw-bg-red-400" />
+                                                    {accessibleCompany.domain}
                                                 </Link>
                                             )}
                                             spaceBuilder={(spaceIndex) => (
@@ -95,16 +97,17 @@ export function SignedInHeaderComponent({
                         {({open: isOpen, close}) => (
                             <>
                                 <Popover.Button>
-                                    <img
+                                    {/* <img
                                         className="tw-w-8 tw-h-8 tw-rounded-full"
                                         src={`https://intellsys-optimizer.b-cdn.net/intellsys/users/${userDetails.id}.jpg`}
-                                    />
+                                    /> */}
+                                    <div className="tw-w-8 tw-h-8 tw-rounded-full tw-bg-blue-600" />
                                 </Popover.Button>
 
                                 <Popover.Panel className="tw-absolute tw-right-0 tw-top-8 tw-w-full tw-min-w-max">
                                     <div className="tw-w-full tw-h-fit tw-max-h-[20rem] tw-bg-dark-bg-500 tw-shadow-lg tw-rounded-lg tw-overflow-auto tw-pointer-events-auto tw-grid tw-grid-cols-1 tw-grid-flow-row">
                                         <div className="tw-p-3">
-                                            Current logged in as: <b>{userDetails.name}</b>
+                                            Current logged in as: <b>{userDetails.email}</b>
                                         </div>
 
                                         <div className="tw-w-full tw-h-px tw-bg-fg" />
@@ -170,14 +173,14 @@ export function MenuComponent({
             displayName: "Home",
         },
         // null,
-        {
-            url: `/${companyId}/business-insights?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
-            displayName: "Business Insights",
-        },
-        {
-            url: `/${companyId}/google-ads-funnel?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
-            displayName: "Google Ads Funnel",
-        },
+        // {
+        //     url: `/${companyId}/business-insights?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
+        //     displayName: "Business Insights",
+        // },
+        // {
+        //     url: `/${companyId}/google-ads-funnel?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
+        //     displayName: "Google Ads Funnel",
+        // },
         // {
         //     url: `/${companyId}/facebook-ads-funnel?selected_granularity=Daily&min_date=2023-03-01&max_date=2023-03-31`,
         //     displayName: "Facebook Ads Funnel",

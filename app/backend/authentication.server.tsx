@@ -1,16 +1,18 @@
-import {Companies} from "~/utilities/typeDefinitions";
 import type {Jwt} from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 import type {AccessToken} from "~/backend/utilities/cookieSessionsHelper.server";
+import {getSystemPostgresDatabaseManager} from "~/backend/utilities/data-management/common.server";
 import {execute, getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
-import type {Uuid} from "~/utilities/typeDefinitions";
-import {getSingletonValueOrNull} from "~/utilities/utilities";
-import {generateUuid, getSingletonValue, getUnixTimeInSeconds, safeExecute} from "~/global-common-typescript/utilities/utilities";
-import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
+import {addCredentialToKms, getCredentialFromKms} from "~/global-common-typescript/server/kms.server";
+import type {PostgresDatabaseCredentials} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {getSystemPostgresDatabaseManager} from "~/backend/utilities/data-management/common.server";
-import {getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
+import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {generateUuid, getSingletonValue, getUnixTimeInSeconds} from "~/global-common-typescript/utilities/utilities";
+import type {Company, User, Uuid} from "~/utilities/typeDefinitions";
+import {Companies} from "~/utilities/typeDefinitions";
+import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 // TODO: Remove this, and store the OTPs in database instead
 declare global {
@@ -36,7 +38,7 @@ export async function verifyOtp(email: string, otp: string): Promise<{success: b
     const activeOtps = getActiveOtps();
 
     try {
-        if ((email in activeOtps && activeOtps[email].otp == otp)) {
+        if (email in activeOtps && activeOtps[email].otp == otp) {
             delete activeOtps[email];
 
             // const normalizedemail = `+91${email}`;
@@ -152,7 +154,7 @@ export async function getAccessTokenForUser(userId: string) {
     };
 }
 
-export async function getCompanyIdForDomain(domain: string): Promise<Uuid | null | Error> {
+export async function getCompanyForDomain(domain: string): Promise<Company | null | Error> {
     const postgresDatabaseManager = await getSystemPostgresDatabaseManager();
     if (postgresDatabaseManager instanceof Error) {
         return postgresDatabaseManager;
@@ -161,7 +163,10 @@ export async function getCompanyIdForDomain(domain: string): Promise<Uuid | null
     const result = await postgresDatabaseManager.execute(
         `
             SELECT
-                id
+                id,
+                name,
+                domain,
+                database_credential_id
             FROM
                 companies
             WHERE
@@ -178,30 +183,201 @@ export async function getCompanyIdForDomain(domain: string): Promise<Uuid | null
         return null;
     }
 
-    const row = getSingletonValue(result.rows);
-    return row.id;
+    return rowToCompany(getSingletonValue(result.rows));
 }
 
-export async function createCompany(domain: string): Promise<void | Error> {
+function rowToCompany(row: unknown): Company {
+    const company: Company = {
+        id: row.id,
+        name: row.name,
+        domain: row.domain,
+        databaseCredentialId: row.database_credential_id,
+    };
+
+    return company;
+}
+
+export async function createCompany(domain: string): Promise<Company | Error> {
+    // TODO: Run a transaction for both databases here?
+    const companyId = generateUuid();
+    const result1 = await createDatabaseForCompany(companyId);
+    if (result1 instanceof Error) {
+        return result1;
+    }
+
+    const intellsysStorage1CredentialStr = await getCredentialFromKms(getUuidFromUnknown(getRequiredEnvironmentVariableNew("INTELLSYS_STORAGE_1_CREDENTIAL_ID")));
+    if (intellsysStorage1CredentialStr instanceof Error) {
+        return intellsysStorage1CredentialStr;
+    }
+    const intellsysStorage1Credential = JSON.parse(intellsysStorage1CredentialStr);
+    const databaseCredential: PostgresDatabaseCredentials = {
+        dbHost: intellsysStorage1Credential.dbHost,
+        dbPort: intellsysStorage1Credential.dbPort,
+        dbUsername: intellsysStorage1Credential.dbUsername,
+        dbPassword: intellsysStorage1Credential.dbPassword,
+        dbName: companyId,
+    };
+
+    const databaseCredentialId = generateUuid();
+    const result2 = await addCredentialToKms(databaseCredentialId, JSON.stringify(databaseCredential), `Intellsys - Company database - ${companyId}`);
+    if (result2 instanceof Error) {
+        return result2;
+    }
+
+    const result3 = await addCompanyEntryToIntellsys(companyId, domain, databaseCredentialId);
+    if (result3 instanceof Error) {
+        return result3;
+    }
+
+    const company: Company = {
+        id: companyId,
+        name: null,
+        domain: domain,
+        databaseCredentialId: databaseCredentialId,
+    };
+
+    return company;
+}
+
+async function addCompanyEntryToIntellsys(id: Uuid, domain: string, databaseCredentialId: Uuid): Promise<void | Error> {
+    const postgresDatabaseManager = await getSystemPostgresDatabaseManager();
+    if (postgresDatabaseManager instanceof Error) {
+        return postgresDatabaseManager;
+    }
+
+    const result = await postgresDatabaseManager.execute(
+        `
+            INSERT INTO companies (
+                id,
+                name,
+                domain,
+                database_credential_id
+            )
+            VALUES (
+                $1,
+                NULL,
+                $2,
+                $3
+            )
+        `,
+        [id, domain, databaseCredentialId],
+    );
+
+    if (result instanceof Error) {
+        return result;
+    }
+}
+
+async function createDatabaseForCompany(id: Uuid): Promise<void | Error> {
     const postgresDatabaseManager = await getPostgresDatabaseManager(getUuidFromUnknown(getRequiredEnvironmentVariableNew("INTELLSYS_STORAGE_1_CREDENTIAL_ID")));
     if (postgresDatabaseManager instanceof Error) {
         return postgresDatabaseManager;
     }
 
-    const id = generateUuid();
-
+    // TODO: Escape this properly
     const result = await postgresDatabaseManager.execute(
         `
             CREATE DATABASE
-                "$1"
+                "${id}"
         `,
-        [domain],
+    );
+
+    if (result instanceof Error) {
+        return result;
+    }
+}
+
+export async function getUserForEmail(email: string): Promise<User | null | Error> {
+    const postgresDatabaseManager = await getSystemPostgresDatabaseManager();
+    if (postgresDatabaseManager instanceof Error) {
+        return postgresDatabaseManager;
+    }
+
+    const result = await postgresDatabaseManager.execute(
+        `
+            SELECT
+                id,
+                email,
+                name,
+                privileges
+            FROM
+                users
+            WHERE
+                email = $1
+        `,
+        [email],
     );
 
     if (result instanceof Error) {
         return result;
     }
 
-    const row = getSingletonValue(result.rows);
-    return row.id;
+    if (result.rows.length == 0) {
+        return null;
+    }
+
+    return rowToUser(getSingletonValue(result.rows));
+}
+
+function rowToUser(row: unknown): User {
+    const user: User = {
+        id: row.id,
+        email: row.email,
+        name: row.name,
+        privileges: row.privileges,
+    };
+
+    return user;
+}
+
+// Company: The company that the user belongs to
+export async function createUser(email: string, company: Company): Promise<User | Error> {
+    const userId = generateUuid();
+
+    const privileges: {[companyId: Uuid]: Array<Uuid>} = {
+        [company.id]: [],
+    };
+
+    const result = await addUserEntryToIntellsys(userId, email, privileges);
+    if (result instanceof Error) {
+        return result;
+    }
+
+    const user: User = {
+        id: userId,
+        email: email,
+        name: null,
+        privileges: privileges,
+    };
+
+    return user;
+}
+
+async function addUserEntryToIntellsys(id: Uuid, email: string, privileges: {[companyId: Uuid]: Array<Uuid>}): Promise<void | Error> {
+    const postgresDatabaseManager = await getSystemPostgresDatabaseManager();
+    if (postgresDatabaseManager instanceof Error) {
+        return postgresDatabaseManager;
+    }
+
+    const result = await postgresDatabaseManager.execute(
+        `
+            INSERT INTO users (
+                id,
+                email,
+                name,
+                privileges
+            )
+            VALUES (
+                $1,
+                $2,
+                NULL,
+                $3
+            )
+        `,
+        [id, email, privileges],
+    );
+
+    if (result instanceof Error) {
+        return result;
+    }
 }

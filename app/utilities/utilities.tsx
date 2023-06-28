@@ -481,3 +481,11 @@ export const plotMargins = {
 // }
 
 const cloudflareImagesAccountHash = "QSJTsX8HH4EtEhHrJthznA";
+
+export function getDomainFromEmail(email: string): string {
+    if (email.indexOf("@") == -1 || email.indexOf("@") != email.lastIndexOf("@")) {
+        throw new Error(`Invalid email: ${email}`);
+    }
+
+    return email.split("@")[1];
+}

@@ -131,7 +131,7 @@ async function updateCredentialsById(credentialsId: Uuid, credentials: Credentia
 export async function storeCredentials(credentialId: Uuid, credentials: Credentials, companyId: Uuid, credentialType: Uuid): Promise<void | Error> {
     try {
         // 1. Store credentials in kms.
-        const response = addCredentialToKms(credentialId, credentials);
+        const response = addCredentialToKms(credentialId, JSON.stringify(credentials));
         if (response instanceof Error) {
             return response;
         }

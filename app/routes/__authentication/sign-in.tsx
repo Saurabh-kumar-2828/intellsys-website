@@ -3,13 +3,15 @@ import {redirect} from "@remix-run/node";
 import {Form, useActionData} from "@remix-run/react";
 import {useEffect, useState} from "react";
 import {toast} from "react-toastify";
-import {getAccessTokenForUser, getCompanyIdForDomain, sendOtp, verifyOtp} from "~/backend/authentication.server";
+import {createCompany, createUser, getAccessTokenForUser, getCompanyForDomain, getUserForEmail, sendOtp, verifyOtp} from "~/backend/authentication.server";
 import {commitCookieSession, getCookieSession} from "~/backend/utilities/cookieSessions.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {errorToast} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
 import {getStringFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {emailIdValidationPattern} from "~/global-common-typescript/utilities/validationPatterns";
+import {getDomainFromEmail} from "~/utilities/utilities";
 
 type ActionData = {
     otpSent: boolean;
@@ -50,19 +52,50 @@ export const action: ActionFunction = async ({request}) => {
 
             return actionData;
         } else {
+            // Ensure company is properly created
+            const domain = getDomainFromEmail(email);
+
+            let company = await getCompanyForDomain(domain);
+            // let wasCompanyJustCreated = false;
+            if (company instanceof Error) {
+                return company;
+            }
+
+            if (company == null) {
+                company = await createCompany(domain);
+                if (company instanceof Error) {
+                    return company;
+                }
+                // wasCompanyJustCreated = true;
+            }
+
+            // Ensure user is properly created
+            let user = await getUserForEmail(email);
+            // let wasUserJustCreated = false;
+            if (user instanceof Error) {
+                return user;
+            }
+
+            if (user == null) {
+                user = await createUser(email, company);
+                // Within createUser:
+                //     - Create the user in table
+                //     - Add the appropriate permissions for his own company
+
+                // While sharing a page with a user that does not have an existing account,
+                // ensure we give him appropriate access to his own company, and appropriate
+                // access to the shared company
+                if (user instanceof Error) {
+                    return user;
+                }
+                // wasUserJustCreated = true;
+            }
+
             const cookieSession = await getCookieSession(request.headers.get("Cookie"));
 
-            const result = await getAccessTokenForUser("2a57cf0e-92ca-4348-bdcd-bfc295553ecc");
+            const result = await getAccessTokenForUser(user.id);
 
             cookieSession.set("accessToken", result.accessTokenJwt);
-
-            const domain = "test.com";
-            const companyId = getCompanyIdForDomain(domain);
-
-            if (companyId == null) {
-                createCompany(domain);
-                // TODO: Create company
-            }
 
             return redirect("/", {
                 headers: {
@@ -170,6 +203,7 @@ function LoginComponent() {
                         className="is-text-input"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        pattern={emailIdValidationPattern}
                     />
                 </>
             ) : (
@@ -180,6 +214,7 @@ function LoginComponent() {
                             name="email"
                             value={email}
                             required={true}
+                            pattern={emailIdValidationPattern}
                         />
                     </div>
 

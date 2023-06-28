@@ -3,9 +3,12 @@ import {json} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {Form, Link, useLoaderData} from "@remix-run/react";
 import {Facebook} from "react-bootstrap-icons";
+<<<<<<< Updated upstream
 import {Bar, Line} from "react-chartjs-2";
 import {getAccessibleCompanies, getUser} from "~/backend/userDetails.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
+=======
+>>>>>>> Stashed changes
 import {deleteConnector, getRedirectUri} from "~/backend/utilities/data-management/common.server";
 import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/data-management/facebookOAuth.server";
 import type {Connector} from "~/backend/utilities/data-management/googleOAuth.server";

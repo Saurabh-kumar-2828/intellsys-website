@@ -1,6 +1,6 @@
 import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
 import type {Uuid} from "~/utilities/typeDefinitions";
-import {ConnectorType} from "~/utilities/typeDefinitions";
+import type {ConnectorType} from "~/utilities/typeDefinitions";
 import type {ConnectorId} from "~/backend/utilities/data-management/common.server";
 import {getArrayOfConnectorIdsAssociatedWithCompanyId} from "~/backend/utilities/data-management/common.server";
 import {getRedirectUri, getSystemConnectorsDatabaseManager} from "~/backend/utilities/data-management/common.server";

@@ -65,9 +65,9 @@ export async function getDestinationCredentialId(companyId: Uuid): Promise<Uuid 
             SELECT
                 database_credential_id
             FROM
-                company_to_database_mapping
+                companies
             WHERE
-                company_id = $1
+                id = $1
         `,
         [companyId]
     );
@@ -318,30 +318,6 @@ function rowToConnectorId(row: any): ConnectorId {
 }
 
 /**
- * Delete a credential Id associated with a given company Id and credential type.
- */
-export async function deleteCompanyIdToCredentialIdMapping(credentialId: Uuid): Promise<void | Error> {
-    const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
-    if (systemPostgresDatabaseManager instanceof Error) {
-        throw systemPostgresDatabaseManager;
-    }
-
-    const query1 = `
-            DELETE FROM
-                credentials_store
-            WHERE
-                credential_id=$1
-        `;
-
-    const response = await systemPostgresDatabaseManager.execute(query1, [credentialId]);
-
-    if (response instanceof Error) {
-        return response;
-    }
-
-}
-
-/**
  * Delete connectors and subconnector associated with connector id.
  */
 export async function deleteConnectorAndSubconnector(connectorId: Uuid): Promise<void | Error> {
@@ -547,9 +523,6 @@ export async function deleteConnector(connectorId: Uuid, accountId: string, tabl
     if (systemPostgresDatabaseManager instanceof Error) {
         return systemPostgresDatabaseManager;
     }
-
-    // TODO: Discuss if this is required.
-    await deleteCompanyIdToCredentialIdMapping(connector.sourceId);
 
     await deleteCredentialFromKms(connector.sourceId);
 

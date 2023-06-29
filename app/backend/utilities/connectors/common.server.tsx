@@ -16,9 +16,9 @@ import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.ser
 export type ConnectorId = Uuid;
 
 export type SourceAndDestinationId = {
-    sourceId: Uuid,
-    destinationId: Uuid
-}
+    sourceId: Uuid;
+    destinationId: Uuid;
+};
 
 /**
  * Retrives internal Postgres database of the system.
@@ -38,7 +38,6 @@ export async function getSystemPostgresDatabaseManager(): Promise<PostgresDataba
  * Retrives internal Connectors database of the system.
  */
 export async function getSystemConnectorsDatabaseManager(): Promise<PostgresDatabaseManager | Error> {
-
     const systemDatabaseCredentialId = getUuidFromUnknown(getRequiredEnvironmentVariable("SYSTEM_CONNECTORS_DATABASE_CREDENTIAL_ID"));
 
     const connectorsDatabaseManager = await getPostgresDatabaseManager(systemDatabaseCredentialId);
@@ -67,7 +66,7 @@ export async function getDestinationCredentialId(companyId: Uuid): Promise<Uuid 
             WHERE
                 id = $1
         `,
-        [companyId]
+        [companyId],
     );
 
     if (response instanceof Error) {
@@ -101,8 +100,14 @@ export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Erro
     return Error("Invalid data source!");
 }
 
-export async function mapCompanyIdToConnectorId(systemPostgresDatabaseManager: PostgresDatabaseManager, companyId: Uuid, connectorId: Uuid, connectorType: ConnectorType, comments?: string, extraInformation?: string): Promise<void | Error> {
-
+export async function mapCompanyIdToConnectorId(
+    systemPostgresDatabaseManager: PostgresDatabaseManager,
+    companyId: Uuid,
+    connectorId: Uuid,
+    connectorType: ConnectorType,
+    comments?: string,
+    extraInformation?: string,
+): Promise<void | Error> {
     const response = await systemPostgresDatabaseManager.execute(
         `
             INSERT INTO
@@ -115,8 +120,8 @@ export async function mapCompanyIdToConnectorId(systemPostgresDatabaseManager: P
                 $5
             )
         `,
-        [companyId, connectorId, connectorType, comments, extraInformation]
-    )
+        [companyId, connectorId, connectorType, comments, extraInformation],
+    );
 
     if (response instanceof Error) {
         return response;
@@ -130,8 +135,8 @@ export async function initializeConnectorAndSubConnector(
     destinationCredentialId: Uuid,
     comments: string,
     connectorTableType: ConnectorTableType,
-    connectorType: ConnectorType
-    ): Promise<void | Error> {
+    connectorType: ConnectorType,
+): Promise<void | Error> {
     const currentTimestamp = getCurrentIsoTimestamp();
 
     const historicalCursorThreshold = DateTime.fromISO(currentTimestamp).minus({days: 15}).toJSDate().toISOString() as Iso8601DateTime;
@@ -150,7 +155,7 @@ export async function initializeConnectorAndSubConnector(
                 $7
             )
         `,
-        [connectorId, currentTimestamp, currentTimestamp, connectorType, sourceCredentialId, destinationCredentialId, comments]
+        [connectorId, currentTimestamp, currentTimestamp, connectorType, sourceCredentialId, destinationCredentialId, comments],
     );
 
     if (connectorResponse instanceof Error) {
@@ -171,13 +176,12 @@ export async function initializeConnectorAndSubConnector(
                 $7
             )
         `,
-        [connectorId, connectorTableType, currentTimestamp, currentTimestamp, currentTimestamp, historicalCursorThreshold, comments]
+        [connectorId, connectorTableType, currentTimestamp, currentTimestamp, currentTimestamp, historicalCursorThreshold, comments],
     );
 
     if (subConnectorResponse instanceof Error) {
         return subConnectorResponse;
     }
-
 }
 
 export async function deleteCompanyIdToConnectorIdMapping(connectorId: Uuid): Promise<void | Error> {
@@ -198,7 +202,6 @@ export async function deleteCompanyIdToConnectorIdMapping(connectorId: Uuid): Pr
     if (response instanceof Error) {
         return response;
     }
-
 }
 
 /**
@@ -297,14 +300,13 @@ export async function getSourceAndDestinationId(connectorId: Uuid): Promise<Sour
 
     // TODO: Refactor the implementation.
     return rowToSourceAndDestinationId(row);
-
 }
 
 function rowToSourceAndDestinationId(row: Credentials): SourceAndDestinationId {
     const result: SourceAndDestinationId = {
         sourceId: getUuidFromUnknown(row.source_credentials_id),
-        destinationId: getUuidFromUnknown(row.destination_credentials_id)
-    }
+        destinationId: getUuidFromUnknown(row.destination_credentials_id),
+    };
 
     return result;
 }
@@ -496,10 +498,7 @@ async function dropConnectorTable(accountId: string, destinationDatabaseCredenti
     }
 }
 
-export async function getArrayOfConnectorIdsAssociatedWithCompanyId(
-    companyId: Uuid,
-    connectorType: Uuid
-): Promise<Array<Connector> | Error> {
+export async function getArrayOfConnectorIdsAssociatedWithCompanyId(companyId: Uuid, connectorType: Uuid): Promise<Array<Connector> | Error> {
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
     if (systemPostgresDatabaseManager instanceof Error) {
         return systemPostgresDatabaseManager;
@@ -522,7 +521,7 @@ export async function getArrayOfConnectorIdsAssociatedWithCompanyId(
     if (connectorIdsResponse instanceof Error) {
         return connectorIdsResponse;
     }
-    if(connectorIdsResponse.rowCount == 0){
+    if (connectorIdsResponse.rowCount == 0) {
         return [];
     }
 

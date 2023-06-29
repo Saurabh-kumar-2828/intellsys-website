@@ -132,7 +132,7 @@ export async function storeCredentials(credentialId: Uuid, credentials: Credenti
     try {
         console.log(credentialId, JSON.stringify(credentials));
         // 1. Store credentials in kms.
-        const response = addCredentialToKms(credentialId, JSON.stringify(credentials));
+        const response = await addCredentialToKms(credentialId, JSON.stringify(credentials));
         if (response instanceof Error) {
             return response;
         }

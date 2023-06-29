@@ -113,8 +113,6 @@ export default function () {
     const {data, accessibleAccounts} = useLoaderData() as LoaderData;
     const [selectedAccount, setSelectedAccount] = useState<GoogleAdsAccessibleAccount | null>(null);
 
-    console.log(accessibleAccounts);
-
     return (
         <div>
             <RadioGroup

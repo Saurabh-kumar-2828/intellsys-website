@@ -1,7 +1,7 @@
 import type {Jwt} from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 import type {AccessToken} from "~/backend/utilities/cookieSessionsHelper.server";
-import {getSystemPostgresDatabaseManager} from "~/backend/utilities/data-management/common.server";
+import {getSystemPostgresDatabaseManager} from "~/backend/utilities/connectors/common.server";
 import {execute, getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
 import {addCredentialToKms, getCredentialFromKms} from "~/global-common-typescript/server/kms.server";
@@ -212,11 +212,11 @@ export async function createCompany(domain: string): Promise<Company | Error> {
 
     const intellsysStorage1Credential = JSON.parse(intellsysStorage1CredentialStr);
     const databaseCredential = {
-        "DB_HOST": intellsysStorage1Credential.DB_HOST,
-        "DB_PORT": intellsysStorage1Credential.DB_PORT,
-        "DB_USERNAME": intellsysStorage1Credential.DB_USERNAME,
-        "DB_PASSWORD": intellsysStorage1Credential.DB_PASSWORD,
-        "DB_NAME": companyId,
+        DB_HOST: intellsysStorage1Credential.DB_HOST,
+        DB_PORT: intellsysStorage1Credential.DB_PORT,
+        DB_USERNAME: intellsysStorage1Credential.DB_USERNAME,
+        DB_PASSWORD: intellsysStorage1Credential.DB_PASSWORD,
+        DB_NAME: companyId,
     };
 
     const databaseCredentialId = generateUuid();

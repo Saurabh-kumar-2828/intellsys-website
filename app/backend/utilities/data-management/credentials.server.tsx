@@ -3,7 +3,7 @@ import {execute} from "~/backend/utilities/databaseManager.server";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {getSingletonValue} from "~/utilities/utilities";
 import {addCredentialToKms, getCredentialFromKms, updateCredentialInKms} from "~/global-common-typescript/server/kms.server";
-import {getSystemPostgresDatabaseManager} from "~/backend/utilities/data-management/common.server";
+import {getSystemPostgresDatabaseManager} from "~/backend/utilities/connectors/common.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 
 export interface Credentials {
@@ -137,11 +137,11 @@ export async function storeCredentials(credentialId: Uuid, credentials: Credenti
             return response;
         }
 
-        // 2. Writes a mapping of company ID, credential type, and credential ID to the `credentials_store` table.
-        const response1 = await writeInCredentialsStoreTable(companyId, credentialType, credentialId);
-        if (response1 instanceof Error) {
-            return response1;
-        }
+        // // 2. Writes a mapping of company ID, credential type, and credential ID to the `credentials_store` table.
+        // const response1 = await writeInCredentialsStoreTable(companyId, credentialType, credentialId);
+        // if (response1 instanceof Error) {
+        //     return response1;
+        // }
     } catch (e) {
         console.log(e);
         throw e;

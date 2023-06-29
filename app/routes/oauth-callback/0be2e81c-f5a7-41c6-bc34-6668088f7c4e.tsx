@@ -4,11 +4,11 @@ import {json, redirect} from "@remix-run/node";
 import {Form, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
-import {ingestAndStoreGoogleAdsData} from "~/backend/utilities/data-management/common.server";
-import type {GoogleAdsAccessibleAccount, GoogleAdsCredentials} from "~/backend/utilities/data-management/googleOAuth.server";
-import {checkConnectorExistsForAccount} from "~/backend/utilities/data-management/googleOAuth.server";
-import {getGoogleAdsRefreshToken} from "~/backend/utilities/data-management/googleOAuth.server";
-import {getAccessibleAccounts} from "~/backend/utilities/data-management/googleOAuth.server";
+import {checkConnectorExistsForAccount} from "~/backend/utilities/connectors/common.server";
+import {ingestAndStoreGoogleAdsData} from "~/backend/utilities/connectors/googleAds.server";
+import type {GoogleAdsAccessibleAccount, GoogleAdsCredentials} from "~/backend/utilities/connectors/googleOAuth.server";
+import {getGoogleAdsRefreshToken} from "~/backend/utilities/connectors/googleOAuth.server";
+import {getAccessibleAccounts} from "~/backend/utilities/connectors/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
@@ -73,41 +73,34 @@ export const action: ActionFunction = async ({request}) => {
 
         const data = body.get("data") as string;
 
-        console.log(-3);
         const selectedAccount = JSON.parse(body.get("selectedAccount") as string);
 
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);
 
-        console.log(-2);
         const accountExists = await checkConnectorExistsForAccount(ConnectorType.GoogleAds, selectedAccount.managerId);
         if (accountExists instanceof Error) {
             return accountExists;
         }
 
-        console.log(-1);
         // Cannot create new connector, if connector with account already exists.
         if (accountExists) {
             throw new Response(null, {status: 404, statusText: "Account already Exists!"});
         }
 
-        console.log(1);
         const googleAdsCredentials: GoogleAdsCredentials = {
             refreshToken: refreshTokenDecoded as string,
             googleAccountId: selectedAccount.customerClientId,
             googleLoginCustomerId: selectedAccount.managerId,
         };
 
-        console.log(2);
         const connectorId = generateUuid();
 
-        console.log(3);
         const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, getUuidFromUnknown(companyId), connectorId);
         if (response instanceof Error) {
             throw response;
         }
 
-        console.log(4);
         return redirect(`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connectorId}`);
     } catch (e) {
         console.log(e);

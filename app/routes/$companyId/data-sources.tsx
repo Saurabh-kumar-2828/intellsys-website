@@ -5,13 +5,12 @@ import {Form, Link, useLoaderData} from "@remix-run/react";
 import {Facebook} from "react-bootstrap-icons";
 import {getAccessibleCompanies, getUser} from "~/backend/userDetails.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
-import {deleteConnector, getRedirectUri} from "~/backend/utilities/data-management/common.server";
-import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/data-management/facebookOAuth.server";
-import type {Connector} from "~/backend/utilities/data-management/googleOAuth.server";
-import {googleAnalyticsScope} from "~/backend/utilities/data-management/googleOAuth.server";
-import {getGoogleAuthorizationCodeUrl} from "~/backend/utilities/data-management/googleOAuth.server";
-import {getConnectorsAssociatedWithCompanyId} from "~/backend/utilities/data-management/googleOAuth.server";
-import {googleAdsScope} from "~/backend/utilities/data-management/googleOAuth.server";
+import {deleteConnector, getConnectorsAssociatedWithCompanyId, getRedirectUri} from "~/backend/utilities/connectors/common.server";
+import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/connectors/facebookOAuth.server";
+import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server";
+import {googleAnalyticsScope} from "~/backend/utilities/connectors/googleOAuth.server";
+import {getGoogleAuthorizationCodeUrl} from "~/backend/utilities/connectors/googleOAuth.server";
+import {googleAdsScope} from "~/backend/utilities/connectors/googleOAuth.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
@@ -98,7 +97,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         return redirect(`/sign-in?redirectTo=${getUrlFromRequest(request)}`);
     }
 
-    const user = await getUser(accessToken.userId);
+    const user = await getUser(getUuidFromUnknown(accessToken.userId));
     const accessibleCompanies = await getAccessibleCompanies(user);
 
     const companyId = params.companyId;
@@ -111,17 +110,17 @@ export const loader: LoaderFunction = async ({request, params}) => {
         throw new Response(null, {status: 404});
     }
 
-    const googleConnectorDetails = await getConnectorsAssociatedWithCompanyId(companyId, getUuidFromUnknown(ConnectorType.GoogleAds));
+    const googleConnectorDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
     if (googleConnectorDetails instanceof Error) {
         return googleConnectorDetails;
     }
 
-    const facebookConnectorDetails = await getConnectorsAssociatedWithCompanyId(companyId, getUuidFromUnknown(ConnectorType.FacebookAds));
+    const facebookConnectorDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.FacebookAds));
     if (facebookConnectorDetails instanceof Error) {
         return facebookConnectorDetails;
     }
 
-    const googleAnalyticsDetails = await getConnectorsAssociatedWithCompanyId(companyId, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
+    const googleAnalyticsDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAnalytics));
     if (googleAnalyticsDetails instanceof Error) {
         return googleAnalyticsDetails;
     }

@@ -1,14 +1,16 @@
 import {
+    createTable,
+    getConnectorsAssociatedWithCompanyId,
     getDestinationCredentialId,
     getRedirectUri,
     getSystemConnectorsDatabaseManager,
     getSystemPostgresDatabaseManager,
     initializeConnectorAndSubConnector,
     mapCompanyIdToConnectorId,
-} from "~/backend/utilities/data-management/common.server";
+} from "~/backend/utilities/connectors/common.server";
 import {storeCredentials} from "~/backend/utilities/data-management/credentials.server";
 import {ingestHistoricalDataFromConnectorsApi} from "~/global-common-typescript/server/connectors.server";
-import type {PostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
+import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
 import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
@@ -107,14 +109,14 @@ export async function facebookOAuthFlow(facebookAdsCredentials: FacebookAdsSourc
         return systemPostgresDatabaseManager;
     }
 
+    await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
+    await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
+
     // Store source credentials in KMS.
     const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), facebookAdsCredentials, companyId, getUuidFromUnknown(ConnectorType.FacebookAds));
     if (response instanceof Error) {
         return response;
     }
-
-    await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
-    await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
 
     const connectorInitializationResponse = await initializeConnectorAndSubConnector(
         systemConnectorsDatabaseManager,
@@ -133,6 +135,8 @@ export async function facebookOAuthFlow(facebookAdsCredentials: FacebookAdsSourc
         await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
         await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
 
+        const response = await deleteCredentialFromKms(sourceCredentialId);
+
         console.log("All transactions rollbacked");
         return connectorInitializationResponse;
     }
@@ -141,33 +145,15 @@ export async function facebookOAuthFlow(facebookAdsCredentials: FacebookAdsSourc
     await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
 
     // Creates a source table in company's database.
-    const createTableResponse = await createTable(companyDatabaseManager, facebookAdsCredentials);
+    const tableName = `${dataSourcesAbbreviations.facebookAds}_${facebookAdsCredentials.adAccountId}`;
+    const createTableResponse = await createTable(companyDatabaseManager, tableName);
     if (createTableResponse instanceof Error) {
         return createTableResponse;
     }
 
-    const dataIngestionResponse = await ingestHistoricalDataFromConnectorsApi(getUuidFromUnknown(connectorId), 45, ConnectorType.FacebookAds);
+    const dataIngestionResponse = await ingestHistoricalDataFromConnectorsApi(getUuidFromUnknown(connectorId), 45, getUuidFromUnknown(ConnectorType.FacebookAds));
     if (dataIngestionResponse instanceof Error) {
         return dataIngestionResponse;
-    }
-}
-
-async function createTable(postgresDatabaseManager: PostgresDatabaseManager, facebookAdsCredentials: FacebookAdsSourceCredentials): Promise<Error | void> {
-    const tableName = `${dataSourcesAbbreviations.facebookAds}_${facebookAdsCredentials.adAccountId}`;
-
-    const response = await postgresDatabaseManager.execute(
-        `
-            CREATE TABLE ${tableName} (
-                id text NOT NULL,
-                ingested_at timestamp NOT NULL,
-                data json NOT NULL,
-                CONSTRAINT ${tableName}_pkey PRIMARY KEY (id)
-            );
-        `,
-    );
-
-    if (response instanceof Error) {
-        return response;
     }
 }
 

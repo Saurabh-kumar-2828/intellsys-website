@@ -1,6 +1,5 @@
 import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
-import type {Integer} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
@@ -13,6 +12,9 @@ import {
     initializeConnectorAndSubConnector,
     mapCompanyIdToConnectorId,
 } from "./common.server";
+import {storeCredentials} from "../data-management/credentials.server";
+import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
+import {ingestHistoricalDataFromConnectorsApi} from "~/global-common-typescript/server/connectors.server";
 
 export type GoogleAnalyticsCredentials = {
     propertyId: string;
@@ -89,14 +91,14 @@ export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyt
             return systemPostgresDatabaseManager;
         }
 
+        await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
+        await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
+
         // Store source credentials in KMS.
         const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
         if (response instanceof Error) {
             return response;
         }
-
-        await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
-        await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
 
         const connectorInitializationResponse = await initializeConnectorAndSubConnector(
             systemConnectorsDatabaseManager,
@@ -115,6 +117,8 @@ export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyt
             await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
             await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
 
+            const response = await deleteCredentialFromKms(sourceCredentialId);
+
             console.log("All transactions rollbacked");
             return connectorInitializationResponse;
         }
@@ -129,45 +133,10 @@ export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyt
             return createTableResponse;
         }
 
-        const dataIngestionResponse = await ingestGoogleAnalyticsData(getUuidFromUnknown(connectorId), 45);
+        const dataIngestionResponse = await ingestHistoricalDataFromConnectorsApi(getUuidFromUnknown(connectorId), 45, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
         if (dataIngestionResponse instanceof Error) {
             return dataIngestionResponse;
         }
-    } catch (e) {
-        console.log(e);
-    }
-}
-
-/**
- * Store the Google Analytics data in the company's database through intellsys-connectors.
- * @param connectorId: Unique id of the connector object.
- * @param duration: Duration to ingest data.
- * @returns : No. of rows deleted and inserted.
- */
-export async function ingestGoogleAnalyticsData(connectorId: Uuid, duration: Integer, connector?: string): Promise<void | Error> {
-    try {
-        const url = `${getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_URL")}/${ConnectorType.GoogleAnalytics}/historical`;
-
-        const body = new FormData();
-        body.set("connectorId", connectorId);
-        body.set("duration", duration.toString());
-
-        const headers = new Headers();
-        headers.append("Authorization", getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_TOKEN"));
-
-        const response = await fetch(url, {
-            method: "POST",
-            headers: headers,
-            body: body,
-            redirect: "follow",
-        });
-
-        if (!response.ok) {
-            return Error(await response.text());
-        }
-
-        const ingestionResult = await response.json();
-        console.log(ingestionResult);
     } catch (e) {
         console.log(e);
     }

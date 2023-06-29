@@ -16,7 +16,7 @@ import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getNonEmptyStringOrNull} from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {getDestinationCredentialId} from "~/backend/utilities/data-management/common.server";
+import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 
 export const meta: MetaFunction = () => {
     return {

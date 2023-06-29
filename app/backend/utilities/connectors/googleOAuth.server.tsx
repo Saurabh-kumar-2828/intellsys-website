@@ -1,11 +1,7 @@
 import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
 import type {Uuid} from "~/utilities/typeDefinitions";
-import type {ConnectorType} from "~/utilities/typeDefinitions";
-import type {ConnectorId} from "~/backend/utilities/data-management/common.server";
-import {getArrayOfConnectorIdsAssociatedWithCompanyId} from "~/backend/utilities/data-management/common.server";
-import {getRedirectUri, getSystemConnectorsDatabaseManager} from "~/backend/utilities/data-management/common.server";
+import {getRedirectUri} from "~/backend/utilities/connectors/common.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
-import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 // TODO: Fix timezone in database
@@ -104,100 +100,5 @@ export function convertToAccessbileAccount(row: Credentials) {
         managerName: row.manager_name as string,
     };
 
-    return result;
-}
-
-/**
- * Checks if connector already exists for given accountId.
- */
-export async function checkConnectorExistsForAccount(connectorType: ConnectorType, accountId: string): Promise<boolean | Error> {
-    const connectorDatabaseManager = await getSystemConnectorsDatabaseManager();
-    if (connectorDatabaseManager instanceof Error) {
-        return connectorDatabaseManager;
-    }
-
-    const response = await connectorDatabaseManager.execute(
-        `
-        SELECT
-            *
-        FROM
-            connectors
-        WHERE
-            connector_type = $1
-            AND
-            extra_information->>'accountId' = $2
-    `,
-        [connectorType, accountId],
-    );
-
-    if (response instanceof Error) {
-        return response;
-    }
-
-    const row = getSingletonValueOrNull(response.rows);
-
-    if (row == null) {
-        return false;
-    }
-
-    return true;
-}
-
-export async function getConnectorsAssociatedWithCompanyId(companyId: Uuid, connectorType: Uuid): Promise<Array<Connector> | Error> {
-    const connectorIds = await getArrayOfConnectorIdsAssociatedWithCompanyId(companyId, connectorType);
-    if (connectorIds instanceof Error) {
-        return connectorIds;
-    }
-
-    if (connectorIds.length == 0) {
-        return [];
-    }
-
-    const connectors = await getAccountIdForConnector(connectorIds, connectorType);
-    if (connectors instanceof Error) {
-        return connectors;
-    }
-
-    return connectors;
-}
-
-/**
- * Retrieves the account id associated with given connector.
- */
-export async function getAccountIdForConnector(connectorIds: Array<ConnectorId>, connectorType: Uuid): Promise<Array<Connector> | Error> {
-    const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
-
-    if (systemConnectorsDatabaseManager instanceof Error) {
-        return systemConnectorsDatabaseManager;
-    }
-
-    const query = `
-        SELECT
-            id,
-            extra_information->>'accountId' AS accountId
-        FROM
-            connectors
-        WHERE
-            id IN (${connectorIds.map((item) => `'${item}'`).join(", ")})
-            AND
-            connector_type = '${connectorType}'
-    `;
-
-    const connectorDetails = await systemConnectorsDatabaseManager.execute(query);
-
-    if (connectorDetails instanceof Error) {
-        return connectorDetails;
-    }
-
-    const result: Array<Connector> = connectorDetails.rows.map((row) => rowToConnector(row as Credentials));
-
-    return result;
-}
-
-function rowToConnector(row: Credentials): Connector {
-    const result: Connector = {
-        id: getUuidFromUnknown(row.id),
-        accountId: row.accountid as string,
-    };
     return result;
 }

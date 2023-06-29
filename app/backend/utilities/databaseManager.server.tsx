@@ -5,9 +5,11 @@ import {Pool} from "pg";
 import type {Uuid} from "~/utilities/typeDefinitions";
 
 declare global {
+    // @deprecated
     var _databaseConnectionPool: {[key: Uuid]: Pool};
 }
 
+// @deprecated
 export type PostgresDatabaseCredentials = {
     dbHost: string;
     dbPort: string;
@@ -16,6 +18,7 @@ export type PostgresDatabaseCredentials = {
     dbPassword: string;
 };
 
+// @deprecated
 export function getErrorFromUnknown(error: unknown) {
     if (error instanceof Error) {
         return error;
@@ -26,6 +29,7 @@ export function getErrorFromUnknown(error: unknown) {
 
 // TODO: Proper error handling
 // TODO: Rename to something better
+// @deprecated
 export async function execute(companyId: Uuid, query: string, queryArguments?: Array<any>): Promise<QueryResult<any> | Error> {
     try {
         const databaseConnectionPool = await getDatabaseConnectionPool(companyId);
@@ -43,6 +47,7 @@ export async function execute(companyId: Uuid, query: string, queryArguments?: A
     }
 }
 
+// @deprecated
 async function getDatabaseConnectionPool(companyId: Uuid): Promise<Pool | Error> {
     if (global._databaseConnectionPool == null) {
         global._databaseConnectionPool = {};
@@ -60,6 +65,7 @@ async function getDatabaseConnectionPool(companyId: Uuid): Promise<Pool | Error>
     return global._databaseConnectionPool[companyId];
 }
 
+// @deprecated
 async function getNewDatabaseConnectionPool(companyId: Uuid): Promise<Pool | Error> {
     const companyDatabaseCredentialsId = companyDatabaseCredentialsMap[companyId];
     const credentials = await getDatabaseCredentials(companyDatabaseCredentialsId);

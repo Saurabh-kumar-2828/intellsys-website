@@ -93,11 +93,15 @@ export const loader: LoaderFunction = async ({request, params}) => {
     );
 
     if (googleAdsData instanceof Error) {
-        throw new Response(null, {status: 402});
+        throw new Response("970986e8-eddb-4597-ba18-e5b34ad972c0", {
+            status: 400,
+        });
     }
 
     if (!googleAdsData) {
-        throw new Response(null, {status: 402});
+        throw new Response("163fc3d9-1bdf-495b-b1e6-94b9eba47af7", {
+            status: 400,
+        });
     }
 
     // TODO: Add filters

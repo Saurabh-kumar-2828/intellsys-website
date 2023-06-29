@@ -71,7 +71,7 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
             ConnectorType.GoogleAds
         );
 
-        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.GoogleAds, "Google Ads", `{"accountId": "${credentials.googleLoginCustomerId}"}`);
+        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.GoogleAds, "Google Ads", `{"accountId": "${credentials.googleAccountId}"}`);
 
         if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {
             await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);

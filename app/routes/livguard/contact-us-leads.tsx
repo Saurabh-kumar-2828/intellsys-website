@@ -1,6 +1,6 @@
 import type {LoaderFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
-import {useLoaderData} from "@remix-run/react";
+import {Form, useLoaderData} from "@remix-run/react";
 import React, {useState} from "react";
 import {getContactUsLeadsWithInfo} from "~/backend/livguard.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
@@ -128,7 +128,7 @@ export default function () {
                     Add Row
                 </button>
                 {/* <fetcher.Form */}
-                <form
+                <Form
                     method="post"
                     action="/update-locations"
                     className="tw-absolute tw-right-0 tw-top-4 tw-bottom-4 tw-flex"
@@ -156,7 +156,7 @@ export default function () {
                     >
                         Save All
                     </button>
-                </form>
+                </Form>
                 {/* </fetcher.Form> */}
             </div>
 

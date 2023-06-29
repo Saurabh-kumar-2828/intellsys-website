@@ -212,7 +212,7 @@ export async function getConnectorId(companyId: Uuid, connectorType: ConnectorTy
 
     const query1 = `
             SELECT
-                *
+                connector_id AS id
             FROM
                 company_to_connector_mapping
             WHERE
@@ -230,13 +230,12 @@ export async function getConnectorId(companyId: Uuid, connectorType: ConnectorTy
     const row = getSingletonValue(credentialIdRaw.rows);
 
     return rowToConnectorId(row);
-
 }
 
 /**
  * Checks if connector already exists for given accountId.
  */
-export async function checkConnectorExistsForAccount(companyId: Uuid, accountId: string): Promise<boolean | Error> {
+export async function checkConnectorExistsForAccount(companyId: Uuid, connectorType: Uuid, accountId: string): Promise<boolean | Error> {
     const postgresDatabaseManager = await getSystemPostgresDatabaseManager();
     if (postgresDatabaseManager instanceof Error) {
         return postgresDatabaseManager;
@@ -249,11 +248,11 @@ export async function checkConnectorExistsForAccount(companyId: Uuid, accountId:
         FROM
             company_to_connector_mapping
         WHERE
-            company_id = $1
-            AND
-            extra_information->>'accountId' = $2
+            company_id = $1 AND
+            connector_type = $2 AND
+            extra_information->>'accountId' = $3
     `,
-        [companyId, accountId],
+        [companyId, connectorType, accountId],
     );
 
     if (response instanceof Error) {
@@ -346,7 +345,7 @@ function rowToSourceAndDestinationId(row: Credentials): SourceAndDestinationId {
 // }
 
 function rowToConnectorId(row: any): ConnectorId {
-    const id: ConnectorId = getUuidFromUnknown(row.connector_id);
+    const id: ConnectorId = getUuidFromUnknown(row.id);
 
     return id;
 }
@@ -354,7 +353,7 @@ function rowToConnectorId(row: any): ConnectorId {
 /**
  * Delete connectors and subconnector associated with connector id.
  */
-export async function deleteConnectorAndSubconnector(connectorId: Uuid): Promise<void | Error> {
+export async function deleteConnectorAndSubConnector(connectorId: Uuid): Promise<void | Error> {
     const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
     if (systemConnectorsDatabaseManager instanceof Error) {
         throw systemConnectorsDatabaseManager;
@@ -420,40 +419,37 @@ export async function getConnectorsAssociatedWithCompanyId(companyId: Uuid, conn
 /**
  * Retrieves the account id associated with given connector.
  */
-export async function getAccountIdForConnector(connectorIds: Array<ConnectorId>, connectorType: Uuid): Promise<Array<Connector> | Error> {
+export async function getAccountIdForConnector(connectorId: ConnectorId): Promise<Connector | Error> {
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
 
     if (systemPostgresDatabaseManager instanceof Error) {
         return systemPostgresDatabaseManager;
     }
 
-    const query = `
-        SELECT
-            company_id,
-            extra_information->>'accountId' AS accountId
-        FROM
-            company_to_connector_mapping
-        WHERE
-            company_id IN (${connectorIds.map((item) => `'${item}'`).join(", ")})
-            AND
-            connector_type = '${connectorType}'
-    `;
+    const result = await systemPostgresDatabaseManager.execute(
+        `
+            SELECT
+                connector_id AS id,
+                extra_information->>'accountId' AS account_id
+            FROM
+                company_to_connector_mapping
+            WHERE
+                connector_id = $1
+        `,
+        [connectorId],
+    );
 
-    const connectorDetails = await systemPostgresDatabaseManager.execute(query);
-
-    if (connectorDetails instanceof Error) {
-        return connectorDetails;
+    if (result instanceof Error) {
+        return result;
     }
 
-    const result: Array<Connector> = connectorDetails.rows.map((row) => rowToConnector(row as Credentials));
-
-    return result;
+    return rowToConnector(getSingletonValue(result.rows));
 }
 
-function rowToConnector(row: Credentials): Connector {
+function rowToConnector(row: unknown): Connector {
     const result: Connector = {
         id: getUuidFromUnknown(row.id),
-        accountId: row.accountid as string,
+        accountId: row.account_id,
     };
     return result;
 }
@@ -474,7 +470,7 @@ export async function deleteConnector(connectorId: Uuid, accountId: string, tabl
     await deleteCredentialFromKms(connector.sourceId);
 
     await deleteCompanyIdToConnectorIdMapping(connectorId);
-    await deleteConnectorAndSubconnector(connectorId);
+    await deleteConnectorAndSubConnector(connectorId);
 
     // Delete data from google ads data
     await dropConnectorTable(accountId, connector.destinationId, tablePrefix);
@@ -489,6 +485,9 @@ async function dropConnectorTable(accountId: string, destinationDatabaseCredenti
     const query = `
         DROP TABLE ${tablePrefix}_${accountId}
     `;
+    console.log("????????????????");
+    console.log(query);
+    console.log("????????????????");
 
     const response = await databaseManager.execute(query);
 
@@ -510,12 +509,11 @@ export async function getArrayOfConnectorIdsAssociatedWithCompanyId(
         `
             SELECT
                 connector_id AS id,
-                extra_information->>'accountId' AS accountId
+                extra_information->>'accountId' AS account_id
             FROM
                 company_to_connector_mapping
             WHERE
-                company_id = $1
-                AND
+                company_id = $1 AND
                 connector_type = $2
         `,
         [companyId, connectorType],

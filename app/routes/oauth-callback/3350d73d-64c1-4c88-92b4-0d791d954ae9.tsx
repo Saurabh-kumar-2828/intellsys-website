@@ -19,6 +19,8 @@ import {getFromCache, putInCache, removeFromCache} from "~/utilities/timedCache"
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
+// Facebook ads
+
 type LoaderData = {
     data: string;
     companyId: Uuid;
@@ -88,7 +90,7 @@ export const action: ActionFunction = async ({request, params}) => {
     const dataDecoded = decrypt(data);
 
     // TODO: Confirm its implementation.
-    const accountExists = await checkConnectorExistsForAccount(ConnectorType.FacebookAds, selectedAccount.accountId);
+    const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), ConnectorType.FacebookAds, selectedAccount.accountId);
     if (accountExists instanceof Error) {
         return Error("Account already exists");
     }

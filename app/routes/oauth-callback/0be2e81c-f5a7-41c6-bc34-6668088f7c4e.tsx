@@ -75,10 +75,14 @@ export const action: ActionFunction = async ({request}) => {
 
         const selectedAccount = JSON.parse(body.get("selectedAccount") as string);
 
+        console.log("~~~~~~~~~~");
+        console.log(selectedAccount);
+        console.log("~~~~~~~~~~");
+
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);
 
-        const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), selectedAccount.managerId);
+        const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), ConnectorType.GoogleAds, selectedAccount.customerClientId);
         if (accountExists instanceof Error) {
             return accountExists;
         }

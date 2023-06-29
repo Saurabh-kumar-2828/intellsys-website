@@ -91,11 +91,15 @@ export const loader: LoaderFunction = async ({request, params}) => {
     );
 
     if (googleAnalyticsData instanceof Error) {
-        throw new Response(null, {status: 402});
+        throw new Response("caf48cb5-5dd9-411a-b49e-c6a2ae7e23e3", {
+            status: 400,
+        });
     }
 
     if (!googleAnalyticsData) {
-        throw new Response(null, {status: 402});
+        throw new Response("bc6d8bac-f3d8-4efe-8a2a-353b205e7d02", {
+            status: 400,
+        });
     }
 
     // TODO: Add filters

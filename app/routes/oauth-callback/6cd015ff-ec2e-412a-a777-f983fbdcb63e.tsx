@@ -1,14 +1,12 @@
 import {RadioGroup} from "@headlessui/react";
 import type {ActionFunction, LoaderFunction} from "@remix-run/node";
-import {redirect} from "@remix-run/node";
-import {json} from "@remix-run/node";
+import {json, redirect} from "@remix-run/node";
 import {Form, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
 import {checkConnectorExistsForAccount} from "~/backend/utilities/connectors/common.server";
 import type {GoogleAnalyticsAccessiblePropertyIds, GoogleAnalyticsCredentials} from "~/backend/utilities/connectors/googleAnalytics.server";
-import {ingestAndStoreGoogleAnalyticsData} from "~/backend/utilities/connectors/googleAnalytics.server";
-import {getAccessiblePropertyIds} from "~/backend/utilities/connectors/googleAnalytics.server";
+import {getAccessiblePropertyIds, ingestAndStoreGoogleAnalyticsData} from "~/backend/utilities/connectors/googleAnalytics.server";
 import type {GoogleAdsAccessibleAccount} from "~/backend/utilities/connectors/googleOAuth.server";
 import {getGoogleAdsRefreshToken} from "~/backend/utilities/connectors/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
@@ -17,6 +15,8 @@ import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValid
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
+
+// Google analytics
 
 // TODO: Keep only code part
 type LoaderData = {
@@ -75,7 +75,7 @@ export const action: ActionFunction = async ({request}) => {
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);
 
-        const accountExists = await checkConnectorExistsForAccount(ConnectorType.GoogleAnalytics, selectedAccount.managerId);
+        const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), ConnectorType.GoogleAnalytics, selectedAccount.customerClientId);
         if (accountExists instanceof Error) {
             return Error("Account already exists");
         }

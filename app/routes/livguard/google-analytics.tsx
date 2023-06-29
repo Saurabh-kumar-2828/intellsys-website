@@ -1,6 +1,6 @@
 import type {LoaderFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
-import {useLoaderData} from "@remix-run/react";
+import {Form, useLoaderData} from "@remix-run/react";
 import {BarElement, CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
 import csvDownload from "json-to-csv-export";
 import React, {useState} from "react";
@@ -373,7 +373,7 @@ export default function () {
                     Add Row
                 </button>
                 {/* <fetcher.Form */}
-                <form
+                <Form
                     method="post"
                     action="/update-locations"
                     className="tw-absolute tw-right-0 tw-top-4 tw-bottom-4 tw-flex"
@@ -401,7 +401,7 @@ export default function () {
                     >
                         Save All
                     </button>
-                </form>
+                </Form>
                 {/* </fetcher.Form> */}
             </div>
 

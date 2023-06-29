@@ -96,11 +96,17 @@ export const loader: LoaderFunction = async ({request, params}) => {
     );
 
     if (facebookAdsData instanceof Error) {
-        throw new Response(null, {status: 402});
+        throw new Response("c6749c49-1410-48f1-857a-abb1cb03da9e", {
+            status: 400,
+        });
+
     }
 
     if (!facebookAdsData) {
-        throw new Response(null, {status: 402});
+        throw new Response("78d046eb-1490-4d52-933d-9aad667bd626", {
+            status: 400,
+        });
+
     }
 
     // TODO: Add filters

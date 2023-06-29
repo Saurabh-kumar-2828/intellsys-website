@@ -1,16 +1,13 @@
 import type {ActionFunction, LinksFunction, LoaderFunction} from "@remix-run/node";
-import {json} from "@remix-run/node";
-import {redirect} from "@remix-run/node";
+import {json, redirect} from "@remix-run/node";
 import {Form, Link, useLoaderData} from "@remix-run/react";
 import {Facebook} from "react-bootstrap-icons";
 import {getAccessibleCompanies, getUser} from "~/backend/userDetails.server";
-import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {deleteConnector, getConnectorsAssociatedWithCompanyId, getRedirectUri} from "~/backend/utilities/connectors/common.server";
 import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/connectors/facebookOAuth.server";
 import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server";
-import {googleAnalyticsScope} from "~/backend/utilities/connectors/googleOAuth.server";
-import {getGoogleAuthorizationCodeUrl} from "~/backend/utilities/connectors/googleOAuth.server";
-import {googleAdsScope} from "~/backend/utilities/connectors/googleOAuth.server";
+import {getGoogleAuthorizationCodeUrl, googleAdsScope, googleAnalyticsScope} from "~/backend/utilities/connectors/googleOAuth.server";
+import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
@@ -20,8 +17,7 @@ import {HorizontalSpacer} from "~/global-common-typescript/components/horizontal
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {Company, User, Uuid} from "~/utilities/typeDefinitions";
-import {dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
-import {ConnectorType} from "~/utilities/typeDefinitions";
+import {ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 export const action: ActionFunction = async ({request, params}) => {
@@ -62,9 +58,9 @@ export const action: ActionFunction = async ({request, params}) => {
         return redirect(authUrl);
     } else if (body.get("action") == "deleteGoogleAds") {
         const connectorId = body.get("connectorId") as Uuid;
-        const loginCustomerId = body.get("loginCustomerId") as Uuid;
+        const accountId = body.get("accountId") as Uuid;
 
-        await deleteConnector(connectorId, loginCustomerId, dataSourcesAbbreviations.googleAds);
+        await deleteConnector(connectorId, accountId, dataSourcesAbbreviations.googleAds);
     } else if (body.get("action") == "deleteFacebookAds") {
         const connectorId = body.get("connectorId") as Uuid;
         const adAccountId = body.get("adAccountId") as Uuid;
@@ -217,7 +213,7 @@ function DataSources({
                                                 />
 
                                                 <HiddenFormField
-                                                    name="loginCustomerId"
+                                                    name="accountId"
                                                     value={connector.accountId}
                                                 />
 

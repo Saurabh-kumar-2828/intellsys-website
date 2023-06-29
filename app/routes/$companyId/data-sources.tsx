@@ -115,6 +115,9 @@ export const loader: LoaderFunction = async ({request, params}) => {
     if (facebookConnectorDetails instanceof Error) {
         return facebookConnectorDetails;
     }
+    console.log("***************");
+    console.log(facebookConnectorDetails);
+    console.log("***************");
 
     const googleAnalyticsDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAnalytics));
     if (googleAnalyticsDetails instanceof Error) {

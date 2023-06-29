@@ -2,23 +2,24 @@ import * as Tabs from "@radix-ui/react-tabs";
 import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
+import "ag-grid-enterprise";
 import {AgGridReact} from "ag-grid-react";
 import styles from "app/styles.css";
+import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
 import {DateTime} from "luxon";
+import {useState} from "react";
+import {Line} from "react-chartjs-2";
 import type {FacebookAdsAggregatedRow} from "~/backend/business-insights";
-import {getFacebookAdsLectrixData} from "~/backend/business-insights";
-import {getTimeGranularityFromUnknown, TimeGranularity} from "~/backend/business-insights";
+import {TimeGranularity, getFacebookAdsLectrixData, getTimeGranularityFromUnknown} from "~/backend/business-insights";
+import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
+import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getDates, getNonEmptyStringOrNull} from "~/utilities/utilities";
-import "ag-grid-enterprise";
-import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
-import {useState} from "react";
-import {CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
-import {Line} from "react-chartjs-2";
+
+// Facebook ads
 
 export const meta: MetaFunction = () => {
     return {

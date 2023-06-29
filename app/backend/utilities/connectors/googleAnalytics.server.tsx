@@ -110,7 +110,16 @@ export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyt
             ConnectorType.GoogleAnalytics,
         );
 
-        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.GoogleAnalytics, "Google Analytics", `{"accountId": "${credentials.propertyId}"}`);
+        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(
+            systemPostgresDatabaseManager,
+            companyId,
+            connectorId,
+            ConnectorType.GoogleAnalytics,
+            "Google Analytics",
+            JSON.stringify({
+                accountId: credentials.propertyId,
+            }),
+        );
 
         if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {
             await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);

@@ -126,10 +126,18 @@ export async function facebookOAuthFlow(facebookAdsCredentials: FacebookAdsSourc
         `Facebook Ads: ${facebookAdsCredentials.adAccountId}`,
         ConnectorTableType.FacebookAds,
         ConnectorType.FacebookAds,
-        `{"accountId": "${facebookAdsCredentials.adAccountId}"}`,
     );
 
-    const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.FacebookAds, "Facebook Ads");
+    const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(
+        systemPostgresDatabaseManager,
+        companyId,
+        connectorId,
+        ConnectorType.FacebookAds,
+        "Facebook Ads",
+        JSON.stringify({
+            accountId: facebookAdsCredentials.adAccountId,
+        }),
+    );
 
     if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {
         await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);

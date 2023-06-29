@@ -61,7 +61,6 @@ export const loader: LoaderFunction = async ({request, params}) => {
     const accessibleAccounts = await getAccessibleAccounts(credentials, companyId);
     if(accessibleAccounts instanceof Error){
         throw new Response(null, {status: 404, statusText: "No Accessible Accounts!"});
-
     }
 
     const loaderData: LoaderData = {

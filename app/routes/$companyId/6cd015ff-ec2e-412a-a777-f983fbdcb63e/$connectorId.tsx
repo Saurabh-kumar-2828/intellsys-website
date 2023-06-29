@@ -2,21 +2,22 @@ import * as Tabs from "@radix-ui/react-tabs";
 import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
 import {useLoaderData} from "@remix-run/react";
+import "ag-grid-enterprise";
 import {AgGridReact} from "ag-grid-react";
 import styles from "app/styles.css";
 import {DateTime} from "luxon";
 import {useState} from "react";
 import type {GoogleAnalyticsData, GoogleAnalyticsDataAggregatedRow} from "~/backend/business-insights";
-import {getGoogleAnalyticsLectrixData} from "~/backend/business-insights";
-import {getTimeGranularityFromUnknown, TimeGranularity} from "~/backend/business-insights";
+import {TimeGranularity, getGoogleAnalyticsLectrixData, getTimeGranularityFromUnknown} from "~/backend/business-insights";
+import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
+import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getNonEmptyStringOrNull} from "~/utilities/utilities";
-import "ag-grid-enterprise";
-import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
+
+// Google analytics
 
 export const meta: MetaFunction = () => {
     return {

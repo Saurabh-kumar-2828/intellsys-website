@@ -17,6 +17,8 @@ import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 
+// Google ads
+
 export const meta: MetaFunction = () => {
     return {
         title: "Google Ads Report - Intellsys",

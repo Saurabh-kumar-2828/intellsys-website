@@ -110,9 +110,9 @@ export const loader: LoaderFunction = async ({request, params}) => {
         throw new Response(null, {status: 404});
     }
 
-    const googleConnectorDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
-    if (googleConnectorDetails instanceof Error) {
-        return googleConnectorDetails;
+    const googleAdsConnectorDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
+    if (googleAdsConnectorDetails instanceof Error) {
+        return googleAdsConnectorDetails;
     }
 
     const facebookConnectorDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.FacebookAds));
@@ -125,11 +125,13 @@ export const loader: LoaderFunction = async ({request, params}) => {
         return googleAnalyticsDetails;
     }
 
+    console.log(googleAdsConnectorDetails);
+
     const response: LoaderData = {
         user: user,
         accessibleCompanies: accessibleCompanies,
         currentCompany: company,
-        googleAdsConnectors: googleConnectorDetails,
+        googleAdsConnectors: googleAdsConnectorDetails,
         facebookAdsConnectors: facebookConnectorDetails,
         googleAnalyticsConnectors: googleAnalyticsDetails,
     };

@@ -68,11 +68,10 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
             companyDatabaseCredentialId,
             "Google Ads",
             ConnectorTableType.GoogleAds,
-            ConnectorType.GoogleAds,
-            `{"accountId": "${credentials.googleLoginCustomerId}"}`,
+            ConnectorType.GoogleAds
         );
 
-        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.GoogleAds, "Google Ads");
+        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.GoogleAds, "Google Ads", `{"accountId": "${credentials.googleLoginCustomerId}"}`);
 
         if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {
             await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);

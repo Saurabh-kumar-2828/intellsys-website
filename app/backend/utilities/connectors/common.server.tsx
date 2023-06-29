@@ -101,7 +101,7 @@ export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Erro
     return Error("Invalid data source!");
 }
 
-export async function mapCompanyIdToConnectorId(systemPostgresDatabaseManager: PostgresDatabaseManager, companyId: Uuid, connectorId: Uuid, connectorType: ConnectorType, comments?: string): Promise<void | Error> {
+export async function mapCompanyIdToConnectorId(systemPostgresDatabaseManager: PostgresDatabaseManager, companyId: Uuid, connectorId: Uuid, connectorType: ConnectorType, comments?: string, extraInformation?: string): Promise<void | Error> {
 
     const response = await systemPostgresDatabaseManager.execute(
         `
@@ -111,10 +111,11 @@ export async function mapCompanyIdToConnectorId(systemPostgresDatabaseManager: P
                 $1,
                 $2,
                 $3,
-                $4
+                $4,
+                $5
             )
         `,
-        [companyId, connectorId, connectorType, comments]
+        [companyId, connectorId, connectorType, comments, extraInformation]
     )
 
     if (response instanceof Error) {
@@ -129,8 +130,7 @@ export async function initializeConnectorAndSubConnector(
     destinationCredentialId: Uuid,
     comments: string,
     connectorTableType: ConnectorTableType,
-    connectorType: ConnectorType,
-    extraInformation?: string
+    connectorType: ConnectorType
     ): Promise<void | Error> {
     const currentTimestamp = getCurrentIsoTimestamp();
 
@@ -147,11 +147,10 @@ export async function initializeConnectorAndSubConnector(
                 $4,
                 $5,
                 $6,
-                $7,
-                $8
+                $7
             )
         `,
-        [connectorId, currentTimestamp, currentTimestamp, connectorType, sourceCredentialId, destinationCredentialId, comments, extraInformation]
+        [connectorId, currentTimestamp, currentTimestamp, connectorType, sourceCredentialId, destinationCredentialId, comments]
     );
 
     if (connectorResponse instanceof Error) {
@@ -237,24 +236,24 @@ export async function getConnectorId(companyId: Uuid, connectorType: ConnectorTy
 /**
  * Checks if connector already exists for given accountId.
  */
-export async function checkConnectorExistsForAccount(connectorType: ConnectorType, accountId: string): Promise<boolean | Error> {
-    const connectorDatabaseManager = await getSystemConnectorsDatabaseManager();
-    if (connectorDatabaseManager instanceof Error) {
-        return connectorDatabaseManager;
+export async function checkConnectorExistsForAccount(companyId: Uuid, accountId: string): Promise<boolean | Error> {
+    const postgresDatabaseManager = await getSystemPostgresDatabaseManager();
+    if (postgresDatabaseManager instanceof Error) {
+        return postgresDatabaseManager;
     }
 
-    const response = await connectorDatabaseManager.execute(
+    const response = await postgresDatabaseManager.execute(
         `
         SELECT
             *
         FROM
-            connectors
+            company_to_connector_mapping
         WHERE
-            connector_type = $1
+            company_id = $1
             AND
             extra_information->>'accountId' = $2
     `,
-        [connectorType, accountId],
+        [companyId, accountId],
     );
 
     if (response instanceof Error) {
@@ -406,18 +405,13 @@ export async function createTable(postgresDatabaseManager: PostgresDatabaseManag
 }
 
 export async function getConnectorsAssociatedWithCompanyId(companyId: Uuid, connectorType: Uuid): Promise<Array<Connector> | Error> {
-    const connectorIds = await getArrayOfConnectorIdsAssociatedWithCompanyId(companyId, connectorType);
-    if (connectorIds instanceof Error) {
-        return connectorIds;
-    }
-
-    if (connectorIds.length == 0) {
-        return [];
-    }
-
-    const connectors = await getAccountIdForConnector(connectorIds, connectorType);
+    const connectors = await getArrayOfConnectorIdsAssociatedWithCompanyId(companyId, connectorType);
     if (connectors instanceof Error) {
         return connectors;
+    }
+
+    if (connectors.length == 0) {
+        return [];
     }
 
     return connectors;
@@ -427,25 +421,25 @@ export async function getConnectorsAssociatedWithCompanyId(companyId: Uuid, conn
  * Retrieves the account id associated with given connector.
  */
 export async function getAccountIdForConnector(connectorIds: Array<ConnectorId>, connectorType: Uuid): Promise<Array<Connector> | Error> {
-    const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
+    const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
 
-    if (systemConnectorsDatabaseManager instanceof Error) {
-        return systemConnectorsDatabaseManager;
+    if (systemPostgresDatabaseManager instanceof Error) {
+        return systemPostgresDatabaseManager;
     }
 
     const query = `
         SELECT
-            id,
+            company_id,
             extra_information->>'accountId' AS accountId
         FROM
-            connectors
+            company_to_connector_mapping
         WHERE
-            id IN (${connectorIds.map((item) => `'${item}'`).join(", ")})
+            company_id IN (${connectorIds.map((item) => `'${item}'`).join(", ")})
             AND
             connector_type = '${connectorType}'
     `;
 
-    const connectorDetails = await systemConnectorsDatabaseManager.execute(query);
+    const connectorDetails = await systemPostgresDatabaseManager.execute(query);
 
     if (connectorDetails instanceof Error) {
         return connectorDetails;
@@ -506,7 +500,7 @@ async function dropConnectorTable(accountId: string, destinationDatabaseCredenti
 export async function getArrayOfConnectorIdsAssociatedWithCompanyId(
     companyId: Uuid,
     connectorType: Uuid
-): Promise<Array<ConnectorId> | Error> {
+): Promise<Array<Connector> | Error> {
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
     if (systemPostgresDatabaseManager instanceof Error) {
         return systemPostgresDatabaseManager;
@@ -515,7 +509,8 @@ export async function getArrayOfConnectorIdsAssociatedWithCompanyId(
     const connectorIdsResponse = await systemPostgresDatabaseManager.execute(
         `
             SELECT
-                connector_id
+                connector_id AS id,
+                extra_information->>'accountId' AS accountId
             FROM
                 company_to_connector_mapping
             WHERE
@@ -533,7 +528,7 @@ export async function getArrayOfConnectorIdsAssociatedWithCompanyId(
         return [];
     }
 
-    const connectorIds: Array<ConnectorId> = connectorIdsResponse.rows.map((row) => getUuidFromUnknown(row.connector_id));
+    const result: Array<Connector> = connectorIdsResponse.rows.map((row) => rowToConnector(row as Credentials));
 
-    return connectorIds;
+    return result;
 }

@@ -8,7 +8,7 @@ import {dateToIso8601Date, getSingletonValue} from "~/utilities/utilities";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {Integer} from "~/global-common-typescript/typeDefinitions";
 import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server";
-import { getAccountIdForConnector } from "./utilities/connectors/common.server";
+import {getAccountIdForConnector} from "./utilities/connectors/common.server";
 
 export enum TimeGranularity {
     daily = "Daily",

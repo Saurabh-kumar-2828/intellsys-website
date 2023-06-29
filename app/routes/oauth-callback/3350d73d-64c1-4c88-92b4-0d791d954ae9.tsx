@@ -88,7 +88,7 @@ export const action: ActionFunction = async ({request, params}) => {
     const dataDecoded = decrypt(data);
 
     // TODO: Confirm its implementation.
-    const accountExists = await checkConnectorExistsForAccount(ConnectorType.FacebookAds, selectedAccount.accountId);
+    const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), selectedAccount.accountId);
     if (accountExists instanceof Error) {
         return Error("Account already exists");
     }

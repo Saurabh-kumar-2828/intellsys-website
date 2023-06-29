@@ -211,12 +211,12 @@ export async function createCompany(domain: string): Promise<Company | Error> {
     }
 
     const intellsysStorage1Credential = JSON.parse(intellsysStorage1CredentialStr);
-    const databaseCredential: PostgresDatabaseCredentials = {
-        dbHost: intellsysStorage1Credential.DB_HOST,
-        dbPort: intellsysStorage1Credential.DB_PORT,
-        dbUsername: intellsysStorage1Credential.DB_USERNAME,
-        dbPassword: intellsysStorage1Credential.DB_PASSWORD,
-        dbName: companyId,
+    const databaseCredential = {
+        "DB_HOST": intellsysStorage1Credential.DB_HOST,
+        "DB_PORT": intellsysStorage1Credential.DB_PORT,
+        "DB_USERNAME": intellsysStorage1Credential.DB_USERNAME,
+        "DB_PASSWORD": intellsysStorage1Credential.DB_PASSWORD,
+        "DB_NAME": companyId,
     };
 
     const databaseCredentialId = generateUuid();

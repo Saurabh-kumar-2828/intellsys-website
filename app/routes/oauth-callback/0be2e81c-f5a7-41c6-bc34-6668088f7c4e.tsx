@@ -26,7 +26,6 @@ type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({request}) => {
-
     const urlSearchParams = new URL(request.url).searchParams;
 
     const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
@@ -74,34 +73,41 @@ export const action: ActionFunction = async ({request}) => {
 
         const data = body.get("data") as string;
 
+        console.log(-3);
         const selectedAccount = JSON.parse(body.get("selectedAccount") as string);
 
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);
 
+        console.log(-2);
         const accountExists = await checkConnectorExistsForAccount(ConnectorType.GoogleAds, selectedAccount.managerId);
         if (accountExists instanceof Error) {
-            return Error("Account already exists");
+            return accountExists;
         }
 
+        console.log(-1);
         // Cannot create new connector, if connector with account already exists.
         if (accountExists) {
             throw new Response(null, {status: 404, statusText: "Account already Exists!"});
         }
 
+        console.log(1);
         const googleAdsCredentials: GoogleAdsCredentials = {
             refreshToken: refreshTokenDecoded as string,
             googleAccountId: selectedAccount.customerClientId,
             googleLoginCustomerId: selectedAccount.managerId,
         };
 
+        console.log(2);
         const connectorId = generateUuid();
 
+        console.log(3);
         const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, getUuidFromUnknown(companyId), connectorId);
         if (response instanceof Error) {
             throw response;
         }
 
+        console.log(4);
         return redirect(`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connectorId}`);
     } catch (e) {
         console.log(e);
@@ -113,6 +119,8 @@ export const action: ActionFunction = async ({request}) => {
 export default function () {
     const {data, accessibleAccounts} = useLoaderData() as LoaderData;
     const [selectedAccount, setSelectedAccount] = useState<GoogleAdsAccessibleAccount | null>(null);
+
+    console.log(accessibleAccounts);
 
     return (
         <div>

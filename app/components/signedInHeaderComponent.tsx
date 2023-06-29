@@ -50,7 +50,9 @@ export function SignedInHeaderComponent({
                                                     className="tw-w-4 tw-h-4 tw-rounded-full"
                                                     src={`https://intellsys-optimizer.b-cdn.net/intellsys/companies/${currentCompany.id}.png`}
                                                 /> */}
-                                                <div className="tw-w-4 tw-h-4 tw-rounded-full tw-bg-red-400" />
+                                                <div className="tw-w-4 tw-h-4 tw-rounded-full tw-bg-gray-600 tw-grid tw-place-items-center tw-text-[0.6rem]">
+                                                    {currentCompany.domain[0].toUpperCase()}
+                                                </div>
 
                                                 <div>{currentCompany.domain}</div>
                                             </div>
@@ -73,7 +75,9 @@ export function SignedInHeaderComponent({
                                                         className="tw-w-4 tw-h-4 tw-rounded-full"
                                                         src={`https://intellsys-optimizer.b-cdn.net/intellsys/companies/${accessibleCompany.id}.png`}
                                                     /> */}
-                                                    <div className="tw-w-4 tw-h-4 tw-rounded-full tw-bg-red-400" />
+                                                    <div className="tw-w-4 tw-h-4 tw-rounded-full tw-bg-gray-600 tw-grid tw-place-items-center tw-text-[0.6rem]">
+                                                        {accessibleCompany.domain[0].toUpperCase()}
+                                                    </div>
                                                     {accessibleCompany.domain}
                                                 </Link>
                                             )}
@@ -101,7 +105,10 @@ export function SignedInHeaderComponent({
                                         className="tw-w-8 tw-h-8 tw-rounded-full"
                                         src={`https://intellsys-optimizer.b-cdn.net/intellsys/users/${userDetails.id}.jpg`}
                                     /> */}
-                                    <div className="tw-w-8 tw-h-8 tw-rounded-full tw-bg-blue-600" />
+                                    {/* <div className="tw-w-8 tw-h-8 tw-rounded-full tw-bg-blue-600" /> */}
+                                    <div className="tw-w-8 tw-h-8 tw-rounded-full tw-bg-gray-600 tw-grid tw-place-items-center">
+                                        {userDetails.email[0].toUpperCase()}
+                                    </div>
                                 </Popover.Button>
 
                                 <Popover.Panel className="tw-absolute tw-right-0 tw-top-8 tw-w-full tw-min-w-max">

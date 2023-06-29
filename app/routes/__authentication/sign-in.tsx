@@ -1,6 +1,6 @@
 import type {ActionFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
-import {Form, useActionData} from "@remix-run/react";
+import {Form, useActionData, useNavigation} from "@remix-run/react";
 import {useEffect, useState} from "react";
 import {toast} from "react-toastify";
 import {createCompany, createUser, getAccessTokenForUser, getCompanyForDomain, getUserForEmail, sendOtp, verifyOtp} from "~/backend/authentication.server";
@@ -162,6 +162,8 @@ export default function () {
 }
 
 function LoginComponent() {
+    const navigation = useNavigation();
+
     const [hasOtpBeenSent, setHasOtpBeenSent] = useState(false);
 
     const [email, setEmail] = useState("");
@@ -205,6 +207,7 @@ function LoginComponent() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         pattern={emailIdValidationPattern}
+                        autoFocus={true}
                     />
                 </>
             ) : (
@@ -235,13 +238,19 @@ function LoginComponent() {
                         className="is-text-input"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
+                        autoFocus={true}
                     />
                 </>
             )}
 
             <VerticalSpacer />
 
-            <button className="is-button tw-self-center tw-px-16">Sign In</button>
+            <button
+                disabled={navigation.state != "idle"}
+                className="is-button tw-self-center tw-px-16"
+            >
+                Sign In
+            </button>
         </Form>
     );
 }

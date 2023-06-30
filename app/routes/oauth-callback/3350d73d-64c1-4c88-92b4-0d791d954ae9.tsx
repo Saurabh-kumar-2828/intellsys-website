@@ -94,13 +94,14 @@ export const action: ActionFunction = async ({request, params}) => {
     // TODO: Confirm its implementation.
     const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), ConnectorType.FacebookAds, selectedAccount.accountId);
     if (accountExists instanceof Error) {
-        return Error("Account already exists");
+        throw Error("Account already exists");
     }
 
+    console.log(accountExists);
     console.log("n3");
     // Cannot create new connector, if connector with account already exists.
     if (accountExists) {
-        throw new Response(null, {status: 404, statusText: "Account already Exists!"});
+        throw new Response(null, {status: 400, statusText: "Account already Exists!"});
     }
 
     const facebookAdsCredentials: FacebookAdsSourceCredentials = {

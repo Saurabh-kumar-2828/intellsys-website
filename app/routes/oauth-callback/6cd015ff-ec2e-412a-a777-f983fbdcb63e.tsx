@@ -38,12 +38,12 @@ export const loader: LoaderFunction = async ({request}) => {
 
     const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAnalytics));
     if (refreshToken instanceof Error) {
-        return refreshToken;
+        throw refreshToken;
     }
 
     const accessiblePropertyIds = await getAccessiblePropertyIds(refreshToken);
     if (accessiblePropertyIds instanceof Error) {
-        return accessiblePropertyIds;
+        throw accessiblePropertyIds;
     }
 
     // TODO: Filter accessible account
@@ -108,6 +108,9 @@ export const action: ActionFunction = async ({request}) => {
 export default function () {
     const {data, accessiblePropertyIds} = useLoaderData() as LoaderData;
     const [selectedAccount, setSelectedAccount] = useState<GoogleAdsAccessibleAccount | null>(null);
+
+    console.log(data);
+    console.log(accessiblePropertyIds);
 
     return (
         <div>

@@ -1,7 +1,7 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
-import {useLoaderData} from "@remix-run/react";
+import {useLoaderData, useMatches} from "@remix-run/react";
 import "ag-grid-enterprise";
 import {AgGridReact} from "ag-grid-react";
 import styles from "app/styles.css";
@@ -9,15 +9,17 @@ import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, Point
 import {DateTime} from "luxon";
 import {useState} from "react";
 import {Line} from "react-chartjs-2";
-import type {FacebookAdsAggregatedRow} from "~/backend/business-insights";
+import type {FacebookAdsAggregatedRow, FacebookAdsData} from "~/backend/business-insights";
 import {TimeGranularity, getFacebookAdsLectrixData, getTimeGranularityFromUnknown} from "~/backend/business-insights";
 import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
+import {PageScaffold} from "~/components/pageScaffold";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getDates, getNonEmptyStringOrNull} from "~/utilities/utilities";
+import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getDates, getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
 
 // Facebook ads
 
@@ -100,14 +102,12 @@ export const loader: LoaderFunction = async ({request, params}) => {
         throw new Response("c6749c49-1410-48f1-857a-abb1cb03da9e", {
             status: 400,
         });
-
     }
 
     if (!facebookAdsData) {
         throw new Response("78d046eb-1490-4d52-933d-9aad667bd626", {
             status: 400,
         });
-
     }
 
     // TODO: Add filters
@@ -126,6 +126,42 @@ export const loader: LoaderFunction = async ({request, params}) => {
 export default function () {
     const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, facebookAdsData, companyId, connectorId} = useLoaderData() as LoaderData;
 
+    const routeMatches = useMatches();
+    const {user, accessibleCompanies, currentCompany} = getSingletonValue(routeMatches.filter((routeMatch) => routeMatch.id == "routes/$companyId")).data as CompanyLoaderData;
+
+    return (
+        <PageScaffold
+            user={user}
+            accessibleCompanies={accessibleCompanies}
+            currentCompany={currentCompany}
+        >
+            <Connector
+                appliedSelectedGranularity={appliedSelectedGranularity}
+                appliedMinDate={appliedMinDate}
+                appliedMaxDate={appliedMaxDate}
+                facebookAdsData={facebookAdsData}
+                companyId={companyId}
+                connectorId={connectorId}
+            />
+        </PageScaffold>
+    );
+}
+
+function Connector({
+    appliedMinDate,
+    appliedMaxDate,
+    appliedSelectedGranularity,
+    facebookAdsData,
+    companyId,
+    connectorId,
+}: {
+    appliedMinDate: Iso8601Date;
+    appliedSelectedGranularity: TimeGranularity;
+    appliedMaxDate: Iso8601Date;
+    facebookAdsData: FacebookAdsData;
+    companyId: Uuid;
+    connectorId: Uuid;
+}) {
     const [selectedGranularity, setSelectedGranularity] = useState<TimeGranularity>(appliedSelectedGranularity);
     const [selectedMinDate, setSelectedMinDate] = useState<Iso8601Date>(appliedMinDate);
     const [selectedMaxDate, setSelectedMaxDate] = useState<Iso8601Date>(appliedMaxDate);

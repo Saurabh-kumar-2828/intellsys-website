@@ -153,14 +153,14 @@ function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {dat
                     </div>
                 </div>
             ) : (
-                <div className="tw-grid tw-max-w-7xl tw-justify-center">
-                    <div>
+                <div className="tw-grid tw-max-w-7xl tw-justify-center tw-min-w-[50vw] tw-w-full">
+                    <div className="tw-w-full tw-min-w-[50vw]">
                         <SectionHeader label="Select an Account" />
                     </div>
 
                     <VerticalSpacer className="tw-h-8" />
 
-                    <div>
+                    <div className="tw-w-full tw-min-w-[50vw]">
                         <RadioGroup
                             name="selectedAccount"
                             value={selectedAccount}
@@ -175,7 +175,7 @@ function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {dat
                                         key={itemIndex}
                                     >
                                         {({checked}) => (
-                                            <div className="tw-pl-4 tw-pr-8 tw-py-[0.9375rem] tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
+                                            <div className="tw-pl-4 tw-pr-8 tw-py-[0.9375rem] tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-4 tw-items-center">
                                                 {checked ? <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" /> : <Circle className="tw-w-6 tw-h-6 tw-text-blue-500" />}
 
                                                 {`${item.propertyId}, ${item.displayName}`}
@@ -186,7 +186,10 @@ function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {dat
                             />
                         </RadioGroup>
 
-                        <Form method="post">
+                        <Form
+                            method="post"
+                            className="tw-grid"
+                        >
                             <input
                                 type="text"
                                 name="selectedAccount"
@@ -205,7 +208,7 @@ function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {dat
 
                             <button
                                 type="submit"
-                                className="tw-row-start-2 tw-lp-button"
+                                className="tw-row-start-2 tw-lp-button tw-place-self-center"
                             >
                                 Proceed
                             </button>

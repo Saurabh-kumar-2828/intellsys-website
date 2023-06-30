@@ -161,14 +161,14 @@ function OAuthCallback({accessibleAccounts, data, companyId}: {data: string; com
                     </div>
                 </div>
             ) : (
-                <div className="tw-grid tw-max-w-7xl tw-justify-center">
-                    <div>
+                <div className="tw-grid tw-w-full tw-max-w-7xl tw-justify-center tw-min-w-[50vw]">
+                    <div className="tw-w-full tw-min-w-[50vw]">
                         <SectionHeader label="Select an Account" />
                     </div>
 
                     <VerticalSpacer className="tw-h-8" />
 
-                    <div>
+                    <div className="tw-w-full tw-min-w-[50vw]">
                         <RadioGroup
                             name="selectedAccount"
                             value={selectedAccount}
@@ -184,7 +184,7 @@ function OAuthCallback({accessibleAccounts, data, companyId}: {data: string; com
                                         disabled={item.disable}
                                     >
                                         {({checked}) => (
-                                            <div className="tw-p-4 tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
+                                            <div className="tw-p-4 tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-4 tw-items-center">
                                                 {checked ? (
                                                     <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" />
                                                 ) : (
@@ -200,10 +200,12 @@ function OAuthCallback({accessibleAccounts, data, companyId}: {data: string; com
                         </RadioGroup>
                     </div>
 
+                    <VerticalSpacer className="tw-h-8" />
+
                     <div>
                         <Form
                             method="post"
-                            className="tw-row-auto"
+                            className="tw-row-auto tw-grid"
                         >
                             <HiddenFormField
                                 name="selectedAccount"
@@ -223,7 +225,7 @@ function OAuthCallback({accessibleAccounts, data, companyId}: {data: string; com
 
                             <button
                                 type="submit"
-                                className="tw-lp-button tw-items-center"
+                                className="tw-lp-button tw-items-center tw-place-self-center"
                             >
                                 Proceed
                             </button>

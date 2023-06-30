@@ -230,9 +230,9 @@ function CompanyHome({user, accessibleCompanies, currentCompany, googleAdsConnec
 function GoogleAdsSummaryCard({currentCompany, connector, spends, impressions, clicks}: {currentCompany: Company, connector: Connector; spends: number; impressions: number; clicks: number}) {
     return (
         <div className="tw-w-full tw-bg-gray-800 tw-grid tw-grid-cols-3 tw-items-center tw-p-4 tw-rounded-lg">
-            <Link to={`/${currentCompany.id}/${DataSourceIds.googleAds}/${connector.id}`} className="tw-col-span-3">Google Ads: {connector.accountId}</Link>
+            <Link to={`/${currentCompany.id}/${DataSourceIds.googleAds}/${connector.id}`} className="tw-col-span-3">Google Ads: {connector.extraInformation.accountName} ({connector.extraInformation.accountId})</Link>
 
-            <VerticalSpacer className="tw-col-span-3 tw-h-4" />
+            {/* <VerticalSpacer className="tw-col-span-3 tw-h-4" />
 
             <div className="tw-text-center">
                 <div className="tw-text-[1.5rem] tw-font-bold">{spends}</div>
@@ -247,7 +247,7 @@ function GoogleAdsSummaryCard({currentCompany, connector, spends, impressions, c
             <div className="tw-text-center">
                 <div className="tw-text-[1.5rem] tw-font-bold">{clicks}</div>
                 <div>Clicks</div>
-            </div>
+            </div> */}
         </div>
     );
 }
@@ -255,9 +255,9 @@ function GoogleAdsSummaryCard({currentCompany, connector, spends, impressions, c
 function FacebookAdsSummaryCard({currentCompany, connector, spends, impressions, clicks}: {currentCompany: Company, connector: Connector; spends: number; impressions: number; clicks: number}) {
     return (
         <div className="tw-w-full tw-bg-gray-800 tw-grid tw-grid-cols-3 tw-items-center tw-p-4 tw-rounded-lg">
-            <Link to={`/${currentCompany.id}/${DataSourceIds.facebookAds}/${connector.id}`} className="tw-col-span-3">Facebook Ads: {connector.accountId}</Link>
+            <Link to={`/${currentCompany.id}/${DataSourceIds.facebookAds}/${connector.id}`} className="tw-col-span-3">Facebook Ads: {connector.extraInformation.accountName} ({connector.extraInformation.accountId})</Link>
 
-            <VerticalSpacer className="tw-col-span-3 tw-h-4" />
+            {/* <VerticalSpacer className="tw-col-span-3 tw-h-4" />
 
             <div className="tw-text-center">
                 <div className="tw-text-[1.5rem] tw-font-bold">{spends}</div>
@@ -272,7 +272,7 @@ function FacebookAdsSummaryCard({currentCompany, connector, spends, impressions,
             <div className="tw-text-center">
                 <div className="tw-text-[1.5rem] tw-font-bold">{clicks}</div>
                 <div>Clicks</div>
-            </div>
+            </div> */}
         </div>
     );
 }
@@ -280,14 +280,14 @@ function FacebookAdsSummaryCard({currentCompany, connector, spends, impressions,
 function GoogleAnalyticsSummaryCard({currentCompany, connector, sessions}: {currentCompany: Company, connector: Connector; sessions: number}) {
     return (
         <div className="tw-w-full tw-bg-gray-800 tw-grid tw-grid-cols-3 tw-items-center tw-p-4 tw-rounded-lg">
-            <Link to={`/${currentCompany.id}/${DataSourceIds.googleAnalytics}/${connector.id}`} className="tw-col-span-3">Google Analytics: {connector.accountId}</Link>
+            <Link to={`/${currentCompany.id}/${DataSourceIds.googleAnalytics}/${connector.id}`} className="tw-col-span-3">Google Analytics: {connector.extraInformation.accountName} ({connector.extraInformation.accountId})</Link>
 
-            <VerticalSpacer className="tw-col-span-3 tw-h-4" />
+            {/* <VerticalSpacer className="tw-col-span-3 tw-h-4" />
 
             <div className="tw-text-center">
                 <div className="tw-text-[1.5rem] tw-font-bold">{sessions}</div>
                 <div>Sessions</div>
-            </div>
+            </div> */}
         </div>
     );
 }

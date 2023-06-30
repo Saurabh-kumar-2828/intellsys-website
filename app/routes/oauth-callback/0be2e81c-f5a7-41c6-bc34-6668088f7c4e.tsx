@@ -92,10 +92,7 @@ export const action: ActionFunction = async ({request}) => {
 
         const data = body.get("data") as string;
 
-        console.log("a");
         const selectedAccount = JSON.parse(body.get("selectedAccount") as string);
-        console.log(selectedAccount);
-        console.log("b");
 
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);

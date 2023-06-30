@@ -36,11 +36,13 @@ export const loader: LoaderFunction = async ({request}) => {
         throw Error("Authorization failed!");
     }
 
+    console.log("1");
     const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAnalytics));
     if (refreshToken instanceof Error) {
         throw refreshToken;
     }
 
+    console.log("2");
     const accessiblePropertyIds = await getAccessiblePropertyIds(refreshToken);
     if (accessiblePropertyIds instanceof Error) {
         throw accessiblePropertyIds;
@@ -48,12 +50,14 @@ export const loader: LoaderFunction = async ({request}) => {
 
     // TODO: Filter accessible account
 
+    console.log("3");
     // TODO: Get multiple accounts
     const loaderData: LoaderData = {
         data: encrypt(refreshToken) as unknown as string,
         accessiblePropertyIds: accessiblePropertyIds,
     };
 
+    console.log("4");
     return json(loaderData);
 };
 

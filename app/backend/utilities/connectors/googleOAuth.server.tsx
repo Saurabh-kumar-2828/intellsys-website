@@ -62,7 +62,6 @@ export async function getGoogleAdsRefreshToken(authorizationCode: string, compan
     console.log(responseBodyJson);
     console.log("~~~");
 
-
     if (responseBodyJson.refresh_token == undefined) {
         return Error("Refresh token not found");
     }

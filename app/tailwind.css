@@ -92,4 +92,40 @@
     .tw-col-span-24 {
         grid-column: span 24 / span 24;
     }
+
+    .gj-text-primary-gradient {
+        @apply tw-text-primary;
+        /* Asset-link afeb6666-2b9d-4945-a009-f30f3b305412 */
+        /* background: -webkit-linear-gradient(0.5turn, #1f40cb, #00a2ed); */
+        background: linear-gradient(86.28deg, #7adfff -9.41%, #1e40ca 73.14%, #58bce7 156.92%);
+        /* /Asset-link */
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .gj-bg-foreground-gradient-dark {
+        background: linear-gradient(331.74deg, #737a88 11.73%, #3d4352 71.11%, #3d4352 117.18%);
+    }
+    .gj-text-button {
+        font-family: "gj-poppins";
+        font-weight: 600;
+
+        @apply tw-text-[1rem] tw-leading-[1.5rem];
+    }
+
+    .gj-bg-primary-gradient {
+        background: -webkit-linear-gradient(0.5turn, #00a2ed, #1e40ca, #58bce7);
+        animation: animated-gradient 6s ease alternate infinite;
+        background-size: 300% 300%;
+    }
+
+    .is-gray-bg-gradient {
+        background: linear-gradient(141deg, rgba(32, 35, 41, 0.3) 30.62%, rgba(124, 126, 131, 0.3) 88.35%);
+    }
+
+    .gj-bg-campaign-cta-card-gradient-border {
+        border: 1px solid;
+        border-image-source: linear-gradient(145.53deg, #1e40ca 0%, #ffffff 105.25%);
+        border-radius: 12px !important;
+    }
 }

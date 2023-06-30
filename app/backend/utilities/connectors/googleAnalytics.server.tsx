@@ -42,15 +42,22 @@ export async function getAccessiblePropertyIds(refreshToken: string): Promise<Ar
         body: formdata,
     };
 
-    const rawResponse = await fetch(`${googleAdsHelperUrl}/get_google_analytics_property_ids`, requestOptions);
+    const response = await fetch(`${googleAdsHelperUrl}/get_google_analytics_property_ids`, requestOptions);
 
-    if (!rawResponse.ok) {
+    const responseBody = await response.text();
+    const responseBodyJson = JSON.parse(responseBody);
+
+    console.log("~~~");
+    console.log(response.status);
+    console.log(responseBody);
+    console.log(responseBodyJson);
+    console.log("~~~");
+
+    if (!response.ok) {
         return Error("Request to get accessible account failed");
     }
 
-    const response = await rawResponse.json();
-
-    const accessbileAccounts: Array<GoogleAnalyticsAccessiblePropertyIds> = response.map((row) => convertToAccessbilePropertyIds(row));
+    const accessbileAccounts: Array<GoogleAnalyticsAccessiblePropertyIds> = responseBodyJson.map((row) => convertToAccessbilePropertyIds(row));
 
     return accessbileAccounts;
 }
@@ -108,10 +115,18 @@ export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyt
             "Google Analytics",
             ConnectorTableType.GoogleAnalytics,
             ConnectorType.GoogleAnalytics,
-            `{"accountId": "${credentials.propertyId}"}`,
         );
 
-        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.GoogleAnalytics, "Google Analytics");
+        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(
+            systemPostgresDatabaseManager,
+            companyId,
+            connectorId,
+            ConnectorType.GoogleAnalytics,
+            "Google Analytics",
+            JSON.stringify({
+                accountId: credentials.propertyId,
+            }),
+        );
 
         if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {
             await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);

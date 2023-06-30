@@ -7,9 +7,9 @@ import {CheckCircle, Circle} from "react-bootstrap-icons";
 import {checkConnectorExistsForAccount} from "~/backend/utilities/connectors/common.server";
 import {ingestAndStoreGoogleAdsData} from "~/backend/utilities/connectors/googleAds.server";
 import type {GoogleAdsAccessibleAccount, GoogleAdsCredentials} from "~/backend/utilities/connectors/googleOAuth.server";
-import {getGoogleAdsRefreshToken} from "~/backend/utilities/connectors/googleOAuth.server";
-import {getAccessibleAccounts} from "~/backend/utilities/connectors/googleOAuth.server";
+import {getAccessibleAccounts, getGoogleAdsRefreshToken} from "~/backend/utilities/connectors/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
+import {PageScaffold2} from "~/components/pageScaffold2";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
@@ -40,12 +40,12 @@ export const loader: LoaderFunction = async ({request}) => {
 
     const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
     if (refreshToken instanceof Error) {
-        return refreshToken;
+        throw refreshToken;
     }
 
     const accessibleAccounts = await getAccessibleAccounts(refreshToken);
     if (accessibleAccounts instanceof Error) {
-        return accessibleAccounts;
+        throw accessibleAccounts;
     }
 
     // TODO: Filter accessible account
@@ -78,7 +78,7 @@ export const action: ActionFunction = async ({request}) => {
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);
 
-        const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), selectedAccount.managerId);
+        const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), ConnectorType.GoogleAds, selectedAccount.customerClientId);
         if (accountExists instanceof Error) {
             return accountExists;
         }
@@ -111,6 +111,18 @@ export const action: ActionFunction = async ({request}) => {
 
 export default function () {
     const {data, accessibleAccounts} = useLoaderData() as LoaderData;
+
+    return (
+        <PageScaffold2>
+            <OAuthCallback
+                data={data}
+                accessibleAccounts={accessibleAccounts}
+            />
+        </PageScaffold2>
+    );
+}
+
+function OAuthCallback({data, accessibleAccounts}: {data: string; accessibleAccounts: Array<GoogleAdsAccessibleAccount>}) {
     const [selectedAccount, setSelectedAccount] = useState<GoogleAdsAccessibleAccount | null>(null);
 
     return (

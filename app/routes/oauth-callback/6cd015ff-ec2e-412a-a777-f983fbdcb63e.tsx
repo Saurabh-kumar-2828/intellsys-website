@@ -1,22 +1,23 @@
 import {RadioGroup} from "@headlessui/react";
 import type {ActionFunction, LoaderFunction} from "@remix-run/node";
-import {redirect} from "@remix-run/node";
-import {json} from "@remix-run/node";
+import {json, redirect} from "@remix-run/node";
 import {Form, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
 import {checkConnectorExistsForAccount} from "~/backend/utilities/connectors/common.server";
 import type {GoogleAnalyticsAccessiblePropertyIds, GoogleAnalyticsCredentials} from "~/backend/utilities/connectors/googleAnalytics.server";
-import {ingestAndStoreGoogleAnalyticsData} from "~/backend/utilities/connectors/googleAnalytics.server";
-import {getAccessiblePropertyIds} from "~/backend/utilities/connectors/googleAnalytics.server";
+import {getAccessiblePropertyIds, ingestAndStoreGoogleAnalyticsData} from "~/backend/utilities/connectors/googleAnalytics.server";
 import type {GoogleAdsAccessibleAccount} from "~/backend/utilities/connectors/googleOAuth.server";
 import {getGoogleAdsRefreshToken} from "~/backend/utilities/connectors/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
+import {PageScaffold2} from "~/components/pageScaffold2";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
+
+// Google analytics
 
 // TODO: Keep only code part
 type LoaderData = {
@@ -36,24 +37,28 @@ export const loader: LoaderFunction = async ({request}) => {
         throw Error("Authorization failed!");
     }
 
+    console.log("1");
     const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAnalytics));
     if (refreshToken instanceof Error) {
-        return refreshToken;
+        throw refreshToken;
     }
 
+    console.log("2");
     const accessiblePropertyIds = await getAccessiblePropertyIds(refreshToken);
     if (accessiblePropertyIds instanceof Error) {
-        return accessiblePropertyIds;
+        throw accessiblePropertyIds;
     }
 
     // TODO: Filter accessible account
 
+    console.log("3");
     // TODO: Get multiple accounts
     const loaderData: LoaderData = {
         data: encrypt(refreshToken) as unknown as string,
         accessiblePropertyIds: accessiblePropertyIds,
     };
 
+    console.log("4");
     return json(loaderData);
 };
 
@@ -75,7 +80,7 @@ export const action: ActionFunction = async ({request}) => {
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);
 
-        const accountExists = await checkConnectorExistsForAccount(ConnectorType.GoogleAnalytics, selectedAccount.managerId);
+        const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), ConnectorType.GoogleAnalytics, selectedAccount.customerClientId);
         if (accountExists instanceof Error) {
             return Error("Account already exists");
         }
@@ -107,6 +112,24 @@ export const action: ActionFunction = async ({request}) => {
 
 export default function () {
     const {data, accessiblePropertyIds} = useLoaderData() as LoaderData;
+
+    console.log(data);
+    console.log(accessiblePropertyIds);
+
+    return (
+        <PageScaffold2>
+            <OAuthCallback
+                data={data}
+                accessiblePropertyIds={accessiblePropertyIds}
+            />
+        </PageScaffold2>
+    );
+}
+
+function OAuthCallback({data, accessiblePropertyIds}: {
+    data: string;
+    accessiblePropertyIds: Array<GoogleAnalyticsAccessiblePropertyIds>;
+}) {
     const [selectedAccount, setSelectedAccount] = useState<GoogleAdsAccessibleAccount | null>(null);
 
     return (

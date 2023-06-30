@@ -1,7 +1,7 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
-import {useLoaderData} from "@remix-run/react";
+import {useLoaderData, useMatches} from "@remix-run/react";
 import {AgGridReact} from "ag-grid-react";
 import styles from "app/styles.css";
 import {DateTime} from "luxon";
@@ -12,10 +12,14 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getNonEmptyStringOrNull} from "~/utilities/utilities";
+import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
+import {PageScaffold} from "~/components/pageScaffold";
+import {CompanyLoaderData} from "~/routes/$companyId";
+
+// Google ads
 
 export const meta: MetaFunction = () => {
     return {
@@ -93,11 +97,15 @@ export const loader: LoaderFunction = async ({request, params}) => {
     );
 
     if (googleAdsData instanceof Error) {
-        throw new Response(null, {status: 402});
+        throw new Response("970986e8-eddb-4597-ba18-e5b34ad972c0", {
+            status: 400,
+        });
     }
 
     if (!googleAdsData) {
-        throw new Response(null, {status: 402});
+        throw new Response("163fc3d9-1bdf-495b-b1e6-94b9eba47af7", {
+            status: 400,
+        });
     }
 
     // TODO: Add filters
@@ -116,6 +124,45 @@ export const loader: LoaderFunction = async ({request, params}) => {
 export default function () {
     const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, googleAdsData, companyId, connectorId} = useLoaderData() as LoaderData;
 
+    const routeMatches = useMatches();
+    const {user, accessibleCompanies, currentCompany} = getSingletonValue(routeMatches.filter(routeMatch => routeMatch.id == "routes/$companyId")).data as CompanyLoaderData;
+
+    return (
+        <PageScaffold
+            user={user}
+            accessibleCompanies={accessibleCompanies}
+            currentCompany={currentCompany}
+        >
+            <Connector
+                appliedSelectedGranularity={appliedSelectedGranularity}
+                appliedMinDate={appliedMinDate}
+                appliedMaxDate={appliedMaxDate}
+                googleAdsData={googleAdsData}
+                companyId={companyId}
+                connectorId={connectorId}
+            />
+        </PageScaffold>
+    );
+}
+
+function Connector({
+    appliedSelectedGranularity,
+    appliedMinDate,
+    appliedMaxDate,
+    googleAdsData,
+    companyId,
+    connectorId,
+}: {
+    appliedMinDate: Iso8601Date;
+    appliedMaxDate: Iso8601Date;
+    appliedSelectedGranularity: TimeGranularity;
+    googleAdsData: {
+        metaQuery: string;
+        rows: Array<GoogleAdsDataAggregatedRow>;
+    };
+    companyId: Uuid;
+    connectorId: Uuid;
+}) {
     const [selectedGranularity, setSelectedGranularity] = useState<TimeGranularity>(appliedSelectedGranularity);
     const [selectedMinDate, setSelectedMinDate] = useState<Iso8601Date>(appliedMinDate);
     const [selectedMaxDate, setSelectedMaxDate] = useState<Iso8601Date>(appliedMaxDate);

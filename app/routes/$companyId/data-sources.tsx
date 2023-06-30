@@ -1,17 +1,11 @@
 import type {ActionFunction, LinksFunction, LoaderFunction} from "@remix-run/node";
-import {json} from "@remix-run/node";
-import {redirect} from "@remix-run/node";
-import {Form, Link, useLoaderData} from "@remix-run/react";
+import {json, redirect} from "@remix-run/node";
+import {Form, Link, useLoaderData, useMatches} from "@remix-run/react";
 import {Facebook} from "react-bootstrap-icons";
-import {getAccessibleCompanies, getUser} from "~/backend/userDetails.server";
-import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {deleteConnector, getConnectorsAssociatedWithCompanyId, getRedirectUri} from "~/backend/utilities/connectors/common.server";
 import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/connectors/facebookOAuth.server";
 import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server";
-import {googleAnalyticsScope} from "~/backend/utilities/connectors/googleOAuth.server";
-import {getGoogleAuthorizationCodeUrl} from "~/backend/utilities/connectors/googleOAuth.server";
-import {googleAdsScope} from "~/backend/utilities/connectors/googleOAuth.server";
-import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
+import {getGoogleAuthorizationCodeUrl, googleAdsScope, googleAnalyticsScope} from "~/backend/utilities/connectors/googleOAuth.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
@@ -19,10 +13,9 @@ import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormF
 import {HorizontalSpacer} from "~/global-common-typescript/components/horizontalSpacer";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import type {Company, User, Uuid} from "~/utilities/typeDefinitions";
-import {dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
-import {ConnectorType} from "~/utilities/typeDefinitions";
-import {getSingletonValueOrNull} from "~/utilities/utilities";
+import type {Uuid} from "~/utilities/typeDefinitions";
+import {ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
+import {getSingletonValue} from "~/utilities/utilities";
 
 export const action: ActionFunction = async ({request, params}) => {
     const body = await request.formData();
@@ -62,9 +55,9 @@ export const action: ActionFunction = async ({request, params}) => {
         return redirect(authUrl);
     } else if (body.get("action") == "deleteGoogleAds") {
         const connectorId = body.get("connectorId") as Uuid;
-        const loginCustomerId = body.get("loginCustomerId") as Uuid;
+        const accountId = body.get("accountId") as Uuid;
 
-        await deleteConnector(connectorId, loginCustomerId, dataSourcesAbbreviations.googleAds);
+        await deleteConnector(connectorId, accountId, dataSourcesAbbreviations.googleAds);
     } else if (body.get("action") == "deleteFacebookAds") {
         const connectorId = body.get("connectorId") as Uuid;
         const adAccountId = body.get("adAccountId") as Uuid;
@@ -81,32 +74,16 @@ export const action: ActionFunction = async ({request, params}) => {
 };
 
 type LoaderData = {
-    user: User;
-    accessibleCompanies: Array<Company>;
-    currentCompany: Company;
     googleAdsConnectors: Array<Connector>;
     facebookAdsConnectors: Array<Connector>;
     googleAnalyticsConnectors: Array<Connector>;
 };
 
 export const loader: LoaderFunction = async ({request, params}) => {
-    const accessToken = await getAccessTokenFromCookies(request);
-
-    if (accessToken == null) {
-        // TODO: Add message in login page
-        return redirect(`/sign-in?redirectTo=${getUrlFromRequest(request)}`);
-    }
-
-    const user = await getUser(getUuidFromUnknown(accessToken.userId));
-    const accessibleCompanies = await getAccessibleCompanies(user);
+    // TODO: Ensure companyId is valid
 
     const companyId = params.companyId;
     if (companyId == null) {
-        throw new Response(null, {status: 404});
-    }
-
-    const company = getSingletonValueOrNull(accessibleCompanies.filter((company) => company.id == companyId));
-    if (company == null) {
         throw new Response(null, {status: 404});
     }
 
@@ -125,28 +102,26 @@ export const loader: LoaderFunction = async ({request, params}) => {
         return googleAnalyticsDetails;
     }
 
-    console.log(googleAdsConnectorDetails);
-
-    const response: LoaderData = {
-        user: user,
-        accessibleCompanies: accessibleCompanies,
-        currentCompany: company,
+    const loaderData: LoaderData = {
         googleAdsConnectors: googleAdsConnectorDetails,
         facebookAdsConnectors: facebookConnectorDetails,
         googleAnalyticsConnectors: googleAnalyticsDetails,
     };
 
-    return json(response);
+    return json(loaderData);
 };
 
 export const links: LinksFunction = () => [{rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Roboto&display=swap"}];
 
 export default function () {
-    const {user, accessibleCompanies, currentCompany, googleAdsConnectors, facebookAdsConnectors, googleAnalyticsConnectors} = useLoaderData() as LoaderData;
+    const {googleAdsConnectors, facebookAdsConnectors, googleAnalyticsConnectors} = useLoaderData() as LoaderData;
+
+    const routeMatches = useMatches();
+    const {user, accessibleCompanies, currentCompany} = getSingletonValue(routeMatches.filter((routeMatch) => routeMatch.id == "routes/$companyId")).data as CompanyLoaderData;
 
     return (
         <PageScaffold
-            userDetails={user}
+            user={user}
             accessibleCompanies={accessibleCompanies}
             currentCompany={currentCompany}
         >
@@ -183,55 +158,59 @@ function DataSources({
                         <div>No connected account!</div>
                     ) : (
                         <table className="tw-w-full tw-border tw-border-solid tw-border-white">
-                            <tr className="tw-w-full tw-border tw-border-solid tw-border-white">
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Source Id</th>
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account Id</th>
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Actions</th>
-                            </tr>
+                            <thead>
+                                <tr className="tw-w-full tw-border tw-border-solid tw-border-white">
+                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Source Id</th>
+                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account Id</th>
+                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Actions</th>
+                                </tr>
+                            </thead>
 
-                            <ItemBuilder
-                                items={googleAdsConnectors}
-                                itemBuilder={(connector, connectorIndex) => (
-                                    <tr key={connectorIndex}>
-                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                            <Link
-                                                to={`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connector.id}`}
-                                                className="tw-text-blue-500"
-                                            >
-                                                {connector.id}
-                                            </Link>
-                                        </td>
-
-                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.accountId}</td>
-
-                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                            <Form method="post">
-                                                <HiddenFormField
-                                                    name="action"
-                                                    value="deleteGoogleAds"
-                                                />
-
-                                                <HiddenFormField
-                                                    name="connectorId"
-                                                    value={connector.id}
-                                                />
-
-                                                <HiddenFormField
-                                                    name="loginCustomerId"
-                                                    value={connector.accountId}
-                                                />
-
-                                                <button
-                                                    type="submit"
-                                                    className="tw-text-red-500 disabled:tw-text-gray-600"
+                            <tbody>
+                                <ItemBuilder
+                                    items={googleAdsConnectors}
+                                    itemBuilder={(connector, connectorIndex) => (
+                                        <tr key={connectorIndex}>
+                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
+                                                <Link
+                                                    to={`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connector.id}`}
+                                                    className="tw-text-blue-500"
                                                 >
-                                                    Delete
-                                                </button>
-                                            </Form>
-                                        </td>
-                                    </tr>
-                                )}
-                            />
+                                                    {connector.id}
+                                                </Link>
+                                            </td>
+
+                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.accountId}</td>
+
+                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
+                                                <Form method="post">
+                                                    <HiddenFormField
+                                                        name="action"
+                                                        value="deleteGoogleAds"
+                                                    />
+
+                                                    <HiddenFormField
+                                                        name="connectorId"
+                                                        value={connector.id}
+                                                    />
+
+                                                    <HiddenFormField
+                                                        name="accountId"
+                                                        value={connector.accountId}
+                                                    />
+
+                                                    <button
+                                                        type="submit"
+                                                        className="tw-text-red-500 disabled:tw-text-gray-600"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </Form>
+                                            </td>
+                                        </tr>
+                                    )}
+                                />
+                            </tbody>
                         </table>
                     )}
                 </div>
@@ -282,55 +261,59 @@ function DataSources({
                         <div>No connected account!</div>
                     ) : (
                         <table className="tw-w-full tw-border tw-border-solid tw-border-white">
-                            <tr className="tw-w-full tw-border tw-border-solid tw-border-white">
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Source Id</th>
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account Id</th>
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Actions</th>
-                            </tr>
+                            <thead>
+                                <tr className="tw-w-full tw-border tw-border-solid tw-border-white">
+                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Source Id</th>
+                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account Id</th>
+                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Actions</th>
+                                </tr>
+                            </thead>
 
-                            <ItemBuilder
-                                items={facebookAdsConnectors}
-                                itemBuilder={(connector, connectorIndex) => (
-                                    <tr key={connectorIndex}>
-                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                            <Link
-                                                to={`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connector.id}`}
-                                                className="tw-text-blue-500"
-                                            >
-                                                {connector.id}
-                                            </Link>
-                                        </td>
-
-                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.accountId}</td>
-
-                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                            <Form method="post">
-                                                <HiddenFormField
-                                                    name="action"
-                                                    value="deleteFacebookAds"
-                                                />
-
-                                                <HiddenFormField
-                                                    name="connectorId"
-                                                    value={connector.id}
-                                                />
-
-                                                <HiddenFormField
-                                                    name="adAccountId"
-                                                    value={connector.accountId}
-                                                />
-
-                                                <button
-                                                    type="submit"
-                                                    className="tw-text-red-500 disabled:tw-text-gray-600"
+                            <tbody>
+                                <ItemBuilder
+                                    items={facebookAdsConnectors}
+                                    itemBuilder={(connector, connectorIndex) => (
+                                        <tr key={connectorIndex}>
+                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
+                                                <Link
+                                                    to={`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connector.id}`}
+                                                    className="tw-text-blue-500"
                                                 >
-                                                    Delete
-                                                </button>
-                                            </Form>
-                                        </td>
-                                    </tr>
-                                )}
-                            />
+                                                    {connector.id}
+                                                </Link>
+                                            </td>
+
+                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.accountId}</td>
+
+                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
+                                                <Form method="post">
+                                                    <HiddenFormField
+                                                        name="action"
+                                                        value="deleteFacebookAds"
+                                                    />
+
+                                                    <HiddenFormField
+                                                        name="connectorId"
+                                                        value={connector.id}
+                                                    />
+
+                                                    <HiddenFormField
+                                                        name="adAccountId"
+                                                        value={connector.accountId}
+                                                    />
+
+                                                    <button
+                                                        type="submit"
+                                                        className="tw-text-red-500 disabled:tw-text-gray-600"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </Form>
+                                            </td>
+                                        </tr>
+                                    )}
+                                />
+                            </tbody>
                         </table>
                     )}
                 </div>
@@ -373,55 +356,59 @@ function DataSources({
                         <div>No connected account!</div>
                     ) : (
                         <table className="tw-w-full tw-border tw-border-solid tw-border-white">
-                            <tr className="tw-w-full tw-border tw-border-solid tw-border-white">
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Source Id</th>
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account Id</th>
-                                <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Actions</th>
-                            </tr>
+                            <thead>
+                                <tr className="tw-w-full tw-border tw-border-solid tw-border-white">
+                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Source Id</th>
+                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account Id</th>
+                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Actions</th>
+                                </tr>
+                            </thead>
 
-                            <ItemBuilder
-                                items={googleAnalyticsConnectors}
-                                itemBuilder={(connector, connectorIndex) => (
-                                    <tr key={connectorIndex}>
-                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                            <Link
-                                                to={`/${companyId}/6cd015ff-ec2e-412a-a777-f983fbdcb63e/${connector.id}`}
-                                                className="tw-text-blue-500"
-                                            >
-                                                {connector.id}
-                                            </Link>
-                                        </td>
-
-                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.accountId}</td>
-
-                                        <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                            <Form method="post">
-                                                <HiddenFormField
-                                                    name="action"
-                                                    value="deleteGoogleAnalytics"
-                                                />
-
-                                                <HiddenFormField
-                                                    name="connectorId"
-                                                    value={connector.id}
-                                                />
-
-                                                <HiddenFormField
-                                                    name="propertyId"
-                                                    value={connector.accountId}
-                                                />
-
-                                                <button
-                                                    type="submit"
-                                                    className="tw-text-red-500 disabled:tw-text-gray-600"
+                            <tbody>
+                                <ItemBuilder
+                                    items={googleAnalyticsConnectors}
+                                    itemBuilder={(connector, connectorIndex) => (
+                                        <tr key={connectorIndex}>
+                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
+                                                <Link
+                                                    to={`/${companyId}/6cd015ff-ec2e-412a-a777-f983fbdcb63e/${connector.id}`}
+                                                    className="tw-text-blue-500"
                                                 >
-                                                    Delete
-                                                </button>
-                                            </Form>
-                                        </td>
-                                    </tr>
-                                )}
-                            />
+                                                    {connector.id}
+                                                </Link>
+                                            </td>
+
+                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.accountId}</td>
+
+                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
+                                                <Form method="post">
+                                                    <HiddenFormField
+                                                        name="action"
+                                                        value="deleteGoogleAnalytics"
+                                                    />
+
+                                                    <HiddenFormField
+                                                        name="connectorId"
+                                                        value={connector.id}
+                                                    />
+
+                                                    <HiddenFormField
+                                                        name="propertyId"
+                                                        value={connector.accountId}
+                                                    />
+
+                                                    <button
+                                                        type="submit"
+                                                        className="tw-text-red-500 disabled:tw-text-gray-600"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </Form>
+                                            </td>
+                                        </tr>
+                                    )}
+                                />
+                            </tbody>
                         </table>
                     )}
                 </div>

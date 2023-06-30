@@ -1,22 +1,25 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
-import {useLoaderData} from "@remix-run/react";
+import {useLoaderData, useMatches} from "@remix-run/react";
+import "ag-grid-enterprise";
 import {AgGridReact} from "ag-grid-react";
 import styles from "app/styles.css";
 import {DateTime} from "luxon";
 import {useState} from "react";
 import type {GoogleAnalyticsData, GoogleAnalyticsDataAggregatedRow} from "~/backend/business-insights";
-import {getGoogleAnalyticsLectrixData} from "~/backend/business-insights";
-import {getTimeGranularityFromUnknown, TimeGranularity} from "~/backend/business-insights";
+import {TimeGranularity, getGoogleAnalyticsLectrixData, getTimeGranularityFromUnknown} from "~/backend/business-insights";
+import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
+import {PageScaffold} from "~/components/pageScaffold";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
-import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getNonEmptyStringOrNull} from "~/utilities/utilities";
-import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
+import {CompanyLoaderData} from "~/routes/$companyId";
+import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
+import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
+
+// Google analytics
 
 export const meta: MetaFunction = () => {
     return {
@@ -91,11 +94,15 @@ export const loader: LoaderFunction = async ({request, params}) => {
     );
 
     if (googleAnalyticsData instanceof Error) {
-        throw new Response(null, {status: 402});
+        throw new Response("caf48cb5-5dd9-411a-b49e-c6a2ae7e23e3", {
+            status: 400,
+        });
     }
 
     if (!googleAnalyticsData) {
-        throw new Response(null, {status: 402});
+        throw new Response("bc6d8bac-f3d8-4efe-8a2a-353b205e7d02", {
+            status: 400,
+        });
     }
 
     // TODO: Add filters
@@ -114,6 +121,42 @@ export const loader: LoaderFunction = async ({request, params}) => {
 export default function () {
     const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, googleAnalyticsData, companyId, connectorId} = useLoaderData() as LoaderData;
 
+    const routeMatches = useMatches();
+    const {user, accessibleCompanies, currentCompany} = getSingletonValue(routeMatches.filter((routeMatch) => routeMatch.id == "routes/$companyId")).data as CompanyLoaderData;
+
+    return (
+        <PageScaffold
+            user={user}
+            accessibleCompanies={accessibleCompanies}
+            currentCompany={currentCompany}
+        >
+            <Connector
+                appliedSelectedGranularity={appliedSelectedGranularity}
+                appliedMinDate={appliedMinDate}
+                appliedMaxDate={appliedMaxDate}
+                googleAnalyticsData={googleAnalyticsData}
+                companyId={companyId}
+                connectorId={connectorId}
+            />
+        </PageScaffold>
+    );
+}
+
+function Connector({
+    appliedMinDate,
+    appliedMaxDate,
+    appliedSelectedGranularity,
+    googleAnalyticsData,
+    companyId,
+    connectorId,
+}: {
+    appliedMinDate: Iso8601Date;
+    appliedSelectedGranularity: TimeGranularity;
+    appliedMaxDate: Iso8601Date;
+    googleAnalyticsData: GoogleAnalyticsData;
+    companyId: Uuid;
+    connectorId: Uuid;
+}) {
     const [selectedGranularity, setSelectedGranularity] = useState<TimeGranularity>(appliedSelectedGranularity);
     const [selectedMinDate, setSelectedMinDate] = useState<Iso8601Date>(appliedMinDate);
     const [selectedMaxDate, setSelectedMaxDate] = useState<Iso8601Date>(appliedMaxDate);

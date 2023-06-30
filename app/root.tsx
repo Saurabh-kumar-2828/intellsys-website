@@ -1,4 +1,4 @@
-import type {LinksFunction, MetaFunction} from "@remix-run/node";
+import {type LinksFunction, type MetaFunction} from "@remix-run/node";
 import {Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration} from "@remix-run/react";
 import reactToastifyStylesheet from "react-toastify/dist/ReactToastify.css";
 import tailwindStylesheet from "~/tailwind.css";

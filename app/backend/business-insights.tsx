@@ -43,169 +43,6 @@ export function getTimeGranularityFromUnknown(timeGranularity: unknown): TimeGra
     }
 }
 
-export type ShopifyData = {
-    metaQuery: string;
-    rows: Array<ShopifyDataAggregatedRow>;
-};
-
-export type ShopifyDataAggregatedRow = {
-    date: Iso8601Date;
-    productCategory: string;
-    productSubCategory: string;
-    productTitle: string;
-    productPrice: number;
-    variantTitle: string;
-    leadGenerationSource: string;
-    leadCaptureSource: string;
-    leadGenerationSourceCampaignName: string;
-    leadGenerationSourceCampaignPlatform: string;
-    leadGenerationSourceCampaignCategory: string;
-    isAssisted: boolean;
-    netSales: number;
-    netQuantity: number;
-};
-
-export async function getShopifyData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<ShopifyData> {
-    const query = `
-        SELECT
-            ${getGranularityQuery(granularity, "date")} AS date,
-            product_category,
-            product_sub_category,
-            product_title,
-            variant_title,
-            lead_generation_source,
-            lead_capture_source,
-            lead_generation_source_campaign_name,
-            lead_generation_source_campaign_platform,
-            lead_generation_source_campaign_category,
-            is_assisted,
-            SUM(net_sales) AS net_sales,
-            SUM(net_quantity) AS net_quantity
-        FROM
-            shopify_sales_to_source_with_information
-        WHERE
-            date >= '${minDate}' AND
-            date <= '${maxDate}' AND
-            cancelled = 'No'
-        GROUP BY
-            ${getGranularityQuery(granularity, "date")},
-            product_category,
-            product_sub_category,
-            product_title,
-            variant_title,
-            lead_generation_source,
-            lead_capture_source,
-            lead_generation_source_campaign_name,
-            lead_generation_source_campaign_platform,
-            lead_generation_source_campaign_category,
-            is_assisted
-        ORDER BY
-            date
-    `;
-
-    const result = await execute(companyId, query);
-
-    return {
-        metaQuery: query,
-        rows: result.rows.map((row) => getRowToShopifyDataAggregatedRow(row)),
-    };
-}
-
-function getRowToShopifyDataAggregatedRow(row: unknown): ShopifyDataAggregatedRow {
-    const shopifyDataAggregatedRow: ShopifyDataAggregatedRow = {
-        date: row.date.toISOString().slice(0, 10),
-        productCategory: row.product_category,
-        productSubCategory: row.product_sub_category,
-        productTitle: row.product_title,
-        variantTitle: row.variant_title,
-        leadGenerationSource: row.lead_generation_source,
-        leadCaptureSource: row.lead_capture_source,
-        leadGenerationSourceCampaignName: row.lead_generation_source_campaign_name,
-        leadGenerationSourceCampaignPlatform: row.lead_generation_source_campaign_platform,
-        leadGenerationSourceCampaignCategory: row.lead_generation_source_campaign_category,
-        isAssisted: row.is_assisted,
-        netSales: parseFloat(row.net_sales),
-        netQuantity: parseInt(row.net_quantity),
-    };
-
-    return shopifyDataAggregatedRow;
-}
-
-export type FreshsalesData = {
-    metaQuery: string;
-    rows: Array<FreshsalesDataAggregatedRow>;
-};
-
-export type FreshsalesDataAggregatedRow = {
-    date: Iso8601Date;
-    count: number;
-    category: string;
-    leadStage: string;
-    leadCaptureSource: string;
-    leadGenerationSource: string;
-    leadGenerationSourceCampaignName: string;
-    leadGenerationSourceCampaignPlatform: string;
-    leadGenerationSourceCampaignCategory: string;
-    timeToClose: number;
-};
-
-export async function getFreshsalesData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<FreshsalesData> {
-
-    const query = `
-        SELECT
-            ${getGranularityQuery(granularity, "lead_created_at")} AS date,
-            category,
-            lead_lead_stage,
-            lead_capture_source,
-            lead_generation_source,
-            lead_generation_source_campaign_name,
-            lead_generation_source_campaign_platform,
-            lead_generation_source_campaign_category,
-            COUNT(*) AS count,
-            AVG(time_to_close) AS time_to_close
-        FROM
-            freshsales_leads_to_source_with_information
-        WHERE
-            DATE(lead_created_at) >= '${minDate}' AND
-            DATE(lead_created_at) <= '${maxDate}'
-        GROUP BY
-            lead_created_at,
-            category,
-            lead_lead_stage,
-            lead_capture_source,
-            lead_generation_source,
-            lead_generation_source_campaign_name,
-            lead_generation_source_campaign_platform,
-            lead_generation_source_campaign_category
-        ORDER BY
-            lead_created_at
-    `;
-
-    const result = await execute(companyId, query);
-
-    return {
-        metaQuery: query,
-        rows: result.rows.map((row) => rowToFreshsalesDataAggregatedRow(row)),
-    };
-}
-
-function rowToFreshsalesDataAggregatedRow(row: unknown): FreshsalesDataAggregatedRow {
-    const freshsalesDataAggregatedRow: FreshsalesDataAggregatedRow = {
-        date: dateToIso8601Date(row.date),
-        count: parseInt(row.count),
-        category: row.category,
-        leadStage: row.lead_lead_stage,
-        leadCaptureSource: row.lead_capture_source,
-        leadGenerationSource: row.lead_generation_source,
-        leadGenerationSourceCampaignName: row.lead_generation_source_campaign_name,
-        leadGenerationSourceCampaignPlatform: row.lead_generation_source_campaign_platform,
-        leadGenerationSourceCampaignCategory: row.lead_generation_source_campaign_category,
-        timeToClose: row.time_to_close,
-    };
-
-    return freshsalesDataAggregatedRow;
-}
-
 export type AdsData = {
     metaQuery: string;
     rows: Array<AdsDataAggregatedRow>;
@@ -458,15 +295,13 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
         return postgresDatabaseManager;
     }
 
-    const loginCustomerIdRaw = await getAccountIdForConnector([connectorId], getUuidFromUnknown(ConnectorType.GoogleAds));
+    const connector = await getAccountIdForConnector(connectorId);
 
-    if (loginCustomerIdRaw instanceof Error || loginCustomerIdRaw.length == 0) {
+    if (connector instanceof Error) {
         return Error("Google account undefined!");
     }
 
-    const loginCustomerId = getSingletonValue(loginCustomerIdRaw);
-
-    const tableName = `${dataSourcesAbbreviations.googleAds}_${loginCustomerId.accountId}`;
+    const tableName = `${dataSourcesAbbreviations.googleAds}_${connector.accountId}`;
 
     const query = `
         SELECT
@@ -535,15 +370,13 @@ export async function getGoogleAnalyticsLectrixData(minDate: Iso8601Date, maxDat
         return postgresDatabaseManager;
     }
 
-    const accountIdRaw = await getAccountIdForConnector([connectorId], getUuidFromUnknown(ConnectorType.GoogleAnalytics));
+    const connector = await getAccountIdForConnector(connectorId);
 
-    if (accountIdRaw instanceof Error || accountIdRaw.length == 0) {
+    if (connector instanceof Error) {
         return Error("Google account undefined!");
     }
 
-    const data = getSingletonValue(accountIdRaw);
-
-    const tableName = `${dataSourcesAbbreviations.googleAnalytics}_${data.accountId}`;
+    const tableName = `${dataSourcesAbbreviations.googleAnalytics}_${connector.accountId}`;
 
     const query = `
         SELECT
@@ -594,12 +427,10 @@ export async function getFacebookAdsLectrixData(minDate: Iso8601Date, maxDate: I
         return postgresDatabaseManager;
     }
 
-    const accountIdRaw = await getAccountIdForConnector([connectorId], getUuidFromUnknown(ConnectorType.FacebookAds));
-    if (accountIdRaw instanceof Error || accountIdRaw.length == 0) {
+    const connector = await getAccountIdForConnector(connectorId);
+    if (connector instanceof Error) {
         return Error("Facebook account undefined!");
     }
-
-    const connector = getSingletonValue(accountIdRaw) as Connector;
 
     const tableName = `${dataSourcesAbbreviations.facebookAds}_${connector.accountId}`;
 

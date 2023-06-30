@@ -68,10 +68,19 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
             companyDatabaseCredentialId,
             "Google Ads",
             ConnectorTableType.GoogleAds,
-            ConnectorType.GoogleAds
+            ConnectorType.GoogleAds,
         );
 
-        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(systemPostgresDatabaseManager, companyId, connectorId, ConnectorType.GoogleAds, "Google Ads", `{"accountId": "${credentials.googleLoginCustomerId}"}`);
+        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(
+            systemPostgresDatabaseManager,
+            companyId,
+            connectorId,
+            ConnectorType.GoogleAds,
+            "Google Ads",
+            JSON.stringify({
+                accountId: credentials.googleAccountId,
+            }),
+        );
 
         if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {
             await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
@@ -98,7 +107,6 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
         if (dataIngestionResponse instanceof Error) {
             return dataIngestionResponse;
         }
-
     } catch (e) {
         console.log(e);
     }

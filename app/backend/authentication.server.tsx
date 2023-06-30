@@ -1,18 +1,14 @@
 import type {Jwt} from "jsonwebtoken";
 import jwt from "jsonwebtoken";
-import type {AccessToken} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getSystemPostgresDatabaseManager} from "~/backend/utilities/connectors/common.server";
-import {execute, getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
-import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
+import type {AccessToken} from "~/backend/utilities/cookieSessionsHelper.server";
+import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {addCredentialToKms, getCredentialFromKms} from "~/global-common-typescript/server/kms.server";
-import type {PostgresDatabaseCredentials} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid, getSingletonValue, getUnixTimeInSeconds} from "~/global-common-typescript/utilities/utilities";
 import type {Company, User, Uuid} from "~/utilities/typeDefinitions";
-import {Companies} from "~/utilities/typeDefinitions";
-import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 // TODO: Remove this, and store the OTPs in database instead
 declare global {
@@ -32,6 +28,34 @@ export async function sendOtp(email: string): Promise<void | Error> {
     };
 
     console.log(otp);
+
+    var headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    headers.append("Authorization", `Bearer ${getRequiredEnvironmentVariableNew("INTELLSYS_MAILER_TOKEN")}`);
+
+    var body = JSON.stringify({
+        template_path: "https://intellsys-optimizer.b-cdn.net/intellsys-mailer/intellsys_otp_template.txt",
+        email_content_dict: {
+            "~!NAME!~": email,
+            "~!OTP!~": otp,
+        },
+        email_to: JSON.stringify([email]),
+        email_subject: "Intellsys Login",
+    });
+
+    var requestOptions = {
+        method: "POST",
+        headers: headers,
+        body: body,
+    };
+
+    const response = await fetch("https://mailer.intellsys.ai/values_from_json", requestOptions);
+
+    if (!response.ok) {
+        console.log(response.status);
+        console.log(response.text());
+        return new Error("Failed to send email");
+    }
 }
 
 export async function verifyOtp(email: string, otp: string): Promise<{success: boolean}> {
@@ -103,41 +127,6 @@ function getActiveOtps() {
     }
 
     return activeOtps;
-}
-
-export async function validateUser(username: string, password: string): Promise<{accessTokenJwt: Jwt; userId: Uuid} | null> {
-    const result = await execute(
-        Companies.Intellsys,
-        `
-            SELECT
-                id
-            FROM
-                users
-            WHERE
-                username = $1 AND
-                hashed_password = crypt($2, hashed_password)
-        `,
-        [username, password],
-    );
-
-    const row = getSingletonValueOrNull(result.rows);
-
-    if (row == null) {
-        return null;
-    }
-
-    const userId = row.id;
-
-    const accessToken: AccessToken = {
-        userId: userId,
-        schemaVersion: getRequiredEnvironmentVariable("COOKIE_SCHEMA_VERSION"),
-    };
-
-    return {
-        // TODO: Use createAuthenticationToken instead
-        accessTokenJwt: jwt.sign(accessToken, getRequiredEnvironmentVariable("JWT_SECRET")) as any as Jwt,
-        userId: userId,
-    };
 }
 
 // TODO: Anything and everything below this is experimental

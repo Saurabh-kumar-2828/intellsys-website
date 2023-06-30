@@ -1,7 +1,6 @@
 import {RadioGroup} from "@headlessui/react";
 import type {ActionFunction, LoaderFunction} from "@remix-run/node";
-import {json} from "@remix-run/node";
-import {redirect} from "@remix-run/node";
+import {json, redirect} from "@remix-run/node";
 import {Form, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
@@ -9,15 +8,18 @@ import {checkConnectorExistsForAccount} from "~/backend/utilities/connectors/com
 import type {FacebookAccessibleAccount, FacebookAdsSourceCredentials} from "~/backend/utilities/connectors/facebookOAuth.server";
 import {facebookOAuthFlow, getAccessibleAccounts, getFacebookAdsAccessToken} from "~/backend/utilities/connectors/facebookOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
+import {PageScaffold2} from "~/components/pageScaffold2";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
-import {getFromCache, putInCache, removeFromCache} from "~/utilities/timedCache";
+import {getMemoryCache} from "~/utilities/memoryCache";
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
+
+// Facebook ads
 
 type LoaderData = {
     data: string;
@@ -41,8 +43,10 @@ export const loader: LoaderFunction = async ({request, params}) => {
 
     let credentials: FacebookAdsSourceCredentials;
 
+    const memoryCache = await getMemoryCache();
+
     const cacheKey = `3350d73d-64c1-4c88-92b4-0d791d954ae9: ${authorizationCode}`;
-    const cachedValue = getFromCache(cacheKey);
+    const cachedValue = await memoryCache.get(cacheKey);
     if (cachedValue != null) {
         credentials = {
             facebookExchangeToken: cachedValue,
@@ -52,14 +56,13 @@ export const loader: LoaderFunction = async ({request, params}) => {
         if (credentials_ instanceof Error) {
             throw new Response(null, {status: 404, statusText: "Invalid credentials!"});
         }
-        putInCache(cacheKey, credentials_.facebookExchangeToken);
+        await memoryCache.set(cacheKey, credentials_.facebookExchangeToken);
         credentials = credentials_;
     }
 
     const accessibleAccounts = await getAccessibleAccounts(credentials, companyId);
     if(accessibleAccounts instanceof Error){
         throw new Response(null, {status: 404, statusText: "No Accessible Accounts!"});
-
     }
 
     const loaderData: LoaderData = {
@@ -85,17 +88,21 @@ export const action: ActionFunction = async ({request, params}) => {
         throw new Response(null, {status: 404});
     }
 
+    console.log("n1");
     const dataDecoded = decrypt(data);
 
+    console.log("n2");
     // TODO: Confirm its implementation.
-    const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), selectedAccount.accountId);
+    const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), ConnectorType.FacebookAds, selectedAccount.accountId);
     if (accountExists instanceof Error) {
-        return Error("Account already exists");
+        throw Error("Account already exists");
     }
 
+    console.log(accountExists);
+    console.log("n3");
     // Cannot create new connector, if connector with account already exists.
     if (accountExists) {
-        throw new Response(null, {status: 404, statusText: "Account already Exists!"});
+        throw new Response(null, {status: 400, statusText: "Account already Exists!"});
     }
 
     const facebookAdsCredentials: FacebookAdsSourceCredentials = {
@@ -105,15 +112,20 @@ export const action: ActionFunction = async ({request, params}) => {
 
     const connectorId = generateUuid();
 
+    console.log("n4");
     if (data != null) {
         const response = await facebookOAuthFlow(facebookAdsCredentials, getUuidFromUnknown(companyId), connectorId);
         if (response instanceof Error) {
             throw response;
         }
 
-        const cacheKey = `3350d73d-64c1-4c88-92b4-0d791d954ae9: ${authorizationCode}`;
-        removeFromCache(cacheKey);
+        const memoryCache = await getMemoryCache();
 
+        console.log("n5");
+        const cacheKey = `3350d73d-64c1-4c88-92b4-0d791d954ae9: ${authorizationCode}`;
+        await memoryCache.delete(cacheKey);
+
+        console.log("n6");
         return redirect(`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connectorId}`);
     }
 
@@ -122,6 +134,23 @@ export const action: ActionFunction = async ({request, params}) => {
 
 export default function () {
     const {accessibleAccounts, data, companyId} = useLoaderData() as LoaderData;
+
+    return (
+        <PageScaffold2>
+            <OAuthCallback
+                data={data}
+                accessibleAccounts={accessibleAccounts}
+                companyId={companyId}
+            />
+        </PageScaffold2>
+    );
+}
+
+function OAuthCallback({accessibleAccounts, data, companyId}: {
+    data: string;
+    companyId: Uuid;
+    accessibleAccounts: Array<FacebookAccessibleAccount>;
+}) {
     const [selectedAccount, setSelectedAccount] = useState("");
 
     return (

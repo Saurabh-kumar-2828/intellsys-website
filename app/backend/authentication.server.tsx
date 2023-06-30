@@ -28,6 +28,34 @@ export async function sendOtp(email: string): Promise<void | Error> {
     };
 
     console.log(otp);
+
+    var headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    headers.append("Authorization", `Bearer ${getRequiredEnvironmentVariableNew("INTELLSYS_MAILER_TOKEN")}`);
+
+    var body = JSON.stringify({
+        template_path: "https://intellsys-optimizer.b-cdn.net/intellsys-mailer/intellsys_otp_template.txt",
+        email_content_dict: {
+            "~!NAME!~": email,
+            "~!OTP!~": otp,
+        },
+        email_to: JSON.stringify([email]),
+        email_subject: "Intellsys Login",
+    });
+
+    var requestOptions = {
+        method: "POST",
+        headers: headers,
+        body: body,
+    };
+
+    const response = await fetch("https://mailer.intellsys.ai/values_from_json", requestOptions);
+
+    if (!response.ok) {
+        console.log(response.status);
+        console.log(response.text());
+        return new Error("Failed to send email");
+    }
 }
 
 export async function verifyOtp(email: string, otp: string): Promise<{success: boolean}> {

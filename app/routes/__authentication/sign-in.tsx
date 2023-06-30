@@ -1,16 +1,17 @@
+import {Dialog, Transition} from "@headlessui/react";
 import type {ActionFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {Form, useActionData, useNavigation} from "@remix-run/react";
-import {useContext, useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {toast} from "react-toastify";
 import {createCompany, createUser, getAccessTokenForUser, getCompanyForDomain, getUserForEmail, sendOtp, verifyOtp} from "~/backend/authentication.server";
 import {commitCookieSession, getCookieSession} from "~/backend/utilities/cookieSessions.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
-import {PageScaffold} from "~/components/pageScaffold";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {errorToast} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
 import {getStringFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {concatenateNonNullStringsWithSpaces} from "~/global-common-typescript/utilities/utilities";
 import {emailIdValidationPattern} from "~/global-common-typescript/utilities/validationPatterns";
 import {getDomainFromEmail} from "~/utilities/utilities";
 
@@ -166,24 +167,36 @@ export default function () {
 }
 
 function LoginPage() {
+    const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+
+    const showLoginDialog = () => setIsLoginDialogOpen(true);
+    const hideLoginDialog = () => setIsLoginDialogOpen(false);
+
     return (
-        <div className="tw-grid tw-grid-cols-1 tw-gap-x-16 tw-items-center tw-justify-center tw-w-full tw-max-w-7xl tw-mx-auto tw-px-[120px]">
-            <div className="tw-row-start-1 tw-grid tw-grid-rows-[6rem_auto_2rem_auto_1rem_auto_minmax(0,2fr)]">
+        <div className="tw-grid tw-grid-cols-1 tw-gap-x-16 tw-items-center tw-justify-center tw-w-full tw-max-w-7xl tw-mx-auto tw-px-[120px] tw-gap-y-24">
+            <div className="tw-row-start-1 tw-grid tw-grid-rows-[6rem_auto_1rem_auto_2rem_auto_2rem_auto_minmax(0,2fr)]">
                 <div className="tw-row-start-2 tw-text-center tw-place-self-center tw-text-4xl tw-font-bold">Empower Your Data Insights With Our Analytical Genius</div>
                 <div className="tw-row-start-4 tw-text-center tw-place-self-center">Connect and track data from any tool, simplifying performance and business decisions.</div>
-                <div className="tw-row-start-6 tw-text-center tw-place-self-center">
-                    <button className="tw-col-start-1 gj-bg-primary-gradient tw-text-white tw-py-2 tw-px-4 tw-rounded-full">Sign Up For Free</button>
+
+                <LoginComponent className="tw-row-start-6 tw-max-w-md tw-mx-auto" />
+
+                <div className="tw-row-start-[8] tw-text-center tw-place-self-center">
+                    <button
+                        onClick={showLoginDialog}
+                        className="tw-col-start-1 gj-bg-primary-gradient tw-text-white tw-py-2 tw-px-4 tw-rounded-full"
+                    >
+                        Sign Up For Free
+                    </button>
                     <VerticalSpacer className="tw-h-8" />
                 </div>
+
                 <img
-                    className="tw-row-start-7"
+                    className="tw-row-start-[9]"
                     src="https://intellsys-optimizer.b-cdn.net/intellsys/sign-in/1/laptop-3b14f4.png"
                 />
             </div>
 
-            <VerticalSpacer className="tw-row-start-2 tw-h-24" />
-
-            <div className="tw-row-start-3 tw-grid tw-grid-flow-row tw-grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <div className="tw-row-start-2 tw-grid tw-grid-flow-row tw-grid-cols-[minmax(0,1fr)_minmax(0,1fr)] tw-gap-x-8">
                 <div className="tw-col-start-1 tw-col-span-full tw-text-center tw-text-3xl">
                     <span className="gj-text-primary-gradient tw-text-3xl">Unlock </span>Your
                 </div>
@@ -200,7 +213,7 @@ function LoginPage() {
                         <div className="gj-bg-foreground-gradient-dark tw-w-full tw-aspect-square tw-place-self-center tw-grid tw-place-items-center tw-rounded-full">
                             <img
                                 src="https://intellsys-optimizer.b-cdn.net/intellsys/sign-in/3/metrics-7845d8.png"
-                                className="tw-col-start-1 tw-h-1/2 tw-w-1/2"
+                                className="tw-col-start-1 tw-h-1/2 tw-w-1/2 tw-object-contain tw-object-left"
                             />
                         </div>
                         <div className="tw-col-start-3">
@@ -248,9 +261,7 @@ function LoginPage() {
                 </div>
             </div>
 
-            <VerticalSpacer className="tw-row-start-4 tw-h-24" />
-
-            <div className="tw-row-start-5 tw-w-full tw-mx-[80px_auto] tw-grid tw-grid-cols-[2rem_auto_2rem_minmax(0,1fr)] tw-bg-[#202329] tw-p-8">
+            <div className="tw-row-start-3 tw-w-full tw-mx-[80px_auto] tw-grid tw-grid-cols-[2rem_auto_2rem_minmax(0,1fr)] tw-bg-[#202329] tw-p-8">
                 <div className="tw-col-start-2">
                     <img src="https://intellsys-optimizer.b-cdn.net/intellsys/sign-in/6/rectangle-188f38.png" />
                 </div>
@@ -290,14 +301,12 @@ function LoginPage() {
                     </div>
 
                     <div className="tw-self-end">
-                        <button className="gj-bg-primary-gradient tw-text-white tw-px-8 tw-py-4 tw-rounded-full">Sign Up For Free</button>
+                        <button onClick={showLoginDialog} className="gj-bg-primary-gradient tw-text-white tw-px-8 tw-py-4 tw-rounded-full">Sign Up For Free</button>
                     </div>
                 </div>
             </div>
 
-            <VerticalSpacer className="tw-row-start-6 tw-h-24" />
-
-            <div className="tw-row-start-7 tw-grid tw-justify-items-center tw-grid-flow-row">
+            <div className="tw-row-start-4 tw-grid tw-justify-items-center tw-grid-flow-row">
                 <div className="tw-text-3xl tw-text-white">Integrations app data</div>
 
                 <VerticalSpacer className="tw-h-12" />
@@ -321,9 +330,7 @@ function LoginPage() {
                 </div>
             </div>
 
-            <VerticalSpacer className="tw-row-start-[8] tw-h-24" />
-
-            <div className="tw-row-start-[9] tw-grid tw-grid-cols-1 tw-grid-flow-row tw-place-items-center">
+            <div className="tw-row-start-5 tw-grid tw-grid-cols-1 tw-grid-flow-row tw-place-items-center">
                 <div className="tw-text-3xl">
                     Types of <span className="gj-text-primary-gradient">Dashboards</span>
                 </div>
@@ -335,9 +342,7 @@ function LoginPage() {
                 </div>
             </div>
 
-            <VerticalSpacer className="tw-row-start-[10] tw-h-24" />
-
-            <div className="tw-row-start-[11] tw-grid tw-p-24 is-gray-bg-gradient tw-place-items-center tw-grid-cols-[minmax(0,2fr)_1rem_minmax(0,1fr)] tw-grid-flow-row">
+            <div className="tw-row-start-6 tw-grid tw-p-24 is-gray-bg-gradient tw-place-items-center tw-grid-cols-[minmax(0,2fr)_1rem_minmax(0,1fr)] tw-grid-flow-row">
                 <div className="tw-col-start-1 tw-grid tw-grid-flow-row">
                     <div className="tw-text-white">Ignite your growth</div>
                     <VerticalSpacer className="tw-h-16" />
@@ -345,13 +350,29 @@ function LoginPage() {
                     <VerticalSpacer className="tw-h-16" />
 
                     <div className="tw-grid tw-grid-cols-[auto_1rem_auto] tw-w-3/4">
-                        <button className="tw-col-start-1 gj-bg-primary-gradient tw-text-white tw-py-2 tw-px-4 tw-rounded-full">Sign Up For Free</button>
-                        <button className="tw-col-start-3 tw-border tw-border-[#00a2ed] tw-text-white tw-py-2 tw-px-4 tw-rounded-full">Start a project</button>
+                        <button onClick={showLoginDialog} className="tw-col-start-1 gj-bg-primary-gradient tw-text-white tw-py-2 tw-px-4 tw-rounded-full">Sign Up For Free</button>
+                        <button onClick={showLoginDialog} className="tw-col-start-3 tw-border tw-border-[#00a2ed] tw-text-white tw-py-2 tw-px-4 tw-rounded-full">Start a project</button>
                     </div>
                 </div>
                 <div className="tw-col-start-3 gj-bg-primary-gradient tw-h-1/2 tw-aspect-square tw-rounded-full tw-text-white tw-flex tw-justify-center tw-items-center">Let's Start</div>
             </div>
-            <VerticalSpacer className="tw-row-start-[12] tw-h-24" />
+
+            <Transition
+                show={isLoginDialogOpen}
+                as={React.Fragment}
+            >
+                <Dialog
+                    as="div"
+                    className="tw-fixed tw-inset-0 tw-grid tw-place-items-center tw-z-50 tw-isolate"
+                    onClose={hideLoginDialog}
+                >
+                    <div
+                        onClick={hideLoginDialog}
+                        className="tw-absolute tw-inset-0 -tw-z-10 tw-bg-[#000000bb]"
+                    />
+                    <LoginComponent />
+                </Dialog>
+            </Transition>
         </div>
     );
 }
@@ -366,7 +387,7 @@ function Integration() {
     );
 }
 
-function LoginComponent() {
+function LoginComponent({className}: {className?: string}) {
     const navigation = useNavigation();
 
     const [hasOtpBeenSent, setHasOtpBeenSent] = useState(false);
@@ -393,7 +414,7 @@ function LoginComponent() {
         <Form
             action="/sign-in"
             method="post"
-            className="tw-flex tw-flex-col tw-bg-dark-bg-500 tw-rounded-2xl tw-p-8"
+            className={concatenateNonNullStringsWithSpaces("tw-flex tw-flex-col tw-bg-dark-bg-500 tw-rounded-2xl tw-p-8", className)}
         >
             {hasOtpBeenSent == false ? (
                 <>

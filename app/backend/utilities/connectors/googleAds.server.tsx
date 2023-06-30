@@ -16,8 +16,8 @@ import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/uti
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
 import {ingestHistoricalDataFromConnectorsApi} from "~/global-common-typescript/server/connectors.server";
 
-export async function ingestAndStoreGoogleAdsData(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
-    const response = await storeGoogleAdsOAuthDetails(credentials, companyId, connectorId);
+export async function ingestAndStoreGoogleAdsData(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid, extraInformation: {[key: string]: any}): Promise<void | Error> {
+    const response = await storeGoogleAdsOAuthDetails(credentials, companyId, connectorId, extraInformation);
     if (response instanceof Error) {
         return response;
     }
@@ -26,7 +26,7 @@ export async function ingestAndStoreGoogleAdsData(credentials: GoogleAdsCredenti
 /**
  *  Handles the OAuth2 flow to authorize the Google Ads API for the given companyId and stores the credentials in KMS table, connectors table, subconnecter table and companyToConnectorTable.
  */
-export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
+export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid, extraInformation: {[key: string]: any}): Promise<void | Error> {
     try {
         const sourceCredentialId = generateUuid();
 
@@ -77,9 +77,7 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
             connectorId,
             ConnectorType.GoogleAds,
             "Google Ads",
-            JSON.stringify({
-                accountId: credentials.googleAccountId,
-            }),
+            JSON.stringify(extraInformation),
         );
 
         if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {

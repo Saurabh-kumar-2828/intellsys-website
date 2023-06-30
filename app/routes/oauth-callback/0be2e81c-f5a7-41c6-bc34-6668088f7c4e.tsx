@@ -13,10 +13,11 @@ import {PageScaffold2} from "~/components/pageScaffold2";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {SectionHeader} from "~/components/scratchpad";
-import {Uuid} from "~/global-common-typescript/typeDefinitions";
+import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
-import {ConnectorType} from "~/utilities/typeDefinitions";
+import {getMemoryCache} from "~/utilities/memoryCache";
+import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 // Google ads
@@ -42,9 +43,21 @@ export const loader: LoaderFunction = async ({request}) => {
         throw Error("Authorization failed!");
     }
 
-    const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
-    if (refreshToken instanceof Error) {
-        throw refreshToken;
+    let refreshToken: string;
+
+    const memoryCache = await getMemoryCache();
+
+    const cacheKey = `${DataSourceIds.googleAnalytics}: ${authorizationCode}`;
+    const cachedValue = await memoryCache.get(cacheKey);
+    if (cachedValue != null) {
+        refreshToken = cachedValue;
+    } else {
+        const refreshToken_ = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
+        if (refreshToken_ instanceof Error) {
+            throw refreshToken_;
+        }
+        await memoryCache.set(cacheKey, refreshToken_);
+        refreshToken = refreshToken_;
     }
 
     const accessibleAccounts = await getAccessibleAccounts(refreshToken);
@@ -68,6 +81,7 @@ export const action: ActionFunction = async ({request}) => {
     try {
         const urlSearchParams = new URL(request.url).searchParams;
 
+        const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
         const companyId = getNonEmptyStringOrNull(urlSearchParams.get("state"));
 
         if (companyId == null) {
@@ -78,7 +92,10 @@ export const action: ActionFunction = async ({request}) => {
 
         const data = body.get("data") as string;
 
+        console.log("a");
         const selectedAccount = JSON.parse(body.get("selectedAccount") as string);
+        console.log(selectedAccount);
+        console.log("b");
 
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);
@@ -90,7 +107,7 @@ export const action: ActionFunction = async ({request}) => {
 
         // Cannot create new connector, if connector with account already exists.
         if (accountExists) {
-            throw new Response(null, {status: 404, statusText: "Account already Exists!"});
+            throw new Response(null, {status: 400, statusText: "Account already Exists!"});
         }
 
         const googleAdsCredentials: GoogleAdsCredentials = {
@@ -101,10 +118,18 @@ export const action: ActionFunction = async ({request}) => {
 
         const connectorId = generateUuid();
 
-        const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, getUuidFromUnknown(companyId), connectorId);
+        const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, getUuidFromUnknown(companyId), connectorId, {
+            accountId: googleAdsCredentials.googleAccountId,
+            accountName: selectedAccount.customerClientName,
+        });
         if (response instanceof Error) {
             throw response;
         }
+
+        const memoryCache = await getMemoryCache();
+
+        const cacheKey = `${DataSourceIds.googleAnalytics}: ${authorizationCode}`;
+        await memoryCache.delete(cacheKey);
 
         return redirect(`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connectorId}`);
     } catch (e) {

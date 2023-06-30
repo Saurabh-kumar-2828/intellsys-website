@@ -10,6 +10,7 @@ import {getAccessiblePropertyIds, ingestAndStoreGoogleAnalyticsData} from "~/bac
 import type {GoogleAdsAccessibleAccount} from "~/backend/utilities/connectors/googleOAuth.server";
 import {getGoogleAdsRefreshToken} from "~/backend/utilities/connectors/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
+import {PageScaffold2} from "~/components/pageScaffold2";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
@@ -111,10 +112,25 @@ export const action: ActionFunction = async ({request}) => {
 
 export default function () {
     const {data, accessiblePropertyIds} = useLoaderData() as LoaderData;
-    const [selectedAccount, setSelectedAccount] = useState<GoogleAdsAccessibleAccount | null>(null);
 
     console.log(data);
     console.log(accessiblePropertyIds);
+
+    return (
+        <PageScaffold2>
+            <OAuthCallback
+                data={data}
+                accessiblePropertyIds={accessiblePropertyIds}
+            />
+        </PageScaffold2>
+    );
+}
+
+function OAuthCallback({data, accessiblePropertyIds}: {
+    data: string;
+    accessiblePropertyIds: Array<GoogleAnalyticsAccessiblePropertyIds>;
+}) {
+    const [selectedAccount, setSelectedAccount] = useState<GoogleAdsAccessibleAccount | null>(null);
 
     return (
         <div>

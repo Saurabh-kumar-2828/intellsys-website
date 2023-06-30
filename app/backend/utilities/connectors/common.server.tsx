@@ -246,15 +246,15 @@ export async function checkConnectorExistsForAccount(companyId: Uuid, connectorT
 
     const response = await postgresDatabaseManager.execute(
         `
-        SELECT
-            *
-        FROM
-            company_to_connector_mapping
-        WHERE
-            company_id = $1 AND
-            connector_type = $2 AND
-            extra_information->>'accountId' = $3
-    `,
+            SELECT
+                *
+            FROM
+                company_to_connector_mapping
+            WHERE
+                company_id = $1 AND
+                connector_type = $2 AND
+                extra_information->>'accountId' = $3
+        `,
         [companyId, connectorType, accountId],
     );
 

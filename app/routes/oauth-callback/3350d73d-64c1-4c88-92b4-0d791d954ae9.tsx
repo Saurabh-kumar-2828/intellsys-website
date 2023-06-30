@@ -8,6 +8,7 @@ import {checkConnectorExistsForAccount} from "~/backend/utilities/connectors/com
 import type {FacebookAccessibleAccount, FacebookAdsSourceCredentials} from "~/backend/utilities/connectors/facebookOAuth.server";
 import {facebookOAuthFlow, getAccessibleAccounts, getFacebookAdsAccessToken} from "~/backend/utilities/connectors/facebookOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
+import {PageScaffold2} from "~/components/pageScaffold2";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
@@ -133,6 +134,23 @@ export const action: ActionFunction = async ({request, params}) => {
 
 export default function () {
     const {accessibleAccounts, data, companyId} = useLoaderData() as LoaderData;
+
+    return (
+        <PageScaffold2>
+            <OAuthCallback
+                data={data}
+                accessibleAccounts={accessibleAccounts}
+                companyId={companyId}
+            />
+        </PageScaffold2>
+    );
+}
+
+function OAuthCallback({accessibleAccounts, data, companyId}: {
+    data: string;
+    companyId: Uuid;
+    accessibleAccounts: Array<FacebookAccessibleAccount>;
+}) {
     const [selectedAccount, setSelectedAccount] = useState("");
 
     return (

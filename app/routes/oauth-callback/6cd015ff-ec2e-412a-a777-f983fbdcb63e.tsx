@@ -158,7 +158,7 @@ function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {dat
                         <SectionHeader label="Select an Account" />
                     </div>
 
-                    <VerticalSpacer classList="tw-h-8" />
+                    <VerticalSpacer className="tw-h-8" />
 
                     <div>
                         <RadioGroup

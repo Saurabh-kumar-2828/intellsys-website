@@ -166,7 +166,7 @@ function OAuthCallback({accessibleAccounts, data, companyId}: {data: string; com
                         <SectionHeader label="Select an Account" />
                     </div>
 
-                    <VerticalSpacer classList="tw-h-8" />
+                    <VerticalSpacer className="tw-h-8" />
 
                     <div>
                         <RadioGroup

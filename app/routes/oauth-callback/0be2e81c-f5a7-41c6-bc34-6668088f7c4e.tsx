@@ -13,10 +13,11 @@ import {PageScaffold2} from "~/components/pageScaffold2";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {SectionHeader} from "~/components/scratchpad";
-import {Uuid} from "~/global-common-typescript/typeDefinitions";
+import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
-import {ConnectorType} from "~/utilities/typeDefinitions";
+import {getMemoryCache} from "~/utilities/memoryCache";
+import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 // Google ads
@@ -42,9 +43,21 @@ export const loader: LoaderFunction = async ({request}) => {
         throw Error("Authorization failed!");
     }
 
-    const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
-    if (refreshToken instanceof Error) {
-        throw refreshToken;
+    let refreshToken: string;
+
+    const memoryCache = await getMemoryCache();
+
+    const cacheKey = `${DataSourceIds.googleAnalytics}: ${authorizationCode}`;
+    const cachedValue = await memoryCache.get(cacheKey);
+    if (cachedValue != null) {
+        refreshToken = cachedValue;
+    } else {
+        const refreshToken_ = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
+        if (refreshToken_ instanceof Error) {
+            throw refreshToken_;
+        }
+        await memoryCache.set(cacheKey, refreshToken_);
+        refreshToken = refreshToken_;
     }
 
     const accessibleAccounts = await getAccessibleAccounts(refreshToken);
@@ -68,6 +81,7 @@ export const action: ActionFunction = async ({request}) => {
     try {
         const urlSearchParams = new URL(request.url).searchParams;
 
+        const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
         const companyId = getNonEmptyStringOrNull(urlSearchParams.get("state"));
 
         if (companyId == null) {
@@ -90,7 +104,7 @@ export const action: ActionFunction = async ({request}) => {
 
         // Cannot create new connector, if connector with account already exists.
         if (accountExists) {
-            throw new Response(null, {status: 404, statusText: "Account already Exists!"});
+            throw new Response(null, {status: 400, statusText: "Account already Exists!"});
         }
 
         const googleAdsCredentials: GoogleAdsCredentials = {
@@ -101,10 +115,18 @@ export const action: ActionFunction = async ({request}) => {
 
         const connectorId = generateUuid();
 
-        const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, getUuidFromUnknown(companyId), connectorId);
+        const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, getUuidFromUnknown(companyId), connectorId, {
+            accountId: googleAdsCredentials.googleAccountId,
+            accountName: selectedAccount.customerClientName,
+        });
         if (response instanceof Error) {
             throw response;
         }
+
+        const memoryCache = await getMemoryCache();
+
+        const cacheKey = `${DataSourceIds.googleAnalytics}: ${authorizationCode}`;
+        await memoryCache.delete(cacheKey);
 
         return redirect(`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connectorId}`);
     } catch (e) {
@@ -149,14 +171,14 @@ function OAuthCallback({data, accessibleAccounts, companyId}: {data: string; acc
                     </div>
                 </div>
             ) : (
-                <div className="tw-grid tw-max-w-7xl tw-justify-center">
-                    <div>
+                <div className="tw-grid tw-max-w-7xl tw-justify-center tw-min-w-[50vw] tw-w-full">
+                    <div className="tw-w-full tw-min-w-[50vw]">
                         <SectionHeader label="Select an Account" />
                     </div>
 
                     <VerticalSpacer className="tw-h-8" />
 
-                    <div>
+                    <div className="tw-w-full tw-min-w-[50vw]">
                         <RadioGroup
                             name="selectedAccount"
                             value={selectedAccount}
@@ -171,7 +193,7 @@ function OAuthCallback({data, accessibleAccounts, companyId}: {data: string; acc
                                         key={itemIndex}
                                     >
                                         {({checked}) => (
-                                            <div className="tw-pl-4 tw-pr-8 tw-py-[0.9375rem] tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
+                                            <div className="tw-pl-4 tw-pr-8 tw-py-[0.9375rem] tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-4 tw-items-center">
                                                 {checked ? <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" /> : <Circle className="tw-w-6 tw-h-6 tw-text-blue-500" />}
 
                                                 {`${item.customerClientName}, ${item.customerClientId}`}
@@ -182,7 +204,12 @@ function OAuthCallback({data, accessibleAccounts, companyId}: {data: string; acc
                             />
                         </RadioGroup>
 
-                        <Form method="post">
+                        <VerticalSpacer className="tw-h-8" />
+
+                        <Form
+                            method="post"
+                            className="tw-grid"
+                        >
                             <input
                                 type="text"
                                 name="selectedAccount"
@@ -202,7 +229,7 @@ function OAuthCallback({data, accessibleAccounts, companyId}: {data: string; acc
                             {/* TODO: Disable it while loading */}
                             <button
                                 type="submit"
-                                className="tw-row-start-2 tw-lp-button"
+                                className="tw-row-start-2 tw-lp-button tw-place-self-center"
                             >
                                 Submit
                             </button>

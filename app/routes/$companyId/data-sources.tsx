@@ -155,13 +155,13 @@ function DataSources({
 
                 <div className="tw-grid tw-grid-rows-auto tw-gap-2">
                     {googleAdsConnectors.length == 0 ? (
-                        <div>No connected account!</div>
+                        <div className="tw-w-full tw-text-center">No connected account!</div>
                     ) : (
                         <table className="tw-w-full tw-border tw-border-solid tw-border-white">
                             <thead>
                                 <tr className="tw-w-full tw-border tw-border-solid tw-border-white">
+                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account</th>
                                     <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Source Id</th>
-                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account Id</th>
                                     <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
@@ -176,11 +176,11 @@ function DataSources({
                                                     to={`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connector.id}`}
                                                     className="tw-text-blue-500"
                                                 >
-                                                    {connector.id}
+                                                    {connector.extraInformation.accountName} ({connector.accountId})
                                                 </Link>
                                             </td>
 
-                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.accountId}</td>
+                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.id}</td>
 
                                             <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                                 <Form method="post">
@@ -258,13 +258,13 @@ function DataSources({
 
                 <div className="tw-grid tw-grid-rows-auto tw-gap-2">
                     {facebookAdsConnectors.length == 0 ? (
-                        <div>No connected account!</div>
+                        <div className="tw-w-full tw-text-center">No connected account!</div>
                     ) : (
                         <table className="tw-w-full tw-border tw-border-solid tw-border-white">
                             <thead>
                                 <tr className="tw-w-full tw-border tw-border-solid tw-border-white">
+                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account</th>
                                     <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Source Id</th>
-                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account Id</th>
                                     <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
@@ -279,11 +279,11 @@ function DataSources({
                                                     to={`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connector.id}`}
                                                     className="tw-text-blue-500"
                                                 >
-                                                    {connector.id}
+                                                    {connector.extraInformation.accountName} ({connector.accountId})
                                                 </Link>
                                             </td>
 
-                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.accountId}</td>
+                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.id}</td>
 
                                             <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                                 <Form method="post">
@@ -353,13 +353,13 @@ function DataSources({
 
                 <div className="tw-grid tw-grid-rows-auto tw-gap-2">
                     {googleAnalyticsConnectors.length == 0 ? (
-                        <div>No connected account!</div>
+                        <div className="tw-w-full tw-text-center">No connected account!</div>
                     ) : (
                         <table className="tw-w-full tw-border tw-border-solid tw-border-white">
                             <thead>
                                 <tr className="tw-w-full tw-border tw-border-solid tw-border-white">
+                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account</th>
                                     <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Source Id</th>
-                                    <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Account Id</th>
                                     <th className="tw-w-full tw-border tw-border-solid tw-border-white tw-text-left tw-p-2 tw-whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
@@ -374,11 +374,11 @@ function DataSources({
                                                     to={`/${companyId}/6cd015ff-ec2e-412a-a777-f983fbdcb63e/${connector.id}`}
                                                     className="tw-text-blue-500"
                                                 >
-                                                    {connector.id}
+                                                    {connector.extraInformation.accountName} ({connector.accountId})
                                                 </Link>
                                             </td>
 
-                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.accountId}</td>
+                                            <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.id}</td>
 
                                             <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
                                                 <Form method="post">

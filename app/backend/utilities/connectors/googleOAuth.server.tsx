@@ -25,6 +25,12 @@ export type GoogleAdsAccessToken = {
     accessToken: string;
 };
 
+export type Connector = {
+    id: Uuid;
+    accountId: string;
+    extraInformation: {[key: string]: any};
+};
+
 export function getGoogleAuthorizationCodeUrl(redirectUri: string, companyId: Uuid, scope: string) {
     const clientId = getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_ID");
 

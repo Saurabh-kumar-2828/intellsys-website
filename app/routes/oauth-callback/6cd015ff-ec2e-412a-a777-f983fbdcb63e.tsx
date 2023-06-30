@@ -1,13 +1,12 @@
 import {RadioGroup} from "@headlessui/react";
 import type {ActionFunction, LoaderFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
-import {Form, Link, useLoaderData, useMatches} from "@remix-run/react";
+import {Form, Link, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
 import {CheckCircle, Circle} from "react-bootstrap-icons";
 import {checkConnectorExistsForAccount} from "~/backend/utilities/connectors/common.server";
 import type {GoogleAnalyticsAccessiblePropertyIds, GoogleAnalyticsCredentials} from "~/backend/utilities/connectors/googleAnalytics.server";
 import {getAccessiblePropertyIds, ingestAndStoreGoogleAnalyticsData} from "~/backend/utilities/connectors/googleAnalytics.server";
-import type {GoogleAdsAccessibleAccount} from "~/backend/utilities/connectors/googleOAuth.server";
 import {getGoogleAdsRefreshToken} from "~/backend/utilities/connectors/googleOAuth.server";
 import {decrypt, encrypt} from "~/backend/utilities/utilities.server";
 import {PageScaffold2} from "~/components/pageScaffold2";
@@ -17,9 +16,9 @@ import {SectionHeader} from "~/components/scratchpad";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {concatenateNonNullStringsWithSpaces, generateUuid} from "~/global-common-typescript/utilities/utilities";
-import {ConnectorType} from "~/utilities/typeDefinitions";
-import {getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
-import {CompanyLoaderData} from "../oauth-callback";
+import {getMemoryCache} from "~/utilities/memoryCache";
+import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
+import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
 // Google analytics
 
@@ -44,10 +43,23 @@ export const loader: LoaderFunction = async ({request}) => {
         throw Error("Authorization failed!");
     }
 
-    const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAnalytics));
-    if (refreshToken instanceof Error) {
-        throw refreshToken;
+    let refreshToken: string;
+
+    const memoryCache = await getMemoryCache();
+
+    const cacheKey = `${DataSourceIds.googleAds}: ${authorizationCode}`;
+    const cachedValue = await memoryCache.get(cacheKey);
+    if (cachedValue != null) {
+        refreshToken = cachedValue;
+    } else {
+        const refreshToken_ = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAnalytics));
+        if (refreshToken_ instanceof Error) {
+            throw refreshToken_;
+        }
+        await memoryCache.set(cacheKey, refreshToken_);
+        refreshToken = refreshToken_;
     }
+
 
     const accessiblePropertyIds = await getAccessiblePropertyIds(refreshToken);
     if (accessiblePropertyIds instanceof Error) {
@@ -70,6 +82,7 @@ export const action: ActionFunction = async ({request}) => {
     try {
         const urlSearchParams = new URL(request.url).searchParams;
 
+        const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
         const companyId = getNonEmptyStringOrNull(urlSearchParams.get("state"));
 
         if (companyId == null) {
@@ -86,7 +99,7 @@ export const action: ActionFunction = async ({request}) => {
 
         const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), ConnectorType.GoogleAnalytics, selectedAccount.customerClientId);
         if (accountExists instanceof Error) {
-            return Error("Account already exists");
+            throw new Response(null, {status: 400, statusText: "Account already Exists!"});
         }
 
         // Cannot create new connector, if connector with account already exists.
@@ -101,10 +114,18 @@ export const action: ActionFunction = async ({request}) => {
 
         const connectorId = generateUuid();
 
-        const response = await ingestAndStoreGoogleAnalyticsData(googleAnalyticsCredentials, getUuidFromUnknown(companyId), connectorId);
+        const response = await ingestAndStoreGoogleAnalyticsData(googleAnalyticsCredentials, getUuidFromUnknown(companyId), connectorId, {
+            accountId: googleAnalyticsCredentials.propertyId,
+            accountName: selectedAccount.displayName,
+        });
         if (response instanceof Error) {
             throw response;
         }
+
+        const memoryCache = await getMemoryCache();
+
+        const cacheKey = `${DataSourceIds.googleAds}: ${authorizationCode}`;
+        await memoryCache.delete(cacheKey);
 
         return redirect(`/${companyId}/6cd015ff-ec2e-412a-a777-f983fbdcb63e/${connectorId}`);
     } catch (e) {
@@ -133,7 +154,7 @@ export default function () {
 }
 
 function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {data: string; accessiblePropertyIds: Array<GoogleAnalyticsAccessiblePropertyIds>; companyId: Uuid; className: string}) {
-    const [selectedAccount, setSelectedAccount] = useState<GoogleAdsAccessibleAccount | null>(null);
+    const [selectedAccount, setSelectedAccount] = useState<GoogleAnalyticsAccessiblePropertyIds | null>(null);
 
     return (
         <div className={concatenateNonNullStringsWithSpaces("tw-m-4 tw-grid tw-grid-auto-rows tw-gap-4 tw-justify-center", className)}>
@@ -153,14 +174,14 @@ function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {dat
                     </div>
                 </div>
             ) : (
-                <div className="tw-grid tw-max-w-7xl tw-justify-center">
-                    <div>
+                <div className="tw-grid tw-max-w-7xl tw-justify-center tw-min-w-[50vw] tw-w-full">
+                    <div className="tw-w-full tw-min-w-[50vw]">
                         <SectionHeader label="Select an Account" />
                     </div>
 
                     <VerticalSpacer className="tw-h-8" />
 
-                    <div>
+                    <div className="tw-w-full tw-min-w-[50vw]">
                         <RadioGroup
                             name="selectedAccount"
                             value={selectedAccount}
@@ -175,7 +196,7 @@ function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {dat
                                         key={itemIndex}
                                     >
                                         {({checked}) => (
-                                            <div className="tw-pl-4 tw-pr-8 tw-py-[0.9375rem] tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
+                                            <div className="tw-pl-4 tw-pr-8 tw-py-[0.9375rem] tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-4 tw-items-center">
                                                 {checked ? <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" /> : <Circle className="tw-w-6 tw-h-6 tw-text-blue-500" />}
 
                                                 {`${item.propertyId}, ${item.displayName}`}
@@ -186,7 +207,10 @@ function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {dat
                             />
                         </RadioGroup>
 
-                        <Form method="post">
+                        <Form
+                            method="post"
+                            className="tw-grid"
+                        >
                             <input
                                 type="text"
                                 name="selectedAccount"
@@ -205,7 +229,7 @@ function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {dat
 
                             <button
                                 type="submit"
-                                className="tw-row-start-2 tw-lp-button"
+                                className="tw-row-start-2 tw-lp-button tw-place-self-center"
                             >
                                 Proceed
                             </button>

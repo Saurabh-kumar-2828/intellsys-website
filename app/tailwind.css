@@ -16,7 +16,8 @@
     } */
 
     .tw-lp-button {
-        @apply tw-bg-dark-bg-500 tw-text-fg hover:tw-brightness-125 disabled:tw-brightness-50 tw-p-4 disabled:tw-cursor-not-allowed;
+        @apply tw-bg-primary-1 tw-text-fg hover:tw-brightness-125 disabled:tw-brightness-50 tw-p-4 disabled:tw-cursor-not-allowed tw-rounded-full tw-px-8;
+        font-size: 16px;
     }
 
     .lp-tab {

@@ -83,7 +83,7 @@ export async function refreshFacebookAdsAccessToken(oldAccessToken: string): Pro
 /**
  * Handles the OAuth2 flow to authorize the Facebook API for the given companyId and stores the credentials in database.
  */
-export async function facebookOAuthFlow(facebookAdsCredentials: FacebookAdsSourceCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
+export async function facebookOAuthFlow(facebookAdsCredentials: FacebookAdsSourceCredentials, companyId: Uuid, connectorId: Uuid, extraInformation: {[key: string]: any}): Promise<void | Error> {
     const sourceCredentialId = generateUuid();
 
     // Destination = Company's Database.
@@ -134,9 +134,7 @@ export async function facebookOAuthFlow(facebookAdsCredentials: FacebookAdsSourc
         connectorId,
         ConnectorType.FacebookAds,
         "Facebook Ads",
-        JSON.stringify({
-            accountId: facebookAdsCredentials.adAccountId,
-        }),
+        JSON.stringify(extraInformation),
     );
 
     if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {

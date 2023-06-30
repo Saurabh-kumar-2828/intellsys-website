@@ -56,8 +56,8 @@ export async function getAccessiblePropertyIds(refreshToken: string): Promise<Ar
     return accessbileAccounts;
 }
 
-export async function ingestAndStoreGoogleAnalyticsData(credentials: GoogleAnalyticsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
-    const response = await storeGoogleAnalyticsOAuthDetails(credentials, companyId, connectorId);
+export async function ingestAndStoreGoogleAnalyticsData(credentials: GoogleAnalyticsCredentials, companyId: Uuid, connectorId: Uuid, extraInformation: {[key: string]: any}): Promise<void | Error> {
+    const response = await storeGoogleAnalyticsOAuthDetails(credentials, companyId, connectorId, extraInformation);
     if (response instanceof Error) {
         return response;
     }
@@ -66,7 +66,7 @@ export async function ingestAndStoreGoogleAnalyticsData(credentials: GoogleAnaly
 /**
  *  Handles the OAuth2 flow to authorize the Google Ads API for the given companyId and stores the credentials in KMS table, connectors table, subconnecter table and companyToConnectorTable.
  */
-export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyticsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
+export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyticsCredentials, companyId: Uuid, connectorId: Uuid, extraInformation: {[key: string]: any}): Promise<void | Error> {
     try {
         const sourceCredentialId = generateUuid();
 
@@ -117,9 +117,7 @@ export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyt
             connectorId,
             ConnectorType.GoogleAnalytics,
             "Google Analytics",
-            JSON.stringify({
-                accountId: credentials.propertyId,
-            }),
+            JSON.stringify(extraInformation),
         );
 
         if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {

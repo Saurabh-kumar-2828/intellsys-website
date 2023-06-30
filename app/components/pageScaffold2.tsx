@@ -19,7 +19,7 @@ export function PageScaffold2({children}: {children}) {
                 />
             )} */}
 
-            <div className="tw-row-start-1 tw-w-full tw-h-16 tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-sticky tw-top-0 tw-bg-dark-bg-400">
+            <div className="tw-row-start-1 tw-w-full tw-h-16 tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-sticky tw-top-0 tw-bg-dark-bg-400 tw-p-4">
                 <Link
                     to="/"
                     className="tw-col-start-1"

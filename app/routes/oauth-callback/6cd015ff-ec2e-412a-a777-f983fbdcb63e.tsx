@@ -138,7 +138,7 @@ function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {dat
     return (
         <div className={concatenateNonNullStringsWithSpaces("tw-m-4 tw-grid tw-grid-auto-rows tw-gap-4 tw-justify-center", className)}>
             {accessiblePropertyIds.length == 0 ? (
-                <div className="tw-w-[100vw] tw-h-[100vh] tw-grid tw-items-center tw-justify-center tw-max-w-7xl">
+                <div className="tw-w-[100vw] tw-h-[calc(100vh-6rem)] tw-grid tw-items-center tw-justify-center tw-max-w-7xl">
                     <div className="tw-grid">
                         <div className="tw-font-h1-400 tw-row-start-1">No Account Found, Please login with different account.</div>
 
@@ -157,6 +157,8 @@ function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {dat
                     <div>
                         <SectionHeader label="Select an Account" />
                     </div>
+
+                    <VerticalSpacer classList="tw-h-8" />
 
                     <div>
                         <RadioGroup

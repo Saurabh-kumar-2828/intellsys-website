@@ -9,6 +9,7 @@ import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/serv
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid, getSingletonValue, getUnixTimeInSeconds} from "~/global-common-typescript/utilities/utilities";
 import type {Company, User, Uuid} from "~/utilities/typeDefinitions";
+import {getTagFromEmail} from "~/utilities/utilities";
 
 // TODO: Remove this, and store the OTPs in database instead
 declare global {
@@ -36,7 +37,7 @@ export async function sendOtp(email: string): Promise<void | Error> {
     var body = JSON.stringify({
         template_path: "https://intellsys-optimizer.b-cdn.net/intellsys-mailer/intellsys_otp_template.txt",
         email_content_dict: {
-            "~!NAME!~": email,
+            "~!NAME!~": getTagFromEmail(email),
             "~!OTP!~": otp,
         },
         email_to: JSON.stringify([email]),

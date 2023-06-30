@@ -432,7 +432,7 @@ export async function getAccountIdForConnector(connectorId: ConnectorId): Promis
         `
             SELECT
                 connector_id AS id,
-                extra_information->>'accountId' AS account_id
+                extra_information
             FROM
                 company_to_connector_mapping
             WHERE
@@ -450,8 +450,9 @@ export async function getAccountIdForConnector(connectorId: ConnectorId): Promis
 
 function rowToConnector(row: unknown): Connector {
     const result: Connector = {
-        id: getUuidFromUnknown(row.id),
-        accountId: row.account_id,
+        id: row.id,
+        accountId: row.extra_information["accountId"],
+        extraInformation: row.extra_information,
     };
     return result;
 }
@@ -505,7 +506,7 @@ export async function getArrayOfConnectorIdsAssociatedWithCompanyId(companyId: U
         `
             SELECT
                 connector_id AS id,
-                extra_information->>'accountId' AS account_id
+                extra_information
             FROM
                 company_to_connector_mapping
             WHERE

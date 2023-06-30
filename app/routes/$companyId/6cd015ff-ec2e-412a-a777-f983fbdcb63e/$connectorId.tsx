@@ -7,6 +7,8 @@ import {AgGridReact} from "ag-grid-react";
 import styles from "app/styles.css";
 import {DateTime} from "luxon";
 import {useState} from "react";
+import { Line } from "react-chartjs-2";
+import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
 import type {GoogleAnalyticsData, GoogleAnalyticsDataAggregatedRow} from "~/backend/business-insights";
 import {TimeGranularity, getGoogleAnalyticsLectrixData, getTimeGranularityFromUnknown} from "~/backend/business-insights";
 import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
@@ -17,7 +19,7 @@ import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
+import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getDates, getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
 
 // Google analytics
 
@@ -207,8 +209,57 @@ function CampaignsSection({
     minDate: Iso8601Date;
     maxDate: Iso8601Date;
 }) {
+
+    ChartJS.register(CategoryScale, LinearScale, Title, Tooltip, Legend, PointElement, LineElement);
+
+    const dates = getDates(minDate, maxDate);
+    const dayWiseSpend = analyticsData.map((row) => parseInt(row.activeUsers));
+
+    const labels = dates;
+    const data = {
+        labels,
+        datasets: [
+            {
+                label: "Daily Active Users",
+                data: dayWiseSpend,
+                borderColor: "rgb(212, 172, 13)",
+                backgroundColor: "rgb(212, 172, 13)",
+            },
+        ],
+    };
+
+    const options = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: "top" as const,
+            },
+            title: {
+                display: true,
+                text: "Day-wise distribution of total clicks",
+            },
+        },
+    };
+
     return (
         <div className="tw-grid tw-grid-cols-1 tw-p-2">
+            <div className="tw-row-start-1">
+                <GenericCard
+                    className="tw-rounded-tl-none"
+                    content={
+                        <div className="tw-grid tw-grid-cols-4">
+                            <div className="tw-row-start-1 tw-col-start-2 tw-col-span-2 tw-grid">
+                                <Line
+                                    options={options}
+                                    data={data}
+                                    className="tw-row-start-1 tw-col-start-1"
+                                />
+                            </div>
+                        </div>
+                    }
+                    metaQuery={""}
+                />
+            </div>
             <Tabs.Root
                 defaultValue="1"
                 className="tw-row-start-4"

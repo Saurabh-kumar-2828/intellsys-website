@@ -12,12 +12,14 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getNonEmptyStringOrNull, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
+import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getDates, getNonEmptyStringOrNull, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import type {CompanyLoaderData} from "~/routes/$companyId";
+import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
+import { Line } from "react-chartjs-2";
 
 // Google ads
 
@@ -211,9 +213,58 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
 
     // TODO: Fix amount name
     const microValue = 10^6;
+    ChartJS.register(CategoryScale, LinearScale, Title, Tooltip, Legend, PointElement, LineElement);
+
+    const dates = getDates(minDate, maxDate);
+    const dayWiseSpend = adsData.map((row) => parseInt(row.clicks));
+
+    const labels = dates;
+    const data = {
+        labels,
+        datasets: [
+            {
+                label: "Daily Spend",
+                data: dayWiseSpend,
+                borderColor: "rgb(212, 172, 13)",
+                backgroundColor: "rgb(212, 172, 13)",
+            },
+        ],
+    };
+
+    const options = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: "top" as const,
+            },
+            title: {
+                display: true,
+                text: "Day-wise distribution of total clicks",
+            },
+        },
+    };
+
 
     return (
         <div className="tw-grid tw-grid-cols-1 tw-p-2">
+             <div className="tw-row-start-1">
+                <GenericCard
+                    className="tw-rounded-tl-none"
+                    content={
+                        <div className="tw-grid tw-grid-cols-4">
+                            <div className="tw-row-start-1 tw-col-start-2 tw-col-span-2 tw-grid">
+                                <Line
+                                    options={options}
+                                    data={data}
+                                    className="tw-row-start-1 tw-col-start-1"
+                                />
+                            </div>
+                        </div>
+                    }
+                    metaQuery={""}
+                />
+            </div>
+
             <Tabs.Root
                 defaultValue="1"
                 className="tw-row-start-4"

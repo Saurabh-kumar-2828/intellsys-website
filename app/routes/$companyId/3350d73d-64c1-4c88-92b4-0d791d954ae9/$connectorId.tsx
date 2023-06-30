@@ -16,6 +16,7 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
+import { VerticalSpacer } from "~/global-common-typescript/components/verticalSpacer";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
@@ -254,6 +255,8 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                     metaQuery={""}
                 />
             </div>
+
+            <VerticalSpacer className="tw-h-8"/>
 
             <Tabs.Root
                 defaultValue="1"

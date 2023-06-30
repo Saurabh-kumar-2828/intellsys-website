@@ -20,6 +20,7 @@ import {PageScaffold} from "~/components/pageScaffold";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
 import { Line } from "react-chartjs-2";
+import { VerticalSpacer } from "~/global-common-typescript/components/verticalSpacer";
 
 // Google ads
 
@@ -264,6 +265,8 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                     metaQuery={""}
                 />
             </div>
+
+            <VerticalSpacer className="tw-h-8"/>
 
             <Tabs.Root
                 defaultValue="1"

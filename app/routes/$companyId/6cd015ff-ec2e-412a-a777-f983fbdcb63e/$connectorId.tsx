@@ -20,6 +20,7 @@ import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescri
 import {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getDates, getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
+import { VerticalSpacer } from "~/global-common-typescript/components/verticalSpacer";
 
 // Google analytics
 
@@ -242,8 +243,8 @@ function CampaignsSection({
     };
 
     return (
-        <div className="tw-grid tw-grid-cols-1 tw-p-2">
-            <div className="tw-row-start-1 tw-gap-8">
+        <div className="tw-grid tw-grid-cols-1 tw-p-2 tw-gap-8">
+            <div className="tw-row-start-1">
                 <GenericCard
                     className="tw-rounded-tl-none"
                     content={
@@ -260,6 +261,10 @@ function CampaignsSection({
                     metaQuery={""}
                 />
             </div>
+
+            <VerticalSpacer className="tw-h-8"/>
+
+
             <Tabs.Root
                 defaultValue="1"
                 className="tw-row-start-4"

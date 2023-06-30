@@ -53,13 +53,15 @@ export async function getGoogleAdsRefreshToken(authorizationCode: string, compan
     const response = await fetch(url, {
         method: "POST",
     });
-    const responseBody = await response.json();
+    const responseBody = await response.text();
+    const responseBodyJson = JSON.parse(responseBody);
+
     console.log("~~~");
     console.log(response.status);
     console.log(responseBody);
+    console.log(responseBodyJson);
     console.log("~~~");
 
-    const responseBodyJson = JSON.parse(responseBody);
 
     if (responseBodyJson.refresh_token == undefined) {
         return Error("Refresh token not found");

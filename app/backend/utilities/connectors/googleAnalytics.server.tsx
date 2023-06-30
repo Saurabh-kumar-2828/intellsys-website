@@ -47,12 +47,6 @@ export async function getAccessiblePropertyIds(refreshToken: string): Promise<Ar
     const responseBody = await response.text();
     const responseBodyJson = JSON.parse(responseBody);
 
-    console.log("~~~");
-    console.log(response.status);
-    console.log(responseBody);
-    console.log(responseBodyJson);
-    console.log("~~~");
-
     if (!response.ok) {
         return Error("Request to get accessible account failed");
     }

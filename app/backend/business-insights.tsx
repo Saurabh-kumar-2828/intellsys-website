@@ -7,8 +7,7 @@ import {ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitio
 import {dateToIso8601Date, getSingletonValue} from "~/utilities/utilities";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {Integer} from "~/global-common-typescript/typeDefinitions";
-import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server";
-import {getAccountIdForConnector} from "./utilities/connectors/common.server";
+import {Connector, getAccountIdForConnector} from "./utilities/connectors/common.server";
 
 export enum TimeGranularity {
     daily = "Daily",
@@ -74,22 +73,15 @@ export type AdsDataAggregatedRow = {
 };
 
 export type GoogleAnalyticsDataAggregatedRow = {
-    sessionCampaignName: string,
-    source: string,
-    sourceMedium: string,
-    sourcePlatform: string,
     date: Iso8601Date,
-    audienceId: string,
-    sessions: string,
-    averagePurchaseRevenuePerPayingUser: string,
-    bounceRate: string,
-    cartToViewRate: string,
-    conversions: string,
-    engagedSessions: string,
-    engagementRate: string,
-    eventValue: string,
-    firstTimePurchasers: string,
-    grossPurchaseRevenue: string
+    source: any,
+    activeUsers: any,
+    conversions: any,
+    dauPerMau: any,
+    dauPerWau: any,
+    totalUsers: any,
+    userConversionRate: any,
+    wauPerMau: any
 }
 
 export type GoogleAdsDataAggregatedRow = {
@@ -240,22 +232,15 @@ function rowToFacebookAdsDataAggregatedRow(row: Credentials): FacebookAdsAggrega
 
 function rowToGoogleAnalyticsDataAggregatedRow(row: unknown): GoogleAnalyticsDataAggregatedRow {
     const analyticsDataAggregatedRow: GoogleAnalyticsDataAggregatedRow = {
-        sessionCampaignName: row.sessioncampaignname,
-        source: row.source,
-        sourceMedium: row.sourcemedium,
-        sourcePlatform: row.sourceplatform,
         date: row.date,
-        audienceId: row.audienceid,
-        sessions: row.sessions,
-        averagePurchaseRevenuePerPayingUser: row.averagepurchaserevenueperpayinguser,
-        bounceRate: row.bouncerate,
-        cartToViewRate: row.carttoviewrate,
+        source: row.source,
+        activeUsers: row.activeusers,
         conversions: row.conversions,
-        engagedSessions: row.engagedsessions,
-        engagementRate: row.engagementrate,
-        eventValue: row.eventvalue,
-        firstTimePurchasers: row.firsttimepurchasers,
-        grossPurchaseRevenue: row.grosspurchaserevenue,
+        dauPerMau: row.daupermau,
+        dauPerWau: row.dauperwau,
+        totalUsers: row.totalusers,
+        userConversionRate: row.userconversionrate,
+        wauPerMau: row.waupermau
     };
 
     return analyticsDataAggregatedRow;
@@ -380,22 +365,15 @@ export async function getGoogleAnalyticsLectrixData(minDate: Iso8601Date, maxDat
 
     const query = `
         SELECT
-            data->'dimensionValues'->>'sessionCampaignName' AS sessionCampaignName,
-            data->'dimensionValues'->>'source' AS source,
-            data->'dimensionValues'->>'sourceMedium' AS sourceMedium,
-            data->'dimensionValues'->>'sourcePlatform' AS sourcePlatform,
             DATE((data->'dimensionValues'->>'date')) AS date,
-            data->'dimensionValues'->>'audienceId' AS audienceId,
-            data->'metricValues'->>'sessions' AS sessions,
-            data->'metricValues'->>'averagePurchaseRevenuePerPayingUser' AS averagePurchaseRevenuePerPayingUser,
-            data->'metricValues'->>'bounceRate' AS bounceRate,
-            data->'metricValues'->>'cartToViewRate' AS cartToViewRate,
-            data->'metricValues'->>'conversions' AS conversions,
-            data->'metricValues'->>'engagedSessions' AS engagedSessions,
-            data->'metricValues'->>'engagementRate' AS engagementRate,
-            data->'metricValues'->>'eventValue' AS eventValue,
-            data->'metricValues'->>'firstTimePurchasers' AS firstTimePurchasers,
-            data->'metricValues'->>'grossPurchaseRevenue' AS grossPurchaseRevenu
+            data->'dimensionValues'->>'source' AS source,
+            data->'metricValues'->>'activeUsers' AS activeUsers,
+            data->'metricValues'->>'conversions' As conversions,
+            data->'metricValues'->>'dauPerMau' As dauPerMau,
+            data->'metricValues'->>'dauPerWau' As dauPerWau,
+            data->'metricValues'->>'totalUsers' As totalUsers,
+            data->'metricValues'->>'userConversionRate' As userConversionRate,
+            data->'metricValues'->>'wauPerMau' As wauPerMau
         FROM
             ${tableName}
         WHERE

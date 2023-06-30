@@ -1,45 +1,37 @@
-// import type {ActionFunction} from "@remix-run/node";
-// import {getConnectors, ingestFutureDataFromConnectorsApi, ingestHistoricalDataFromConnectorsApi} from "~/global-common-typescript/server/connectors.server";
+import type {ActionFunction} from "@remix-run/node";
+import {getConnectors, ingestFutureDataFromConnectorsApi, ingestHistoricalDataFromConnectorsApi} from "~/backend/connectors.server";
 
-// export const action: ActionFunction = async ({request}) => {
+// TODO: Test this E2E
 
-//     const resyncDuration = 15;
-//     const historicalDuration = 60;
+export const action: ActionFunction = async ({request}) => {
+    const resyncDuration = 15;
+    const historicalDuration = 60;
 
-//     // Get array of connectors
-//     const connectors= await getConnectors();
-//     if(connectors instanceof Error){
-//         return
-//     }
+    // Get array of connectors
+    const connectors = await getConnectors();
+    if (connectors instanceof Error) {
+        return;
+    }
 
-//     for( let i=0; i<connectors.length; i++){
+    for (let i = 0; i < connectors.length; i++) {
+        // Sync historical data.
+        const historicalUpdate = await ingestHistoricalDataFromConnectorsApi(connectors[i].id, historicalDuration, connectors[i].connectorType);
 
-//         // Sync historical data.
-//         const historicalUpdate = await ingestHistoricalDataFromConnectorsApi(
-//             connectors[i].id,
-//             historicalDuration,
-//             connectors[i].connectorType
-//         );
+        if (historicalUpdate instanceof Error) {
+            console.log(`${connectors[i].id} - Historical - Failed`);
+        } else {
+            console.log(`${connectors[i].id} - Historical - Completed`);
+        }
 
-//         if(historicalUpdate instanceof Error){
-//             console.log(`${connectors[i].id} - Historical - Failed`);
-//         } else {
-//             console.log(`${connectors[i].id} - Historical - Completed`)
-//         }
+        // Sync future data.
+        const futureUpdate = await ingestFutureDataFromConnectorsApi(connectors[i].id, resyncDuration, connectors[i].connectorType);
 
-//         // Sync future data.
-//         const futureUpdate = await ingestFutureDataFromConnectorsApi(
-//             connectors[i].id,
-//             resyncDuration,
-//             connectors[i].connectorType
-//         );
+        if (futureUpdate instanceof Error) {
+            console.log(`${connectors[i].id} - Future - Failed`);
+        } else {
+            console.log(`${connectors[i].id} - Future - Completed`);
+        }
+    }
 
-//         if(futureUpdate instanceof Error){
-//             console.log(`${connectors[i].id} - Future - Failed`);
-//         } else {
-//             console.log(`${connectors[i].id} - Future - Completed`);
-//         }
-//     }
-
-//     return null;
-// };
+    return null;
+};

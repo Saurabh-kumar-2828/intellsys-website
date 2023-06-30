@@ -12,12 +12,12 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
+import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getNonEmptyStringOrNull, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 import {PageScaffold} from "~/components/pageScaffold";
-import {CompanyLoaderData} from "~/routes/$companyId";
+import type {CompanyLoaderData} from "~/routes/$companyId";
 
 // Google ads
 
@@ -204,10 +204,13 @@ function Connector({
 }
 
 function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Array<GoogleAdsDataAggregatedRow>; granularity: TimeGranularity; minDate: Iso8601Date; maxDate: Iso8601Date}) {
-    if (granularity == TimeGranularity.daily) {
-        const dailyDistributionOfData = aggregateHourlyData(adsData);
-        adsData = Object.values(dailyDistributionOfData);
-    }
+    // if (granularity == TimeGranularity.daily) {
+    //     const dailyDistributionOfData = aggregateHourlyData(adsData);
+    //     adsData = Object.values(dailyDistributionOfData);
+    // }
+
+    // TODO: Fix amount name
+    const microValue = 10^6;
 
     return (
         <div className="tw-grid tw-grid-cols-1 tw-p-2">
@@ -229,105 +232,6 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                         Raw Data
                     </Tabs.Trigger>
                 </Tabs.List>
-                <Tabs.Content value="2">
-                    <div className="tw-grid tw-overflow-auto">
-                        {/* <GenericCard
-                            content={
-                                <div className="tw-grid tw-grid-cols-1 tw-overflow-auto tw-gap-y-2 tw-py-4">
-                                    <div className="tw-row-start-1">
-                                        <ComposedChart
-                                            width={canvasDimensions.width}
-                                            height={canvasDimensions.height}
-                                            xValues={labels}
-                                            title={"Day-on-day distribution of selected campaigns"}
-                                            className="tw-row-start-1 tw-col-start-1"
-                                        >
-                                            {showAmountSpent && (
-                                                <LineGraphComponent
-                                                    data={salesLineData}
-                                                    scale={Scale.dataDriven}
-                                                />
-                                            )}
-
-                                            {showClicks && (
-                                                <LineGraphComponent
-                                                    data={clicksLineData}
-                                                    scale={Scale.dataDriven}
-                                                />
-                                            )}
-
-                                            {showImpressions && (
-                                                <LineGraphComponent
-                                                    data={impressionsLineData}
-                                                    scale={Scale.dataDriven}
-                                                />
-                                            )}
-                                        </ComposedChart>
-                                    </div>
-
-                                    <div className="tw-row-start-2 tw-flex tw-flex-row tw-justify-center">
-                                        <input
-                                            type="checkbox"
-                                            className="tw-h-5 tw-w-5"
-                                            id="amountspent"
-                                            checked={showAmountSpent}
-                                            onChange={(e) => {
-                                                showClicks == false && showImpressions == false ? setShowAmountSpent(true) : setShowAmountSpent(e.target.checked);
-                                            }}
-                                        />
-                                        <label
-                                            // TODO: Disabled because having multiple panes is causing issue with this
-                                            // htmlFor="amountspent"
-                                            className="tw-pl-3 tw-font-sans"
-                                        >
-                                            Amount Spent
-                                        </label>
-
-                                        <HorizontalSpacer className="tw-w-8" />
-
-                                        <input
-                                            type="checkbox"
-                                            className="tw-h-5 tw-w-5"
-                                            id="clicks"
-                                            checked={showClicks}
-                                            onChange={(e) => {
-                                                showAmountSpent == false && showImpressions == false ? setShowClicks(true) : setShowClicks(e.target.checked);
-                                            }}
-                                        />
-                                        <label
-                                            // TODO: Disabled because having multiple panes is causing issue with this
-                                            // htmlFor="clicks"
-                                            className="tw-pl-3 tw-font-sans"
-                                        >
-                                            Clicks
-                                        </label>
-
-                                        <HorizontalSpacer className="tw-w-8" />
-
-                                        <input
-                                            type="checkbox"
-                                            className="tw-h-5 tw-w-5"
-                                            id="impressions"
-                                            checked={showImpressions}
-                                            onChange={(e) => {
-                                                showAmountSpent == false && showClicks == false ? setShowImpressions(true) : setShowImpressions(e.target.checked);
-                                            }}
-                                        />
-                                        <label
-                                            // TODO: Disabled because having multiple panes is causing issue with this
-                                            // htmlFor="impressions"
-                                            className="tw-pl-3 tw-font-sans"
-                                        >
-                                            Impressions
-                                        </label>
-                                    </div>
-                                </div>
-                            }
-                            // metaQuery={shopifyData.metaQuery}
-                        /> */}
-                        Sample
-                    </div>
-                </Tabs.Content>
                 <Tabs.Content value="1">
                     <GenericCard
                         className="tw-rounded-tl-none"
@@ -339,37 +243,37 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                         hour: object.hour,
                                         campaignId: object.campaignId,
                                         campaignName: object.campaignName,
-                                        averageCost: object.averageCost,
-                                        impressions: object.impressions,
-                                        clicks: object.clicks,
-                                        interactionEventTypes: object.interactionEventTypes,
-                                        valuePerAllConversions: object.valuePerAllConversions,
-                                        videoViewRate: object.videoViewRate,
-                                        videoViews: object.videoViews,
-                                        viewThroughConversions: object.viewThroughConversions,
-                                        conversionsFromInteractionsRate: object.conversionsFromInteractionsRate,
-                                        conversionsValue: object.conversionsValue,
-                                        conversions: object.conversions,
-                                        costMicros: object.costMicros,
-                                        costPerAllConversions: object.costPerAllConversions,
-                                        ctr: object.ctr,
-                                        engagementRate: object.engagementRate,
-                                        engagements: object.engagements,
-                                        activeViewImpressions: object.activeViewImpressions,
-                                        activeViewMeasurability: object.activeViewMeasurability,
-                                        activeViewMeasurableCostMicros: object.activeViewMeasurableCostMicros,
-                                        activeViewMeasurableImpressions: object.activeViewMeasurableImpressions,
-                                        allConversionsFromInteractionsRate: object.allConversionsFromInteractionsRate,
-                                        allConversionsValue: object.allConversionsValue,
-                                        allConversions: object.allConversions,
-                                        averageCpc: object.averageCpc,
-                                        averageCpe: object.averageCpe,
-                                        averageCpm: object.averageCpm,
-                                        averageCpv: object.averageCpv,
-                                        interactionRate: object.interactionRate,
-                                        interactions: object.interactions,
-                                        allConversionsByConversionDate: object.allConversionsByConversionDate,
-                                        valuePerAllConversionsByConversionDate: object.valuePerAllConversionsByConversionDate,
+                                        averageCost: numberToHumanFriendlyString(object.averageCost),
+                                        impressions: numberToHumanFriendlyString(object.impressions),
+                                        clicks: numberToHumanFriendlyString(object.clicks),
+                                        averageCpc: numberToHumanFriendlyString(object.averageCpc/microValue) ,
+                                        averageCpe: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpe/microValue)) ,
+                                        averageCpm: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpm/microValue)) ,
+                                        averageCpv: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpv/microValue)) ,
+                                        interactionEventTypes: numberToHumanFriendlyString(object.interactionEventTypes),
+                                        valuePerAllConversions: numberToHumanFriendlyString(object.valuePerAllConversions),
+                                        videoViewRate: roundOffToTwoDigits(object.videoViewRate),
+                                        videoViews: roundOffToTwoDigits(object.videoViews),
+                                        viewThroughConversions: numberToHumanFriendlyString(object.viewThroughConversions),
+                                        conversionsFromInteractionsRate: numberToHumanFriendlyString(object.conversionsFromInteractionsRate),
+                                        conversionsValue: numberToHumanFriendlyString(object.conversionsValue),
+                                        conversions: numberToHumanFriendlyString(object.conversions),
+                                        costMicros: numberToHumanFriendlyString(object.costMicros/microValue),
+                                        costPerAllConversions: numberToHumanFriendlyString(object.costPerAllConversions),
+                                        ctr: roundOffToTwoDigits(object.ctr) ,
+                                        engagementRate: numberToHumanFriendlyString(object.engagementRate) ,
+                                        engagements: numberToHumanFriendlyString(object.engagements) ,
+                                        activeViewImpressions: numberToHumanFriendlyString(object.activeViewImpressions),
+                                        activeViewMeasurability: numberToHumanFriendlyString(object.activeViewMeasurability),
+                                        activeViewMeasurableCostMicros: numberToHumanFriendlyString(object.activeViewMeasurableCostMicros),
+                                        activeViewMeasurableImpressions: numberToHumanFriendlyString(object.activeViewMeasurableImpressions),
+                                        allConversionsFromInteractionsRate: roundOffToTwoDigits(object.allConversionsFromInteractionsRate),
+                                        allConversionsValue: numberToHumanFriendlyString(object.allConversionsValue) ,
+                                        allConversions: numberToHumanFriendlyString(object.allConversions) ,
+                                        interactionRate: roundOffToTwoDigits(object.interactionRate) ,
+                                        interactions: numberToHumanFriendlyString(object.interactions) ,
+                                        allConversionsByConversionDate: numberToHumanFriendlyString(object.allConversionsByConversionDate),
+                                        valuePerAllConversionsByConversionDate: numberToHumanFriendlyString(object.valuePerAllConversionsByConversionDate,)
                                     }))}
                                     columnDefs={[
                                         {
@@ -386,6 +290,10 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                         {headerName: "impressions", field: "impressions", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "clicks", field: "clicks", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "amountSpent", field: "amountSpent", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "averageCpc", field: "averageCpc", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "averageCpe", field: "averageCpe", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "averageCpm", field: "averageCpm", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "averageCpv", field: "averageCpv", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "interactionEventTypes", field: "interactionEventTypes", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "valuePerAllConversions", field: "valuePerAllConversions", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "videoViewRate", field: "videoViewRate", cellClass: "!tw-px-0", resizable: true},
@@ -406,10 +314,6 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                         {headerName: "allConversionsFromInteractionsRate", field: "allConversionsFromInteractionsRate", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "allConversionsValue", field: "allConversionsValue", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "allConversions", field: "allConversions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "averageCpc", field: "averageCpc", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "averageCpe", field: "averageCpe", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "averageCpm", field: "averageCpm", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "averageCpv", field: "averageCpv", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "interactionRate", field: "interactionRate", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "interactions", field: "interactions", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "allConversionsByConversionDate", field: "allConversionsByConversionDate", cellClass: "!tw-px-0", resizable: true},

@@ -237,46 +237,32 @@ function CampaignsSection({
                             <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
                                 <AgGridReact
                                     rowData={analyticsData.map((object) => ({
-                                        Date: object.date,
-                                        sessionCampaignName: object.sessionCampaignName,
+                                        date: object.date,
                                         source: object.source,
-                                        sourceMedium: object.sourceMedium,
-                                        sourcePlatform: object.sourcePlatform,
-                                        audienceId: object.audienceId,
-                                        sessions: object.sessions,
-                                        averagePurchaseRevenuePerPayingUser: object.averagePurchaseRevenuePerPayingUser,
-                                        bounceRate: object.bounceRate,
-                                        cartToViewRate: object.cartToViewRate,
+                                        activeUsers: object.activeUsers,
                                         conversions: object.conversions,
-                                        engagedSessions: object.engagedSessions,
-                                        engagementRate: object.engagementRate,
-                                        eventValue: object.eventValue,
-                                        firstTimePurchasers: object.firstTimePurchasers,
-                                        grossPurchaseRevenue: object.grossPurchaseRevenue,
+                                        dauPerMau: object.dauPerMau,
+                                        dauPerWau: object.dauPerWau,
+                                        totalUsers: object.totalUsers,
+                                        userConversionRate: object.userConversionRate,
+                                        wauPerMau: object.wauPerMau
                                     }))}
                                     columnDefs={[
                                         {
                                             headerName: "Date",
-                                            valueGetter: (params) => dateToMediumNoneEnFormat(params.data.Date),
+                                            valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date),
                                             filter: "agDateColumnFilter",
                                             comparator: agGridDateComparator,
                                             resizable: true,
                                         },
-                                        {headerName: "sessionCampaignName", field: "sessionCampaignName", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "source", field: "source", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "sourceMedium", field: "sourceMedium", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "sourcePlatform", field: "sourcePlatform", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "audienceId", field: "audienceId", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "sessions", field: "sessions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "averagePurchaseRevenuePerPayingUser", field: "averagePurchaseRevenuePerPayingUser", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "bounceRate", field: "bounceRate", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "cartToViewRate", field: "cartToViewRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "activeUsers", field: "activeUsers", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "conversions", field: "conversions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "engagedSessions", field: "engagedSessions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "engagementRate", field: "engagementRate", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "eventValue", field: "eventValue", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "firstTimePurchasers", field: "firstTimePurchasers", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "grossPurchaseRevenue", field: "grossPurchaseRevenue", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "dauPerMau", field: "dauPerMau", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "dauPerWau", field: "dauPerWau", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "totalUsers", field: "totalUsers", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "userConversionRate", field: "userConversionRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "wauPerMau", field: "wauPerMau", cellClass: "!tw-px-0", resizable: true}
                                     ]}
                                     defaultColDef={defaultColumnDefinitions}
                                     animateRows={true}

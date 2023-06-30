@@ -2,9 +2,9 @@ import type {ActionFunction, LinksFunction, LoaderFunction} from "@remix-run/nod
 import {json, redirect} from "@remix-run/node";
 import {Form, Link, useLoaderData, useMatches} from "@remix-run/react";
 import {Facebook} from "react-bootstrap-icons";
+import type {Connector} from "~/backend/utilities/connectors/common.server";
 import {deleteConnector, getConnectorsAssociatedWithCompanyId, getRedirectUri} from "~/backend/utilities/connectors/common.server";
 import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/connectors/facebookOAuth.server";
-import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server";
 import {getGoogleAuthorizationCodeUrl, googleAdsScope, googleAnalyticsScope} from "~/backend/utilities/connectors/googleOAuth.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";

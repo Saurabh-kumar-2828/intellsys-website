@@ -2,7 +2,6 @@ import type {Credentials} from "~/backend/utilities/data-management/credentials.
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {getRedirectUri} from "~/backend/utilities/connectors/common.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
-import {getSingletonValueOrNull} from "~/utilities/utilities";
 
 // TODO: Fix timezone in database
 
@@ -24,11 +23,6 @@ export type GoogleAdsCredentials = {
 
 export type GoogleAdsAccessToken = {
     accessToken: string;
-};
-
-export type Connector = {
-    id: Uuid;
-    accountId: string;
 };
 
 export function getGoogleAuthorizationCodeUrl(redirectUri: string, companyId: Uuid, scope: string) {
@@ -57,7 +51,9 @@ export async function getGoogleAdsRefreshToken(authorizationCode: string, compan
     const responseBodyJson = JSON.parse(responseBody);
 
     if (responseBodyJson.refresh_token == undefined) {
+        console.log(responseBody);
         return Error("Refresh token not found");
+
     }
 
     return responseBodyJson.refresh_token;

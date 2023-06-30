@@ -1,3 +1,4 @@
+import {ingestHistoricalDataFromConnectorsApi} from "~/backend/connectors.server";
 import {
     createTable,
     getConnectorsAssociatedWithCompanyId,
@@ -9,7 +10,6 @@ import {
     mapCompanyIdToConnectorId,
 } from "~/backend/utilities/connectors/common.server";
 import {storeCredentials} from "~/backend/utilities/data-management/credentials.server";
-import {ingestHistoricalDataFromConnectorsApi} from "~/global-common-typescript/server/connectors.server";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
 import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";

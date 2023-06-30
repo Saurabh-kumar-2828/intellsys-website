@@ -14,7 +14,7 @@ import {
 } from "./common.server";
 import {storeCredentials} from "../data-management/credentials.server";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
-import {ingestHistoricalDataFromConnectorsApi} from "~/global-common-typescript/server/connectors.server";
+import {ingestHistoricalDataFromConnectorsApi} from "~/backend/connectors.server";
 
 export type GoogleAnalyticsCredentials = {
     propertyId: string;

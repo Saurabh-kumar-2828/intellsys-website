@@ -14,7 +14,7 @@ import {storeCredentials} from "../data-management/credentials.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
-import {ingestHistoricalDataFromConnectorsApi} from "~/global-common-typescript/server/connectors.server";
+import {ingestHistoricalDataFromConnectorsApi} from "~/backend/connectors.server";
 
 export async function ingestAndStoreGoogleAdsData(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid): Promise<void | Error> {
     const response = await storeGoogleAdsOAuthDetails(credentials, companyId, connectorId);
@@ -68,6 +68,7 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
             companyDatabaseCredentialId,
             "Google Ads",
             ConnectorTableType.GoogleAds,
+            ConnectorType.GoogleAds,
             ConnectorType.GoogleAds,
         );
 

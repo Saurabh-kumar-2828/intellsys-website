@@ -10,7 +10,6 @@ import {getCurrentIsoTimestamp} from "~/global-common-typescript/utilities/utili
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import type {ConnectorTableType} from "~/utilities/typeDefinitions";
 import {getSingletonValue, getSingletonValueOrNull} from "~/utilities/utilities";
-import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
 
 export type ConnectorId = Uuid;
@@ -18,6 +17,11 @@ export type ConnectorId = Uuid;
 export type SourceAndDestinationId = {
     sourceId: Uuid;
     destinationId: Uuid;
+};
+
+export type Connector = {
+    id: Uuid;
+    accountId: string;
 };
 
 /**

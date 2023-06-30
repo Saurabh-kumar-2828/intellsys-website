@@ -12,14 +12,12 @@ export type AccessToken = {
 
 export async function getAccessTokenFromCookies(request: Request): Promise<null | AccessToken> {
     const session = await getCookieSession(request.headers.get("Cookie"));
-    console.log("~~~~~~~~~~~~~~~ session ~~~~~~~~~~~~~~~~~", session.data);
 
     if (!session.has("accessToken")) {
         return null;
     }
 
     const accessToken = getNonEmptyStringOrNull(session.get("accessToken"));
-    console.log("~~~~~~~~~~~~~~~ accessToken ~~~~~~~~~~~~~~~~~", accessToken);
     if (accessToken == null) {
         return null;
     }

@@ -16,7 +16,7 @@ import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {SectionHeader} from "~/components/scratchpad";
 import {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {generateUuid} from "~/global-common-typescript/utilities/utilities";
+import {concatenateNonNullStringsWithSpaces, generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
 import {CompanyLoaderData} from "../oauth-callback";
@@ -117,29 +117,26 @@ export const action: ActionFunction = async ({request}) => {
 export default function () {
     const {data, accessiblePropertyIds, companyId} = useLoaderData() as LoaderData;
 
-    const routeMatches = useMatches();
-    const {user, accessibleCompanies, currentCompany} = getSingletonValue(routeMatches.filter((routeMatch) => routeMatch.id == `routes/oauth-callback`)).data as CompanyLoaderData;
+    // const routeMatches = useMatches();
+    // const {user, accessibleCompanies, currentCompany} = getSingletonValue(routeMatches.filter((routeMatch) => routeMatch.id == `routes/oauth-callback`)).data as CompanyLoaderData;
 
     return (
-        <PageScaffold2
-            user={user}
-            accessibleCompanies={accessibleCompanies}
-            currentCompany={currentCompany}
-        >
+        <PageScaffold2>
             <OAuthCallback
                 data={data}
                 accessiblePropertyIds={accessiblePropertyIds}
                 companyId={companyId}
+                className="tw-row-start-2"
             />
         </PageScaffold2>
     );
 }
 
-function OAuthCallback({data, accessiblePropertyIds, companyId}: {data: string; accessiblePropertyIds: Array<GoogleAnalyticsAccessiblePropertyIds>; companyId: Uuid}) {
+function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {data: string; accessiblePropertyIds: Array<GoogleAnalyticsAccessiblePropertyIds>; companyId: Uuid; className: string}) {
     const [selectedAccount, setSelectedAccount] = useState<GoogleAdsAccessibleAccount | null>(null);
 
     return (
-        <div className="tw-m-4 tw-grid tw-grid-auto-rows tw-gap-4 tw-justify-center">
+        <div className={concatenateNonNullStringsWithSpaces("tw-m-4 tw-grid tw-grid-auto-rows tw-gap-4 tw-justify-center", className)}>
             {accessiblePropertyIds.length == 0 ? (
                 <div className="tw-w-[100vw] tw-h-[100vh] tw-grid tw-items-center tw-justify-center tw-max-w-7xl">
                     <div className="tw-grid">

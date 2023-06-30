@@ -7,6 +7,7 @@ import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server"
 import {getSummarizedViewOfFacebookAdsConnector, getSummarizedViewOfGoogleAdsConnector, getSummarizedViewOfGoogleAnalyticsConnector} from "~/backend/utilities/temporary.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
+import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import {ConnectorType} from "~/utilities/typeDefinitions";
@@ -140,7 +141,7 @@ export default function () {
                             </Link>
                         </div>
                     ) : (
-                        <div className="tw-flex tw-flex-col">
+                        <div className="tw-w-full tw-flex tw-flex-col tw-gap-y-4 tw-max-w-2xl">
                             <ItemBuilder
                                 items={googleAdsConnectorsWithDetails}
                                 itemBuilder={(googleAdsConnectorWithDetails) => (
@@ -172,17 +173,22 @@ export default function () {
 
 function GoogleAdsSummaryCard({connector, spends, impressions, clicks}: {connector: Connector; spends: number; impressions: number; clicks: number}) {
     return (
-        <div className="tw-w-full tw-bg-gray-800 tw-grid tw-grid-cols-3">
+        <div className="tw-w-full tw-bg-gray-800 tw-grid tw-grid-cols-3 tw-items-center tw-p-4 tw-rounded-lg">
             <div className="tw-col-span-3">Google Ads: {connector.accountId}</div>
-            <div>
+
+            <VerticalSpacer className="tw-col-span-3 tw-h-4" />
+
+            <div className="tw-text-center">
                 <div>Spends</div>
                 <div>{spends}</div>
             </div>
-            <div>
+
+            <div className="tw-text-center">
                 <div>Impressions</div>
                 <div>{impressions}</div>
             </div>
-            <div>
+
+            <div className="tw-text-center">
                 <div>Clicks</div>
                 <div>{clicks}</div>
             </div>

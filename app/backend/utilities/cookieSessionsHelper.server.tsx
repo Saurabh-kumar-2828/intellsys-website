@@ -49,11 +49,9 @@ async function parseAccessTokenFromString(accessTokenEncoded: string): Promise<n
 
 async function decodeAccessToken(accessToken: string): Promise<null | AccessToken> {
     let accessTokenDecoded;
-    console.log("INSIDE decode access token");
 
     try {
         accessTokenDecoded = jwt.verify(accessToken, getRequiredEnvironmentVariable("JWT_SECRET"));
-        console.log("~~~~~~~~~~~~accessTokenDecoded~~~~~~~~~~~~~~~~~~~~~ :::", accessTokenDecoded);
 
         if (accessTokenDecoded.schemaVersion != process.env.COOKIE_SCHEMA_VERSION) {
             return null;
@@ -61,8 +59,6 @@ async function decodeAccessToken(accessToken: string): Promise<null | AccessToke
 
         // TODO: Add additional checks for structure of token?
     } catch {
-        console.log("~~~~~~~~~~~~accessTokenDecoded Inside catch~~~~~~~~~~~~~~~~~~~~~ :::");
-
         accessTokenDecoded = null;
     }
 

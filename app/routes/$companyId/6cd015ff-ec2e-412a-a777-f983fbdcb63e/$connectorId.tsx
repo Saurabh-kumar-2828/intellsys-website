@@ -243,7 +243,7 @@ function CampaignsSection({
     };
 
     return (
-        <div className="tw-grid tw-grid-cols-1 tw-p-2 tw-gap-8">
+        <div className="tw-grid tw-grid-cols-1 tw-p-2">
             <div className="tw-row-start-1">
                 <GenericCard
                     className="tw-rounded-tl-none"
@@ -262,12 +262,12 @@ function CampaignsSection({
                 />
             </div>
 
-            <VerticalSpacer className="tw-h-8"/>
+            <VerticalSpacer className="tw-row-start-2 tw-h-8"/>
 
 
             <Tabs.Root
                 defaultValue="1"
-                className="tw-row-start-4"
+                className="tw-row-start-3"
             >
                 <Tabs.List>
                     <Tabs.Trigger

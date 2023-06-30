@@ -236,7 +236,7 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
     };
 
     return (
-        <div className="tw-grid tw-grid-cols-1 tw-p-2 tw-gap-5">
+        <div className="tw-grid tw-grid-cols-1 tw-p-2 tw-gap-8">
             <div className="tw-row-start-1">
                 <GenericCard
                     className="tw-rounded-tl-none"

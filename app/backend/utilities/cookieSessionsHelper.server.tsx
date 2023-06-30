@@ -1,9 +1,8 @@
 import jwt from "jsonwebtoken";
 import {getCookieSession} from "~/backend/utilities/cookieSessions.server";
-import {execute} from "~/backend/utilities/databaseManager.server";
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
-import {User, Uuid} from "~/utilities/typeDefinitions";
-import {getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
+import type {User, Uuid} from "~/utilities/typeDefinitions";
+import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 // import {getUserDetailsFromDatabase} from "~/backend/userDetails.server";
 
 export type AccessToken = {
@@ -13,12 +12,14 @@ export type AccessToken = {
 
 export async function getAccessTokenFromCookies(request: Request): Promise<null | AccessToken> {
     const session = await getCookieSession(request.headers.get("Cookie"));
+    console.log("~~~~~~~~~~~~~~~ session ~~~~~~~~~~~~~~~~~", session.data);
 
     if (!session.has("accessToken")) {
         return null;
     }
 
     const accessToken = getNonEmptyStringOrNull(session.get("accessToken"));
+    console.log("~~~~~~~~~~~~~~~ accessToken ~~~~~~~~~~~~~~~~~", accessToken);
     if (accessToken == null) {
         return null;
     }
@@ -50,9 +51,11 @@ async function parseAccessTokenFromString(accessTokenEncoded: string): Promise<n
 
 async function decodeAccessToken(accessToken: string): Promise<null | AccessToken> {
     let accessTokenDecoded;
+    console.log("INSIDE decode access token");
 
     try {
         accessTokenDecoded = jwt.verify(accessToken, getRequiredEnvironmentVariable("JWT_SECRET"));
+        console.log("~~~~~~~~~~~~accessTokenDecoded~~~~~~~~~~~~~~~~~~~~~ :::", accessTokenDecoded);
 
         if (accessTokenDecoded.schemaVersion != process.env.COOKIE_SCHEMA_VERSION) {
             return null;
@@ -60,6 +63,8 @@ async function decodeAccessToken(accessToken: string): Promise<null | AccessToke
 
         // TODO: Add additional checks for structure of token?
     } catch {
+        console.log("~~~~~~~~~~~~accessTokenDecoded Inside catch~~~~~~~~~~~~~~~~~~~~~ :::");
+
         accessTokenDecoded = null;
     }
 

@@ -1,9 +1,9 @@
 import {RadioGroup} from "@headlessui/react";
 import type {ActionFunction, LoaderFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
-import {Form, useLoaderData} from "@remix-run/react";
+import {Form, Link, useLoaderData} from "@remix-run/react";
 import {useState} from "react";
-import {CheckCircle, Circle} from "react-bootstrap-icons";
+import {ArrowLeft, CheckCircle, Circle} from "react-bootstrap-icons";
 import {checkConnectorExistsForAccount} from "~/backend/utilities/connectors/common.server";
 import type {FacebookAccessibleAccount, FacebookAdsSourceCredentials} from "~/backend/utilities/connectors/facebookOAuth.server";
 import {facebookOAuthFlow, getAccessibleAccounts, getFacebookAdsAccessToken} from "~/backend/utilities/connectors/facebookOAuth.server";
@@ -12,6 +12,7 @@ import {PageScaffold2} from "~/components/pageScaffold2";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
+import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
@@ -61,7 +62,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
     }
 
     const accessibleAccounts = await getAccessibleAccounts(credentials, companyId);
-    if(accessibleAccounts instanceof Error){
+    if (accessibleAccounts instanceof Error) {
         throw new Response(null, {status: 404, statusText: "No Accessible Accounts!"});
     }
 
@@ -146,76 +147,94 @@ export default function () {
     );
 }
 
-function OAuthCallback({accessibleAccounts, data, companyId}: {
-    data: string;
-    companyId: Uuid;
-    accessibleAccounts: Array<FacebookAccessibleAccount>;
-}) {
+function OAuthCallback({accessibleAccounts, data, companyId}: {data: string; companyId: Uuid; accessibleAccounts: Array<FacebookAccessibleAccount>}) {
     const [selectedAccount, setSelectedAccount] = useState("");
 
     return (
-        <div className="tw-m-4 tw-grid tw-grid-auto-rows tw-gap-4">
-            <div>
-                <SectionHeader label="Select an Account" />
-            </div>
-            <div>
-                <RadioGroup
-                    name="selectedAccount"
-                    value={selectedAccount}
-                    onChange={(e) => setSelectedAccount(e)}
-                    className="tw-m-1 tw-row-start-1 tw-grid tw-grid-flow-row tw-content-center tw-gap-y-4"
-                >
-                    <ItemBuilder
-                        items={accessibleAccounts}
-                        itemBuilder={(item, itemIndex) => (
-                            <RadioGroup.Option
-                                value={item}
-                                key={itemIndex}
-                                disabled={item.disable}
-                            >
-                                {({checked}) => (
-                                    <div className="tw-p-4 tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
-                                        {checked ? <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" /> :
-                                        <Circle className={`tw-w-6 tw-h-6 tw-text-blue-500 ${item.disable ? 'disabled:tw-text-gray-500' : ''}`} />}
+        <div className="tw-m-4 tw-grid tw-grid-auto-rows tw-gap-4 tw-justify-center">
+            {accessibleAccounts.length == 0 ? (
+                <div className="tw-w-[100vw] tw-h-[100vh] tw-grid tw-items-center tw-justify-center tw-max-w-7xl">
+                    <div className="tw-grid">
+                        <div className="tw-font-h1-400 tw-row-start-1">No Account Found, Please login with different account.</div>
 
-                                        {`${item.accountId}, ${item.accountName}`}
-                                    </div>
+                        <VerticalSpacer className="tw-h-8 tw-row-start-2" />
+
+                        <Link
+                            to={`/${companyId}/data-sources`}
+                            className="tw-font-1rem tw-row-start-3 tw-flex tw-flex-row tw-gap-[2px] tw-items-center tw-text-center"
+                        >
+                            Click Here to go back to <span className="hover:tw-underline tw-underline-offset-4">data sources</span>
+                        </Link>
+                    </div>
+                </div>
+            ) : (
+                <div className="tw-grid tw-max-w-7xl tw-justify-center">
+                    <div>
+                        <SectionHeader label="Select an Account" />
+                    </div>
+                    <div>
+                        <RadioGroup
+                            name="selectedAccount"
+                            value={selectedAccount}
+                            onChange={(e) => setSelectedAccount(e)}
+                            className="tw-m-1 tw-row-start-1 tw-grid tw-grid-flow-row tw-content-center tw-gap-y-4"
+                        >
+                            <ItemBuilder
+                                items={accessibleAccounts}
+                                itemBuilder={(item, itemIndex) => (
+                                    <RadioGroup.Option
+                                        value={item}
+                                        key={itemIndex}
+                                        disabled={item.disable}
+                                    >
+                                        {({checked}) => (
+                                            <div className="tw-p-4 tw-rounded-full tw-border-[0.0625rem] tw-border-solid tw-border-white tw-text-white tw-grid tw-grid-cols-[auto_minmax(0,1fr)] tw-gap-x-2">
+                                                {checked ? (
+                                                    <CheckCircle className="tw-w-6 tw-h-6 tw-text-blue-500" />
+                                                ) : (
+                                                    <Circle className={`tw-w-6 tw-h-6 tw-text-blue-500 ${item.disable ? "disabled:tw-text-gray-500" : ""}`} />
+                                                )}
+
+                                                {`${item.accountId}, ${item.accountName}`}
+                                            </div>
+                                        )}
+                                    </RadioGroup.Option>
                                 )}
-                            </RadioGroup.Option>
-                        )}
-                    />
-                </RadioGroup>
-            </div>
+                            />
+                        </RadioGroup>
+                    </div>
 
-            <div>
-                <Form
-                    method="post"
-                    className="tw-row-auto"
-                >
-                    <HiddenFormField
-                        name="selectedAccount"
-                        value={selectedAccount ? JSON.stringify(selectedAccount) : ""}
-                        required
-                    />
+                    <div>
+                        <Form
+                            method="post"
+                            className="tw-row-auto"
+                        >
+                            <HiddenFormField
+                                name="selectedAccount"
+                                value={selectedAccount ? JSON.stringify(selectedAccount) : ""}
+                                required
+                            />
 
-                    <HiddenFormField
-                        name="data"
-                        value={data}
-                    />
+                            <HiddenFormField
+                                name="data"
+                                value={data}
+                            />
 
-                    <HiddenFormField
-                        name="companyId"
-                        value={companyId}
-                    />
+                            <HiddenFormField
+                                name="companyId"
+                                value={companyId}
+                            />
 
-                    <button
-                        type="submit"
-                        className="tw-lp-button tw-items-center"
-                    >
-                        Proceed
-                    </button>
-                </Form>
-            </div>
+                            <button
+                                type="submit"
+                                className="tw-lp-button tw-items-center"
+                            >
+                                Proceed
+                            </button>
+                        </Form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

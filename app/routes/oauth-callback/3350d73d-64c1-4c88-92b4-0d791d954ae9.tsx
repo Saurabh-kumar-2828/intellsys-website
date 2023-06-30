@@ -87,14 +87,17 @@ export const action: ActionFunction = async ({request, params}) => {
         throw new Response(null, {status: 404});
     }
 
+    console.log("n1");
     const dataDecoded = decrypt(data);
 
+    console.log("n2");
     // TODO: Confirm its implementation.
     const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), ConnectorType.FacebookAds, selectedAccount.accountId);
     if (accountExists instanceof Error) {
         return Error("Account already exists");
     }
 
+    console.log("n3");
     // Cannot create new connector, if connector with account already exists.
     if (accountExists) {
         throw new Response(null, {status: 404, statusText: "Account already Exists!"});
@@ -107,6 +110,7 @@ export const action: ActionFunction = async ({request, params}) => {
 
     const connectorId = generateUuid();
 
+    console.log("n4");
     if (data != null) {
         const response = await facebookOAuthFlow(facebookAdsCredentials, getUuidFromUnknown(companyId), connectorId);
         if (response instanceof Error) {
@@ -115,9 +119,11 @@ export const action: ActionFunction = async ({request, params}) => {
 
         const memoryCache = await getMemoryCache();
 
+        console.log("n5");
         const cacheKey = `3350d73d-64c1-4c88-92b4-0d791d954ae9: ${authorizationCode}`;
-        memoryCache.delete(cacheKey);
+        await memoryCache.delete(cacheKey);
 
+        console.log("n6");
         return redirect(`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connectorId}`);
     }
 

@@ -2,13 +2,10 @@ import type {ActionFunction, LinksFunction, LoaderFunction} from "@remix-run/nod
 import {json, redirect} from "@remix-run/node";
 import {Form, Link, useLoaderData, useMatches} from "@remix-run/react";
 import {Facebook} from "react-bootstrap-icons";
-import {getAccessibleCompanies, getUser} from "~/backend/userDetails.server";
 import {deleteConnector, getConnectorsAssociatedWithCompanyId, getRedirectUri} from "~/backend/utilities/connectors/common.server";
 import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/connectors/facebookOAuth.server";
 import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server";
 import {getGoogleAuthorizationCodeUrl, googleAdsScope, googleAnalyticsScope} from "~/backend/utilities/connectors/googleOAuth.server";
-import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
-import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
@@ -18,7 +15,7 @@ import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpac
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
-import {getSingletonValue, getSingletonValueOrNull} from "~/utilities/utilities";
+import {getSingletonValue} from "~/utilities/utilities";
 
 export const action: ActionFunction = async ({request, params}) => {
     const body = await request.formData();
@@ -120,7 +117,7 @@ export default function () {
     const {googleAdsConnectors, facebookAdsConnectors, googleAnalyticsConnectors} = useLoaderData() as LoaderData;
 
     const routeMatches = useMatches();
-    const {user, accessibleCompanies, currentCompany} = getSingletonValue(routeMatches.filter(routeMatch => routeMatch.id == "routes/$companyId")).data as CompanyLoaderData;
+    const {user, accessibleCompanies, currentCompany} = getSingletonValue(routeMatches.filter((routeMatch) => routeMatch.id == "routes/$companyId")).data as CompanyLoaderData;
 
     return (
         <PageScaffold

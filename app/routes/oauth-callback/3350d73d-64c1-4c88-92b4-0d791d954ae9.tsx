@@ -14,7 +14,7 @@ import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormF
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
-import {getFromCache, putInCache, removeFromCache} from "~/utilities/timedCache";
+import {getMemoryCache} from "~/utilities/memoryCache";
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 
@@ -42,8 +42,10 @@ export const loader: LoaderFunction = async ({request, params}) => {
 
     let credentials: FacebookAdsSourceCredentials;
 
+    const memoryCache = await getMemoryCache();
+
     const cacheKey = `3350d73d-64c1-4c88-92b4-0d791d954ae9: ${authorizationCode}`;
-    const cachedValue = getFromCache(cacheKey);
+    const cachedValue = await memoryCache.get(cacheKey);
     if (cachedValue != null) {
         credentials = {
             facebookExchangeToken: cachedValue,
@@ -53,7 +55,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         if (credentials_ instanceof Error) {
             throw new Response(null, {status: 404, statusText: "Invalid credentials!"});
         }
-        putInCache(cacheKey, credentials_.facebookExchangeToken);
+        await memoryCache.set(cacheKey, credentials_.facebookExchangeToken);
         credentials = credentials_;
     }
 
@@ -111,8 +113,10 @@ export const action: ActionFunction = async ({request, params}) => {
             throw response;
         }
 
+        const memoryCache = await getMemoryCache();
+
         const cacheKey = `3350d73d-64c1-4c88-92b4-0d791d954ae9: ${authorizationCode}`;
-        removeFromCache(cacheKey);
+        memoryCache.delete(cacheKey);
 
         return redirect(`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connectorId}`);
     }

@@ -487,9 +487,6 @@ async function dropConnectorTable(accountId: string, destinationDatabaseCredenti
     const query = `
         DROP TABLE ${tablePrefix}_${accountId}
     `;
-    console.log("????????????????");
-    console.log(query);
-    console.log("????????????????");
 
     const response = await databaseManager.execute(query);
 

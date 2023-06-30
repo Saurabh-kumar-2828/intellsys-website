@@ -297,8 +297,6 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
 
     const connector = await getAccountIdForConnector(connectorId);
 
-    console.log("==========");
-    console.log(connector);
     if (connector instanceof Error) {
         return Error("Google account undefined!");
     }

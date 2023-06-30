@@ -4,17 +4,17 @@ import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {IntellsysHeaderDropdownTrigger} from "~/components/scratchpad";
 import type {Company, User} from "~/utilities/typeDefinitions";
 import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
-import {List, XLg} from "react-bootstrap-icons";
+import {CheckCircle, List, XLg} from "react-bootstrap-icons";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import React, {useState} from "react";
 
 export function SignedInHeaderComponent({
-    userDetails,
+    user,
     accessibleCompanies,
     currentCompany,
     className,
 }: {
-    userDetails: User;
+    user: User;
     accessibleCompanies: Array<Company>;
     currentCompany: Company;
     className?: string;
@@ -42,79 +42,60 @@ export function SignedInHeaderComponent({
                         {({open: isOpen, close}) => (
                             <>
                                 <Popover.Button>
-                                    <IntellsysHeaderDropdownTrigger
-                                        isOpen={isOpen}
-                                        content={
-                                            <div className="tw-grid tw-grid-cols-[auto_auto] tw-items-center tw-gap-x-2">
-                                                {/* <img
-                                                    className="tw-w-4 tw-h-4 tw-rounded-full"
-                                                    src={`https://intellsys-optimizer.b-cdn.net/intellsys/companies/${currentCompany.id}.png`}
-                                                /> */}
-                                                <div className="tw-w-4 tw-h-4 tw-rounded-full tw-bg-gray-600 tw-grid tw-place-items-center tw-text-[0.6rem]">
-                                                    {currentCompany.domain[0].toUpperCase()}
-                                                </div>
-
-                                                <div>{currentCompany.domain}</div>
-                                            </div>
-                                        }
-                                    />
-                                </Popover.Button>
-
-                                <Popover.Panel className="tw-absolute tw-right-0 tw-top-8 tw-w-full tw-min-w-max">
-                                    <div className="tw-w-full tw-h-fit tw-max-h-[20rem] tw-bg-dark-bg-500 tw-shadow-lg tw-rounded-lg tw-overflow-auto tw-pointer-events-auto tw-grid tw-grid-cols-1 tw-grid-flow-row">
-                                        <ItemBuilder
-                                            items={accessibleCompanies}
-                                            itemBuilder={(accessibleCompany, accessibleCompanyIndex) => (
-                                                <Link
-                                                    to={`/${accessibleCompany.id}`}
-                                                    className="tw-p-3 tw-flex tw-flex-row tw-items-center tw-gap-x-2"
-                                                    onClick={close}
-                                                    key={accessibleCompanyIndex}
-                                                >
-                                                    {/* <img
-                                                        className="tw-w-4 tw-h-4 tw-rounded-full"
-                                                        src={`https://intellsys-optimizer.b-cdn.net/intellsys/companies/${accessibleCompany.id}.png`}
-                                                    /> */}
-                                                    <div className="tw-w-4 tw-h-4 tw-rounded-full tw-bg-gray-600 tw-grid tw-place-items-center tw-text-[0.6rem]">
-                                                        {accessibleCompany.domain[0].toUpperCase()}
-                                                    </div>
-                                                    {accessibleCompany.domain}
-                                                </Link>
-                                            )}
-                                            spaceBuilder={(spaceIndex) => (
-                                                <div
-                                                    className="tw-w-full tw-h-px tw-bg-fg"
-                                                    key={spaceIndex}
-                                                />
-                                            )}
-                                        />
-                                    </div>
-                                </Popover.Panel>
-                            </>
-                        )}
-                    </Popover>
-
-                    <Popover
-                        as="div"
-                        className="tw-relative"
-                    >
-                        {({open: isOpen, close}) => (
-                            <>
-                                <Popover.Button>
                                     {/* <img
                                         className="tw-w-8 tw-h-8 tw-rounded-full"
-                                        src={`https://intellsys-optimizer.b-cdn.net/intellsys/users/${userDetails.id}.jpg`}
+                                        src={`https://intellsys-optimizer.b-cdn.net/intellsys/users/${user.id}.jpg`}
                                     /> */}
                                     {/* <div className="tw-w-8 tw-h-8 tw-rounded-full tw-bg-blue-600" /> */}
                                     <div className="tw-w-8 tw-h-8 tw-rounded-full tw-bg-gray-600 tw-grid tw-place-items-center">
-                                        {userDetails.email[0].toUpperCase()}
+                                        {user.email[0].toUpperCase()}
                                     </div>
                                 </Popover.Button>
 
-                                <Popover.Panel className="tw-absolute tw-right-0 tw-top-8 tw-w-full tw-min-w-max">
+                                <Popover.Panel className="tw-absolute tw-right-0 tw-top-12 tw-w-full tw-min-w-max">
                                     <div className="tw-w-full tw-h-fit tw-max-h-[20rem] tw-bg-dark-bg-500 tw-shadow-lg tw-rounded-lg tw-overflow-auto tw-pointer-events-auto tw-grid tw-grid-cols-1 tw-grid-flow-row">
-                                        <div className="tw-p-3">
-                                            Current logged in as: <b>{userDetails.email}</b>
+                                        <div className="tw-p-3 tw-flex tw-flex-row tw-gap-x-4 tw-items-center">
+                                            <div className="tw-w-8 tw-h-8 tw-rounded-full tw-bg-gray-600 tw-grid tw-place-items-center">
+                                                {user.email[0].toUpperCase()}
+                                            </div>
+
+                                            <b>{user.email}</b>
+                                        </div>
+
+                                        <div className="tw-w-full tw-h-px tw-bg-fg" />
+
+                                        <div className="tw-w-full tw-h-fit tw-max-h-[20rem] tw-bg-dark-bg-500 tw-shadow-lg tw-rounded-lg tw-overflow-auto tw-pointer-events-auto tw-grid tw-grid-cols-1 tw-grid-flow-row">
+                                            <ItemBuilder
+                                                items={accessibleCompanies}
+                                                itemBuilder={(accessibleCompany, accessibleCompanyIndex) => (
+                                                    <Link
+                                                        to={`/${accessibleCompany.id}`}
+                                                        className="tw-p-3 tw-grid tw-grid-cols-[1rem_minmax(0,1fr)_1rem] tw-items-center tw-gap-x-2"
+                                                        onClick={close}
+                                                        key={accessibleCompanyIndex}
+                                                    >
+                                                        {/* <img
+                                                            className="tw-w-4 tw-h-4 tw-rounded-full"
+                                                            src={`https://intellsys-optimizer.b-cdn.net/intellsys/companies/${accessibleCompany.id}.png`}
+                                                        /> */}
+                                                        <div className="tw-w-4 tw-h-4 tw-rounded-full tw-bg-gray-600 tw-grid tw-place-items-center tw-text-[0.6rem]">
+                                                            {accessibleCompany.domain[0].toUpperCase()}
+                                                        </div>
+
+                                                        {accessibleCompany.domain}
+
+                                                        {accessibleCompany.id != currentCompany.id ? null : (
+                                                            <CheckCircle className="tw-w-4 tw-h-4" />
+                                                        )}
+                                                    </Link>
+                                                )}
+                                                spaceBuilder={(spaceIndex) => (
+                                                    <div
+                                                        className="tw-w-full tw-h-px tw-bg-fg tw-opacity-50"
+                                                        key={spaceIndex}
+                                                    />
+                                                )}
+                                            />
                                         </div>
 
                                         <div className="tw-w-full tw-h-px tw-bg-fg" />
@@ -134,7 +115,7 @@ export function SignedInHeaderComponent({
 
                     <MenuComponent
                         className="tw-h-8"
-                        userDetails={userDetails}
+                        user={user}
                         accessibleCompanies={accessibleCompanies}
                         currentCompany={currentCompany}
                     />
@@ -145,12 +126,12 @@ export function SignedInHeaderComponent({
 }
 
 export function MenuComponent({
-    userDetails,
+    user,
     accessibleCompanies,
     currentCompany,
     className,
 }: {
-    userDetails: User;
+    user: User;
     accessibleCompanies: Array<Company>;
     currentCompany: Company;
     className?: string;

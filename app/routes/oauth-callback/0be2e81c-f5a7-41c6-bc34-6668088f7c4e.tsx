@@ -39,12 +39,12 @@ export const loader: LoaderFunction = async ({request}) => {
 
     const refreshToken = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
     if (refreshToken instanceof Error) {
-        return refreshToken;
+        throw refreshToken;
     }
 
     const accessibleAccounts = await getAccessibleAccounts(refreshToken);
     if (accessibleAccounts instanceof Error) {
-        return accessibleAccounts;
+        throw accessibleAccounts;
     }
 
     // TODO: Filter accessible account
@@ -73,10 +73,6 @@ export const action: ActionFunction = async ({request}) => {
         const data = body.get("data") as string;
 
         const selectedAccount = JSON.parse(body.get("selectedAccount") as string);
-
-        console.log("~~~~~~~~~~");
-        console.log(selectedAccount);
-        console.log("~~~~~~~~~~");
 
         // TODO: type validation
         const refreshTokenDecoded = decrypt(data);

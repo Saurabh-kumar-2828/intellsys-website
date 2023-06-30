@@ -12,14 +12,12 @@ export type AccessToken = {
 
 export async function getAccessTokenFromCookies(request: Request): Promise<null | AccessToken> {
     const session = await getCookieSession(request.headers.get("Cookie"));
-    console.log("~~~~~~~~~~~~~~~ session ~~~~~~~~~~~~~~~~~", session.data);
 
     if (!session.has("accessToken")) {
         return null;
     }
 
     const accessToken = getNonEmptyStringOrNull(session.get("accessToken"));
-    console.log("~~~~~~~~~~~~~~~ accessToken ~~~~~~~~~~~~~~~~~", accessToken);
     if (accessToken == null) {
         return null;
     }
@@ -51,11 +49,9 @@ async function parseAccessTokenFromString(accessTokenEncoded: string): Promise<n
 
 async function decodeAccessToken(accessToken: string): Promise<null | AccessToken> {
     let accessTokenDecoded;
-    console.log("INSIDE decode access token");
 
     try {
         accessTokenDecoded = jwt.verify(accessToken, getRequiredEnvironmentVariable("JWT_SECRET"));
-        console.log("~~~~~~~~~~~~accessTokenDecoded~~~~~~~~~~~~~~~~~~~~~ :::", accessTokenDecoded);
 
         if (accessTokenDecoded.schemaVersion != process.env.COOKIE_SCHEMA_VERSION) {
             return null;
@@ -63,8 +59,6 @@ async function decodeAccessToken(accessToken: string): Promise<null | AccessToke
 
         // TODO: Add additional checks for structure of token?
     } catch {
-        console.log("~~~~~~~~~~~~accessTokenDecoded Inside catch~~~~~~~~~~~~~~~~~~~~~ :::");
-
         accessTokenDecoded = null;
     }
 

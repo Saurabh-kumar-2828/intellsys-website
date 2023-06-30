@@ -243,7 +243,7 @@ function CampaignsSection({
 
     return (
         <div className="tw-grid tw-grid-cols-1 tw-p-2">
-            <div className="tw-row-start-1">
+            <div className="tw-row-start-1 tw-gap-8">
                 <GenericCard
                     className="tw-rounded-tl-none"
                     content={

@@ -463,7 +463,6 @@ export async function getGoogleAnalyticsLectrixData(minDate: Iso8601Date, maxDat
     if (result instanceof Error) {
         return result;
     }
-
     return {
         metaQuery: query,
         rows: result.rows.map((row) => rowToGoogleAnalyticsDataAggregatedRow(row)),

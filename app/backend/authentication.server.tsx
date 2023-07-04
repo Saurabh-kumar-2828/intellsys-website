@@ -194,6 +194,7 @@ export async function createCompany(domain: string): Promise<Company | Error> {
     if (result1 instanceof Error) {
         return result1;
     }
+    console.log("Company's database initialized");
 
     const intellsysStorage1CredentialStr = await getCredentialFromKms(getUuidFromUnknown(getRequiredEnvironmentVariableNew("INTELLSYS_STORAGE_1_CREDENTIAL_ID")));
     if (intellsysStorage1CredentialStr instanceof Error) {

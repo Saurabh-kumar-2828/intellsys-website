@@ -76,6 +76,7 @@ export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyt
             return companyDatabaseCredentialId;
         }
 
+
         const companyDatabaseManager = await getPostgresDatabaseManager(companyDatabaseCredentialId);
         if (companyDatabaseManager instanceof Error) {
             return companyDatabaseManager;
@@ -139,7 +140,6 @@ export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyt
         if (createTableResponse instanceof Error) {
             return createTableResponse;
         }
-
         const dataIngestionResponse = await ingestHistoricalDataFromConnectorsApi(getUuidFromUnknown(connectorId), 45, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
         if (dataIngestionResponse instanceof Error) {
             return dataIngestionResponse;

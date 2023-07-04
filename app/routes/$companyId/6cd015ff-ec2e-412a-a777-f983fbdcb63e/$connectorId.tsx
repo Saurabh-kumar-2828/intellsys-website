@@ -7,7 +7,7 @@ import {AgGridReact} from "ag-grid-react";
 import styles from "app/styles.css";
 import {DateTime} from "luxon";
 import {useState} from "react";
-import { Line } from "react-chartjs-2";
+import {Line} from "react-chartjs-2";
 import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
 import type {GoogleAnalyticsData, GoogleAnalyticsDataAggregatedRow} from "~/backend/business-insights";
 import {TimeGranularity, getGoogleAnalyticsLectrixData, getTimeGranularityFromUnknown} from "~/backend/business-insights";
@@ -17,10 +17,10 @@ import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {CompanyLoaderData} from "~/routes/$companyId";
+import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getDates, getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
-import { VerticalSpacer } from "~/global-common-typescript/components/verticalSpacer";
+import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 
 // Google analytics
 
@@ -210,7 +210,6 @@ function CampaignsSection({
     minDate: Iso8601Date;
     maxDate: Iso8601Date;
 }) {
-
     ChartJS.register(CategoryScale, LinearScale, Title, Tooltip, Legend, PointElement, LineElement);
 
     const dates = getDates(minDate, maxDate);
@@ -262,8 +261,7 @@ function CampaignsSection({
                 />
             </div>
 
-            <VerticalSpacer className="tw-row-start-2 tw-h-8"/>
-
+            <VerticalSpacer className="tw-row-start-2 tw-h-8" />
 
             <Tabs.Root
                 defaultValue="1"
@@ -294,14 +292,38 @@ function CampaignsSection({
                                 <AgGridReact
                                     rowData={analyticsData.map((object) => ({
                                         date: object.date,
-                                        source: object.source,
+                                        active1DayUsers: object.active1DayUsers,
+                                        active28DayUsers: object.active28DayUsers,
+                                        active7DayUsers: object.active7DayUsers,
                                         activeUsers: object.activeUsers,
+                                        averagePurchaseRevenuePerPayingUser: object.averagePurchaseRevenuePerPayingUser,
+                                        averagePurchaseRevenuePerUser: object.averagePurchaseRevenuePerUser,
+                                        averageRevenuePerUser: object.averageRevenuePerUser,
+                                        bounceRate: object.bounceRate,
+                                        cartToViewRate: object.cartToViewRate,
                                         conversions: object.conversions,
                                         dauPerMau: object.dauPerMau,
                                         dauPerWau: object.dauPerWau,
+                                        engagedSessions: object.engagedSessions,
+                                        engagementRate: object.engagementRate,
+                                        eventValue: object.eventValue,
+                                        firstTimePurchaserConversionRate: object.firstTimePurchaserConversionRate,
+                                        firstTimePurchasers: object.firstTimePurchasers,
+                                        grossPurchaseRevenue: object.grossPurchaseRevenue,
+                                        itemListClickThroughRate: object.itemListClickThroughRate,
+                                        itemPromotionClickThroughRate: object.itemPromotionClickThroughRate,
+                                        purchaserConversionRate: object.purchaserConversionRate,
+                                        purchaseRevenue: object.purchaseRevenue,
+                                        purchaseToViewRate: object.purchaseToViewRate,
+                                        refundAmount: object.refundAmount,
+                                        sessionConversionRate: object.sessionConversionRate,
+                                        sessions: object.sessions,
+                                        sessionsPerUser: object.sessionsPerUser,
+                                        totalPurchasers: object.totalPurchasers,
+                                        totalRevenue: object.totalRevenue,
                                         totalUsers: object.totalUsers,
                                         userConversionRate: object.userConversionRate,
-                                        wauPerMau: object.wauPerMau
+                                        wauPerMau: object.wauPerMau,
                                     }))}
                                     columnDefs={[
                                         {
@@ -312,13 +334,38 @@ function CampaignsSection({
                                             resizable: true,
                                         },
                                         {headerName: "source", field: "source", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "active1DayUsers", field: "active1DayUsers", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "active7DayUsers", field: "active7DayUsers", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "activeUsers", field: "activeUsers", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "averagePurchaseRevenuePerPayingUser", field: "averagePurchaseRevenuePerPayingUser", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "averagePurchaseRevenuePerUser", field: "averagePurchaseRevenuePerUser", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "averageRevenuePerUser", field: "averageRevenuePerUser", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "bounceRate", field: "bounceRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "cartToViewRate", field: "cartToViewRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "active28DayUsers", field: "active28DayUsers", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "conversions", field: "conversions", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "dauPerMau", field: "dauPerMau", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "dauPerWau", field: "dauPerWau", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "engagedSessions", field: "engagedSessions", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "engagementRate", field: "engagementRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "eventValue", field: "eventValue", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "firstTimePurchaserConversionRate", field: "firstTimePurchaserConversionRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "firstTimePurchasers", field: "firstTimePurchasers", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "grossPurchaseRevenue", field: "grossPurchaseRevenue", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "itemListClickThroughRate", field: "itemListClickThroughRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "itemPromotionClickThroughRate", field: "itemPromotionClickThroughRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "purchaserConversionRate", field: "purchaserConversionRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "purchaseRevenue", field: "purchaseRevenue", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "purchaseToViewRate", field: "purchaseToViewRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "refundAmount", field: "refundAmount", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "sessionConversionRate", field: "sessionConversionRate", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "sessions", field: "sessions", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "sessionsPerUser", field: "sessionsPerUser", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "totalPurchasers", field: "totalPurchasers", cellClass: "!tw-px-0", resizable: true},
+                                        {headerName: "totalRevenue", field: "totalRevenue", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "totalUsers", field: "totalUsers", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "userConversionRate", field: "userConversionRate", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "wauPerMau", field: "wauPerMau", cellClass: "!tw-px-0", resizable: true}
+                                        {headerName: "wauPerMau", field: "wauPerMau", cellClass: "!tw-px-0", resizable: true},
                                     ]}
                                     defaultColDef={defaultColumnDefinitions}
                                     animateRows={true}

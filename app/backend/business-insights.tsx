@@ -74,14 +74,41 @@ export type AdsDataAggregatedRow = {
 
 export type GoogleAnalyticsDataAggregatedRow = {
     date: Iso8601Date,
-    source: any,
-    activeUsers: any,
-    conversions: any,
-    dauPerMau: any,
-    dauPerWau: any,
-    totalUsers: any,
-    userConversionRate: any,
-    wauPerMau: any
+    active1DayUsers: any;
+    active28DayUsers: any;
+    active7DayUsers: any;
+    activeUsers: any;
+    averagePurchaseRevenuePerPayingUser: any;
+    averagePurchaseRevenuePerUser: any;
+    averageRevenuePerUser: any;
+    bounceRate: any;
+    cartToViewRate: any;
+    conversions: any;
+    dauPerMau: any;
+    dauPerWau: any;
+    engagedSessions: any;
+    engagementRate: any;
+    eventValue: any;
+    firstTimePurchaserConversionRate: any;
+    firstTimePurchasers: any;
+    grossPurchaseRevenue: any;
+    itemListClickThroughRate: any;
+    itemPromotionClickThroughRate: any;
+    purchaserConversionRate: any;
+    purchaseRevenue: any;
+    purchaseToViewRate: any;
+    refundAmount: any;
+    sessionConversionRate: any;
+    sessions: any;
+    sessionsPerUser: any;
+    totalPurchasers: any;
+    totalRevenue: any;
+    totalUsers: any;
+    userConversionRate: any;
+    wauPerMau: any;
+    // conversions:purchase: any;
+    // [sessionConversionRate:purchase]: any;
+    // userConversionRate:purchase: any;
 }
 
 export type GoogleAdsDataAggregatedRow = {
@@ -233,11 +260,35 @@ function rowToFacebookAdsDataAggregatedRow(row: Credentials): FacebookAdsAggrega
 function rowToGoogleAnalyticsDataAggregatedRow(row: unknown): GoogleAnalyticsDataAggregatedRow {
     const analyticsDataAggregatedRow: GoogleAnalyticsDataAggregatedRow = {
         date: row.date,
-        source: row.source,
+        active1DayUsers: row.active1dayusers,
+        active28DayUsers: row.active28dayusers,
+        active7DayUsers: row.active7dayusers,
         activeUsers: row.activeusers,
+        averagePurchaseRevenuePerPayingUser: row.averagepurchaserevenueperpayinguser,
+        averagePurchaseRevenuePerUser: row.averagepurchaserevenueperuser,
+        averageRevenuePerUser: row.averagerevenueperuser,
+        bounceRate: row.bouncerate,
+        cartToViewRate: row.carttoviewrate,
         conversions: row.conversions,
         dauPerMau: row.daupermau,
         dauPerWau: row.dauperwau,
+        engagedSessions: row.engagedsessions,
+        engagementRate: row.engagementrate,
+        eventValue: row.eventvalue,
+        firstTimePurchaserConversionRate: row.firsttimepurchaserconversionrate,
+        firstTimePurchasers: row.firsttimepurchasers,
+        grossPurchaseRevenue: row.grosspurchaserevenue,
+        itemListClickThroughRate: row.itemlistclickthroughrate,
+        itemPromotionClickThroughRate: row.itempromotionclickthroughrate,
+        purchaserConversionRate: row.purchaserconversionrate,
+        purchaseRevenue: row.purchaserevenue,
+        purchaseToViewRate: row.purchasetoviewrate,
+        refundAmount: row.refundamount,
+        sessionConversionRate: row.sessionconversionrate,
+        sessions: row.sessions,
+        sessionsPerUser: row.sessionsperuser,
+        totalPurchasers: row.totalpurchasers,
+        totalRevenue: row.totalrevenue,
         totalUsers: row.totalusers,
         userConversionRate: row.userconversionrate,
         wauPerMau: row.waupermau
@@ -366,14 +417,38 @@ export async function getGoogleAnalyticsLectrixData(minDate: Iso8601Date, maxDat
     const query = `
         SELECT
             DATE((data->'dimensionValues'->>'date')) AS date,
-            data->'dimensionValues'->>'source' AS source,
+            data->'metricValues'->>'active1DayUsers' AS active1DayUsers,
+            data->'metricValues'->>'active28DayUsers' AS active28DayUsers,
+            data->'metricValues'->>'active7DayUsers' AS active7DayUsers,
             data->'metricValues'->>'activeUsers' AS activeUsers,
-            data->'metricValues'->>'conversions' As conversions,
-            data->'metricValues'->>'dauPerMau' As dauPerMau,
-            data->'metricValues'->>'dauPerWau' As dauPerWau,
-            data->'metricValues'->>'totalUsers' As totalUsers,
-            data->'metricValues'->>'userConversionRate' As userConversionRate,
-            data->'metricValues'->>'wauPerMau' As wauPerMau
+            data->'metricValues'->>'averagePurchaseRevenuePerPayingUser' AS averagePurchaseRevenuePerPayingUser,
+            data->'metricValues'->>'averagePurchaseRevenuePerUser' AS averagePurchaseRevenuePerUser,
+            data->'metricValues'->>'averageRevenuePerUser' AS averageRevenuePerUser,
+            data->'metricValues'->>'bounceRate' AS bounceRate,
+            data->'metricValues'->>'cartToViewRate' AS cartToViewRate,
+            data->'metricValues'->>'conversions' AS conversions,
+            data->'metricValues'->>'dauPerMau' AS dauPerMau,
+            data->'metricValues'->>'dauPerWau' AS dauPerWau,
+            data->'metricValues'->>'engagedSessions' AS engagedSessions,
+            data->'metricValues'->>'engagementRate' AS engagementRate,
+            data->'metricValues'->>'eventValue' AS eventValue,
+            data->'metricValues'->>'firstTimePurchaserConversionRate' AS firstTimePurchaserConversionRate,
+            data->'metricValues'->>'firstTimePurchasers' AS firstTimePurchasers,
+            data->'metricValues'->>'grossPurchaseRevenue' AS grossPurchaseRevenue,
+            data->'metricValues'->>'itemListClickThroughRate' AS itemListClickThroughRate,
+            data->'metricValues'->>'itemPromotionClickThroughRate' AS itemPromotionClickThroughRate,
+            data->'metricValues'->>'purchaserConversionRate' AS purchaserConversionRate,
+            data->'metricValues'->>'purchaseRevenue' AS purchaseRevenue,
+            data->'metricValues'->>'purchaseToViewRate' AS purchaseToViewRate,
+            data->'metricValues'->>'refundAmount' AS refundAmount,
+            data->'metricValues'->>'sessionConversionRate' AS sessionConversionRate,
+            data->'metricValues'->>'sessions' AS sessions,
+            data->'metricValues'->>'sessionsPerUser' AS sessionsPerUser,
+            data->'metricValues'->>'totalPurchasers' AS totalPurchasers,
+            data->'metricValues'->>'totalRevenue' AS totalRevenue,
+            data->'metricValues'->>'totalUsers' AS totalUsers,
+            data->'metricValues'->>'userConversionRate' AS userConversionRate,
+            data->'metricValues'->>'wauPerMau' AS wauPerMau
         FROM
             ${tableName}
         WHERE

@@ -12,15 +12,24 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getDates, getNonEmptyStringOrNull, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/utilities/utilities";
+import {
+    agGridDateComparator,
+    dateToMediumNoneEnFormat,
+    defaultColumnDefinitions,
+    getDates,
+    getNonEmptyStringOrNull,
+    getSingletonValue,
+    numberToHumanFriendlyString,
+    roundOffToTwoDigits,
+} from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
-import { Line } from "react-chartjs-2";
-import { VerticalSpacer } from "~/global-common-typescript/components/verticalSpacer";
+import {Line} from "react-chartjs-2";
+import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 
 // Google ads
 
@@ -128,7 +137,7 @@ export default function () {
     const {appliedSelectedGranularity, appliedMinDate, appliedMaxDate, googleAdsData, companyId, connectorId} = useLoaderData() as LoaderData;
 
     const routeMatches = useMatches();
-    const {user, accessibleCompanies, currentCompany} = getSingletonValue(routeMatches.filter(routeMatch => routeMatch.id == "routes/$companyId")).data as CompanyLoaderData;
+    const {user, accessibleCompanies, currentCompany} = getSingletonValue(routeMatches.filter((routeMatch) => routeMatch.id == "routes/$companyId")).data as CompanyLoaderData;
 
     return (
         <PageScaffold
@@ -213,7 +222,7 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
     // }
 
     // TODO: Fix amount name
-    const microValue = 10^6;
+    const microValue = 10 ^ 6;
     ChartJS.register(CategoryScale, LinearScale, Title, Tooltip, Legend, PointElement, LineElement);
 
     const dates = getDates(minDate, maxDate);
@@ -245,10 +254,9 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
         },
     };
 
-
     return (
         <div className="tw-grid tw-grid-cols-1 tw-p-2">
-             <div className="tw-row-start-1">
+            <div className="tw-row-start-1">
                 <GenericCard
                     className="tw-rounded-tl-none"
                     content={
@@ -266,7 +274,7 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                 />
             </div>
 
-            <VerticalSpacer className="tw-row-start-2 tw-h-8"/>
+            <VerticalSpacer className="tw-row-start-2 tw-h-8" />
 
             <Tabs.Root
                 defaultValue="1"
@@ -300,10 +308,10 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                         averageCost: numberToHumanFriendlyString(object.averageCost),
                                         impressions: numberToHumanFriendlyString(object.impressions),
                                         clicks: numberToHumanFriendlyString(object.clicks),
-                                        averageCpc: numberToHumanFriendlyString(object.averageCpc/microValue) ,
-                                        averageCpe: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpe/microValue)) ,
-                                        averageCpm: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpm/microValue)) ,
-                                        averageCpv: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpv/microValue)) ,
+                                        averageCpc: numberToHumanFriendlyString(object.averageCpc / microValue),
+                                        averageCpe: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpe / microValue)),
+                                        averageCpm: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpm / microValue)),
+                                        averageCpv: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpv / microValue)),
                                         interactionEventTypes: numberToHumanFriendlyString(object.interactionEventTypes),
                                         valuePerAllConversions: numberToHumanFriendlyString(object.valuePerAllConversions),
                                         videoViewRate: roundOffToTwoDigits(object.videoViewRate),
@@ -312,22 +320,22 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                         conversionsFromInteractionsRate: numberToHumanFriendlyString(object.conversionsFromInteractionsRate),
                                         conversionsValue: numberToHumanFriendlyString(object.conversionsValue),
                                         conversions: numberToHumanFriendlyString(object.conversions),
-                                        costMicros: numberToHumanFriendlyString(object.costMicros/microValue),
+                                        costMicros: numberToHumanFriendlyString(object.costMicros / microValue),
                                         costPerAllConversions: numberToHumanFriendlyString(object.costPerAllConversions),
-                                        ctr: roundOffToTwoDigits(object.ctr) ,
-                                        engagementRate: numberToHumanFriendlyString(object.engagementRate) ,
-                                        engagements: numberToHumanFriendlyString(object.engagements) ,
+                                        ctr: roundOffToTwoDigits(object.ctr),
+                                        engagementRate: numberToHumanFriendlyString(object.engagementRate),
+                                        engagements: numberToHumanFriendlyString(object.engagements),
                                         activeViewImpressions: numberToHumanFriendlyString(object.activeViewImpressions),
                                         activeViewMeasurability: numberToHumanFriendlyString(object.activeViewMeasurability),
                                         activeViewMeasurableCostMicros: numberToHumanFriendlyString(object.activeViewMeasurableCostMicros),
                                         activeViewMeasurableImpressions: numberToHumanFriendlyString(object.activeViewMeasurableImpressions),
                                         allConversionsFromInteractionsRate: roundOffToTwoDigits(object.allConversionsFromInteractionsRate),
-                                        allConversionsValue: numberToHumanFriendlyString(object.allConversionsValue) ,
-                                        allConversions: numberToHumanFriendlyString(object.allConversions) ,
-                                        interactionRate: roundOffToTwoDigits(object.interactionRate) ,
-                                        interactions: numberToHumanFriendlyString(object.interactions) ,
+                                        allConversionsValue: numberToHumanFriendlyString(object.allConversionsValue),
+                                        allConversions: numberToHumanFriendlyString(object.allConversions),
+                                        interactionRate: roundOffToTwoDigits(object.interactionRate),
+                                        interactions: numberToHumanFriendlyString(object.interactions),
                                         allConversionsByConversionDate: numberToHumanFriendlyString(object.allConversionsByConversionDate),
-                                        valuePerAllConversionsByConversionDate: numberToHumanFriendlyString(object.valuePerAllConversionsByConversionDate,)
+                                        valuePerAllConversionsByConversionDate: numberToHumanFriendlyString(object.valuePerAllConversionsByConversionDate),
                                     }))}
                                     columnDefs={[
                                         {

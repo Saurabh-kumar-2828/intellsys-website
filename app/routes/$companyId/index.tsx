@@ -2,8 +2,8 @@ import type {LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData, useMatches} from "@remix-run/react";
 import {PlusCircle} from "react-bootstrap-icons";
-import type {Connector} from "~/backend/utilities/connectors/common.server";
 import {getConnectorsAssociatedWithCompanyId} from "~/backend/utilities/connectors/common.server";
+import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server";
 import {getSummarizedViewOfFacebookAdsConnector, getSummarizedViewOfGoogleAdsConnector, getSummarizedViewOfGoogleAnalyticsConnector} from "~/backend/utilities/temporary.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
@@ -11,7 +11,8 @@ import {SectionHeader} from "~/components/scratchpad";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
-import {Company, ConnectorType, DataSourceIds, User} from "~/utilities/typeDefinitions";
+import type {Company, User} from "~/utilities/typeDefinitions";
+import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
 import {getSingletonValue, getTagFromEmail} from "~/utilities/utilities";
 
 type LoaderData = {
@@ -30,13 +31,15 @@ type LoaderData = {
     googleAnalyticsConnectorsWithDetails: Array<{
         connector: Connector;
         sessions: number;
+        dauPerMau: number;
+        wauPerMau: number;
     }>;
 };
 
 export const loader: LoaderFunction = async ({request, params}) => {
     // TODO: Ensure companyId is valid
 
-    const companyId = params.companyId;
+    const companyId = getUuidFromUnknown(params.companyId);
     if (companyId == null) {
         throw new Response(null, {status: 404});
     }
@@ -52,7 +55,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         clicks: number;
     }> = [];
     for (const googleAdsConnector of googleAdsConnectors) {
-        const summary = await getSummarizedViewOfGoogleAdsConnector(googleAdsConnector);
+        const summary = await getSummarizedViewOfGoogleAdsConnector(googleAdsConnector, companyId);
         if (summary instanceof Error) {
             throw summary;
         }
@@ -73,7 +76,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         clicks: number;
     }> = [];
     for (const facebookAdsConnector of facebookAdsConnectors) {
-        const summary = await getSummarizedViewOfFacebookAdsConnector(facebookAdsConnector);
+        const summary = await getSummarizedViewOfFacebookAdsConnector(facebookAdsConnector, companyId);
         if (summary instanceof Error) {
             throw summary;
         }
@@ -92,7 +95,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         sessions: number;
     }> = [];
     for (const googleAnalyticsConnector of googleAnalyticsConnectors) {
-        const summary = await getSummarizedViewOfGoogleAnalyticsConnector(googleAnalyticsConnector);
+        const summary = await getSummarizedViewOfGoogleAnalyticsConnector(googleAnalyticsConnector, companyId);
         if (summary instanceof Error) {
             throw summary;
         }
@@ -141,7 +144,14 @@ export default function () {
     );
 }
 
-function CompanyHome({user, accessibleCompanies, currentCompany, googleAdsConnectorsWithDetails, facebookAdsConnectorsWithDetails, googleAnalyticsConnectorsWithDetails}: {
+function CompanyHome({
+    user,
+    accessibleCompanies,
+    currentCompany,
+    googleAdsConnectorsWithDetails,
+    facebookAdsConnectorsWithDetails,
+    googleAnalyticsConnectorsWithDetails,
+}: {
     user: User;
     accessibleCompanies: Array<Company>;
     currentCompany: Company;
@@ -160,13 +170,13 @@ function CompanyHome({user, accessibleCompanies, currentCompany, googleAdsConnec
     googleAnalyticsConnectorsWithDetails: Array<{
         connector: Connector;
         sessions: number;
+        dauPerMau: number;
+        wauPerMau: number;
     }>;
 }) {
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
-            <div className="tw-col-span-12 tw-font-2rem tw-font-bold">
-                Welcome back, {getTagFromEmail(user.email)}!
-            </div>
+            <div className="tw-col-span-12 tw-font-2rem tw-font-bold">Welcome back, {getTagFromEmail(user.email)}!</div>
 
             <div className="tw-col-span-12 tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-y-4">
                 {googleAdsConnectorsWithDetails.length == 0 && facebookAdsConnectorsWithDetails.length == 0 && googleAnalyticsConnectorsWithDetails.length == 0 ? (
@@ -216,6 +226,8 @@ function CompanyHome({user, accessibleCompanies, currentCompany, googleAdsConnec
                                     currentCompany={currentCompany}
                                     connector={connectorWithDetails.connector}
                                     sessions={connectorWithDetails.sessions}
+                                    dauPerMau={connectorWithDetails.dauPerMau}
+                                    wauPerMau={connectorWithDetails.wauPerMau}
                                     key={connectorWithDetailsIndex}
                                 />
                             )}
@@ -227,12 +239,17 @@ function CompanyHome({user, accessibleCompanies, currentCompany, googleAdsConnec
     );
 }
 
-function GoogleAdsSummaryCard({currentCompany, connector, spends, impressions, clicks}: {currentCompany: Company, connector: Connector; spends: number; impressions: number; clicks: number}) {
+function GoogleAdsSummaryCard({currentCompany, connector, spends, impressions, clicks}: {currentCompany: Company; connector: Connector; spends: number; impressions: number; clicks: number}) {
     return (
         <div className="tw-w-full tw-bg-gray-800 tw-grid tw-grid-cols-3 tw-items-center tw-p-4 tw-rounded-lg">
-            <Link to={`/${currentCompany.id}/${DataSourceIds.googleAds}/${connector.id}`} className="tw-col-span-3">Google Ads: {connector.extraInformation.accountName} ({connector.extraInformation.accountId})</Link>
+            <Link
+                to={`/${currentCompany.id}/${DataSourceIds.googleAds}/${connector.id}`}
+                className="tw-col-span-3"
+            >
+                Google Ads: {connector.extraInformation.accountName} ({connector.extraInformation.accountId})
+            </Link>
 
-            {/* <VerticalSpacer className="tw-col-span-3 tw-h-4" />
+            <VerticalSpacer className="tw-col-span-3 tw-h-4" />
 
             <div className="tw-text-center">
                 <div className="tw-text-[1.5rem] tw-font-bold">{spends}</div>
@@ -247,17 +264,22 @@ function GoogleAdsSummaryCard({currentCompany, connector, spends, impressions, c
             <div className="tw-text-center">
                 <div className="tw-text-[1.5rem] tw-font-bold">{clicks}</div>
                 <div>Clicks</div>
-            </div> */}
+            </div>
         </div>
     );
 }
 
-function FacebookAdsSummaryCard({currentCompany, connector, spends, impressions, clicks}: {currentCompany: Company, connector: Connector; spends: number; impressions: number; clicks: number}) {
+function FacebookAdsSummaryCard({currentCompany, connector, spends, impressions, clicks}: {currentCompany: Company; connector: Connector; spends: number; impressions: number; clicks: number}) {
     return (
         <div className="tw-w-full tw-bg-gray-800 tw-grid tw-grid-cols-3 tw-items-center tw-p-4 tw-rounded-lg">
-            <Link to={`/${currentCompany.id}/${DataSourceIds.facebookAds}/${connector.id}`} className="tw-col-span-3">Facebook Ads: {connector.extraInformation.accountName} ({connector.extraInformation.accountId})</Link>
+            <Link
+                to={`/${currentCompany.id}/${DataSourceIds.facebookAds}/${connector.id}`}
+                className="tw-col-span-3"
+            >
+                Facebook Ads: {connector.extraInformation.accountName} ({connector.extraInformation.accountId})
+            </Link>
 
-            {/* <VerticalSpacer className="tw-col-span-3 tw-h-4" />
+            <VerticalSpacer className="tw-col-span-3 tw-h-4" />
 
             <div className="tw-text-center">
                 <div className="tw-text-[1.5rem] tw-font-bold">{spends}</div>
@@ -272,22 +294,35 @@ function FacebookAdsSummaryCard({currentCompany, connector, spends, impressions,
             <div className="tw-text-center">
                 <div className="tw-text-[1.5rem] tw-font-bold">{clicks}</div>
                 <div>Clicks</div>
-            </div> */}
+            </div>
         </div>
     );
 }
 
-function GoogleAnalyticsSummaryCard({currentCompany, connector, sessions}: {currentCompany: Company, connector: Connector; sessions: number}) {
+function GoogleAnalyticsSummaryCard({currentCompany, connector, sessions, dauPerMau, wauPerMau}: {currentCompany: Company; connector: Connector; sessions: number; dauPerMau: number; wauPerMau: number;}) {
     return (
         <div className="tw-w-full tw-bg-gray-800 tw-grid tw-grid-cols-3 tw-items-center tw-p-4 tw-rounded-lg">
-            <Link to={`/${currentCompany.id}/${DataSourceIds.googleAnalytics}/${connector.id}`} className="tw-col-span-3">Google Analytics: {connector.extraInformation.accountName} ({connector.extraInformation.accountId})</Link>
+            <Link
+                to={`/${currentCompany.id}/${DataSourceIds.googleAnalytics}/${connector.id}`}
+                className="tw-col-span-3"
+            >
+                Google Analytics: {connector.extraInformation.accountName} ({connector.extraInformation.accountId})
+            </Link>
 
-            {/* <VerticalSpacer className="tw-col-span-3 tw-h-4" />
+            <VerticalSpacer className="tw-col-span-3 tw-h-4" />
 
             <div className="tw-text-center">
                 <div className="tw-text-[1.5rem] tw-font-bold">{sessions}</div>
                 <div>Sessions</div>
-            </div> */}
+            </div>
+            <div className="tw-text-center">
+                <div className="tw-text-[1.5rem] tw-font-bold">{dauPerMau}</div>
+                <div>dauPerMau</div>
+            </div>
+            <div className="tw-text-center">
+                <div className="tw-text-[1.5rem] tw-font-bold">{wauPerMau}</div>
+                <div>wauPerMau</div>
+            </div>
         </div>
     );
 }

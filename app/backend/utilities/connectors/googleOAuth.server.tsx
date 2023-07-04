@@ -25,6 +25,7 @@ export type GoogleAdsAccessToken = {
     accessToken: string;
 };
 
+// TODO: Rename and remove accountId as, already present in extra information;
 export type Connector = {
     id: Uuid;
     accountId: string;

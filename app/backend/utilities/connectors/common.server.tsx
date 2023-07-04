@@ -19,11 +19,6 @@ export type SourceAndDestinationId = {
     destinationId: Uuid;
 };
 
-export type Connector = {
-    id: Uuid;
-    accountId: string;
-};
-
 /**
  * Retrives internal Postgres database of the system.
  */

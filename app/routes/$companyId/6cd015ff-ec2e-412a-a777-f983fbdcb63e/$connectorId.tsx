@@ -333,7 +333,6 @@ function CampaignsSection({
                                             comparator: agGridDateComparator,
                                             resizable: true,
                                         },
-                                        {headerName: "source", field: "source", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "active1DayUsers", field: "active1DayUsers", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "active7DayUsers", field: "active7DayUsers", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "activeUsers", field: "activeUsers", cellClass: "!tw-px-0", resizable: true},

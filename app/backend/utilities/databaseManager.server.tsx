@@ -11,11 +11,11 @@ declare global {
 
 // @deprecated
 export type PostgresDatabaseCredentials = {
-    dbHost: string;
-    dbPort: string;
-    dbName: string;
-    dbUsername: string;
-    dbPassword: string;
+    DB_HOST: string;
+    DB_PORT: string;
+    DB_NAME: string;
+    DB_USERNAME: string;
+    DB_PASSWORD: string;
 };
 
 // @deprecated
@@ -68,18 +68,18 @@ async function getDatabaseConnectionPool(companyId: Uuid): Promise<Pool | Error>
 // @deprecated
 async function getNewDatabaseConnectionPool(companyId: Uuid): Promise<Pool | Error> {
     const companyDatabaseCredentialsId = companyDatabaseCredentialsMap[companyId];
-    const credentials = await getDatabaseCredentials(companyDatabaseCredentialsId);
 
+    const credentials = await getDatabaseCredentials(companyDatabaseCredentialsId);
     if (credentials instanceof Error) {
         return credentials;
     }
 
     const databaseConnectionPool = new Pool({
-        host: credentials.dbHost,
-        port: parseInt(credentials.dbPort),
-        database: credentials.dbName,
-        user: credentials.dbUsername,
-        password: credentials.dbPassword,
+        host: credentials.DB_HOST,
+        port: parseInt(credentials.DB_PORT),
+        database: credentials.DB_NAME,
+        user: credentials.DB_USERNAME,
+        password: credentials.DB_PASSWORD,
     });
 
     return databaseConnectionPool;

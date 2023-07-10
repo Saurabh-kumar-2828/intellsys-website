@@ -73,42 +73,88 @@ export type AdsDataAggregatedRow = {
 };
 
 export type GoogleAnalyticsDataAggregatedRow = {
-    date: Iso8601Date,
-    active1DayUsers: any;
-    active28DayUsers: any;
-    active7DayUsers: any;
-    activeUsers: any;
-    averagePurchaseRevenuePerPayingUser: any;
-    averagePurchaseRevenuePerUser: any;
-    averageRevenuePerUser: any;
-    bounceRate: any;
-    cartToViewRate: any;
-    conversions: any;
-    dauPerMau: any;
-    dauPerWau: any;
-    engagedSessions: any;
-    engagementRate: any;
-    eventValue: any;
-    firstTimePurchaserConversionRate: any;
-    firstTimePurchasers: any;
-    grossPurchaseRevenue: any;
-    itemListClickThroughRate: any;
-    itemPromotionClickThroughRate: any;
-    purchaserConversionRate: any;
-    purchaseRevenue: any;
-    purchaseToViewRate: any;
-    refundAmount: any;
-    sessionConversionRate: any;
-    sessions: any;
-    sessionsPerUser: any;
-    totalPurchasers: any;
-    totalRevenue: any;
-    totalUsers: any;
-    userConversionRate: any;
-    wauPerMau: any;
-    // conversions:purchase: any;
-    // [sessionConversionRate:purchase]: any;
-    // userConversionRate:purchase: any;
+    "date": Iso8601Date,
+    "adSourceName": any,
+    "adUnitName": any,
+    "newVsReturning": any,
+    "platform": any,
+    "active1DayUsers": any,
+    "active28DayUsers": any,
+    "active7DayUsers": any,
+    "activeUsers": any,
+    "addToCarts": any,
+    "adUnitExposure": any,
+    "averagePurchaseRevenue": any,
+    "averagePurchaseRevenuePerPayingUser": any,
+    "averagePurchaseRevenuePerUser": any,
+    "averageRevenuePerUser": any,
+    "averageSessionDuration": any,
+    "bounceRate": any,
+    "cartToViewRate": any,
+    "checkouts": any,
+    "conversions": any,
+    "conversionsTest_Ride": any,
+    "conversionsTRD": any,
+    "conversionsTRH_CYTR": any,
+    "conversionsTRH_OTPverified": any,
+    "conversionsPurchase": any,
+    "crashAffectedUsers": any,
+    "crashFreeUsersRate": any,
+    "dauPerMau": any,
+    "dauPerWau": any,
+    "ecommercePurchases": any,
+    "engagedSessions": any,
+    "engagementRate": any,
+    "eventCount": any,
+    "eventCountPerUser": any,
+    "eventsPerSession": any,
+    "eventValue": any,
+    "firstTimePurchaserConversionRate": any,
+    "firstTimePurchasers": any,
+    "firstTimePurchasersPerNewUser": any,
+    "grossPurchaseRevenue": any,
+    "itemListClickEvents": any,
+    "itemListClickThroughRate": any,
+    "itemListViewEvents": any,
+    "itemPromotionClickThroughRate": any,
+    "itemViewEvents": any,
+    "newUsers": any,
+    "promotionClicks": any,
+    "promotionViews": any,
+    "publisherAdClicks": any,
+    "publisherAdImpressions": any,
+    "purchaseRevenue": any,
+    "purchaseToViewRate": any,
+    "purchaserConversionRate": any,
+    "refundAmount": any,
+    "screenPageViews": any,
+    "screenPageViewsPerSession": any,
+    "screenPageViewsPerUser": any,
+    "scrolledUsers": any,
+    "sessionConversionRate": any,
+    "sessionConversionRateTestRide": any,
+    "sessionConversionRateTRD": any,
+    "sessionConversionRateTRH_CYTR": any,
+    "sessionConversionRateTRH_OTPverified": any,
+    "sessionConversionRatePurchase": any,
+    "sessions": any,
+    "sessionsPerUser": any,
+    "shippingAmount": any,
+    "taxAmount": any,
+    "totalAdRevenue": any,
+    "totalPurchasers": any,
+    "totalRevenue": any,
+    "totalUsers": any,
+    "transactions": any,
+    "transactionsPerPurchaser": any,
+    "userConversionRate": any,
+    "userConversionRateTestRide": any,
+    "userConversionRateTRD": any,
+    "userConversionRateTRH_CYTR": any,
+    "userConversionRateTRH_Otpverified": any,
+    "userConversionRatePurchase": any,
+    "userEngagementDuration": any,
+    "wauPerMau": any,
 }
 
 export type GoogleAdsDataAggregatedRow = {
@@ -258,40 +304,90 @@ function rowToFacebookAdsDataAggregatedRow(row: Credentials): FacebookAdsAggrega
 }
 
 function rowToGoogleAnalyticsDataAggregatedRow(row: unknown): GoogleAnalyticsDataAggregatedRow {
+    console.log(row);
     const analyticsDataAggregatedRow: GoogleAnalyticsDataAggregatedRow = {
-        date: row.date,
-        active1DayUsers: row.active1dayusers,
-        active28DayUsers: row.active28dayusers,
-        active7DayUsers: row.active7dayusers,
-        activeUsers: row.activeusers,
-        averagePurchaseRevenuePerPayingUser: row.averagepurchaserevenueperpayinguser,
-        averagePurchaseRevenuePerUser: row.averagepurchaserevenueperuser,
-        averageRevenuePerUser: row.averagerevenueperuser,
-        bounceRate: row.bouncerate,
-        cartToViewRate: row.carttoviewrate,
-        conversions: row.conversions,
-        dauPerMau: row.daupermau,
-        dauPerWau: row.dauperwau,
-        engagedSessions: row.engagedsessions,
-        engagementRate: row.engagementrate,
-        eventValue: row.eventvalue,
-        firstTimePurchaserConversionRate: row.firsttimepurchaserconversionrate,
-        firstTimePurchasers: row.firsttimepurchasers,
-        grossPurchaseRevenue: row.grosspurchaserevenue,
-        itemListClickThroughRate: row.itemlistclickthroughrate,
-        itemPromotionClickThroughRate: row.itempromotionclickthroughrate,
-        purchaserConversionRate: row.purchaserconversionrate,
-        purchaseRevenue: row.purchaserevenue,
-        purchaseToViewRate: row.purchasetoviewrate,
-        refundAmount: row.refundamount,
-        sessionConversionRate: row.sessionconversionrate,
-        sessions: row.sessions,
-        sessionsPerUser: row.sessionsperuser,
-        totalPurchasers: row.totalpurchasers,
-        totalRevenue: row.totalrevenue,
-        totalUsers: row.totalusers,
-        userConversionRate: row.userconversionrate,
-        wauPerMau: row.waupermau
+        "date": row.date,
+        "adSourceName": row.adsourcename,
+        "adUnitName": row.adunitname,
+        "newVsReturning": row.newvsreturning,
+        "platform": row.platform,
+        "active1DayUsers": row.active1dayusers,
+        "active28DayUsers": row.active28dayusers,
+        "active7DayUsers": row.active7dayusers,
+        "activeUsers": row.activeusers,
+        "addToCarts": row.addtocarts,
+        "adUnitExposure": row.adunitexposure,
+        "averagePurchaseRevenue": row.averagepurchaserevenue,
+        "averagePurchaseRevenuePerPayingUser": row.averagepurchaserevenueperpayinguser,
+        "averagePurchaseRevenuePerUser": row.averagepurchaserevenueperuser,
+        "averageRevenuePerUser": row.averagerevenueperuser,
+        "averageSessionDuration": row.averagesessionduration,
+        "bounceRate": row.bouncerate,
+        "cartToViewRate": row.carttoviewrate,
+        "checkouts": row.checkouts,
+        "conversions": row.conversions,
+        "conversionsTest_Ride": row.conversionstest_ride,
+        "conversionsTRD": row.conversionstrd,
+        "conversionsTRH_CYTR": row.conversionstrh_cytr,
+        "conversionsTRH_OTPverified": row.conversionstrh_otpverified,
+        "conversionsPurchase": row.conversionspurchase,
+        "crashAffectedUsers": row.crashaffectedusers,
+        "crashFreeUsersRate": row.crashfreeusersrate,
+        "dauPerMau": row.daupermau,
+        "dauPerWau": row.dauperwau,
+        "ecommercePurchases": row.ecommercepurchases,
+        "engagedSessions": row.engagedsessions,
+        "engagementRate": row.engagementrate,
+        "eventCount": row.eventcount,
+        "eventCountPerUser": row.eventcountperuser,
+        "eventsPerSession": row.eventspersession,
+        "eventValue": row.eventvalue,
+        "firstTimePurchaserConversionRate": row.firsttimepurchaserconversionrate,
+        "firstTimePurchasers": row.firsttimepurchasers,
+        "firstTimePurchasersPerNewUser": row.firsttimepurchaserspernewuser,
+        "grossPurchaseRevenue": row.grosspurchaserevenue,
+        "itemListClickEvents": row.itemlistclickevents,
+        "itemListClickThroughRate": row.itemlistclickthroughrate,
+        "itemListViewEvents": row.itemlistviewevents,
+        "itemPromotionClickThroughRate": row.itempromotionclickthroughrate,
+        "itemViewEvents": row.itemviewevents,
+        "newUsers": row.newusers,
+        "promotionClicks": row.promotionclicks,
+        "promotionViews": row.promotionviews,
+        "publisherAdClicks": row.publisheradclicks,
+        "publisherAdImpressions": row.publisheradimpressions,
+        "purchaseRevenue": row.purchaserevenue,
+        "purchaseToViewRate": row.purchasetoviewrate,
+        "purchaserConversionRate": row.purchaserconversionrate,
+        "refundAmount": row.refundamount,
+        "screenPageViews": row.screenpageviews,
+        "screenPageViewsPerSession": row.screenpageviewspersession,
+        "screenPageViewsPerUser": row.screenpageviewsperuser,
+        "scrolledUsers": row.scrolledusers,
+        "sessionConversionRate": row.sessionconversionrate,
+        "sessionConversionRateTestRide": row.sessionconversionratetestride,
+        "sessionConversionRateTRD": row.sessionconversionratetrd,
+        "sessionConversionRateTRH_CYTR": row.sessionconversionratetrh_cytr,
+        "sessionConversionRateTRH_OTPverified": row.sessionconversionratetrh_otpverified,
+        "sessionConversionRatePurchase": row.sessionconversionratepurchase,
+        "sessions": row.sessions,
+        "sessionsPerUser": row.sessionsperuser,
+        "shippingAmount": row.shippingamount,
+        "taxAmount": row.taxamount,
+        "totalAdRevenue": row.totaladrevenue,
+        "totalPurchasers": row.totalpurchasers,
+        "totalRevenue": row.totalrevenue,
+        "totalUsers": row.totalusers,
+        "transactions": row.transactions,
+        "transactionsPerPurchaser": row.transactionsperpurchaser,
+        "userConversionRate": row.userconversionrate,
+        "userConversionRateTestRide": row.userronversionratetestride,
+        "userConversionRateTRD": row.userconversionratetrd,
+        "userConversionRateTRH_CYTR": row.userconversionratetrh_cytr,
+        "userConversionRateTRH_Otpverified": row.userconversionratetrh_otpverified,
+        "userConversionRatePurchase": row.userconversionratepurchase,
+        "userEngagementDuration": row.userengagementduration,
+        "wauPerMau": row.waupermau,
     };
 
     return analyticsDataAggregatedRow;
@@ -325,6 +421,8 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
 }
 
 export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<GoogleAdsData | Error> {
+
+    console.log(destinationDatabaseId);
     const postgresDatabaseManager = await getPostgresDatabaseManager(destinationDatabaseId);
 
     if (postgresDatabaseManager instanceof Error) {
@@ -400,6 +498,8 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
 }
 
 export async function getGoogleAnalyticsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<GoogleAnalyticsData | Error> {
+
+    console.log("destination credential id", destinationDatabaseId);
     const postgresDatabaseManager = await getPostgresDatabaseManager(destinationDatabaseId);
 
     if (postgresDatabaseManager instanceof Error) {
@@ -416,39 +516,88 @@ export async function getGoogleAnalyticsLectrixData(minDate: Iso8601Date, maxDat
 
     const query = `
         SELECT
-            DATE((data->'dimensionValues'->>'date')) AS date,
-            data->'metricValues'->>'active1DayUsers' AS active1DayUsers,
-            data->'metricValues'->>'active28DayUsers' AS active28DayUsers,
-            data->'metricValues'->>'active7DayUsers' AS active7DayUsers,
-            data->'metricValues'->>'activeUsers' AS activeUsers,
-            data->'metricValues'->>'averagePurchaseRevenuePerPayingUser' AS averagePurchaseRevenuePerPayingUser,
-            data->'metricValues'->>'averagePurchaseRevenuePerUser' AS averagePurchaseRevenuePerUser,
-            data->'metricValues'->>'averageRevenuePerUser' AS averageRevenuePerUser,
-            data->'metricValues'->>'bounceRate' AS bounceRate,
-            data->'metricValues'->>'cartToViewRate' AS cartToViewRate,
-            data->'metricValues'->>'conversions' AS conversions,
-            data->'metricValues'->>'dauPerMau' AS dauPerMau,
-            data->'metricValues'->>'dauPerWau' AS dauPerWau,
-            data->'metricValues'->>'engagedSessions' AS engagedSessions,
-            data->'metricValues'->>'engagementRate' AS engagementRate,
-            data->'metricValues'->>'eventValue' AS eventValue,
-            data->'metricValues'->>'firstTimePurchaserConversionRate' AS firstTimePurchaserConversionRate,
-            data->'metricValues'->>'firstTimePurchasers' AS firstTimePurchasers,
-            data->'metricValues'->>'grossPurchaseRevenue' AS grossPurchaseRevenue,
-            data->'metricValues'->>'itemListClickThroughRate' AS itemListClickThroughRate,
-            data->'metricValues'->>'itemPromotionClickThroughRate' AS itemPromotionClickThroughRate,
-            data->'metricValues'->>'purchaserConversionRate' AS purchaserConversionRate,
-            data->'metricValues'->>'purchaseRevenue' AS purchaseRevenue,
-            data->'metricValues'->>'purchaseToViewRate' AS purchaseToViewRate,
-            data->'metricValues'->>'refundAmount' AS refundAmount,
-            data->'metricValues'->>'sessionConversionRate' AS sessionConversionRate,
-            data->'metricValues'->>'sessions' AS sessions,
-            data->'metricValues'->>'sessionsPerUser' AS sessionsPerUser,
-            data->'metricValues'->>'totalPurchasers' AS totalPurchasers,
-            data->'metricValues'->>'totalRevenue' AS totalRevenue,
-            data->'metricValues'->>'totalUsers' AS totalUsers,
-            data->'metricValues'->>'userConversionRate' AS userConversionRate,
-            data->'metricValues'->>'wauPerMau' AS wauPerMau
+	        data->'dimensionValues'->>'date' AS date,
+	        data->'dimensionValues'->>'adSourceName' AS adSourceName,
+	        data->'dimensionValues'->>'adUnitName' AS adUnitName,
+	        data->'dimensionValues'->>'newVsReturning' AS newVsReturning,
+	        data->'dimensionValues'->>'platform' AS platform,
+	        data->'metricValues'->>'active1DayUsers' AS active1DayUsers,
+	        data->'metricValues'->>'active28DayUsers' AS active28DayUsers,
+	        data->'metricValues'->>'active7DayUsers' AS active7DayUsers,
+	        data->'metricValues'->>'activeUsers' AS activeUsers,
+	        data->'metricValues'->>'addToCarts' AS addToCarts,
+	        data->'metricValues'->>'adUnitExposure' AS adUnitExposure,
+	        data->'metricValues'->>'averagePurchaseRevenue' AS averagePurchaseRevenue,
+	        data->'metricValues'->>'averagePurchaseRevenuePerPayingUser' AS averagePurchaseRevenuePerPayingUser,
+	        data->'metricValues'->>'averagePurchaseRevenuePerUser' AS averagePurchaseRevenuePerUser,
+	        data->'metricValues'->>'averageRevenuePerUser' AS averageRevenuePerUser,
+	        data->'metricValues'->>'averageSessionDuration' AS averageSessionDuration,
+	        data->'metricValues'->>'bounceRate' AS bounceRate,
+	        data->'metricValues'->>'cartToViewRate' AS cartToViewRate,
+	        data->'metricValues'->>'checkouts' AS checkouts,
+	        data->'metricValues'->>'conversions' AS conversions,
+	        data->'metricValues'->>'conversions:Test_Ride' AS conversionsTest_Ride,
+	        data->'metricValues'->>'conversions:TRD' AS conversionsTRD,
+	        data->'metricValues'->>'conversions:TRH_CYTR' AS conversionsTRH_CYTR,
+	        data->'metricValues'->>'conversions:TRH_OTPverified' AS conversionsTRH_OTPverified,
+	        data->'metricValues'->>'conversions:purchase' AS conversionsPurchase,
+	        data->'metricValues'->>'crashAffectedUsers' AS crashAffectedUsers,
+	        data->'metricValues'->>'crashFreeUsersRate' AS crashFreeUsersRate,
+	        data->'metricValues'->>'dauPerMau' AS dauPerMau,
+	        data->'metricValues'->>'dauPerWau' AS dauPerWau,
+	        data->'metricValues'->>'ecommercePurchases' AS ecommercePurchases,
+	        data->'metricValues'->>'engagedSessions' AS engagedSessions,
+	        data->'metricValues'->>'engagementRate' AS engagementRate,
+	        data->'metricValues'->>'eventCount' AS eventCount,
+	        data->'metricValues'->>'eventCountPerUser' AS eventCountPerUser,
+	        data->'metricValues'->>'eventsPerSession' AS eventsPerSession,
+	        data->'metricValues'->>'eventValue' AS eventValue,
+	        data->'metricValues'->>'firstTimePurchaserConversionRate' AS firstTimePurchaserConversionRate,
+	        data->'metricValues'->>'firstTimePurchasers' AS firstTimePurchasers,
+	        data->'metricValues'->>'firstTimePurchasersPerNewUser' AS firstTimePurchasersPerNewUser,
+	        data->'metricValues'->>'grossPurchaseRevenue' AS grossPurchaseRevenue,
+	        data->'metricValues'->>'itemListClickEvents' AS itemListClickEvents,
+	        data->'metricValues'->>'itemListClickThroughRate' AS itemListClickThroughRate,
+	        data->'metricValues'->>'itemListViewEvents' AS itemListViewEvents,
+	        data->'metricValues'->>'itemPromotionClickThroughRate' AS itemPromotionClickThroughRate,
+	        data->'metricValues'->>'itemViewEvents' AS itemViewEvents,
+	        data->'metricValues'->>'newUsers' AS newUsers,
+	        data->'metricValues'->>'promotionClicks' AS promotionClicks,
+	        data->'metricValues'->>'promotionViews' AS promotionViews,
+	        data->'metricValues'->>'publisherAdClicks' AS publisherAdClicks,
+	        data->'metricValues'->>'publisherAdImpressions' AS publisherAdImpressions,
+	        data->'metricValues'->>'purchaseRevenue' AS purchaseRevenue,
+	        data->'metricValues'->>'purchaseToViewRate' AS purchaseToViewRate,
+	        data->'metricValues'->>'purchaserConversionRate' AS purchaserConversionRate,
+	        data->'metricValues'->>'refundAmount' AS refundAmount,
+	        data->'metricValues'->>'screenPageViews' AS screenPageViews,
+	        data->'metricValues'->>'screenPageViewsPerSession' AS screenPageViewsPerSession,
+	        data->'metricValues'->>'screenPageViewsPerUser' AS screenPageViewsPerUser,
+	        data->'metricValues'->>'scrolledUsers' AS scrolledUsers,
+	        data->'metricValues'->>'sessionConversionRate' AS sessionConversionRate,
+	        data->'metricValues'->>'sessionConversionRate:Test_Ride' AS sessionConversionRateTestRide,
+	        data->'metricValues'->>'sessionConversionRate:TRD' AS sessionConversionRateTRD,
+	        data->'metricValues'->>'sessionConversionRate:TRH_CYTR' AS sessionConversionRateTRH_CYTR,
+	        data->'metricValues'->>'sessionConversionRate:TRH_OTPverified' AS sessionConversionRateTRH_OTPverified,
+	        data->'metricValues'->>'sessionConversionRate:purchase' AS sessionConversionRatePurchase,
+	        data->'metricValues'->>'sessions' AS sessions,
+	        data->'metricValues'->>'sessionsPerUser' AS sessionsPerUser,
+	        data->'metricValues'->>'shippingAmount' AS shippingAmount,
+	        data->'metricValues'->>'taxAmount' AS taxAmount,
+	        data->'metricValues'->>'totalAdRevenue' AS totalAdRevenue,
+	        data->'metricValues'->>'totalPurchasers' AS totalPurchasers,
+	        data->'metricValues'->>'totalRevenue' AS totalRevenue,
+	        data->'metricValues'->>'totalUsers' AS totalUsers,
+	        data->'metricValues'->>'transactions' AS transactions,
+	        data->'metricValues'->>'transactionsPerPurchaser' AS transactionsPerPurchaser,
+	        data->'metricValues'->>'userConversionRate' AS userConversionRate,
+	        data->'metricValues'->>'userConversionRate:Test_Ride' AS userConversionRateTestRide,
+	        data->'metricValues'->>'userConversionRate:TRD' AS userConversionRateTRD,
+	        data->'metricValues'->>'userConversionRate:TRH_CYTR' AS userConversionRateTRH_CYTR,
+	        data->'metricValues'->>'userConversionRate:TRH_OTPverified' AS userConversionRateTRH_Otpverified,
+	        data->'metricValues'->>'userConversionRate:purchase' AS userConversionRatePurchase,
+	        data->'metricValues'->>'userEngagementDuration' AS userEngagementDuration,
+	        data->'metricValues'->>'wauPerMau' AS wauPerMau
         FROM
             ${tableName}
         WHERE

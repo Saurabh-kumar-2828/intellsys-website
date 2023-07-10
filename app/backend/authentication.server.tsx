@@ -4,7 +4,7 @@ import {getSystemPostgresDatabaseManager} from "~/backend/utilities/connectors/c
 import type {AccessToken} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {addCredentialToKms, getCredentialFromKms} from "~/global-common-typescript/server/kms.server";
-import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
+import {PostgresDatabaseCredentials, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid, getSingletonValue, getUnixTimeInSeconds} from "~/global-common-typescript/utilities/utilities";
@@ -189,6 +189,7 @@ function rowToCompany(row: unknown): Company {
 
 export async function createCompany(domain: string): Promise<Company | Error> {
     // TODO: Run a transaction for both databases here?
+
     const companyId = generateUuid();
     const result1 = await createDatabaseForCompany(companyId);
     if (result1 instanceof Error) {
@@ -197,12 +198,13 @@ export async function createCompany(domain: string): Promise<Company | Error> {
     console.log("Company's database initialized");
 
     const intellsysStorage1CredentialStr = await getCredentialFromKms(getUuidFromUnknown(getRequiredEnvironmentVariableNew("INTELLSYS_STORAGE_1_CREDENTIAL_ID")));
+
     if (intellsysStorage1CredentialStr instanceof Error) {
         return intellsysStorage1CredentialStr;
     }
 
     const intellsysStorage1Credential = JSON.parse(intellsysStorage1CredentialStr);
-    const databaseCredential = {
+    const databaseCredential: PostgresDatabaseCredentials = {
         DB_HOST: intellsysStorage1Credential.DB_HOST,
         DB_PORT: intellsysStorage1Credential.DB_PORT,
         DB_USERNAME: intellsysStorage1Credential.DB_USERNAME,
@@ -211,7 +213,8 @@ export async function createCompany(domain: string): Promise<Company | Error> {
     };
 
     const databaseCredentialId = generateUuid();
-    const result2 = await addCredentialToKms(databaseCredentialId, JSON.stringify(databaseCredential), `Intellsys - Company database - ${companyId}`);
+    const result2 = await addCredentialToKms(databaseCredentialId,
+         JSON.stringify(databaseCredential), `Intellsys - Company database - ${companyId}`);
     if (result2 instanceof Error) {
         return result2;
     }
@@ -262,6 +265,7 @@ async function addCompanyEntryToIntellsys(id: Uuid, domain: string, databaseCred
 
 async function createDatabaseForCompany(id: Uuid): Promise<void | Error> {
     const postgresDatabaseManager = await getPostgresDatabaseManager(getUuidFromUnknown(getRequiredEnvironmentVariableNew("INTELLSYS_STORAGE_1_CREDENTIAL_ID")));
+
     if (postgresDatabaseManager instanceof Error) {
         return postgresDatabaseManager;
     }

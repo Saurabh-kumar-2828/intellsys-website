@@ -1,6 +1,5 @@
 import {ColumnInfo} from "~/backend/data-management";
 import {Iso8601DateTime, PhoneNumberWithCountryCode} from "~/utilities/typeDefinitions";
-import {dateToMediumEnFormat, distinct, getSingletonValue} from "~/utilities/utilities";
 import {execute} from "../databaseManager.server";
 const facebookApiBaseUrl = "https://graph.facebook.com/";
 

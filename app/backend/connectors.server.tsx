@@ -9,6 +9,7 @@ export enum ConnectorType {
     GoogleAnalytics = "cc991d2b-dc83-458e-8e8d-9b47164c735f",
 }
 
+// TODO: one more connector type exists: resolve
 export type Connector = {
     id: Uuid;
     connectorType: Uuid;

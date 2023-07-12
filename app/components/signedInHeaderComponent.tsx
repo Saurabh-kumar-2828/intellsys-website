@@ -3,22 +3,12 @@ import {Link, useLocation, useParams} from "@remix-run/react";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {IntellsysHeaderDropdownTrigger} from "~/components/scratchpad";
 import type {Company, User} from "~/utilities/typeDefinitions";
-import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
 import {CheckCircle, List, XLg} from "react-bootstrap-icons";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import React, {useState} from "react";
+import {concatenateNonNullStringsWithSpaces} from "~/global-common-typescript/utilities/utilities";
 
-export function SignedInHeaderComponent({
-    user,
-    accessibleCompanies,
-    currentCompany,
-    className,
-}: {
-    user: User;
-    accessibleCompanies: Array<Company>;
-    currentCompany: Company;
-    className?: string;
-}) {
+export function SignedInHeaderComponent({user, accessibleCompanies, currentCompany, className}: {user: User; accessibleCompanies: Array<Company>; currentCompany: Company; className?: string}) {
     return (
         <div className={concatenateNonNullStringsWithSpaces("tw-sticky tw-top-0 tw-h-16 tw-bg-dark-bg-400", className)}>
             <div className="tw-grid tw-grid-cols-[auto_1fr_auto] tw-items-center tw-p-4">
@@ -47,17 +37,13 @@ export function SignedInHeaderComponent({
                                         src={`https://intellsys-optimizer.b-cdn.net/intellsys/users/${user.id}.jpg`}
                                     /> */}
                                     {/* <div className="tw-w-8 tw-h-8 tw-rounded-full tw-bg-blue-600" /> */}
-                                    <div className="tw-w-8 tw-h-8 tw-rounded-full tw-bg-gray-600 tw-grid tw-place-items-center">
-                                        {user.email[0].toUpperCase()}
-                                    </div>
+                                    <div className="tw-w-8 tw-h-8 tw-rounded-full tw-bg-gray-600 tw-grid tw-place-items-center">{user.email[0].toUpperCase()}</div>
                                 </Popover.Button>
 
                                 <Popover.Panel className="tw-absolute tw-right-0 tw-top-12 tw-w-full tw-min-w-max">
                                     <div className="tw-w-full tw-h-fit tw-max-h-[20rem] tw-bg-dark-bg-500 tw-shadow-lg tw-rounded-lg tw-overflow-auto tw-pointer-events-auto tw-grid tw-grid-cols-1 tw-grid-flow-row">
                                         <div className="tw-p-3 tw-flex tw-flex-row tw-gap-x-4 tw-items-center">
-                                            <div className="tw-w-8 tw-h-8 tw-rounded-full tw-bg-gray-600 tw-grid tw-place-items-center">
-                                                {user.email[0].toUpperCase()}
-                                            </div>
+                                            <div className="tw-w-8 tw-h-8 tw-rounded-full tw-bg-gray-600 tw-grid tw-place-items-center">{user.email[0].toUpperCase()}</div>
 
                                             <b>{user.email}</b>
                                         </div>
@@ -84,9 +70,7 @@ export function SignedInHeaderComponent({
 
                                                         {accessibleCompany.domain}
 
-                                                        {accessibleCompany.id != currentCompany.id ? null : (
-                                                            <CheckCircle className="tw-w-4 tw-h-4" />
-                                                        )}
+                                                        {accessibleCompany.id != currentCompany.id ? null : <CheckCircle className="tw-w-4 tw-h-4" />}
                                                     </Link>
                                                 )}
                                                 spaceBuilder={(spaceIndex) => (
@@ -125,17 +109,7 @@ export function SignedInHeaderComponent({
     );
 }
 
-export function MenuComponent({
-    user,
-    accessibleCompanies,
-    currentCompany,
-    className,
-}: {
-    user: User;
-    accessibleCompanies: Array<Company>;
-    currentCompany: Company;
-    className?: string;
-}) {
+export function MenuComponent({user, accessibleCompanies, currentCompany, className}: {user: User; accessibleCompanies: Array<Company>; currentCompany: Company; className?: string}) {
     const currentUrl = useLocation().pathname;
 
     const [isMenuExpanded, setIsMenuExpanded] = useState(false);

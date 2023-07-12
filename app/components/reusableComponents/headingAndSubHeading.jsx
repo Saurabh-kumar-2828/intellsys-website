@@ -1,5 +1,5 @@
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
-import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
+
 
 export function HeadingAndSubHeading(props) {
     const heading = props.heading;

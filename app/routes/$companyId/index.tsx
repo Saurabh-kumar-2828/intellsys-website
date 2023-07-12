@@ -10,10 +10,11 @@ import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import { getSingletonValue } from "~/global-common-typescript/utilities/utilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Company, User} from "~/utilities/typeDefinitions";
 import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
-import {getSingletonValue, getTagFromEmail} from "~/utilities/utilities";
+import {getTagFromEmail} from "~/utilities/utilities";
 
 type LoaderData = {
     googleAdsConnectorsWithDetails: Array<{
@@ -93,6 +94,8 @@ export const loader: LoaderFunction = async ({request, params}) => {
     const googleAnalyticsConnectorsWithDetails: Array<{
         connector: Connector;
         sessions: number;
+        dauPerMau: number;
+        wauPerMau: number;
     }> = [];
     for (const googleAnalyticsConnector of googleAnalyticsConnectors) {
         const summary = await getSummarizedViewOfGoogleAnalyticsConnector(googleAnalyticsConnector, companyId);

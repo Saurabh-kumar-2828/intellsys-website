@@ -4,9 +4,8 @@ import {Outlet} from "@remix-run/react";
 import {getAccessibleCompanies, getUser} from "~/backend/userDetails.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getSingletonValueOrNull} from "~/global-common-typescript/utilities/utilities";
 import type {Company, User} from "~/utilities/typeDefinitions";
-import {getSingletonValueOrNull} from "~/utilities/utilities";
-
 export type CompanyLoaderData = {
     user: User;
     accessibleCompanies: Array<Company>;
@@ -24,7 +23,14 @@ export const loader: LoaderFunction = async ({request, params}) => {
     }
 
     const user = await getUser(getUuidFromUnknown(accessToken.userId));
+    if(user instanceof Error){
+        return user;
+    }
+
     const accessibleCompanies = await getAccessibleCompanies(user);
+    if(accessibleCompanies instanceof Error){
+        return accessibleCompanies;
+    }
 
     const companyId = params.companyId;
     if (companyId == null) {
@@ -46,7 +52,5 @@ export const loader: LoaderFunction = async ({request, params}) => {
 };
 
 export default function () {
-    return (
-        <Outlet />
-    );
+    return <Outlet />;
 }

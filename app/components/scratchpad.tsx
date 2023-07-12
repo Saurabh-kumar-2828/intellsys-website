@@ -9,7 +9,7 @@ import {Doughnut} from "react-chartjs-2";
 import {toast} from "react-toastify";
 import type {TimeGranularity} from "~/backend/business-insights";
 import {filterToHumanReadableString, filterToTextColor, TimeZones, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
-import {concatenateNonNullStringsWithAmpersand, concatenateNonNullStringsWithSpaces, numberToHumanFriendlyString} from "~/utilities/utilities";
+import {concatenateNonNullStringsWithAmpersand, numberToHumanFriendlyString} from "~/utilities/utilities";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 
 export function FancySearchableSelect(props: {className?: string; options: Array<string>; label: string; selectedOption; setSelectedOption}) {

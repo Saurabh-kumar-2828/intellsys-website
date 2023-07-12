@@ -1,7 +1,7 @@
 import type {LoaderFunction} from "@remix-run/node";
 import {redirect} from "@remix-run/node";
 import {commitCookieSession, getCookieSession} from "~/backend/utilities/cookieSessions.server";
-import {coalesce} from "~/utilities/utilities";
+import {coalesce} from "~/global-common-typescript/utilities/utilities";
 
 export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;

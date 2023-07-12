@@ -7,20 +7,14 @@ import styles from "app/styles.css";
 import {DateTime} from "luxon";
 import {useState} from "react";
 import type {GoogleAdsDataAggregatedRow} from "~/backend/business-insights";
-import {getGoogleAdsLectrixData, getTimeGranularityFromUnknown, TimeGranularity} from "~/backend/business-insights";
+import {getGoogleAdsData, getTimeGranularityFromUnknown, TimeGranularity} from "~/backend/business-insights";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {
-    agGridDateComparator,
-    dateToMediumNoneEnFormat,
     defaultColumnDefinitions,
     getDates,
-    getNonEmptyStringOrNull,
-    getSingletonValue,
-    numberToHumanFriendlyString,
-    roundOffToTwoDigits,
 } from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
@@ -30,6 +24,7 @@ import type {CompanyLoaderData} from "~/routes/$companyId";
 import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
 import {Line} from "react-chartjs-2";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
+import { agGridDateComparator, dateToMediumNoneEnFormat, getNonEmptyStringOrNull, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits } from "~/global-common-typescript/utilities/utilities";
 
 // Google ads
 
@@ -100,7 +95,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         maxDate = maxDateRaw;
     }
 
-    const googleAdsData = await getGoogleAdsLectrixData(
+    const googleAdsData = await getGoogleAdsData(
         getStringFromUnknown(minDate),
         getStringFromUnknown(maxDate),
         selectedGranularity,

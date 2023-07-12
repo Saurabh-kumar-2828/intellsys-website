@@ -1,4 +1,3 @@
-import {execute} from "~/backend/utilities/databaseManager.server";
 import format from "pg-format";
 
 export async function doesTableExist(tableName: string): Promise<boolean> {

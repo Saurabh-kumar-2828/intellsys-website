@@ -15,10 +15,10 @@ import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {SectionHeader} from "~/components/scratchpad";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {concatenateNonNullStringsWithSpaces, generateUuid} from "~/global-common-typescript/utilities/utilities";
+import {concatenateNonNullStringsWithSpaces, generateUuid, getNonEmptyStringOrNull} from "~/global-common-typescript/utilities/utilities";
 import {getMemoryCache} from "~/utilities/memoryCache";
 import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
-import {getNonEmptyStringOrNull} from "~/utilities/utilities";
+
 
 // Google analytics
 

@@ -9,7 +9,7 @@ import {
     initializeConnectorAndSubConnector,
     mapCompanyIdToConnectorId,
 } from "~/backend/utilities/connectors/common.server";
-import {storeCredentials} from "~/backend/utilities/data-management/credentials.server";
+import {addCredentialToKms} from "~/backend/utilities/data-management/credentials.server";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
 import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
@@ -113,7 +113,7 @@ export async function facebookOAuthFlow(facebookAdsCredentials: FacebookAdsSourc
     await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
 
     // Store source credentials in KMS.
-    const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), facebookAdsCredentials, companyId, getUuidFromUnknown(ConnectorType.FacebookAds));
+    const response = await addCredentialToKms(getUuidFromUnknown(sourceCredentialId), JSON.stringify(facebookAdsCredentials), `${companyId} - Facebook Ads`);
     if (response instanceof Error) {
         return response;
     }

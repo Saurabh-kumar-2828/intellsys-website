@@ -10,7 +10,7 @@ import {
     mapCompanyIdToConnectorId,
 } from "./common.server";
 import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {storeCredentials} from "../data-management/credentials.server";
+import {addCredentialToKms} from "../data-management/credentials.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
@@ -56,7 +56,7 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
         await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
 
         // Store source credentials in KMS.
-        const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, getUuidFromUnknown(ConnectorType.GoogleAds));
+        const response = await addCredentialToKms(getUuidFromUnknown(sourceCredentialId), JSON.stringify(credentials), `${companyId} - Google Ads `);
         if (response instanceof Error) {
             return response;
         }

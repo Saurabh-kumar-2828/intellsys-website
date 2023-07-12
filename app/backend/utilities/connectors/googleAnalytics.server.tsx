@@ -12,7 +12,7 @@ import {
     initializeConnectorAndSubConnector,
     mapCompanyIdToConnectorId,
 } from "./common.server";
-import {storeCredentials} from "../data-management/credentials.server";
+import {addCredentialToKms} from "../data-management/credentials.server";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
 import {ingestHistoricalDataFromConnectorsApi} from "~/backend/connectors.server";
 
@@ -97,7 +97,7 @@ export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyt
         await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
 
         // Store source credentials in KMS.
-        const response = await storeCredentials(getUuidFromUnknown(sourceCredentialId), credentials, companyId, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
+        const response = await addCredentialToKms(getUuidFromUnknown(sourceCredentialId), JSON.stringify(credentials), `${companyId} - Google Analytics`);
         if (response instanceof Error) {
             return response;
         }

@@ -10,7 +10,7 @@ import {DateTime} from "luxon";
 import {useState} from "react";
 import {Line} from "react-chartjs-2";
 import type {FacebookAdsAggregatedRow, FacebookAdsData} from "~/backend/business-insights";
-import {TimeGranularity, getFacebookAdsLectrixData, getTimeGranularityFromUnknown} from "~/backend/business-insights";
+import {TimeGranularity, getFacebookAdsData, getTimeGranularityFromUnknown} from "~/backend/business-insights";
 import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
@@ -18,9 +18,10 @@ import {PageScaffold} from "~/components/pageScaffold";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import { agGridDateComparator, dateToMediumNoneEnFormat, getSingletonValue } from "~/global-common-typescript/utilities/utilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {agGridDateComparator, dateToMediumNoneEnFormat, defaultColumnDefinitions, getDates, getNonEmptyStringOrNull, getSingletonValue} from "~/utilities/utilities";
+import {defaultColumnDefinitions, getDates} from "~/utilities/utilities";
 
 // Facebook ads
 
@@ -91,7 +92,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         maxDate = maxDateRaw;
     }
 
-    const facebookAdsData = await getFacebookAdsLectrixData(
+    const facebookAdsData = await getFacebookAdsData(
         getStringFromUnknown(minDate),
         getStringFromUnknown(maxDate),
         selectedGranularity,
@@ -332,3 +333,7 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
         </div>
     );
 }
+function getNonEmptyStringOrNull(arg0: string | null) {
+    throw new Error("Function not implemented.");
+}
+

@@ -2,7 +2,7 @@ import {useState} from "react";
 import {CaretLeftFill, CaretRightFill} from "react-bootstrap-icons";
 import {Swiper} from "swiper/react";
 import {SwiperSlide} from "swiper/react";
-import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
+
 
 export function SwiperWithCustomArrows(props: {swiperAttributes; buttonClassName; items; itemBuilder}) {
     const isLooping = props.swiperAttributes.loop;

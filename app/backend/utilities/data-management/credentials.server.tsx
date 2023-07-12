@@ -1,10 +1,8 @@
-import {Companies} from "~/utilities/typeDefinitions";
-import {execute} from "~/backend/utilities/databaseManager.server";
 import type {Uuid} from "~/utilities/typeDefinitions";
-import {getSingletonValue} from "~/utilities/utilities";
-import {addCredentialToKms, getCredentialFromKms, updateCredentialInKms} from "~/global-common-typescript/server/kms.server";
+import {getCredentialFromKms, updateCredentialInKms} from "~/global-common-typescript/server/kms.server";
 import {getSystemPostgresDatabaseManager} from "~/backend/utilities/connectors/common.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getSingletonValue} from "~/global-common-typescript/utilities/utilities";
 
 export interface Credentials {
     [x: string]: string | number | boolean;
@@ -16,40 +14,11 @@ export enum Response {
 
 export type CredentialId = Uuid;
 
-export async function writeInCredentialsStoreTable(companyId: Uuid, credentialType: Uuid, credentialId: Uuid): Promise<void | Error> {
-    const response = await execute(
-        Companies.Intellsys,
-        `
-          INSERT INTO
-            credentials_store (
-              company_id,
-              credential_type,
-              credential_id
-            )
-          VALUES (
-              $1,
-              $2,
-              $3
-          )
-      `,
-        [companyId, credentialType, credentialId],
-    );
-
-    if (response instanceof Error) {
-        return response;
-    }
-
-}
-
-export async function writeInCredentialsTable(credentials: Credentials, credentialId: Uuid): Promise<void | Error> {
-
-}
-
 export async function getCredentialId(companyId: Uuid, credentialType: Uuid): Promise<Uuid | Error> {
     // Returns the credential ID associated with a given company Id and credential type.
 
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
-    if(systemPostgresDatabaseManager instanceof Error) {
+    if (systemPostgresDatabaseManager instanceof Error) {
         return systemPostgresDatabaseManager;
     }
 
@@ -73,7 +42,6 @@ export async function getCredentialId(companyId: Uuid, credentialType: Uuid): Pr
     const row = getSingletonValue(credentialIdRaw.rows);
 
     return rowToCredentialId(row);
-
 }
 
 function rowToCredentialId(row: {credential_id: Uuid}): CredentialId {
@@ -101,7 +69,6 @@ async function getCredentialsById(credentialId: Uuid): Promise<Credentials | Err
 }
 
 export async function getCredentials(companyId: Uuid, credentialType: Uuid): Promise<Credentials | Error> {
-
     // 1. Get credential id associated with given company and data source.
     const credentialId = await getCredentialId(companyId, credentialType);
     if (credentialId instanceof Error) {
@@ -113,37 +80,11 @@ export async function getCredentials(companyId: Uuid, credentialType: Uuid): Pro
     return credentials;
 }
 
-async function updateCredentialsById(credentialsId: Uuid, credentials: Credentials): Promise<void | Error> {
+async function updateCredentialsById(credentialsId: Uuid, credentials: string): Promise<void | Error> {
     const response = await updateCredentialInKms(credentialsId, credentials);
 
     if (response instanceof Error) {
-        return response
-    }
-}
-
-/**
- * Store the credentials of a company's data source.
- * @param  {Credentials} credentials credentials of a company's data source.
- * @param  {Uuid} companyId Unique Id of the company
- * @param  {Uuid} credentialType Unique Id of the data source
- * @returns  This function does not return anything
- */
-export async function storeCredentials(credentialId: Uuid, credentials: Credentials, companyId: Uuid, credentialType: Uuid): Promise<void | Error> {
-    try {
-        // 1. Store credentials in kms.
-        const response = await addCredentialToKms(credentialId, JSON.stringify(credentials));
-        if (response instanceof Error) {
-            return response;
-        }
-
-        // // 2. Writes a mapping of company ID, credential type, and credential ID to the `credentials_store` table.
-        // const response1 = await writeInCredentialsStoreTable(companyId, credentialType, credentialId);
-        // if (response1 instanceof Error) {
-        //     return response1;
-        // }
-    } catch (e) {
-        console.log(e);
-        throw e;
+        return response;
     }
 }
 
@@ -153,7 +94,7 @@ export async function updateCredentials(credentials: Credentials, companyId: Uui
         return credentialsId;
     }
 
-    const response = await updateCredentialsById(credentialsId, credentials);
+    const response = await updateCredentialsById(credentialsId, JSON.stringify(credentials));
 
     if (response instanceof Error) {
         return response;

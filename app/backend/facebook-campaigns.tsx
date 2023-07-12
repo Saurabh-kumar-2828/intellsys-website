@@ -1,8 +1,6 @@
-import {execute} from "~/backend/utilities/databaseManager.server";
-import {dateToMediumNoneEnFormat} from "~/utilities/utilities";
 import {getGranularityQuery, joinValues} from "~/backend/utilities/utilities.server";
 import {get_r4_facebookAdsSpends } from "~/backend/business-insights";
-import {Uuid} from "~/utilities/typeDefinitions";
+import type {Uuid} from "~/utilities/typeDefinitions";
 
 export async function getCampaignsInformation(
     selectedCategories: Array<string>,

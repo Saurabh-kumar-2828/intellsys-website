@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
 import {getCookieSession} from "~/backend/utilities/cookieSessions.server";
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
+import { getNonEmptyStringOrNull } from "~/global-common-typescript/utilities/utilities";
 import type {User, Uuid} from "~/utilities/typeDefinitions";
-import {getNonEmptyStringOrNull} from "~/utilities/utilities";
 // import {getUserDetailsFromDatabase} from "~/backend/userDetails.server";
 
 export type AccessToken = {

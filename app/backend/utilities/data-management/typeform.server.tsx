@@ -1,7 +1,7 @@
 // import {DateTime} from "luxon";
 // import {insertIntoTable, processTruncate, Table} from "~/backend/data-management";
 // import {GoogleSpreadsheet, GoogleSpreadsheetRow} from "google-spreadsheet";
-// import {getNonEmptyStringOrNull} from "~/utilities/utilities";
+//
 // import {getDataFromGoogleSheet} from "~/backend/utilities/data-management/googleSheets.server";
 // import {get_typeformResponsesWaterPurifierDataInformation} from "~/backend/data-source-information";
 

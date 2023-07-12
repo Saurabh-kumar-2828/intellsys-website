@@ -4,7 +4,8 @@ import {getSystemPostgresDatabaseManager} from "~/backend/utilities/connectors/c
 import type {AccessToken} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {addCredentialToKms, getCredentialFromKms} from "~/global-common-typescript/server/kms.server";
-import {PostgresDatabaseCredentials, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
+import type {PostgresDatabaseCredentials} from "~/global-common-typescript/server/postgresDatabaseManager.server";
+import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid, getSingletonValue, getUnixTimeInSeconds} from "~/global-common-typescript/utilities/utilities";

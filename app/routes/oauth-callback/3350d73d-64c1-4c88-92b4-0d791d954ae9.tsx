@@ -15,10 +15,10 @@ import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormF
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {generateUuid} from "~/global-common-typescript/utilities/utilities";
+import {generateUuid, getNonEmptyStringOrNull} from "~/global-common-typescript/utilities/utilities";
 import {getMemoryCache} from "~/utilities/memoryCache";
 import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
-import {getNonEmptyStringOrNull} from "~/utilities/utilities";
+
 
 // Facebook ads
 

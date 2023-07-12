@@ -1,4 +1,4 @@
-import {concatenateNonNullStringsWithSpaces} from "~/utilities/utilities";
+
 
 export function ArrowRightSvgIconComponent(props) {
     const className = props.className;

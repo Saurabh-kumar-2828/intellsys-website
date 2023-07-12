@@ -1,11 +1,14 @@
-import {Companies} from "~/utilities/typeDefinitions";
-import {execute} from "~/backend/utilities/databaseManager.server";
 import type {Company, User, Uuid} from "~/utilities/typeDefinitions";
-import {getSingletonValue} from "~/utilities/utilities";
+import {getSingletonValue} from "~/global-common-typescript/utilities/utilities";
+import {getSystemPostgresDatabaseManager} from "./utilities/connectors/common.server";
 
-export async function getUser(userId: Uuid): Promise<User> {
-    const result = await execute(
-        Companies.Intellsys,
+export async function getUser(userId: Uuid): Promise<User | Error> {
+    const postgresDatabaseManager = await getSystemPostgresDatabaseManager();
+    if (postgresDatabaseManager instanceof Error) {
+        return postgresDatabaseManager;
+    }
+
+    const result = await postgresDatabaseManager.execute(
         `
             SELECT
                 id,
@@ -19,6 +22,10 @@ export async function getUser(userId: Uuid): Promise<User> {
         `,
         [userId],
     );
+
+    if(result instanceof Error){
+        return result;
+    }
 
     return rowToUser(getSingletonValue(result.rows));
 }
@@ -34,10 +41,14 @@ function rowToUser(row: unknown): User {
     return user;
 }
 
-export async function getAccessibleCompanies(user: User): Promise<Array<Company>> {
+export async function getAccessibleCompanies(user: User): Promise<Array<Company> | Error> {
     // TODO: DO THIS PROPERLY
-    const result = await execute(
-        Companies.Intellsys,
+    const postgresDatabaseManager = await getSystemPostgresDatabaseManager();
+    if (postgresDatabaseManager instanceof Error) {
+        return postgresDatabaseManager;
+    }
+
+    const result = await postgresDatabaseManager.execute(
         `
             SELECT
                 id,
@@ -47,11 +58,17 @@ export async function getAccessibleCompanies(user: User): Promise<Array<Company>
             FROM
                 companies
             WHERE
-                id IN ${`(${Object.keys(user.privileges).map(companyId => `'${companyId}'`).join(", ")})`}
+                id IN ${`(${Object.keys(user.privileges)
+                    .map((companyId) => `'${companyId}'`)
+                    .join(", ")})`}
         `,
     );
 
-    return result.rows.map(row => rowToCompany(row));
+    if(result instanceof Error){
+        return result;
+    }
+
+    return result.rows.map((row) => rowToCompany(row));
 }
 
 function rowToCompany(row: unknown): Company {

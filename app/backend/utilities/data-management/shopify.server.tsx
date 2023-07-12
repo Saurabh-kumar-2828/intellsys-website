@@ -1,6 +1,5 @@
 import {ColumnInfo} from "~/backend/data-management";
 import {Iso8601Date} from "~/utilities/typeDefinitions";
-import {delay} from "~/utilities/utilities";
 import {shopifyQuery} from "../api-integration-utilities/shopifyQuery";
 
 const shopifyApiBaseUrl = "https://livpuresleep.myshopify.com/admin/api/2022-10/graphql.json";

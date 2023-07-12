@@ -6,11 +6,12 @@ import {getPostgresDatabaseManager} from "~/global-common-typescript/server/post
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
 import type {Iso8601DateTime, Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {getCurrentIsoTimestamp} from "~/global-common-typescript/utilities/utilities";
+import {getCurrentIsoTimestamp, getSingletonValue, getSingletonValueOrNull} from "~/global-common-typescript/utilities/utilities";
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import type {ConnectorTableType} from "~/utilities/typeDefinitions";
-import {getSingletonValue, getSingletonValueOrNull} from "~/utilities/utilities";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
+import { Connector } from "./googleOAuth.server";
+
 
 export type ConnectorId = Uuid;
 
@@ -206,7 +207,7 @@ export async function deleteCompanyIdToConnectorIdMapping(connectorId: Uuid): Pr
 /**
  * Retrieves a connector Id associated with a given company Id and connector type.
  */
-export async function getConnectorId(companyId: Uuid, connectorType: ConnectorType): Promise<Uuid | Error> {
+export async function getConnectorId(companyId: Uuid, connectorType: typeof ConnectorType): Promise<Uuid | Error> {
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
     if (systemPostgresDatabaseManager instanceof Error) {
         throw systemPostgresDatabaseManager;

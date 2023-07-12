@@ -1,9 +1,8 @@
 import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server";
-import {TimeGranularity, getFacebookAdsLectrixData, getGoogleAdsLectrixData, getGoogleAnalyticsLectrixData} from "../business-insights";
+import {TimeGranularity, getFacebookAdsData, getGoogleAdsData, getGoogleAnalyticsData} from "../business-insights";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getDestinationCredentialId} from "./connectors/common.server";
 import {getCurrentIsoTimestamp} from "~/global-common-typescript/utilities/utilities";
-import {numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export async function getSummarizedViewOfGoogleAdsConnector(
     connector: Connector,
@@ -23,7 +22,7 @@ export async function getSummarizedViewOfGoogleAdsConnector(
         return databaseCredentialId;
     }
 
-    const data = await getGoogleAdsLectrixData("2023-06-27", "2023-06-27", TimeGranularity.daily, databaseCredentialId, connector.id);
+    const data = await getGoogleAdsData("2023-06-27", "2023-06-27", TimeGranularity.daily, databaseCredentialId, connector.id);
     if (data instanceof Error) {
         return data;
     }
@@ -64,7 +63,7 @@ export async function getSummarizedViewOfFacebookAdsConnector(
         return databaseCredentialId;
     }
 
-    const data = await getFacebookAdsLectrixData("2023-06-27", "2023-06-27", TimeGranularity.daily, databaseCredentialId, connector.id);
+    const data = await getFacebookAdsData("2023-06-27", "2023-06-27", TimeGranularity.daily, databaseCredentialId, connector.id);
     if (data instanceof Error) {
         return data;
     }
@@ -105,7 +104,7 @@ export async function getSummarizedViewOfGoogleAnalyticsConnector(
         return databaseCredentialId;
     }
 
-    const data = await getGoogleAnalyticsLectrixData("2023-06-27", "2023-06-27", TimeGranularity.daily, databaseCredentialId, connector.id);
+    const data = await getGoogleAnalyticsData("2023-06-27", "2023-06-27", TimeGranularity.daily, databaseCredentialId, connector.id);
     if (data instanceof Error) {
         return data;
     }

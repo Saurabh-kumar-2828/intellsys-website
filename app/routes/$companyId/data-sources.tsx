@@ -13,9 +13,10 @@ import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormF
 import {HorizontalSpacer} from "~/global-common-typescript/components/horizontalSpacer";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import { getSingletonValue } from "~/global-common-typescript/utilities/utilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
-import {getSingletonValue} from "~/utilities/utilities";
+import { CompanyLoaderData } from "../$companyId";
 
 export const action: ActionFunction = async ({request, params}) => {
     const body = await request.formData();

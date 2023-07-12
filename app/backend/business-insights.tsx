@@ -1,6 +1,5 @@
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
-import {execute} from "~/backend/utilities/databaseManager.server";
 import {getGranularityQuery} from "~/backend/utilities/utilities.server";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
@@ -214,31 +213,17 @@ export type FacebookAdsAggregatedRow = {
 // Metrics: amountSpent, impressions, clicks
 // Dependent column: platform, category
 // pivots: date, campaign name
-export async function getAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
-    const googleAdsData = await getGoogleAdsData(minDate, maxDate, granularity, companyId);
-    const facebookAdsData = await getFacebookAdsData(minDate, maxDate, granularity, companyId);
+// export async function getAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
+//     const googleAdsData = await getGoogleAdsData(minDate, maxDate, granularity, companyId);
+//     const facebookAdsData = await getFacebookAdsData(minDate, maxDate, granularity, companyId);
 
-    const result = {
-        metaQuery: googleAdsData.metaQuery + "\n" + facebookAdsData.metaQuery,
-        rows: [...googleAdsData.rows, ...facebookAdsData.rows],
-    };
+//     const result = {
+//         metaQuery: googleAdsData.metaQuery + "\n" + facebookAdsData.metaQuery,
+//         rows: [...googleAdsData.rows, ...facebookAdsData.rows],
+//     };
 
-    return result;
-}
-
-function rowToAdsDataAggregatedRow(row: unknown): AdsDataAggregatedRow {
-    const adsDataAggregatedRow: AdsDataAggregatedRow = {
-        date: row.date.toISOString().slice(0, 10),
-        amountSpent: parseFloat(row.amount_spent),
-        impressions: parseInt(row.impressions),
-        clicks: parseInt(row.clicks),
-        platform: row.platform,
-        campaignName: row.campaign_name,
-        category: row.category,
-    };
-
-    return adsDataAggregatedRow;
-}
+//     return result;
+// }
 
 function rowToGoogleAdsDataAggregatedRow(row: unknown): GoogleAdsDataAggregatedRow {
     const adsDataAggregatedRow: GoogleAdsDataAggregatedRow = {
@@ -390,34 +375,7 @@ function rowToGoogleAnalyticsDataAggregatedRow(row: unknown): GoogleAnalyticsDat
     return analyticsDataAggregatedRow;
 }
 
-export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
-    const query = `
-        SELECT
-            ${getGranularityQuery(granularity, "date")} AS date,
-            campaign_name,
-            spend AS amount_spent,
-            impressions,
-            clicks,
-            campaign_category AS category,
-            'Google' AS platform
-        FROM
-            google_ads_with_information
-        WHERE
-            DATE(date) >= '${minDate}'
-            AND DATE(date) <= '${maxDate}'
-        ORDER BY
-            date
-    `;
-
-    const result = await execute(companyId, query);
-
-    return {
-        metaQuery: query,
-        rows: result.rows.map((row) => rowToAdsDataAggregatedRow(row)),
-    };
-}
-
-export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<GoogleAdsData | Error> {
+export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<GoogleAdsData | Error> {
     const postgresDatabaseManager = await getPostgresDatabaseManager(destinationDatabaseId);
 
     if (postgresDatabaseManager instanceof Error) {
@@ -492,7 +450,7 @@ export async function getGoogleAdsLectrixData(minDate: Iso8601Date, maxDate: Iso
     };
 }
 
-export async function getGoogleAnalyticsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<GoogleAnalyticsData | Error> {
+export async function getGoogleAnalyticsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<GoogleAnalyticsData | Error> {
     const postgresDatabaseManager = await getPostgresDatabaseManager(destinationDatabaseId);
 
     if (postgresDatabaseManager instanceof Error) {
@@ -611,7 +569,7 @@ export async function getGoogleAnalyticsLectrixData(minDate: Iso8601Date, maxDat
     };
 }
 
-export async function getFacebookAdsLectrixData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<FacebookAdsData | Error> {
+export async function getFacebookAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<FacebookAdsData | Error> {
 
     // FacebookAdsData | Error
 
@@ -666,29 +624,3 @@ export async function getFacebookAdsLectrixData(minDate: Iso8601Date, maxDate: I
 
 }
 
-export async function getFacebookAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, companyId: Uuid): Promise<AdsData> {
-    const query = `
-        SELECT
-            ${getGranularityQuery(granularity, "date")} AS date,
-            campaign_name,
-            spend AS amount_spent,
-            impressions,
-            clicks,
-            campaign_category AS category,
-            'Facebook' AS platform
-        FROM
-            facebook_ads_with_information
-        WHERE
-            DATE(date) >= '${minDate}'
-            AND DATE(date) <= '${maxDate}'
-        ORDER BY
-            date
-    `;
-
-    const result = await execute(companyId, query);
-
-    return {
-        metaQuery: query,
-        rows: result.rows.map((row) => rowToAdsDataAggregatedRow(row)),
-    };
-}

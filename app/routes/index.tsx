@@ -3,7 +3,7 @@ import {redirect} from "@remix-run/node";
 import {getCompanyForDomain} from "~/backend/authentication.server";
 import {getUser} from "~/backend/userDetails.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
-import { getUuidFromUnknown } from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getDomainFromEmail} from "~/utilities/utilities";
 
 export const loader: LoaderFunction = async ({request}) => {
@@ -17,7 +17,7 @@ export const loader: LoaderFunction = async ({request}) => {
     const userId = getUuidFromUnknown(accessToken.userId);
 
     const user = await getUser(userId);
-    if(user instanceof Error){
+    if (user instanceof Error) {
         throw new Response("No user found!", {status: 400});
     }
 

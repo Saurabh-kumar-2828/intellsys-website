@@ -18,7 +18,7 @@ import {PageScaffold} from "~/components/pageScaffold";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import { agGridDateComparator, dateToMediumNoneEnFormat, getSingletonValue } from "~/global-common-typescript/utilities/utilities";
+import {agGridDateComparator, dateToMediumNoneEnFormat, getSingletonValue} from "~/global-common-typescript/utilities/utilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {defaultColumnDefinitions, getDates} from "~/utilities/utilities";
@@ -336,4 +336,3 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
 function getNonEmptyStringOrNull(arg0: string | null) {
     throw new Error("Function not implemented.");
 }
-

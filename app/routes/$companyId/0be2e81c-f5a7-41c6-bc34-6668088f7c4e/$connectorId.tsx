@@ -12,10 +12,7 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {
-    defaultColumnDefinitions,
-    getDates,
-} from "~/utilities/utilities";
+import {defaultColumnDefinitions, getDates} from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
@@ -24,7 +21,14 @@ import type {CompanyLoaderData} from "~/routes/$companyId";
 import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
 import {Line} from "react-chartjs-2";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
-import { agGridDateComparator, dateToMediumNoneEnFormat, getNonEmptyStringOrNull, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits } from "~/global-common-typescript/utilities/utilities";
+import {
+    agGridDateComparator,
+    dateToMediumNoneEnFormat,
+    getNonEmptyStringOrNull,
+    getSingletonValue,
+    numberToHumanFriendlyString,
+    roundOffToTwoDigits,
+} from "~/global-common-typescript/utilities/utilities";
 
 // Google ads
 

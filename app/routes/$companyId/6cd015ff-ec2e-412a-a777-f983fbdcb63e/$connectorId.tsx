@@ -21,7 +21,7 @@ import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {defaultColumnDefinitions, getDates} from "~/utilities/utilities";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
-import { agGridDateComparator, dateToMediumNoneEnFormat, getSingletonValue } from "~/global-common-typescript/utilities/utilities";
+import {agGridDateComparator, dateToMediumNoneEnFormat, getSingletonValue} from "~/global-common-typescript/utilities/utilities";
 
 // Google analytics
 
@@ -463,7 +463,7 @@ function CampaignsSection({
                                         {headerName: "userConversionRateTRH_Otpverified", field: "userConversionRateTRH_Otpverified", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "userConversionRatePurchase", field: "userConversionRatePurchase", cellClass: "!tw-px-0", resizable: true},
                                         {headerName: "userEngagementDuration", field: "userEngagementDuration", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "wauPerMau", field: "wauPerMau", cellClass: "!tw-px-0", resizable: true}
+                                        {headerName: "wauPerMau", field: "wauPerMau", cellClass: "!tw-px-0", resizable: true},
                                     ]}
                                     defaultColDef={defaultColumnDefinitions}
                                     animateRows={true}
@@ -483,4 +483,3 @@ function CampaignsSection({
 function getNonEmptyStringOrNull(arg0: string | null) {
     throw new Error("Function not implemented.");
 }
-

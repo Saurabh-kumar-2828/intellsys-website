@@ -9,8 +9,7 @@ import {
     initializeConnectorAndSubConnector,
     mapCompanyIdToConnectorId,
 } from "~/backend/utilities/connectors/common.server";
-import {addCredentialToKms} from "~/backend/utilities/data-management/credentials.server";
-import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
+import {addCredentialToKms, deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
 import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";

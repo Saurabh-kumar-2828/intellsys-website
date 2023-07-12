@@ -10,10 +10,9 @@ import {
     mapCompanyIdToConnectorId,
 } from "./common.server";
 import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {addCredentialToKms} from "../data-management/credentials.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
-import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
+import {addCredentialToKms, deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
 import {ingestHistoricalDataFromConnectorsApi} from "~/backend/connectors.server";
 
 export async function ingestAndStoreGoogleAdsData(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid, extraInformation: {[key: string]: any}): Promise<void | Error> {
@@ -68,7 +67,6 @@ export async function storeGoogleAdsOAuthDetails(credentials: GoogleAdsCredentia
             companyDatabaseCredentialId,
             "Google Ads",
             ConnectorTableType.GoogleAds,
-            ConnectorType.GoogleAds,
             ConnectorType.GoogleAds,
         );
 

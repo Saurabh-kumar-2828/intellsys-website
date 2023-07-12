@@ -31,6 +31,9 @@ type LoaderData = {
 
 export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;
+    if(urlSearchParams == null){
+        throw new Response(null, {status: 404});
+    }
 
     const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
     const state = getNonEmptyStringOrNull(urlSearchParams.get("state"));

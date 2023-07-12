@@ -12,8 +12,7 @@ import {
     initializeConnectorAndSubConnector,
     mapCompanyIdToConnectorId,
 } from "./common.server";
-import {addCredentialToKms} from "../data-management/credentials.server";
-import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
+import {addCredentialToKms, deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
 import {ingestHistoricalDataFromConnectorsApi} from "~/backend/connectors.server";
 
 export type GoogleAnalyticsCredentials = {
@@ -75,7 +74,6 @@ export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyt
         if (companyDatabaseCredentialId instanceof Error) {
             return companyDatabaseCredentialId;
         }
-
 
         const companyDatabaseManager = await getPostgresDatabaseManager(companyDatabaseCredentialId);
         if (companyDatabaseManager instanceof Error) {

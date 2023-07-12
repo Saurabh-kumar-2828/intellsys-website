@@ -10,7 +10,7 @@ import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import { getSingletonValue } from "~/global-common-typescript/utilities/utilities";
+import {getSingletonValue} from "~/global-common-typescript/utilities/utilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Company, User} from "~/utilities/typeDefinitions";
 import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
@@ -302,7 +302,19 @@ function FacebookAdsSummaryCard({currentCompany, connector, spends, impressions,
     );
 }
 
-function GoogleAnalyticsSummaryCard({currentCompany, connector, sessions, dauPerMau, wauPerMau}: {currentCompany: Company; connector: Connector; sessions: number; dauPerMau: number; wauPerMau: number;}) {
+function GoogleAnalyticsSummaryCard({
+    currentCompany,
+    connector,
+    sessions,
+    dauPerMau,
+    wauPerMau,
+}: {
+    currentCompany: Company;
+    connector: Connector;
+    sessions: number;
+    dauPerMau: number;
+    wauPerMau: number;
+}) {
     return (
         <div className="tw-w-full tw-bg-gray-800 tw-grid tw-grid-cols-3 tw-items-center tw-p-4 tw-rounded-lg">
             <Link

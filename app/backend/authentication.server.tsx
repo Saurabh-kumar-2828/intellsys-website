@@ -2,7 +2,6 @@ import type {Jwt} from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 import {getSystemPostgresDatabaseManager} from "~/backend/utilities/connectors/common.server";
 import type {AccessToken} from "~/backend/utilities/cookieSessionsHelper.server";
-import {getErrorFromUnknown} from "~/backend/utilities/databaseManager.server";
 import {addCredentialToKms, getCredentialFromKms} from "~/global-common-typescript/server/kms.server";
 import type {PostgresDatabaseCredentials} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";

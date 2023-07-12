@@ -301,7 +301,12 @@ function LoginPage() {
                     </div>
 
                     <div className="tw-self-end">
-                        <button onClick={showLoginDialog} className="gj-bg-primary-gradient tw-text-white tw-px-8 tw-py-4 tw-rounded-full">Sign Up For Free</button>
+                        <button
+                            onClick={showLoginDialog}
+                            className="gj-bg-primary-gradient tw-text-white tw-px-8 tw-py-4 tw-rounded-full"
+                        >
+                            Sign Up For Free
+                        </button>
                     </div>
                 </div>
             </div>
@@ -350,8 +355,18 @@ function LoginPage() {
                     <VerticalSpacer className="tw-h-16" />
 
                     <div className="tw-grid tw-grid-cols-[auto_1rem_auto] tw-w-3/4">
-                        <button onClick={showLoginDialog} className="tw-col-start-1 gj-bg-primary-gradient tw-text-white tw-py-2 tw-px-4 tw-rounded-full">Sign Up For Free</button>
-                        <button onClick={showLoginDialog} className="tw-col-start-3 tw-border tw-border-[#00a2ed] tw-text-white tw-py-2 tw-px-4 tw-rounded-full">Start a project</button>
+                        <button
+                            onClick={showLoginDialog}
+                            className="tw-col-start-1 gj-bg-primary-gradient tw-text-white tw-py-2 tw-px-4 tw-rounded-full"
+                        >
+                            Sign Up For Free
+                        </button>
+                        <button
+                            onClick={showLoginDialog}
+                            className="tw-col-start-3 tw-border tw-border-[#00a2ed] tw-text-white tw-py-2 tw-px-4 tw-rounded-full"
+                        >
+                            Start a project
+                        </button>
                     </div>
                 </div>
                 <div className="tw-col-start-3 gj-bg-primary-gradient tw-h-1/2 tw-aspect-square tw-rounded-full tw-text-white tw-flex tw-justify-center tw-items-center">Let's Start</div>

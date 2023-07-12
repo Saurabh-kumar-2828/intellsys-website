@@ -1,6 +1,5 @@
 // import * as csv from "csv-string";
 // var format = require("pg-format");
-// import {execute} from "~/backend/utilities/databaseManager.server";
 //
 // import {ingestDataFromTypeformMattressApi, ingestDataFromTypeformWaterPurifierApi} from "~/backend/utilities/data-management/typeform.server";
 // import {googleAdsRawColumnInfos} from "~/backend/utilities/data-management/googleAds.server";

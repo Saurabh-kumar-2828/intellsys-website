@@ -96,7 +96,6 @@ export async function getSummarizedViewOfGoogleAnalyticsConnector(
       }
     | Error
 > {
-
     const dateToday = getCurrentIsoTimestamp();
 
     const databaseCredentialId = await getDestinationCredentialId(companyId);

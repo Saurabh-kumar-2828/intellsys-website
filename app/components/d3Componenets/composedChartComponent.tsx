@@ -23,7 +23,6 @@ type scaleObject = {
 };
 
 export function ComposedChart(props: {xValues: Array<string>; className: string; children: any; title: string; height: number; width: number; ref: React.MutableRefObject<null>}) {
-
     const height = props.height;
     const padding = 0.2;
     const innerHeight = height - plotMargins.top - plotMargins.bottom;

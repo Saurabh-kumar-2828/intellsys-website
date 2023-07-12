@@ -569,7 +569,6 @@ export async function getGoogleAnalyticsData(minDate: Iso8601Date, maxDate: Iso8
 }
 
 export async function getFacebookAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<FacebookAdsData | Error> {
-
     // TODO: Fix all places with newline after function start/before function end
 
     // FacebookAdsData | Error

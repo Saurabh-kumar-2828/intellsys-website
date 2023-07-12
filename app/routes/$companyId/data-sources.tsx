@@ -94,7 +94,6 @@ type LoaderData = {
 
 export const loader: LoaderFunction = async ({request, params}) => {
     // TODO: Ensure companyId is valid
-
     const companyId = params.companyId;
     if (companyId == null) {
         throw new Response(null, {status: 404});

@@ -20,7 +20,6 @@ export function progressCellRenderer(props: ICellRendererParams) {
 }
 
 export function progressCellRendererTarget(props: ICellRendererParams) {
-
     const target = props.target[props.data.campaignName][props.colDef.field];
     const progress = (props.value / target)*100;
     const remaining = (Math.abs(props.value - target) / target)*100;

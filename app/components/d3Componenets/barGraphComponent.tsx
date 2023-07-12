@@ -1,6 +1,6 @@
 import React from "react";
-import {axisLeft, axisRight} from "d3-axis";
-import {ScaleBand, scaleBand, ScaleLinear, scaleLinear} from "d3-scale";
+import type {ScaleBand, ScaleLinear} from "d3-scale";
+import {scaleBand, scaleLinear} from "d3-scale";
 import {select} from "d3-selection";
 import {plotMargins, Scale} from "~/utilities/utilities";
 
@@ -22,9 +22,9 @@ interface props {
 }
 
 export class BarGraphComponent extends React.Component<props> {
-    constructor(props: any) {
-        super(props);
-    }
+    // constructor(props: any) {
+    //     super(props);
+    // }
 
     static displayName: string = "BarGraphComponent";
 
@@ -37,6 +37,7 @@ export class BarGraphComponent extends React.Component<props> {
     }
 
     drawBarChart(data: lineDataObject, xScale: ScaleBand<string> | undefined) {
+        console.log(1);
         const width = this.props.width;
         const height = this.props.height;
         const padding = this.props.padding;
@@ -45,8 +46,12 @@ export class BarGraphComponent extends React.Component<props> {
             return null;
         }
 
+        console.log(2);
+
         const innerHeight = height - plotMargins.top - plotMargins.bottom;
         const innerWidth = width - plotMargins.left - plotMargins.right;
+
+        console.log(3);
 
         // Xscale
 
@@ -54,8 +59,10 @@ export class BarGraphComponent extends React.Component<props> {
             xScale = scaleBand()
                 .domain(data.dates.map((d: string) => d))
                 .range([0, innerWidth])
-                .padding(padding);
+                .padding(this.props.padding);
         }
+
+        console.log(4);
 
         // Yscale
         var yScale: ScaleLinear<number, number, never>;
@@ -66,6 +73,8 @@ export class BarGraphComponent extends React.Component<props> {
         }
         yScale = scaleLinear().domain([0, data.yMax]).range([0, innerHeight]).nice();
         const yScaleReversed = scaleLinear().domain([0, data.yMax]).range([innerHeight, 0]).nice();
+
+        console.log(5);
 
         const node = select(this.props.container!);
 
@@ -78,6 +87,8 @@ export class BarGraphComponent extends React.Component<props> {
             .attr("width", xScale.bandwidth())
             .attr("height", (d) => yScale(d.value))
             .attr("fill", "white");
+
+        console.log(6);
     }
     render() {
         return null;

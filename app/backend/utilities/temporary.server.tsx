@@ -2,7 +2,7 @@ import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server"
 import {TimeGranularity, getFacebookAdsData, getGoogleAdsData, getGoogleAnalyticsData} from "../business-insights";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getDestinationCredentialId} from "./connectors/common.server";
-import {getCurrentIsoTimestamp} from "~/global-common-typescript/utilities/utilities";
+import {getCurrentIsoTimestamp, numberToHumanFriendlyString} from "~/global-common-typescript/utilities/utilities";
 
 export async function getSummarizedViewOfGoogleAdsConnector(
     connector: Connector,

@@ -14,15 +14,13 @@ import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {SectionHeader} from "~/components/scratchpad";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
-import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {concatenateNonNullStringsWithSpaces, generateUuid, getNonEmptyStringOrNull} from "~/global-common-typescript/utilities/utilities";
+import {getNonEmptyStringFromUnknown, getObjectFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {concatenateNonNullStringsWithSpaces, generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getMemoryCache} from "~/utilities/memoryCache";
 import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
 
-
 // Google analytics
 
-// TODO: Keep only code part
 type LoaderData = {
     data: string;
     accessiblePropertyIds: Array<GoogleAnalyticsAccessiblePropertyIds>;
@@ -31,19 +29,16 @@ type LoaderData = {
 
 export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;
-    if(urlSearchParams == null){
-        throw new Response(null, {status: 404});
+    // REMOVE THIS, urlSearchParams can never be null
+    if (urlSearchParams == null) {
+        throw new Response(null, {status: 400});
     }
 
-    const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
-    const state = getNonEmptyStringOrNull(urlSearchParams.get("state"));
+    const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
+    const companyId = safeParse(getUuidFromUnknown, urlSearchParams.get("state"));
 
-    const companyId = getUuidFromUnknown(state);
-    if (companyId == null) {
-        throw new Response(null, {status: 404});
-    }
-    if (authorizationCode == null) {
-        throw Error("Authorization failed!");
+    if (authorizationCode == null || companyId == null) {
+        throw new Response(null, {status: 400});
     }
 
     let refreshToken: string;
@@ -55,14 +50,13 @@ export const loader: LoaderFunction = async ({request}) => {
     if (cachedValue != null) {
         refreshToken = cachedValue;
     } else {
-        const refreshToken_ = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAnalytics));
+        const refreshToken_ = await getGoogleAdsRefreshToken(authorizationCode, companyId, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
         if (refreshToken_ instanceof Error) {
             throw refreshToken_;
         }
         await memoryCache.set(cacheKey, refreshToken_);
         refreshToken = refreshToken_;
     }
-
 
     const accessiblePropertyIds = await getAccessiblePropertyIds(refreshToken);
     if (accessiblePropertyIds instanceof Error) {
@@ -73,7 +67,7 @@ export const loader: LoaderFunction = async ({request}) => {
 
     // TODO: Get multiple accounts
     const loaderData: LoaderData = {
-        data: encrypt(refreshToken) as unknown as string,
+        data: encrypt(refreshToken),
         accessiblePropertyIds: accessiblePropertyIds,
         companyId: companyId,
     };
@@ -82,60 +76,58 @@ export const loader: LoaderFunction = async ({request}) => {
 };
 
 export const action: ActionFunction = async ({request}) => {
-    try {
-        const urlSearchParams = new URL(request.url).searchParams;
+    const urlSearchParams = new URL(request.url).searchParams;
 
-        const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
-        const companyId = getNonEmptyStringOrNull(urlSearchParams.get("state"));
+    const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
+    const companyId = safeParse(getUuidFromUnknown, urlSearchParams.get("state"));
 
-        if (companyId == null) {
-            throw new Response(null, {status: 404});
-        }
-
-        const body = await request.formData();
-
-        const data = body.get("data") as string;
-        const selectedAccount = JSON.parse(body.get("selectedAccount") as string);
-
-        // TODO: type validation
-        const refreshTokenDecoded = decrypt(data);
-
-        const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), ConnectorType.GoogleAnalytics, selectedAccount.customerClientId);
-        if (accountExists instanceof Error) {
-            throw new Response(null, {status: 400, statusText: "Account already Exists!"});
-        }
-
-        // Cannot create new connector, if connector with account already exists.
-        if (accountExists) {
-            throw new Response(null, {status: 404, statusText: "Account already Exists!"});
-        }
-
-        const googleAnalyticsCredentials: GoogleAnalyticsCredentials = {
-            propertyId: selectedAccount.propertyId,
-            refreshToken: refreshTokenDecoded,
-        };
-
-        const connectorId = generateUuid();
-
-        const response = await ingestAndStoreGoogleAnalyticsData(googleAnalyticsCredentials, getUuidFromUnknown(companyId), connectorId, {
-            accountId: googleAnalyticsCredentials.propertyId,
-            accountName: selectedAccount.displayName,
-        });
-        if (response instanceof Error) {
-            throw response;
-        }
-
-        const memoryCache = await getMemoryCache();
-
-        const cacheKey = `${DataSourceIds.googleAds}: ${authorizationCode}`;
-        await memoryCache.delete(cacheKey);
-
-        return redirect(`/${companyId}/6cd015ff-ec2e-412a-a777-f983fbdcb63e/${connectorId}`);
-    } catch (e) {
-        console.log(e);
+    if (authorizationCode == null || companyId == null) {
+        return new Response(null, {status: 400});
     }
 
-    return null;
+    const body = await request.formData();
+
+    const data = safeParse(getNonEmptyStringFromUnknown, body.get("data"));
+    const selectedAccount = safeParse(getObjectFromUnknown, body.get("selectedAccount"));
+
+    if (data == null || selectedAccount == null) {
+        return new Response(null, {status: 400});
+    }
+
+    const refreshTokenDecoded = decrypt(data);
+
+    const accountExists = await checkConnectorExistsForAccount(companyId, ConnectorType.GoogleAnalytics, selectedAccount.customerClientId);
+    if (accountExists instanceof Error) {
+        return accountExists;
+    }
+
+    // Cannot create new connector, if connector with account already exists.
+    if (accountExists) {
+        // TODO: Fix casing
+        return new Response(null, {status: 400, statusText: "Account already Exists!"});
+    }
+
+    const googleAnalyticsCredentials: GoogleAnalyticsCredentials = {
+        propertyId: selectedAccount.propertyId,
+        refreshToken: refreshTokenDecoded,
+    };
+
+    const connectorId = generateUuid();
+
+    const response = await ingestAndStoreGoogleAnalyticsData(googleAnalyticsCredentials, companyId, connectorId, {
+        accountId: googleAnalyticsCredentials.propertyId,
+        accountName: selectedAccount.displayName,
+    });
+    if (response instanceof Error) {
+        return response;
+    }
+
+    const memoryCache = await getMemoryCache();
+
+    const cacheKey = `${DataSourceIds.googleAds}: ${authorizationCode}`;
+    await memoryCache.delete(cacheKey);
+
+    return redirect(`/${companyId}/6cd015ff-ec2e-412a-a777-f983fbdcb63e/${connectorId}`);
 };
 
 export default function () {

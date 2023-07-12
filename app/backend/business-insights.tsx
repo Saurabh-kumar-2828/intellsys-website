@@ -267,21 +267,22 @@ function rowToGoogleAdsDataAggregatedRow(row: unknown): GoogleAdsDataAggregatedR
     return adsDataAggregatedRow;
 }
 
+// TODO: Find all places where row is set to anything other than unknown (including any)
 function rowToFacebookAdsDataAggregatedRow(row: Credentials): FacebookAdsAggregatedRow {
     const facebookAdsAggregatedRow: FacebookAdsAggregatedRow = {
-        accountCurrency: row.accountcurrency as string,
-        accountId: row.accountid as string,
-        accountName: row.accountname as string,
-        clicks: row.clicks as string,
-        createdTime: row.createdtime as string,
-        dateStart: row.datestart as string,
-        dateStop: row.datestop as string,
-        frequency: row.frequency as string,
-        impressions: row.impressions as string,
-        reach: row.reach as string,
-        spend: row.spend as string,
-        campaignId: row.campaignid as string,
-        campaignName: row.campaignname as string
+        accountCurrency: row.accountcurrency,
+        accountId: row.accountid,
+        accountName: row.accountname,
+        clicks: row.clicks,
+        createdTime: row.createdtime,
+        dateStart: row.datestart,
+        dateStop: row.datestop,
+        frequency: row.frequency,
+        impressions: row.impressions,
+        reach: row.reach,
+        spend: row.spend,
+        campaignId: row.campaignid,
+        campaignName: row.campaignname,
     }
     return facebookAdsAggregatedRow
 }
@@ -571,6 +572,8 @@ export async function getGoogleAnalyticsData(minDate: Iso8601Date, maxDate: Iso8
 
 export async function getFacebookAdsData(minDate: Iso8601Date, maxDate: Iso8601Date, granularity: TimeGranularity, destinationDatabaseId: Uuid, connectorId: Uuid): Promise<FacebookAdsData | Error> {
 
+    // TODO: Fix all places with newline after function start/before function end
+
     // FacebookAdsData | Error
 
     const postgresDatabaseManager = await getPostgresDatabaseManager(destinationDatabaseId);
@@ -620,7 +623,5 @@ export async function getFacebookAdsData(minDate: Iso8601Date, maxDate: Iso8601D
         metaQuery: "",
         rows: result.rows.map((row) => rowToFacebookAdsDataAggregatedRow(row)),
     };
-
-
 }
 

@@ -29,6 +29,7 @@ export async function getMissingCampaigns(companyId: Uuid): Promise<Array<Campai
             campaign_category IS NULL
     `;
 
+    // TODO: Comment out or delete old files
     const result = await execute(query);
 
     return result.rows.map((row) => rowToCampaignLibraryRow(row));

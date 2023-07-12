@@ -60,12 +60,12 @@ async function getCredentialsById(credentialId: Uuid): Promise<Credentials | Err
     }
 
     const credential = JSON.parse(credentialsRaw);
-    const credentialsResponse = {
+    const credentialsResponse: Credentials = {
         access_token: credential.access_token,
         expiry_date: credential.expiry_date,
     };
 
-    return credentialsResponse as Credentials;
+    return credentialsResponse;
 }
 
 export async function getCredentials(companyId: Uuid, credentialType: Uuid): Promise<Credentials | Error> {

@@ -17,7 +17,7 @@ import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
-import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getNonEmptyStringFromUnknown, getStringFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {agGridDateComparator, dateToMediumNoneEnFormat, getSingletonValue} from "~/global-common-typescript/utilities/utilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
@@ -73,7 +73,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
 
     const urlSearchParams = new URL(request.url).searchParams;
 
-    const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
+    const selectedGranularityRaw = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("selected_granularity"));
     const selectedGranularity: TimeGranularity = selectedGranularityRaw == null ? TimeGranularity.daily : getTimeGranularityFromUnknown(selectedGranularityRaw);
 
     const minDateRaw = urlSearchParams.get("min_date");
@@ -115,8 +115,8 @@ export const loader: LoaderFunction = async ({request, params}) => {
     // TODO: Add filters
     const loaderData: LoaderData = {
         appliedSelectedGranularity: selectedGranularity,
-        appliedMinDate: minDate as string,
-        appliedMaxDate: maxDate as string,
+        appliedMinDate: minDate,
+        appliedMaxDate: maxDate,
         facebookAdsData: facebookAdsData,
         companyId: getUuidFromUnknown(companyId),
         connectorId: getUuidFromUnknown(connectorId),
@@ -228,7 +228,7 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
         responsive: true,
         plugins: {
             legend: {
-                position: "top" as const,
+                position: "top",
             },
             title: {
                 display: true,
@@ -332,7 +332,4 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
             </Tabs.Root>
         </div>
     );
-}
-function getNonEmptyStringOrNull(arg0: string | null) {
-    throw new Error("Function not implemented.");
 }

@@ -38,7 +38,7 @@ export async function getSummarizedViewOfGoogleAdsConnector(
     );
 
     return {
-        spends: numberToHumanFriendlyString((spends / 10) ^ 6),
+        spends: numberToHumanFriendlyString(spends / Math.pow(10, 6)),
         impressions: numberToHumanFriendlyString(impressions),
         clicks: numberToHumanFriendlyString(clicks),
     };

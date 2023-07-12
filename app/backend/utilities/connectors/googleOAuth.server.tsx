@@ -96,12 +96,12 @@ export async function getAccessibleAccounts(refreshToken: string): Promise<Array
     return accessbileAccounts;
 }
 
-export function convertToAccessbileAccount(row: Credentials) {
+export function convertToAccessbileAccount(row: unknown) {
     const result: GoogleAdsAccessibleAccount = {
-        customerClientId: row.customer_client_id as string,
-        customerClientName: row.customer_client_name as string,
-        managerId: row.manager_id as string,
-        managerName: row.manager_name as string,
+        customerClientId: row.customer_client_id,
+        customerClientName: row.customer_client_name,
+        managerId: row.manager_id,
+        managerName: row.manager_name,
     };
 
     return result;

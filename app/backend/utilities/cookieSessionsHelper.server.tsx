@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import {getCookieSession} from "~/backend/utilities/cookieSessions.server";
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
-import { getNonEmptyStringOrNull } from "~/global-common-typescript/utilities/utilities";
+import {getNonEmptyStringFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {User, Uuid} from "~/utilities/typeDefinitions";
 // import {getUserDetailsFromDatabase} from "~/backend/userDetails.server";
 
@@ -17,7 +17,7 @@ export async function getAccessTokenFromCookies(request: Request): Promise<null 
         return null;
     }
 
-    const accessToken = getNonEmptyStringOrNull(session.get("accessToken"));
+    const accessToken = safeParse(getNonEmptyStringFromUnknown, session.get("accessToken"));
     if (accessToken == null) {
         return null;
     }
@@ -26,7 +26,7 @@ export async function getAccessTokenFromCookies(request: Request): Promise<null 
 }
 
 export async function getAccessTokenFromAuthorizationHeader(request: Request): Promise<null | AccessToken> {
-    const authorizationHeader = getNonEmptyStringOrNull(request.headers.get("Authorization"));
+    const authorizationHeader = safeParse(getNonEmptyStringFromUnknown, request.headers.get("Authorization"));
     if (authorizationHeader == null) {
         return null;
     }

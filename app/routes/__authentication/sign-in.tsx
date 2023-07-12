@@ -23,8 +23,8 @@ type ActionData = {
 export const action: ActionFunction = async ({request}) => {
     const body = await request.formData();
 
-    const email = safeParse(getStringFromUnknown, body.get("email") as string);
-    const otp = safeParse(getStringFromUnknown, body.get("otp") as string);
+    const email = safeParse(getStringFromUnknown, body.get("email"));
+    const otp = safeParse(getStringFromUnknown, body.get("otp"));
 
     // TODO: Do this properly
 
@@ -126,7 +126,7 @@ export const meta: MetaFunction = () => {
 };
 
 export default function () {
-    const actionData = useActionData() as ActionData;
+    const actionData = useActionData() as ActionData | null;
 
     useEffect(() => {
         if (actionData != null) {

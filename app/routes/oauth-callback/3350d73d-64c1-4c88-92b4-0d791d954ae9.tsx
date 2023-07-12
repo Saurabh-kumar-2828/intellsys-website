@@ -14,11 +14,10 @@ import {SectionHeader} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
-import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {generateUuid, getNonEmptyStringOrNull} from "~/global-common-typescript/utilities/utilities";
+import {getNonEmptyStringFromUnknown, getObjectFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getMemoryCache} from "~/utilities/memoryCache";
 import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
-
 
 // Facebook ads
 
@@ -30,12 +29,12 @@ type LoaderData = {
 
 export const loader: LoaderFunction = async ({request, params}) => {
     const urlSearchParams = new URL(request.url).searchParams;
-    const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
-    const state = getNonEmptyStringOrNull(urlSearchParams.get("state"));
 
-    const companyId = getUuidFromUnknown(state);
+    const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
+    const companyId = safeParse(getUuidFromUnknown, urlSearchParams.get("state"));
+
     if (companyId == null) {
-        throw new Response(null, {status: 404});
+        throw new Response(null, {status: 400});
     }
 
     if (authorizationCode == null) {
@@ -77,22 +76,23 @@ export const loader: LoaderFunction = async ({request, params}) => {
 
 export const action: ActionFunction = async ({request, params}) => {
     const urlSearchParams = new URL(request.url).searchParams;
-    const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
+
+    const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
 
     const body = await request.formData();
 
-    const selectedAccount: FacebookAccessibleAccount = JSON.parse(body.get("selectedAccount") as string);
-    const data = body.get("data") as string;
-    const companyId = body.get("companyId") as string;
+    const selectedAccount: FacebookAccessibleAccount = safeParse(getObjectFromUnknown, body.get("selectedAccount"));
+    const data = safeParse(getNonEmptyStringFromUnknown, body.get("data"));
+    const companyId = safeParse(getUuidFromUnknown, body.get("companyId"));
 
     if (selectedAccount == null || data == null || companyId == null) {
-        throw new Response(null, {status: 404});
+        throw new Response(null, {status: 400});
     }
 
     const dataDecoded = decrypt(data);
 
     // TODO: Confirm its implementation.
-    const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), ConnectorType.FacebookAds, selectedAccount.accountId);
+    const accountExists = await checkConnectorExistsForAccount(companyId, ConnectorType.FacebookAds, selectedAccount.accountId);
     if (accountExists instanceof Error) {
         throw Error("Account already exists");
     }
@@ -110,7 +110,7 @@ export const action: ActionFunction = async ({request, params}) => {
     const connectorId = generateUuid();
 
     if (data != null) {
-        const response = await facebookOAuthFlow(facebookAdsCredentials, getUuidFromUnknown(companyId), connectorId, {
+        const response = await facebookOAuthFlow(facebookAdsCredentials, companyId, connectorId, {
             accountId: facebookAdsCredentials.adAccountId,
             accountName: selectedAccount.accountName,
         });

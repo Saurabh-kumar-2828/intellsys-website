@@ -139,6 +139,7 @@ export async function getAccessTokenForUser(userId: string) {
 
     return {
         // TODO: Use createAuthenticationToken instead
+        // TODO: Figure out a better return type here?
         accessTokenJwt: jwt.sign(accessToken, getRequiredEnvironmentVariableNew("JWT_SECRET")) as unknown as Jwt,
         userId: userId,
     };

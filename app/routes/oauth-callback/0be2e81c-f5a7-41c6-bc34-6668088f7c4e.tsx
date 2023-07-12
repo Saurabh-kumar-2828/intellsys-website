@@ -14,15 +14,12 @@ import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {SectionHeader} from "~/components/scratchpad";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
-import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {generateUuid, getNonEmptyStringOrNull} from "~/global-common-typescript/utilities/utilities";
+import {getNonEmptyStringFromUnknown, getObjectFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getMemoryCache} from "~/utilities/memoryCache";
 import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
 
-
 // Google ads
-
-// TODO: Keep only code part
 
 type LoaderData = {
     data: string;
@@ -33,14 +30,10 @@ type LoaderData = {
 export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;
 
-    const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
-    const companyId = getNonEmptyStringOrNull(urlSearchParams.get("state"));
-    if (companyId == null) {
+    const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
+    const companyId = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("state"));
+    if (authorizationCode == null || companyId == null) {
         throw new Response(null, {status: 400});
-    }
-
-    if (authorizationCode == null) {
-        throw Error("Authorization failed!");
     }
 
     let refreshToken: string;
@@ -69,7 +62,7 @@ export const loader: LoaderFunction = async ({request}) => {
 
     // TODO: Get multiple accounts
     const loaderData: LoaderData = {
-        data: encrypt(refreshToken) as unknown as string,
+        data: encrypt(refreshToken),
         accessibleAccounts: accessibleAccounts,
         companyId: getUuidFromUnknown(companyId),
     };
@@ -78,62 +71,58 @@ export const loader: LoaderFunction = async ({request}) => {
 };
 
 export const action: ActionFunction = async ({request}) => {
-    try {
-        const urlSearchParams = new URL(request.url).searchParams;
+    const urlSearchParams = new URL(request.url).searchParams;
 
-        const authorizationCode = getNonEmptyStringOrNull(urlSearchParams.get("code"));
-        const companyId = getNonEmptyStringOrNull(urlSearchParams.get("state"));
+    const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
+    const companyId = safeParse(getUuidFromUnknown, urlSearchParams.get("state"));
 
-        if (companyId == null) {
-            throw new Response(null, {status: 404});
-        }
-
-        const body = await request.formData();
-
-        const data = body.get("data") as string;
-
-        const selectedAccount = JSON.parse(body.get("selectedAccount") as string);
-
-        // TODO: type validation
-        const refreshTokenDecoded = decrypt(data);
-
-        const accountExists = await checkConnectorExistsForAccount(getUuidFromUnknown(companyId), ConnectorType.GoogleAds, selectedAccount.customerClientId);
-        if (accountExists instanceof Error) {
-            return accountExists;
-        }
-
-        // Cannot create new connector, if connector with account already exists.
-        if (accountExists) {
-            throw new Response(null, {status: 400, statusText: "Account already Exists!"});
-        }
-
-        const googleAdsCredentials: GoogleAdsCredentials = {
-            refreshToken: refreshTokenDecoded as string,
-            googleAccountId: selectedAccount.customerClientId,
-            googleLoginCustomerId: selectedAccount.managerId,
-        };
-
-        const connectorId = generateUuid();
-
-        const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, getUuidFromUnknown(companyId), connectorId, {
-            accountId: googleAdsCredentials.googleAccountId,
-            accountName: selectedAccount.customerClientName,
-        });
-        if (response instanceof Error) {
-            throw response;
-        }
-
-        const memoryCache = await getMemoryCache();
-
-        const cacheKey = `${DataSourceIds.googleAnalytics}: ${authorizationCode}`;
-        await memoryCache.delete(cacheKey);
-
-        return redirect(`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connectorId}`);
-    } catch (e) {
-        console.log(e);
+    if (authorizationCode == null || companyId == null) {
+        return new Response(null, {status: 400});
     }
 
-    return null;
+    const body = await request.formData();
+
+    const data = safeParse(getNonEmptyStringFromUnknown, body.get("data"));
+    const selectedAccount = safeParse(getObjectFromUnknown, body.get("selectedAccount"));
+
+    if (data == null || selectedAccount == null) {
+        return new Response(null, {status: 400});
+    }
+
+    const refreshTokenDecoded = decrypt(data);
+
+    const accountExists = await checkConnectorExistsForAccount(companyId, ConnectorType.GoogleAds, selectedAccount.customerClientId);
+    if (accountExists instanceof Error) {
+        return accountExists;
+    }
+
+    // Cannot create new connector, if connector with account already exists.
+    if (accountExists) {
+        return new Response(null, {status: 400, statusText: "Account already exists!"});
+    }
+
+    const googleAdsCredentials: GoogleAdsCredentials = {
+        refreshToken: refreshTokenDecoded,
+        googleAccountId: selectedAccount.customerClientId,
+        googleLoginCustomerId: selectedAccount.managerId,
+    };
+
+    const connectorId = generateUuid();
+
+    const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, companyId, connectorId, {
+        accountId: googleAdsCredentials.googleAccountId,
+        accountName: selectedAccount.customerClientName,
+    });
+    if (response instanceof Error) {
+        return response;
+    }
+
+    const memoryCache = await getMemoryCache();
+
+    const cacheKey = `${DataSourceIds.googleAnalytics}: ${authorizationCode}`;
+    await memoryCache.delete(cacheKey);
+
+    return redirect(`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connectorId}`);
 };
 
 export default function () {

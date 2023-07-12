@@ -14,7 +14,7 @@ import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {defaultColumnDefinitions, getDates} from "~/utilities/utilities";
 import "ag-grid-enterprise";
-import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getNonEmptyStringFromUnknown, getStringFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import type {CompanyLoaderData} from "~/routes/$companyId";
@@ -24,7 +24,6 @@ import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpac
 import {
     agGridDateComparator,
     dateToMediumNoneEnFormat,
-    getNonEmptyStringOrNull,
     getSingletonValue,
     numberToHumanFriendlyString,
     roundOffToTwoDigits,
@@ -80,7 +79,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
 
     const urlSearchParams = new URL(request.url).searchParams;
 
-    const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
+    const selectedGranularityRaw = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("selected_granularity"));
     const selectedGranularity: TimeGranularity = selectedGranularityRaw == null ? TimeGranularity.daily : getTimeGranularityFromUnknown(selectedGranularityRaw);
 
     const minDateRaw = urlSearchParams.get("min_date");
@@ -122,8 +121,8 @@ export const loader: LoaderFunction = async ({request, params}) => {
     // TODO: Add filters
     const loaderData: LoaderData = {
         appliedSelectedGranularity: selectedGranularity,
-        appliedMinDate: minDate as string,
-        appliedMaxDate: maxDate as string,
+        appliedMinDate: minDate,
+        appliedMaxDate: maxDate,
         googleAdsData: googleAdsData,
         companyId: getUuidFromUnknown(companyId),
         connectorId: getUuidFromUnknown(connectorId),
@@ -221,7 +220,7 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
     // }
 
     // TODO: Fix amount name
-    const microValue = 10 ^ 6;
+    const microValue = Math.pow(10, 6);
     ChartJS.register(CategoryScale, LinearScale, Title, Tooltip, Legend, PointElement, LineElement);
 
     const dates = getDates(minDate, maxDate);
@@ -244,7 +243,7 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
         responsive: true,
         plugins: {
             legend: {
-                position: "top" as const,
+                position: "top",
             },
             title: {
                 display: true,

@@ -43,7 +43,7 @@ async function insertIntoTable(tableName: string, tableColumns: Array<string>, r
                 VALUES
                     %L
             `,
-            rowsSubset
+            rowsSubset,
         );
 
         const success = await execute(query);
@@ -53,7 +53,7 @@ async function insertIntoTable(tableName: string, tableColumns: Array<string>, r
 
 function addOnlyOrderObjects(dataFromFile: Array<orderObject>): {[key: string]: orderObject} {
     const match = "gid://shopify/Order";
-    const result= dataFromFile.reduce((accumulator: {[key: string]: orderObject} , currentObject) => {
+    const result = dataFromFile.reduce((accumulator: {[key: string]: orderObject}, currentObject) => {
         if (currentObject.id.includes(match)) {
             accumulator = {...accumulator, [currentObject.id]: [currentObject]};
         }

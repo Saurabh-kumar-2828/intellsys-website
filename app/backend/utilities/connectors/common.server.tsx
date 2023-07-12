@@ -135,6 +135,7 @@ export async function initializeConnectorAndSubConnector(
     destinationCredentialId: Uuid,
     comments: string,
     connectorTableType: ConnectorTableType,
+    // TODO: Fix ConnectorType typing
     connectorType: ConnectorType,
 ): Promise<void | Error> {
     const currentTimestamp = getCurrentIsoTimestamp();
@@ -523,7 +524,7 @@ export async function getArrayOfConnectorIdsAssociatedWithCompanyId(companyId: U
         return [];
     }
 
-    const result: Array<Connector> = connectorIdsResponse.rows.map((row) => rowToConnector(row as Credentials));
+    const result: Array<Connector> = connectorIdsResponse.rows.map((row) => rowToConnector(row));
 
     return result;
 }

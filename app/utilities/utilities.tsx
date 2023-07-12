@@ -1,5 +1,4 @@
 import {DateTime} from "luxon";
-import type {Iso8601Date} from "~/utilities/typeDefinitions";
 
 // export function getUrlForResource(resourceRelativePath) {
 //     return `${process.env.NEXT_PUBLIC_FRONTEND_URL}/resources/${resourceRelativePath}`;
@@ -60,18 +59,15 @@ export const adsColorPalette = {
     facebookSpl: "#FFCC00",
     performanceAcos: "#FF0000",
     facebookAcos: "#B30000",
-    netSales:"#FFFF00"
-
-
+    netSales: "#FFFF00",
 };
 
 export const campaignsColorPalette = {
-    impressions : "#1F40CB",
-    clicks : "#3B82F6",
-    amountSpent : "#6D28D9",
-    leads : "#22C55E",
-    orders : "#65A30D",
-
+    impressions: "#1F40CB",
+    clicks: "#3B82F6",
+    amountSpent: "#6D28D9",
+    leads: "#22C55E",
+    orders: "#65A30D",
 };
 
 export const colorPalette = {
@@ -114,7 +110,7 @@ export function getColor(key: string) {
     }
 }
 
-export function transposeData(data : Array<any>){
+export function transposeData(data: Array<any>) {
     return data[0].map((_, colIndex) => data.map((row) => row[colIndex]));
 }
 
@@ -158,7 +154,6 @@ export function aggregateByDate(arr: Array<object>, param: string, dates: Array<
     return counts;
 }
 
-
 // Example:
 // [[1, 2, 3]
 //  [4, 5, 6]
@@ -184,11 +179,11 @@ export enum Scale {
 export enum YAxisDisplay {
     leftSide = "leftSide",
     rightSide = "rightSide",
-    noDisplay = "noDisplay"
+    noDisplay = "noDisplay",
 }
 
 export const plotMargins = {
-    top:90,
+    top: 90,
     right: 60,
     bottom: 90,
     left: 60,

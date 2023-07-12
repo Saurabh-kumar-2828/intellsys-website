@@ -16,7 +16,7 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
-import {getStringFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getNonEmptyStringFromUnknown, getStringFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {defaultColumnDefinitions, getDates} from "~/utilities/utilities";
@@ -70,7 +70,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
 
     const urlSearchParams = new URL(request.url).searchParams;
 
-    const selectedGranularityRaw = getNonEmptyStringOrNull(urlSearchParams.get("selected_granularity"));
+    const selectedGranularityRaw = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("selected_granularity"));
     const selectedGranularity: TimeGranularity = selectedGranularityRaw == null ? TimeGranularity.daily : getTimeGranularityFromUnknown(selectedGranularityRaw);
 
     const minDateRaw = urlSearchParams.get("min_date");
@@ -112,8 +112,8 @@ export const loader: LoaderFunction = async ({request, params}) => {
     // TODO: Add filters
     const loaderData: LoaderData = {
         appliedSelectedGranularity: selectedGranularity,
-        appliedMinDate: minDate as string,
-        appliedMaxDate: maxDate as string,
+        appliedMinDate: minDate,
+        appliedMaxDate: maxDate,
         googleAnalyticsData: googleAnalyticsData,
         companyId: getUuidFromUnknown(companyId),
         connectorId: getUuidFromUnknown(connectorId),
@@ -233,7 +233,7 @@ function CampaignsSection({
         responsive: true,
         plugins: {
             legend: {
-                position: "top" as const,
+                position: "top",
             },
             title: {
                 display: true,
@@ -479,7 +479,4 @@ function CampaignsSection({
             </Tabs.Root>
         </div>
     );
-}
-function getNonEmptyStringOrNull(arg0: string | null) {
-    throw new Error("Function not implemented.");
 }

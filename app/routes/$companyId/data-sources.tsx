@@ -12,7 +12,7 @@ import {SectionHeader} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
 import {HorizontalSpacer} from "~/global-common-typescript/components/horizontalSpacer";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
-import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import { getSingletonValue } from "~/global-common-typescript/utilities/utilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
@@ -55,18 +55,20 @@ export const action: ActionFunction = async ({request, params}) => {
 
         return redirect(authUrl);
     } else if (body.get("action") == "deleteGoogleAds") {
-        const connectorId = body.get("connectorId") as Uuid;
-        const accountId = body.get("accountId") as Uuid;
+        const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
+        const accountId = safeParse(getUuidFromUnknown, body.get("accountId"));
+
+        // TODO: Handle null case here, and in other branches
 
         await deleteConnector(connectorId, accountId, dataSourcesAbbreviations.googleAds);
     } else if (body.get("action") == "deleteFacebookAds") {
-        const connectorId = body.get("connectorId") as Uuid;
-        const adAccountId = body.get("adAccountId") as Uuid;
+        const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
+        const adAccountId = safeParse(getUuidFromUnknown, body.get("adAccountId"));
 
         await deleteConnector(connectorId, adAccountId, dataSourcesAbbreviations.facebookAds);
     } else if (body.get("action") == "deleteGoogleAnalytics") {
-        const connectorId = body.get("connectorId") as Uuid;
-        const propertyId = body.get("propertyId") as Uuid;
+        const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
+        const propertyId = safeParse(getUuidFromUnknown, body.get("propertyId"));
 
         await deleteConnector(connectorId, propertyId, dataSourcesAbbreviations.googleAnalytics);
     }

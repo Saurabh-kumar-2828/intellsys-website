@@ -66,6 +66,7 @@ export async function ingestAndStoreGoogleAnalyticsData(credentials: GoogleAnaly
  *  Handles the OAuth2 flow to authorize the Google Ads API for the given companyId and stores the credentials in KMS table, connectors table, subconnecter table and companyToConnectorTable.
  */
 export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyticsCredentials, companyId: Uuid, connectorId: Uuid, extraInformation: {[key: string]: any}): Promise<void | Error> {
+    // TODO: Find and remove all try-catches from the code
     try {
         const sourceCredentialId = generateUuid();
 
@@ -147,10 +148,10 @@ export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyt
     }
 }
 
-function convertToAccessbilePropertyIds(row: any) {
+function convertToAccessbilePropertyIds(row: unknown) {
     const result: GoogleAnalyticsAccessiblePropertyIds = {
-        propertyId: row.property_id as string,
-        displayName: row.display_name as string,
+        propertyId: row.property_id,
+        displayName: row.display_name,
     };
 
     return result;

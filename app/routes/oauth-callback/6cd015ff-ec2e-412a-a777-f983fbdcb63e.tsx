@@ -29,10 +29,6 @@ type LoaderData = {
 
 export const loader: LoaderFunction = async ({request}) => {
     const urlSearchParams = new URL(request.url).searchParams;
-    // REMOVE THIS, urlSearchParams can never be null
-    if (urlSearchParams == null) {
-        throw new Response(null, {status: 400});
-    }
 
     const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
     const companyId = safeParse(getUuidFromUnknown, urlSearchParams.get("state"));

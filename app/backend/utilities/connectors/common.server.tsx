@@ -1,5 +1,4 @@
 import {DateTime} from "luxon";
-import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
 import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
 import type {PostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
@@ -10,8 +9,7 @@ import {getCurrentIsoTimestamp, getSingletonValue, getSingletonValueOrNull} from
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import type {ConnectorTableType} from "~/utilities/typeDefinitions";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
-import { Connector } from "./googleOAuth.server";
-
+import type {Connector} from "./googleOAuth.server";
 
 export type ConnectorId = Uuid;
 
@@ -303,7 +301,7 @@ export async function getSourceAndDestinationId(connectorId: Uuid): Promise<Sour
     return rowToSourceAndDestinationId(row);
 }
 
-function rowToSourceAndDestinationId(row: Credentials): SourceAndDestinationId {
+function rowToSourceAndDestinationId(row: unknown): SourceAndDestinationId {
     const result: SourceAndDestinationId = {
         sourceId: getUuidFromUnknown(row.source_credentials_id),
         destinationId: getUuidFromUnknown(row.destination_credentials_id),
@@ -347,7 +345,7 @@ function rowToSourceAndDestinationId(row: Credentials): SourceAndDestinationId {
 //     return true;
 // }
 
-function rowToConnectorId(row: any): ConnectorId {
+function rowToConnectorId(row: unknown): ConnectorId {
     const id: ConnectorId = getUuidFromUnknown(row.id);
 
     return id;

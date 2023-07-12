@@ -1,9 +1,11 @@
-import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {getRedirectUri} from "~/backend/utilities/connectors/common.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
 
 // TODO: Fix timezone in database
+
+export const googleAdsScope = "https://www.googleapis.com/auth/adwords";
+export const googleAnalyticsScope = "https://www.googleapis.com/auth/analytics.readonly";
 
 export type GoogleAdsAccessibleAccount = {
     customerClientId: string;
@@ -11,9 +13,6 @@ export type GoogleAdsAccessibleAccount = {
     managerId: string;
     managerName: string;
 };
-
-export const googleAdsScope = "https://www.googleapis.com/auth/adwords";
-export const googleAnalyticsScope = "https://www.googleapis.com/auth/analytics.readonly";
 
 export type GoogleAdsCredentials = {
     refreshToken: string;

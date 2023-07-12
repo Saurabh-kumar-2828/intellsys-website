@@ -58,17 +58,27 @@ export const action: ActionFunction = async ({request, params}) => {
         const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
         const accountId = safeParse(getUuidFromUnknown, body.get("accountId"));
 
-        // TODO: Handle null case here, and in other branches
+        if(connectorId == null || accountId == null){
+            return new Response("Connector or Account not found for Google Ads!", {status: 400});
+        }
 
         await deleteConnector(connectorId, accountId, dataSourcesAbbreviations.googleAds);
     } else if (body.get("action") == "deleteFacebookAds") {
         const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
         const adAccountId = safeParse(getUuidFromUnknown, body.get("adAccountId"));
 
+        if(connectorId == null || adAccountId == null){
+            return new Response("Connector or Account not found for Facebook Ads!", {status: 400});
+        }
+
         await deleteConnector(connectorId, adAccountId, dataSourcesAbbreviations.facebookAds);
     } else if (body.get("action") == "deleteGoogleAnalytics") {
         const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
         const propertyId = safeParse(getUuidFromUnknown, body.get("propertyId"));
+
+        if(connectorId == null || propertyId == null){
+            return new Response("Connector or Account not found for Google Analytics!", {status: 400});
+        }
 
         await deleteConnector(connectorId, propertyId, dataSourcesAbbreviations.googleAnalytics);
     }

@@ -88,13 +88,13 @@ async function updateCredentialsById(credentialsId: Uuid, credentials: string): 
     }
 }
 
-export async function updateCredentials(credentials: Credentials, companyId: Uuid, credentialType: Uuid): Promise<void | Error> {
+export async function updateCredentials(credentials: string, companyId: Uuid, credentialType: Uuid): Promise<void | Error> {
     const credentialsId = await getCredentialId(companyId, credentialType);
     if (credentialsId instanceof Error) {
         return credentialsId;
     }
 
-    const response = await updateCredentialsById(credentialsId, JSON.stringify(credentials));
+    const response = await updateCredentialsById(credentialsId, credentials);
 
     if (response instanceof Error) {
         return response;

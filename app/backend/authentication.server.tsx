@@ -6,7 +6,7 @@ import {addCredentialToKms, getCredentialFromKms} from "~/global-common-typescri
 import type {PostgresDatabaseCredentials} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
-import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getErrorFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid, getSingletonValue, getUnixTimeInSeconds} from "~/global-common-typescript/utilities/utilities";
 import type {Company, User, Uuid} from "~/utilities/typeDefinitions";
 import {getTagFromEmail} from "~/utilities/utilities";

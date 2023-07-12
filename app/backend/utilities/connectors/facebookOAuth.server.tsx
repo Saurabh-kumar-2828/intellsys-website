@@ -162,7 +162,7 @@ export async function facebookOAuthFlow(facebookAdsCredentials: FacebookAdsSourc
     }
 }
 
-function mapTokenToFacebookAdsSourceCredentialsType(credentials: any): FacebookAdsSourceCredentials | Error {
+function mapTokenToFacebookAdsSourceCredentialsType(credentials: unknown): FacebookAdsSourceCredentials | Error {
     if (credentials.access_token == undefined) {
         return Error("Invalid Facebook Ads credentials");
     }
@@ -229,7 +229,7 @@ export async function getAccessibleAccounts(credentials: FacebookAdsSourceCreden
     return newAccounts;
 }
 
-function convertToFacebookAccessibleAccount(row: any): FacebookAccessibleAccount {
+function convertToFacebookAccessibleAccount(row: unknown): FacebookAccessibleAccount {
     const result: FacebookAccessibleAccount = {
         accountId: row.account_id,
         accountName: row.name,

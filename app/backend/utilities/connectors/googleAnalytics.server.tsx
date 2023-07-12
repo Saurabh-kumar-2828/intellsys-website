@@ -67,84 +67,80 @@ export async function ingestAndStoreGoogleAnalyticsData(credentials: GoogleAnaly
  */
 export async function storeGoogleAnalyticsOAuthDetails(credentials: GoogleAnalyticsCredentials, companyId: Uuid, connectorId: Uuid, extraInformation: {[key: string]: any}): Promise<void | Error> {
     // TODO: Find and remove all try-catches from the code
-    try {
-        const sourceCredentialId = generateUuid();
+    const sourceCredentialId = generateUuid();
 
-        // Destination = Company's Database.
-        const companyDatabaseCredentialId = await getDestinationCredentialId(companyId);
-        if (companyDatabaseCredentialId instanceof Error) {
-            return companyDatabaseCredentialId;
-        }
+    // Destination = Company's Database.
+    const companyDatabaseCredentialId = await getDestinationCredentialId(companyId);
+    if (companyDatabaseCredentialId instanceof Error) {
+        return companyDatabaseCredentialId;
+    }
 
-        const companyDatabaseManager = await getPostgresDatabaseManager(companyDatabaseCredentialId);
-        if (companyDatabaseManager instanceof Error) {
-            return companyDatabaseManager;
-        }
+    const companyDatabaseManager = await getPostgresDatabaseManager(companyDatabaseCredentialId);
+    if (companyDatabaseManager instanceof Error) {
+        return companyDatabaseManager;
+    }
 
-        // System Database
-        const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
-        if (systemConnectorsDatabaseManager instanceof Error) {
-            return systemConnectorsDatabaseManager;
-        }
+    // System Database
+    const systemConnectorsDatabaseManager = await getSystemConnectorsDatabaseManager();
+    if (systemConnectorsDatabaseManager instanceof Error) {
+        return systemConnectorsDatabaseManager;
+    }
 
-        const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
-        if (systemPostgresDatabaseManager instanceof Error) {
-            return systemPostgresDatabaseManager;
-        }
+    const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
+    if (systemPostgresDatabaseManager instanceof Error) {
+        return systemPostgresDatabaseManager;
+    }
 
-        await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
-        await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
+    await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
+    await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Begin);
 
-        // Store source credentials in KMS.
-        const response = await addCredentialToKms(getUuidFromUnknown(sourceCredentialId), JSON.stringify(credentials), `${companyId} - Google Analytics`);
-        if (response instanceof Error) {
-            return response;
-        }
+    // Store source credentials in KMS.
+    const response = await addCredentialToKms(getUuidFromUnknown(sourceCredentialId), JSON.stringify(credentials), `${companyId} - Google Analytics`);
+    if (response instanceof Error) {
+        return response;
+    }
 
-        const connectorInitializationResponse = await initializeConnectorAndSubConnector(
-            systemConnectorsDatabaseManager,
-            connectorId,
-            sourceCredentialId,
-            companyDatabaseCredentialId,
-            "Google Analytics",
-            ConnectorTableType.GoogleAnalytics,
-            ConnectorType.GoogleAnalytics,
-        );
+    const connectorInitializationResponse = await initializeConnectorAndSubConnector(
+        systemConnectorsDatabaseManager,
+        connectorId,
+        sourceCredentialId,
+        companyDatabaseCredentialId,
+        "Google Analytics",
+        ConnectorTableType.GoogleAnalytics,
+        ConnectorType.GoogleAnalytics,
+    );
 
-        const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(
-            systemPostgresDatabaseManager,
-            companyId,
-            connectorId,
-            ConnectorType.GoogleAnalytics,
-            "Google Analytics",
-            JSON.stringify(extraInformation),
-        );
+    const mapCompanyIdToConnectorIdResponse = await mapCompanyIdToConnectorId(
+        systemPostgresDatabaseManager,
+        companyId,
+        connectorId,
+        ConnectorType.GoogleAnalytics,
+        "Google Analytics",
+        JSON.stringify(extraInformation),
+    );
 
-        if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {
-            await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
-            await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
+    if (connectorInitializationResponse instanceof Error || mapCompanyIdToConnectorIdResponse instanceof Error) {
+        await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
+        await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Rollback);
 
-            const response = await deleteCredentialFromKms(sourceCredentialId);
+        const response = await deleteCredentialFromKms(sourceCredentialId);
 
-            console.log("All transactions rollbacked");
-            return connectorInitializationResponse;
-        }
+        console.log("All transactions rollbacked");
+        return connectorInitializationResponse;
+    }
 
-        await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
-        await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
+    await systemConnectorsDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
+    await systemPostgresDatabaseManager.executeTransactionCommand(TransactionCommand.Commit);
 
-        // Creates a source table in company's database.
-        const tableName = `${dataSourcesAbbreviations.googleAnalytics}_${credentials.propertyId}`;
-        const createTableResponse = await createTable(companyDatabaseManager, tableName);
-        if (createTableResponse instanceof Error) {
-            return createTableResponse;
-        }
-        const dataIngestionResponse = await ingestHistoricalDataFromConnectorsApi(getUuidFromUnknown(connectorId), 45, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
-        if (dataIngestionResponse instanceof Error) {
-            return dataIngestionResponse;
-        }
-    } catch (e) {
-        console.log(e);
+    // Creates a source table in company's database.
+    const tableName = `${dataSourcesAbbreviations.googleAnalytics}_${credentials.propertyId}`;
+    const createTableResponse = await createTable(companyDatabaseManager, tableName);
+    if (createTableResponse instanceof Error) {
+        return createTableResponse;
+    }
+    const dataIngestionResponse = await ingestHistoricalDataFromConnectorsApi(getUuidFromUnknown(connectorId), 45, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
+    if (dataIngestionResponse instanceof Error) {
+        return dataIngestionResponse;
     }
 }
 

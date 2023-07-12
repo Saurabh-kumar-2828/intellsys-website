@@ -1,6 +1,5 @@
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
 import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
-import {getGranularityQuery} from "~/backend/utilities/utilities.server";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import type {Integer} from "~/global-common-typescript/typeDefinitions";
@@ -267,8 +266,7 @@ function rowToGoogleAdsDataAggregatedRow(row: unknown): GoogleAdsDataAggregatedR
     return adsDataAggregatedRow;
 }
 
-// TODO: Find all places where row is set to anything other than unknown (including any)
-function rowToFacebookAdsDataAggregatedRow(row: Credentials): FacebookAdsAggregatedRow {
+function rowToFacebookAdsDataAggregatedRow(row: unknown): FacebookAdsAggregatedRow {
     const facebookAdsAggregatedRow: FacebookAdsAggregatedRow = {
         accountCurrency: row.accountcurrency,
         accountId: row.accountid,

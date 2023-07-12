@@ -13,10 +13,10 @@ import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormF
 import {HorizontalSpacer} from "~/global-common-typescript/components/horizontalSpacer";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import { getSingletonValue } from "~/global-common-typescript/utilities/utilities";
+import {getSingletonValue} from "~/global-common-typescript/utilities/utilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
-import { CompanyLoaderData } from "../$companyId";
+import type {CompanyLoaderData} from "../$companyId";
 
 export const action: ActionFunction = async ({request, params}) => {
     const body = await request.formData();
@@ -58,7 +58,7 @@ export const action: ActionFunction = async ({request, params}) => {
         const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
         const accountId = safeParse(getUuidFromUnknown, body.get("accountId"));
 
-        if(connectorId == null || accountId == null){
+        if (connectorId == null || accountId == null) {
             return new Response("Connector or Account not found for Google Ads!", {status: 400});
         }
 
@@ -67,7 +67,7 @@ export const action: ActionFunction = async ({request, params}) => {
         const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
         const adAccountId = safeParse(getUuidFromUnknown, body.get("adAccountId"));
 
-        if(connectorId == null || adAccountId == null){
+        if (connectorId == null || adAccountId == null) {
             return new Response("Connector or Account not found for Facebook Ads!", {status: 400});
         }
 
@@ -76,7 +76,7 @@ export const action: ActionFunction = async ({request, params}) => {
         const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
         const propertyId = safeParse(getUuidFromUnknown, body.get("propertyId"));
 
-        if(connectorId == null || propertyId == null){
+        if (connectorId == null || propertyId == null) {
             return new Response("Connector or Account not found for Google Analytics!", {status: 400});
         }
 

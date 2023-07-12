@@ -102,7 +102,7 @@ export async function mapCompanyIdToConnectorId(
     systemPostgresDatabaseManager: PostgresDatabaseManager,
     companyId: Uuid,
     connectorId: Uuid,
-    connectorType: ConnectorType,
+    connectorType: typeof ConnectorType,
     comments?: string,
     extraInformation?: string,
 ): Promise<void | Error> {
@@ -206,7 +206,7 @@ export async function deleteCompanyIdToConnectorIdMapping(connectorId: Uuid): Pr
 /**
  * Retrieves a connector Id associated with a given company Id and connector type.
  */
-export async function getConnectorId(companyId: Uuid, connectorType: typeof ConnectorType): Promise<Uuid | Error> {
+export async function getConnectorId(companyId: Uuid, connectorType: ConnectorType): Promise<Uuid | Error> {
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
     if (systemPostgresDatabaseManager instanceof Error) {
         throw systemPostgresDatabaseManager;

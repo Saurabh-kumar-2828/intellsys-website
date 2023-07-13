@@ -2,8 +2,8 @@ import type {LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData, useMatches} from "@remix-run/react";
 import {PlusCircle} from "react-bootstrap-icons";
+import type {ConnectorConfig} from "~/backend/utilities/connectors/common.server";
 import {getConnectorsAssociatedWithCompanyId} from "~/backend/utilities/connectors/common.server";
-import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server";
 import {getSummarizedViewOfFacebookAdsConnector, getSummarizedViewOfGoogleAdsConnector, getSummarizedViewOfGoogleAnalyticsConnector} from "~/backend/utilities/temporary.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
@@ -18,19 +18,19 @@ import {getTagFromEmail} from "~/utilities/utilities";
 
 type LoaderData = {
     googleAdsConnectorsWithDetails: Array<{
-        connector: Connector;
+        connector: ConnectorConfig;
         spends: number;
         impressions: number;
         clicks: number;
     }>;
     facebookAdsConnectorsWithDetails: Array<{
-        connector: Connector;
+        connector: ConnectorConfig;
         spends: number;
         impressions: number;
         clicks: number;
     }>;
     googleAnalyticsConnectorsWithDetails: Array<{
-        connector: Connector;
+        connector: ConnectorConfig;
         sessions: number;
         dauPerMau: number;
         wauPerMau: number;
@@ -50,7 +50,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         return googleAdsConnectors;
     }
     const googleAdsConnectorsWithDetails: Array<{
-        connector: Connector;
+        connector: ConnectorConfig;
         spends: number;
         impressions: number;
         clicks: number;
@@ -71,7 +71,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         return facebookAdsConnectors;
     }
     const facebookAdsConnectorsWithDetails: Array<{
-        connector: Connector;
+        connector: ConnectorConfig;
         spends: number;
         impressions: number;
         clicks: number;
@@ -92,7 +92,7 @@ export const loader: LoaderFunction = async ({request, params}) => {
         return googleAnalyticsConnectors;
     }
     const googleAnalyticsConnectorsWithDetails: Array<{
-        connector: Connector;
+        connector: ConnectorConfig;
         sessions: number;
         dauPerMau: number;
         wauPerMau: number;
@@ -159,19 +159,19 @@ function CompanyHome({
     accessibleCompanies: Array<Company>;
     currentCompany: Company;
     googleAdsConnectorsWithDetails: Array<{
-        connector: Connector;
+        connector: ConnectorConfig;
         spends: number;
         impressions: number;
         clicks: number;
     }>;
     facebookAdsConnectorsWithDetails: Array<{
-        connector: Connector;
+        connector: ConnectorConfig;
         spends: number;
         impressions: number;
         clicks: number;
     }>;
     googleAnalyticsConnectorsWithDetails: Array<{
-        connector: Connector;
+        connector: ConnectorConfig;
         sessions: number;
         dauPerMau: number;
         wauPerMau: number;
@@ -242,7 +242,7 @@ function CompanyHome({
     );
 }
 
-function GoogleAdsSummaryCard({currentCompany, connector, spends, impressions, clicks}: {currentCompany: Company; connector: Connector; spends: number; impressions: number; clicks: number}) {
+function GoogleAdsSummaryCard({currentCompany, connector, spends, impressions, clicks}: {currentCompany: Company; connector: ConnectorConfig; spends: number; impressions: number; clicks: number}) {
     return (
         <div className="tw-w-full tw-bg-gray-800 tw-grid tw-grid-cols-3 tw-items-center tw-p-4 tw-rounded-lg">
             <Link
@@ -272,7 +272,7 @@ function GoogleAdsSummaryCard({currentCompany, connector, spends, impressions, c
     );
 }
 
-function FacebookAdsSummaryCard({currentCompany, connector, spends, impressions, clicks}: {currentCompany: Company; connector: Connector; spends: number; impressions: number; clicks: number}) {
+function FacebookAdsSummaryCard({currentCompany, connector, spends, impressions, clicks}: {currentCompany: Company; connector: ConnectorConfig; spends: number; impressions: number; clicks: number}) {
     return (
         <div className="tw-w-full tw-bg-gray-800 tw-grid tw-grid-cols-3 tw-items-center tw-p-4 tw-rounded-lg">
             <Link
@@ -310,7 +310,7 @@ function GoogleAnalyticsSummaryCard({
     wauPerMau,
 }: {
     currentCompany: Company;
-    connector: Connector;
+    connector: ConnectorConfig;
     sessions: number;
     dauPerMau: number;
     wauPerMau: number;

@@ -9,13 +9,19 @@ import {getCurrentIsoTimestamp, getSingletonValue, getSingletonValueOrNull} from
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import type {ConnectorTableType} from "~/utilities/typeDefinitions";
 import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
-import type {Connector} from "./googleOAuth.server";
 
 export type ConnectorId = Uuid;
 
 export type SourceAndDestinationId = {
     sourceId: Uuid;
     destinationId: Uuid;
+};
+
+// TODO: Rename and remove accountId as, already present in extra information;
+export type ConnectorConfig = {
+    id: Uuid;
+    accountId: string;
+    extraInformation: {[key: string]: any};
 };
 
 /**
@@ -404,7 +410,7 @@ export async function createTable(postgresDatabaseManager: PostgresDatabaseManag
     }
 }
 
-export async function getConnectorsAssociatedWithCompanyId(companyId: Uuid, connectorType: Uuid): Promise<Array<Connector> | Error> {
+export async function getConnectorsAssociatedWithCompanyId(companyId: Uuid, connectorType: Uuid): Promise<Array<ConnectorConfig> | Error> {
     const connectors = await getArrayOfConnectorIdsAssociatedWithCompanyId(companyId, connectorType);
     if (connectors instanceof Error) {
         return connectors;
@@ -420,7 +426,7 @@ export async function getConnectorsAssociatedWithCompanyId(companyId: Uuid, conn
 /**
  * Retrieves the account id associated with given connector.
  */
-export async function getAccountIdForConnector(connectorId: ConnectorId): Promise<Connector | Error> {
+export async function getAccountIdForConnector(connectorId: ConnectorId): Promise<ConnectorConfig | Error> {
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
 
     if (systemPostgresDatabaseManager instanceof Error) {
@@ -447,8 +453,8 @@ export async function getAccountIdForConnector(connectorId: ConnectorId): Promis
     return rowToConnector(getSingletonValue(result.rows));
 }
 
-function rowToConnector(row: unknown): Connector {
-    const result: Connector = {
+function rowToConnector(row: unknown): ConnectorConfig {
+    const result: ConnectorConfig = {
         id: row.id,
         accountId: row.extra_information["accountId"],
         extraInformation: row.extra_information,
@@ -495,7 +501,7 @@ async function dropConnectorTable(accountId: string, destinationDatabaseCredenti
     }
 }
 
-export async function getArrayOfConnectorIdsAssociatedWithCompanyId(companyId: Uuid, connectorType: Uuid): Promise<Array<Connector> | Error> {
+export async function getArrayOfConnectorIdsAssociatedWithCompanyId(companyId: Uuid, connectorType: Uuid): Promise<Array<ConnectorConfig> | Error> {
     const systemPostgresDatabaseManager = await getSystemPostgresDatabaseManager();
     if (systemPostgresDatabaseManager instanceof Error) {
         return systemPostgresDatabaseManager;
@@ -522,7 +528,7 @@ export async function getArrayOfConnectorIdsAssociatedWithCompanyId(companyId: U
         return [];
     }
 
-    const result: Array<Connector> = connectorIdsResponse.rows.map((row) => rowToConnector(row));
+    const result: Array<ConnectorConfig> = connectorIdsResponse.rows.map((row) => rowToConnector(row));
 
     return result;
 }

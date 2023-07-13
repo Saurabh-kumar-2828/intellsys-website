@@ -1,11 +1,11 @@
-import type {Connector} from "~/backend/utilities/connectors/googleOAuth.server";
 import {TimeGranularity, getFacebookAdsData, getGoogleAdsData, getGoogleAnalyticsData} from "../business-insights";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
+import type {ConnectorConfig} from "./connectors/common.server";
 import {getDestinationCredentialId} from "./connectors/common.server";
 import {getCurrentIsoTimestamp, numberToHumanFriendlyString} from "~/global-common-typescript/utilities/utilities";
 
 export async function getSummarizedViewOfGoogleAdsConnector(
-    connector: Connector,
+    connector: ConnectorConfig,
     companyId: Uuid,
 ): Promise<
     | {
@@ -45,7 +45,7 @@ export async function getSummarizedViewOfGoogleAdsConnector(
 }
 
 export async function getSummarizedViewOfFacebookAdsConnector(
-    connector: Connector,
+    connector: ConnectorConfig,
     companyId: Uuid,
 ): Promise<
     | {
@@ -86,7 +86,7 @@ export async function getSummarizedViewOfFacebookAdsConnector(
 }
 
 export async function getSummarizedViewOfGoogleAnalyticsConnector(
-    connector: Connector,
+    connector: ConnectorConfig,
     companyId: Uuid,
 ): Promise<
     | {

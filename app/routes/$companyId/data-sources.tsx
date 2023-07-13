@@ -2,7 +2,7 @@ import type {ActionFunction, LinksFunction, LoaderFunction} from "@remix-run/nod
 import {json, redirect} from "@remix-run/node";
 import {Form, Link, useLoaderData, useMatches} from "@remix-run/react";
 import {Facebook} from "react-bootstrap-icons";
-import type {Connector} from "~/backend/utilities/connectors/common.server";
+import type {ConnectorConfig} from "~/backend/utilities/connectors/common.server";
 import {deleteConnector, getConnectorsAssociatedWithCompanyId, getRedirectUri} from "~/backend/utilities/connectors/common.server";
 import {getFacebookAuthorizationCodeUrl} from "~/backend/utilities/connectors/facebookOAuth.server";
 import {getGoogleAuthorizationCodeUrl, googleAdsScope, googleAnalyticsScope} from "~/backend/utilities/connectors/googleOAuth.server";
@@ -59,7 +59,7 @@ export const action: ActionFunction = async ({request, params}) => {
         const accountId = safeParse(getUuidFromUnknown, body.get("accountId"));
 
         if (connectorId == null || accountId == null) {
-            return new Response("Connector or Account not found for Google Ads!", {status: 400});
+            return new Response("ConnectorConfig or Account not found for Google Ads!", {status: 400});
         }
 
         await deleteConnector(connectorId, accountId, dataSourcesAbbreviations.googleAds);
@@ -68,7 +68,7 @@ export const action: ActionFunction = async ({request, params}) => {
         const adAccountId = safeParse(getUuidFromUnknown, body.get("adAccountId"));
 
         if (connectorId == null || adAccountId == null) {
-            return new Response("Connector or Account not found for Facebook Ads!", {status: 400});
+            return new Response("ConnectorConfig or Account not found for Facebook Ads!", {status: 400});
         }
 
         await deleteConnector(connectorId, adAccountId, dataSourcesAbbreviations.facebookAds);
@@ -77,7 +77,7 @@ export const action: ActionFunction = async ({request, params}) => {
         const propertyId = safeParse(getUuidFromUnknown, body.get("propertyId"));
 
         if (connectorId == null || propertyId == null) {
-            return new Response("Connector or Account not found for Google Analytics!", {status: 400});
+            return new Response("ConnectorConfig or Account not found for Google Analytics!", {status: 400});
         }
 
         await deleteConnector(connectorId, propertyId, dataSourcesAbbreviations.googleAnalytics);
@@ -87,9 +87,9 @@ export const action: ActionFunction = async ({request, params}) => {
 };
 
 type LoaderData = {
-    googleAdsConnectors: Array<Connector>;
-    facebookAdsConnectors: Array<Connector>;
-    googleAnalyticsConnectors: Array<Connector>;
+    googleAdsConnectors: Array<ConnectorConfig>;
+    facebookAdsConnectors: Array<ConnectorConfig>;
+    googleAnalyticsConnectors: Array<ConnectorConfig>;
 };
 
 export const loader: LoaderFunction = async ({request, params}) => {
@@ -153,9 +153,9 @@ function DataSources({
     googleAnalyticsConnectors,
     companyId,
 }: {
-    googleAdsConnectors: Array<Connector>;
-    facebookAdsConnectors: Array<Connector>;
-    googleAnalyticsConnectors: Array<Connector>;
+    googleAdsConnectors: Array<ConnectorConfig>;
+    facebookAdsConnectors: Array<ConnectorConfig>;
+    googleAnalyticsConnectors: Array<ConnectorConfig>;
     companyId: Uuid;
 }) {
     return (

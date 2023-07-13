@@ -7,7 +7,6 @@ import {getConnectorsAssociatedWithCompanyId} from "~/backend/utilities/connecto
 import {getSummarizedViewOfFacebookAdsConnector, getSummarizedViewOfGoogleAdsConnector, getSummarizedViewOfGoogleAnalyticsConnector} from "~/backend/utilities/temporary.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
-import {SectionHeader} from "~/components/scratchpad";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getSingletonValue} from "~/global-common-typescript/utilities/utilities";

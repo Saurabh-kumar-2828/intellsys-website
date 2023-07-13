@@ -24,13 +24,6 @@ export type GoogleAdsAccessToken = {
     accessToken: string;
 };
 
-// TODO: Rename and remove accountId as, already present in extra information;
-export type Connector = {
-    id: Uuid;
-    accountId: string;
-    extraInformation: {[key: string]: any};
-};
-
 export function getGoogleAuthorizationCodeUrl(redirectUri: string, companyId: Uuid, scope: string) {
     const clientId = getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_ID");
 

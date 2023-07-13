@@ -79,14 +79,6 @@ export function filterToHumanReadableString(filterType: QueryFilterType) {
     }
 }
 
-export const Companies: {[key: string]: Uuid} = {
-    Intellsys: "",
-};
-
-export const companyDatabaseCredentialsMap: {[key: string]: Uuid} = {
-    [Companies.Intellsys]: "24292254-f51b-40e5-b450-e70949876332" as Uuid,
-};
-
 // Get it from intellsys-connectors
 export const ConnectorType = {
     Freshsales: "3ec459aa-ecbd-4829-a89a-9d4284887a1a" as Uuid,

@@ -13,8 +13,9 @@ import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {SectionHeader} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
+import {logBackendError} from "~/global-common-typescript/server/logging.server";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
-import {getNonEmptyStringFromUnknown, getObjectFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getErrorFromUnknown, getNonEmptyStringFromUnknown, getObjectFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getMemoryCache} from "~/utilities/memoryCache";
 import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
@@ -28,105 +29,115 @@ type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({request, params}) => {
-    const urlSearchParams = new URL(request.url).searchParams;
+    try {
+        const urlSearchParams = new URL(request.url).searchParams;
 
-    const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
-    const companyId = safeParse(getUuidFromUnknown, urlSearchParams.get("state"));
+        const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
+        const companyId = safeParse(getUuidFromUnknown, urlSearchParams.get("state"));
 
-    if (companyId == null) {
-        throw new Response(null, {status: 400});
-    }
-
-    if (authorizationCode == null) {
-        throw Error("Authorization failed!");
-    }
-
-    let credentials: FacebookAdsSourceCredentials;
-
-    const memoryCache = await getMemoryCache();
-
-    const cacheKey = `${DataSourceIds.facebookAds}: ${authorizationCode}`;
-    const cachedValue = await memoryCache.get(cacheKey);
-    if (cachedValue != null) {
-        credentials = {
-            facebookExchangeToken: cachedValue,
-        };
-    } else {
-        const credentials_ = await getFacebookAdsAccessToken(authorizationCode, getUuidFromUnknown(companyId));
-        if (credentials_ instanceof Error) {
-            throw new Response(null, {status: 404, statusText: "Invalid credentials!"});
+        if (companyId == null) {
+            throw new Response(null, {status: 400});
         }
-        await memoryCache.set(cacheKey, credentials_.facebookExchangeToken);
-        credentials = credentials_;
-    }
 
-    const accessibleAccounts = await getAccessibleAccounts(credentials, companyId);
-    if (accessibleAccounts instanceof Error) {
-        throw new Response(null, {status: 404, statusText: "No Accessible Accounts!"});
-    }
-
-    const loaderData: LoaderData = {
-        data: encrypt(credentials.facebookExchangeToken),
-        companyId: companyId,
-        accessibleAccounts: accessibleAccounts,
-    };
-
-    return json(loaderData);
-};
-
-export const action: ActionFunction = async ({request, params}) => {
-    const urlSearchParams = new URL(request.url).searchParams;
-
-    const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
-
-    const body = await request.formData();
-
-    const selectedAccount: FacebookAccessibleAccount = safeParse(getObjectFromUnknown, body.get("selectedAccount"));
-    const data = safeParse(getNonEmptyStringFromUnknown, body.get("data"));
-    const companyId = safeParse(getUuidFromUnknown, body.get("companyId"));
-
-    if (selectedAccount == null || data == null || companyId == null) {
-        throw new Response(null, {status: 400});
-    }
-
-    const dataDecoded = decrypt(data);
-
-    // TODO: Confirm its implementation.
-    const accountExists = await checkConnectorExistsForAccount(companyId, ConnectorType.FacebookAds, selectedAccount.accountId);
-    if (accountExists instanceof Error) {
-        throw Error("Account already exists");
-    }
-
-    // Cannot create new connector, if connector with account already exists.
-    if (accountExists) {
-        throw new Response(null, {status: 400, statusText: "Account already Exists!"});
-    }
-
-    const facebookAdsCredentials: FacebookAdsSourceCredentials = {
-        facebookExchangeToken: dataDecoded,
-        adAccountId: selectedAccount.accountId,
-    };
-
-    const connectorId = generateUuid();
-
-    if (data != null) {
-        const response = await facebookOAuthFlow(facebookAdsCredentials, companyId, connectorId, {
-            accountId: facebookAdsCredentials.adAccountId,
-            accountName: selectedAccount.accountName,
-        });
-        if (response instanceof Error) {
-            throw response;
+        if (authorizationCode == null) {
+            throw Error("Authorization failed!");
         }
+
+        let credentials: FacebookAdsSourceCredentials;
 
         const memoryCache = await getMemoryCache();
 
         const cacheKey = `${DataSourceIds.facebookAds}: ${authorizationCode}`;
-        await memoryCache.delete(cacheKey);
+        const cachedValue = await memoryCache.get(cacheKey);
+        if (cachedValue != null) {
+            credentials = {
+                facebookExchangeToken: cachedValue,
+            };
+        } else {
+            const credentials_ = await getFacebookAdsAccessToken(authorizationCode, getUuidFromUnknown(companyId));
+            if (credentials_ instanceof Error) {
+                throw new Response(null, {status: 404, statusText: "Invalid credentials!"});
+            }
+            await memoryCache.set(cacheKey, credentials_.facebookExchangeToken);
+            credentials = credentials_;
+        }
 
-        return redirect(`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connectorId}`);
+        const accessibleAccounts = await getAccessibleAccounts(credentials, companyId);
+        if (accessibleAccounts instanceof Error) {
+            throw new Response(null, {status: 404, statusText: "No Accessible Accounts!"});
+        }
+
+        const loaderData: LoaderData = {
+            data: encrypt(credentials.facebookExchangeToken),
+            companyId: companyId,
+            accessibleAccounts: accessibleAccounts,
+        };
+
+        return json(loaderData);
+    } catch (error_) {
+        const error = getErrorFromUnknown(error_);
+        logBackendError(error);
     }
+};
 
-    return null;
+export const action: ActionFunction = async ({request, params}) => {
+    try {
+        const urlSearchParams = new URL(request.url).searchParams;
+
+        const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
+
+        const body = await request.formData();
+
+        const selectedAccount: FacebookAccessibleAccount = safeParse(getObjectFromUnknown, body.get("selectedAccount"));
+        const data = safeParse(getNonEmptyStringFromUnknown, body.get("data"));
+        const companyId = safeParse(getUuidFromUnknown, body.get("companyId"));
+
+        if (selectedAccount == null || data == null || companyId == null) {
+            throw new Response(null, {status: 400});
+        }
+
+        const dataDecoded = decrypt(data);
+
+        // TODO: Confirm its implementation.
+        const accountExists = await checkConnectorExistsForAccount(companyId, ConnectorType.FacebookAds, selectedAccount.accountId);
+        if (accountExists instanceof Error) {
+            throw Error("Account already exists");
+        }
+
+        // Cannot create new connector, if connector with account already exists.
+        if (accountExists) {
+            throw new Response(null, {status: 400, statusText: "Account already Exists!"});
+        }
+
+        const facebookAdsCredentials: FacebookAdsSourceCredentials = {
+            facebookExchangeToken: dataDecoded,
+            adAccountId: selectedAccount.accountId,
+        };
+
+        const connectorId = generateUuid();
+
+        if (data != null) {
+            const response = await facebookOAuthFlow(facebookAdsCredentials, companyId, connectorId, {
+                accountId: facebookAdsCredentials.adAccountId,
+                accountName: selectedAccount.accountName,
+            });
+            if (response instanceof Error) {
+                throw response;
+            }
+
+            const memoryCache = await getMemoryCache();
+
+            const cacheKey = `${DataSourceIds.facebookAds}: ${authorizationCode}`;
+            await memoryCache.delete(cacheKey);
+
+            return redirect(`/${companyId}/3350d73d-64c1-4c88-92b4-0d791d954ae9/${connectorId}`);
+        }
+
+        return null;
+    } catch (error_) {
+        const error = getErrorFromUnknown(error_);
+        logBackendError(error);
+    }
 };
 
 export default function () {

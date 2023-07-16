@@ -10,7 +10,8 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {errorToast} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
-import {getStringFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {logBackendError} from "~/global-common-typescript/server/logging.server";
+import {getErrorFromUnknown, getStringFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {concatenateNonNullStringsWithSpaces} from "~/global-common-typescript/utilities/utilities";
 import {emailIdValidationPattern} from "~/global-common-typescript/utilities/validationPatterns";
 import {getDomainFromEmail} from "~/utilities/utilities";
@@ -21,91 +22,96 @@ type ActionData = {
 };
 
 export const action: ActionFunction = async ({request}) => {
-    const body = await request.formData();
+    try {
+        const body = await request.formData();
 
-    const email = safeParse(getStringFromUnknown, body.get("email"));
-    const otp = safeParse(getStringFromUnknown, body.get("otp"));
+        const email = safeParse(getStringFromUnknown, body.get("email"));
+        const otp = safeParse(getStringFromUnknown, body.get("otp"));
 
-    // TODO: Do this properly
+        // TODO: Do this properly
 
-    if (email == null) {
-        return new Response("Invalid input: 9e692b78-ca87-4c03-877f-1e53a6510523", {
-            status: 400,
-        });
-    }
+        if (email == null) {
+            return new Response("Invalid input: 9e692b78-ca87-4c03-877f-1e53a6510523", {
+                status: 400,
+            });
+        }
 
-    if (otp == null) {
-        await sendOtp(email);
+        if (otp == null) {
+            await sendOtp(email);
 
-        const actionData: ActionData = {
-            otpSent: true,
-            error: null,
-        };
-
-        return actionData;
-    } else {
-        const result = await verifyOtp(email, otp);
-
-        if (!result.success) {
             const actionData: ActionData = {
-                otpSent: false,
-                error: "Invalid OTP",
+                otpSent: true,
+                error: null,
             };
 
             return actionData;
         } else {
-            // Ensure company is properly created
-            const domain = getDomainFromEmail(email);
+            const result = await verifyOtp(email, otp);
 
-            let company = await getCompanyForDomain(domain);
-            // let wasCompanyJustCreated = false;
-            if (company instanceof Error) {
-                return company;
-            }
+            if (!result.success) {
+                const actionData: ActionData = {
+                    otpSent: false,
+                    error: "Invalid OTP",
+                };
 
-            if (company == null) {
-                company = await createCompany(domain);
+                return actionData;
+            } else {
+                // Ensure company is properly created
+                const domain = getDomainFromEmail(email);
+
+                let company = await getCompanyForDomain(domain);
+                // let wasCompanyJustCreated = false;
                 if (company instanceof Error) {
                     return company;
                 }
 
-                // wasCompanyJustCreated = true;
-            }
+                if (company == null) {
+                    company = await createCompany(domain);
+                    if (company instanceof Error) {
+                        return company;
+                    }
 
-            // Ensure user is properly created
-            let user = await getUserForEmail(email);
-            // let wasUserJustCreated = false;
-            if (user instanceof Error) {
-                return user;
-            }
+                    // wasCompanyJustCreated = true;
+                }
 
-            if (user == null) {
-                user = await createUser(email, company);
-                // Within createUser:
-                //     - Create the user in table
-                //     - Add the appropriate permissions for his own company
-
-                // While sharing a page with a user that does not have an existing account,
-                // ensure we give him appropriate access to his own company, and appropriate
-                // access to the shared company
+                // Ensure user is properly created
+                let user = await getUserForEmail(email);
+                // let wasUserJustCreated = false;
                 if (user instanceof Error) {
                     return user;
                 }
-                // wasUserJustCreated = true;
+
+                if (user == null) {
+                    user = await createUser(email, company);
+                    // Within createUser:
+                    //     - Create the user in table
+                    //     - Add the appropriate permissions for his own company
+
+                    // While sharing a page with a user that does not have an existing account,
+                    // ensure we give him appropriate access to his own company, and appropriate
+                    // access to the shared company
+                    if (user instanceof Error) {
+                        return user;
+                    }
+                    // wasUserJustCreated = true;
+                }
+
+                const cookieSession = await getCookieSession(request.headers.get("Cookie"));
+
+                const result = await getAccessTokenForUser(user.id);
+
+                cookieSession.set("accessToken", result.accessTokenJwt);
+
+                return redirect("/", {
+                    headers: {
+                        "Set-Cookie": await commitCookieSession(cookieSession),
+                    },
+                });
             }
-
-            const cookieSession = await getCookieSession(request.headers.get("Cookie"));
-
-            const result = await getAccessTokenForUser(user.id);
-
-            cookieSession.set("accessToken", result.accessTokenJwt);
-
-            return redirect("/", {
-                headers: {
-                    "Set-Cookie": await commitCookieSession(cookieSession),
-                },
-            });
         }
+    } catch (error_) {
+        const error = getErrorFromUnknown(error_);
+        logBackendError(error);
     }
 };
 

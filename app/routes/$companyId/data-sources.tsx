@@ -12,78 +12,85 @@ import {SectionHeader} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
 import {HorizontalSpacer} from "~/global-common-typescript/components/horizontalSpacer";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
-import {getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getErrorFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getSingletonValue} from "~/global-common-typescript/utilities/utilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
 import {ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import type {CompanyLoaderData} from "../$companyId";
+import {logBackendError} from "~/global-common-typescript/server/logging.server";
 
 export const action: ActionFunction = async ({request, params}) => {
-    const body = await request.formData();
-    const companyId = params.companyId;
-    if (companyId == null) {
-        throw new Response(null, {status: 404});
+    try {
+        const body = await request.formData();
+        const companyId = params.companyId;
+        if (companyId == null) {
+            throw new Response(null, {status: 404});
+        }
+
+        const companyIdUuid = getUuidFromUnknown(companyId);
+
+        if (body.get("action") == "facebook") {
+            const redirectUri = getRedirectUri(companyIdUuid, getUuidFromUnknown(ConnectorType.FacebookAds));
+            if (redirectUri instanceof Error) {
+                return "Facebook Ads redirect uri not defined!";
+            }
+
+            const authUrl = getFacebookAuthorizationCodeUrl(redirectUri, companyIdUuid);
+
+            return redirect(authUrl);
+        } else if (body.get("action") == "googleAds") {
+            const redirectUri = getRedirectUri(companyIdUuid, getUuidFromUnknown(ConnectorType.GoogleAds));
+            if (redirectUri instanceof Error) {
+                return "Google Ads redirect uri not defined!";
+            }
+
+            const authUrl = getGoogleAuthorizationCodeUrl(redirectUri, companyIdUuid, googleAdsScope);
+
+            return redirect(authUrl);
+        } else if (body.get("action") == "googleAnalytics") {
+            const redirectUri = getRedirectUri(companyIdUuid, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
+            if (redirectUri instanceof Error) {
+                return "Google Analytics redirect uri not defined!";
+            }
+
+            const authUrl = getGoogleAuthorizationCodeUrl(redirectUri, companyIdUuid, googleAnalyticsScope);
+
+            return redirect(authUrl);
+        } else if (body.get("action") == "deleteGoogleAds") {
+            const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
+            const accountId = safeParse(getUuidFromUnknown, body.get("accountId"));
+
+            if (connectorId == null || accountId == null) {
+                return new Response("ConnectorConfig or Account not found for Google Ads!", {status: 400});
+            }
+
+            await deleteConnector(connectorId, accountId, dataSourcesAbbreviations.googleAds);
+        } else if (body.get("action") == "deleteFacebookAds") {
+            const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
+            const adAccountId = safeParse(getUuidFromUnknown, body.get("adAccountId"));
+
+            if (connectorId == null || adAccountId == null) {
+                return new Response("ConnectorConfig or Account not found for Facebook Ads!", {status: 400});
+            }
+
+            await deleteConnector(connectorId, adAccountId, dataSourcesAbbreviations.facebookAds);
+        } else if (body.get("action") == "deleteGoogleAnalytics") {
+            const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
+            const propertyId = safeParse(getUuidFromUnknown, body.get("propertyId"));
+
+            if (connectorId == null || propertyId == null) {
+                return new Response("ConnectorConfig or Account not found for Google Analytics!", {status: 400});
+            }
+
+            await deleteConnector(connectorId, propertyId, dataSourcesAbbreviations.googleAnalytics);
+        }
+
+        return null;
+    } catch (error_) {
+        const error = getErrorFromUnknown(error_);
+        logBackendError(error);
+        return error;
     }
-
-    const companyIdUuid = getUuidFromUnknown(companyId);
-
-    if (body.get("action") == "facebook") {
-        const redirectUri = getRedirectUri(companyIdUuid, getUuidFromUnknown(ConnectorType.FacebookAds));
-        if (redirectUri instanceof Error) {
-            return "Facebook Ads redirect uri not defined!";
-        }
-
-        const authUrl = getFacebookAuthorizationCodeUrl(redirectUri, companyIdUuid);
-
-        return redirect(authUrl);
-    } else if (body.get("action") == "googleAds") {
-        const redirectUri = getRedirectUri(companyIdUuid, getUuidFromUnknown(ConnectorType.GoogleAds));
-        if (redirectUri instanceof Error) {
-            return "Google Ads redirect uri not defined!";
-        }
-
-        const authUrl = getGoogleAuthorizationCodeUrl(redirectUri, companyIdUuid, googleAdsScope);
-
-        return redirect(authUrl);
-    } else if (body.get("action") == "googleAnalytics") {
-        const redirectUri = getRedirectUri(companyIdUuid, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
-        if (redirectUri instanceof Error) {
-            return "Google Analytics redirect uri not defined!";
-        }
-
-        const authUrl = getGoogleAuthorizationCodeUrl(redirectUri, companyIdUuid, googleAnalyticsScope);
-
-        return redirect(authUrl);
-    } else if (body.get("action") == "deleteGoogleAds") {
-        const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
-        const accountId = safeParse(getUuidFromUnknown, body.get("accountId"));
-
-        if (connectorId == null || accountId == null) {
-            return new Response("ConnectorConfig or Account not found for Google Ads!", {status: 400});
-        }
-
-        await deleteConnector(connectorId, accountId, dataSourcesAbbreviations.googleAds);
-    } else if (body.get("action") == "deleteFacebookAds") {
-        const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
-        const adAccountId = safeParse(getUuidFromUnknown, body.get("adAccountId"));
-
-        if (connectorId == null || adAccountId == null) {
-            return new Response("ConnectorConfig or Account not found for Facebook Ads!", {status: 400});
-        }
-
-        await deleteConnector(connectorId, adAccountId, dataSourcesAbbreviations.facebookAds);
-    } else if (body.get("action") == "deleteGoogleAnalytics") {
-        const connectorId = safeParse(getUuidFromUnknown, body.get("connectorId"));
-        const propertyId = safeParse(getUuidFromUnknown, body.get("propertyId"));
-
-        if (connectorId == null || propertyId == null) {
-            return new Response("ConnectorConfig or Account not found for Google Analytics!", {status: 400});
-        }
-
-        await deleteConnector(connectorId, propertyId, dataSourcesAbbreviations.googleAnalytics);
-    }
-
-    return null;
 };
 
 type LoaderData = {
@@ -93,34 +100,40 @@ type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({request, params}) => {
-    // TODO: Ensure companyId is valid
-    const companyId = params.companyId;
-    if (companyId == null) {
-        throw new Response(null, {status: 404});
+    try {
+        // TODO: Ensure companyId is valid
+        const companyId = params.companyId;
+        if (companyId == null) {
+            throw new Response(null, {status: 404});
+        }
+
+        const googleAdsConnectorDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
+        if (googleAdsConnectorDetails instanceof Error) {
+            return googleAdsConnectorDetails;
+        }
+
+        const facebookConnectorDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.FacebookAds));
+        if (facebookConnectorDetails instanceof Error) {
+            return facebookConnectorDetails;
+        }
+
+        const googleAnalyticsDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAnalytics));
+        if (googleAnalyticsDetails instanceof Error) {
+            return googleAnalyticsDetails;
+        }
+
+        const loaderData: LoaderData = {
+            googleAdsConnectors: googleAdsConnectorDetails,
+            facebookAdsConnectors: facebookConnectorDetails,
+            googleAnalyticsConnectors: googleAnalyticsDetails,
+        };
+
+        return json(loaderData);
+    } catch (error_) {
+        const error = getErrorFromUnknown(error_);
+        logBackendError(error);
+        return error;
     }
-
-    const googleAdsConnectorDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
-    if (googleAdsConnectorDetails instanceof Error) {
-        return googleAdsConnectorDetails;
-    }
-
-    const facebookConnectorDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.FacebookAds));
-    if (facebookConnectorDetails instanceof Error) {
-        return facebookConnectorDetails;
-    }
-
-    const googleAnalyticsDetails = await getConnectorsAssociatedWithCompanyId(getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAnalytics));
-    if (googleAnalyticsDetails instanceof Error) {
-        return googleAnalyticsDetails;
-    }
-
-    const loaderData: LoaderData = {
-        googleAdsConnectors: googleAdsConnectorDetails,
-        facebookAdsConnectors: facebookConnectorDetails,
-        googleAnalyticsConnectors: googleAnalyticsDetails,
-    };
-
-    return json(loaderData);
 };
 
 export const links: LinksFunction = () => [{rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Roboto&display=swap"}];

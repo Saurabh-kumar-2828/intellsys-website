@@ -13,8 +13,9 @@ import {PageScaffold2} from "~/components/pageScaffold2";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {SectionHeader} from "~/components/scratchpad";
+import {logBackendError} from "~/global-common-typescript/server/logging.server";
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
-import {getNonEmptyStringFromUnknown, getObjectFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {getErrorFromUnknown, getNonEmptyStringFromUnknown, getObjectFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getMemoryCache} from "~/utilities/memoryCache";
 import {ConnectorType, DataSourceIds} from "~/utilities/typeDefinitions";
@@ -28,6 +29,11 @@ type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({request}) => {
+    try {
+    } catch (error_) {
+        const error = getErrorFromUnknown(error_);
+        logBackendError(error);
+    }
     const urlSearchParams = new URL(request.url).searchParams;
 
     const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
@@ -71,58 +77,63 @@ export const loader: LoaderFunction = async ({request}) => {
 };
 
 export const action: ActionFunction = async ({request}) => {
-    const urlSearchParams = new URL(request.url).searchParams;
+    try {
+        const urlSearchParams = new URL(request.url).searchParams;
 
-    const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
-    const companyId = safeParse(getUuidFromUnknown, urlSearchParams.get("state"));
+        const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
+        const companyId = safeParse(getUuidFromUnknown, urlSearchParams.get("state"));
 
-    if (authorizationCode == null || companyId == null) {
-        return new Response(null, {status: 400});
+        if (authorizationCode == null || companyId == null) {
+            return new Response(null, {status: 400});
+        }
+
+        const body = await request.formData();
+
+        const data = safeParse(getNonEmptyStringFromUnknown, body.get("data"));
+        const selectedAccount = safeParse(getObjectFromUnknown, body.get("selectedAccount"));
+
+        if (data == null || selectedAccount == null) {
+            return new Response(null, {status: 400});
+        }
+
+        const refreshTokenDecoded = decrypt(data);
+
+        const accountExists = await checkConnectorExistsForAccount(companyId, ConnectorType.GoogleAds, selectedAccount.customerClientId);
+        if (accountExists instanceof Error) {
+            return accountExists;
+        }
+
+        // Cannot create new connector, if connector with account already exists.
+        if (accountExists) {
+            return new Response(null, {status: 400, statusText: "Account already exists!"});
+        }
+
+        const googleAdsCredentials: GoogleAdsCredentials = {
+            refreshToken: refreshTokenDecoded,
+            googleAccountId: selectedAccount.customerClientId,
+            googleLoginCustomerId: selectedAccount.managerId,
+        };
+
+        const connectorId = generateUuid();
+
+        const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, companyId, connectorId, {
+            accountId: googleAdsCredentials.googleAccountId,
+            accountName: selectedAccount.customerClientName,
+        });
+        if (response instanceof Error) {
+            return response;
+        }
+
+        const memoryCache = await getMemoryCache();
+
+        const cacheKey = `${DataSourceIds.googleAnalytics}: ${authorizationCode}`;
+        await memoryCache.delete(cacheKey);
+
+        return redirect(`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connectorId}`);
+    } catch (error_) {
+        const error = getErrorFromUnknown(error_);
+        logBackendError(error);
     }
-
-    const body = await request.formData();
-
-    const data = safeParse(getNonEmptyStringFromUnknown, body.get("data"));
-    const selectedAccount = safeParse(getObjectFromUnknown, body.get("selectedAccount"));
-
-    if (data == null || selectedAccount == null) {
-        return new Response(null, {status: 400});
-    }
-
-    const refreshTokenDecoded = decrypt(data);
-
-    const accountExists = await checkConnectorExistsForAccount(companyId, ConnectorType.GoogleAds, selectedAccount.customerClientId);
-    if (accountExists instanceof Error) {
-        return accountExists;
-    }
-
-    // Cannot create new connector, if connector with account already exists.
-    if (accountExists) {
-        return new Response(null, {status: 400, statusText: "Account already exists!"});
-    }
-
-    const googleAdsCredentials: GoogleAdsCredentials = {
-        refreshToken: refreshTokenDecoded,
-        googleAccountId: selectedAccount.customerClientId,
-        googleLoginCustomerId: selectedAccount.managerId,
-    };
-
-    const connectorId = generateUuid();
-
-    const response = await ingestAndStoreGoogleAdsData(googleAdsCredentials, companyId, connectorId, {
-        accountId: googleAdsCredentials.googleAccountId,
-        accountName: selectedAccount.customerClientName,
-    });
-    if (response instanceof Error) {
-        return response;
-    }
-
-    const memoryCache = await getMemoryCache();
-
-    const cacheKey = `${DataSourceIds.googleAnalytics}: ${authorizationCode}`;
-    await memoryCache.delete(cacheKey);
-
-    return redirect(`/${companyId}/0be2e81c-f5a7-41c6-bc34-6668088f7c4e/${connectorId}`);
 };
 
 export default function () {

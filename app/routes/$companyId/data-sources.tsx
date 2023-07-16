@@ -89,7 +89,6 @@ export const action: ActionFunction = async ({request, params}) => {
     } catch (error_) {
         const error = getErrorFromUnknown(error_);
         logBackendError(error);
-        return error;
     }
 };
 

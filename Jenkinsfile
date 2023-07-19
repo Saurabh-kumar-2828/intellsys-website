@@ -114,8 +114,8 @@ pipeline {
 
 
                             
-                            } 
-                        }
+                            //} 
+                        //}
                 //sh "sed -i s/TAG/${BUILD_ID}/g deployment.yml"
                 //sshagent(['510bff66-357b-495d-b582-3bfa339135e6'])  {
                   //sh 'sudo yum install docker'

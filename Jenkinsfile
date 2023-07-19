@@ -1,14 +1,10 @@
 pipeline {
     agent any
     environment {
-        REPOSITORY_NAME='growth-jockey-website'
-        // BRANCH='feature/livguard'
-        //TIME='053000'
+        REPOSITORY_NAME='intellsys-website'
         DockerUser="growthjockey"
         AWS_ACCOUNT_ID="048578456468"
         AWS_DEFAULT_REGION="ap-south-1"
-        //IMAGE_REPO_NAME_stage="livguard-stage"
-        //IMAGE_REPO_NAME_prod="livguard-prod"
         REPOSITORY_URI = "048578456468.dkr.ecr.us-east-1.amazonaws.com/env.BRANCH_NAME"
     }
 
@@ -25,8 +21,7 @@ pipeline {
         stage('Cloning Git website') {
             steps {
                 //sh 'sudo rm -rf test-23-06-22; mkdir test-23-06-22; cd test-23-06-22; eval "$(ssh-agent -s)"; ssh-add /home/jenkins/sshKeys/bitbuckey-key; git clone git@bitbucket.org:growthjockey-workspace/livguard-website.git; cd livguard-website; git submodule update --init --recursive;'
-                //git branch: env.BRANCH_NAME, credentialsId: '68ae340b-3fcc-4af1-b9bd-0ce5e244ead4', url: 'git@bitbucket.org:growthjockey-workspace/livguard-website.git' 
-                git branch: env.BRANCH_NAME, credentialsId: '33c357dc-5f11-4930-9063-07bc866f7cff', url: 'https://github.com/GrowthJockey/growth-jockey-website.git'
+                git branch: env.BRANCH_NAME, credentialsId: '33c357dc-5f11-4930-9063-07bc866f7cff', url: 'https://github.com/GrowthJockey/intellsys-website.git'
             }
         }
     
@@ -53,13 +48,13 @@ pipeline {
             steps{
                 script {
                     if (env.BRANCH_NAME == 'staging') {
-                        sh "docker tag growthjockey-stage:latest 048578456468.dkr.ecr.ap-south-1.amazonaws.com/growthjockey-stage:${env.BUILD_ID}"
-                        sh "docker push 048578456468.dkr.ecr.ap-south-1.amazonaws.com/growthjockey-stage:${env.BUILD_ID}"
+                        sh "docker tag growthjockey-stage:latest 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-stage:${env.BUILD_ID}"
+                        sh "docker push 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-stage:${env.BUILD_ID}"
                     } 
 
                     else if (env.BRANCH_NAME == 'prod') {
-                        sh "docker tag growthjockey-prod:latest 048578456468.dkr.ecr.ap-south-1.amazonaws.com/growthjockey-prod:${env.BUILD_ID}"
-                        sh "docker push 048578456468.dkr.ecr.ap-south-1.amazonaws.com/growthjockey-prod:${env.BUILD_ID}"
+                        sh "docker tag growthjockey-prod:latest 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-prod:${env.BUILD_ID}"
+                        sh "docker push 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-prod:${env.BUILD_ID}"
                     }
                 }
             }

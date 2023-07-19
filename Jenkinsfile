@@ -65,7 +65,7 @@ pipeline {
                 script {
                     if (env.BRANCH_NAME == 'staging') {
                         sshagent(['0b24b3d1-83bf-4849-a1d6-0f44be00f76b'])  {
-                            def dockerPsOutput = sh(returnStdout: true, script: """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-200-72-145.ap-south-1.compute.amazonaws.com 'sudo docker ps -aq'""")
+                            def dockerPsOutput = sh(returnStdout: true, script: """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo docker ps -aq'""")
                             if (dockerPsOutput.trim()) {
                                 sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-200-72-145.ap-south-1.compute.amazonaws.com 'sudo su'"""
                                 sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-200-72-145.ap-south-1.compute.amazonaws.com 'sudo docker rm -f \$(sudo docker ps -aq)'"""
@@ -78,8 +78,8 @@ pipeline {
                         sshagent(['085b53a5-a741-47a5-b931-df84bb49fd62']) {
                             def dockerPsOutput = sh(returnStdout: true, script: """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo docker ps -aq'""")
                             if (dockerPsOutput.trim()) {
-                                sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo su'"""
-                                sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo docker rm -f \$(sudo docker ps -aq)'"""
+                                sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo su'"""
+                                sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo docker rm -f \$(sudo docker ps -aq)'"""
                             }  else {
                                 echo 'No containers found.'
                     }
@@ -95,11 +95,11 @@ pipeline {
               script{
                  if (env.BRANCH_NAME == 'staging') {
                     sshagent(['0b24b3d1-83bf-4849-a1d6-0f44be00f76b'])  {
-                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-200-72-145.ap-south-1.compute.amazonaws.com 'sudo su'"""
-                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-200-72-145.ap-south-1.compute.amazonaws.com 'sudo docker login'"""
-                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-200-72-145.ap-south-1.compute.amazonaws.com 'sudo docker ps -a'"""
-                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-200-72-145.ap-south-1.compute.amazonaws.com 'sudo docker pull 048578456468.dkr.ecr.ap-south-1.amazonaws.com/growthjockey-stage:$BUILD_ID'"""
-                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-200-72-145.ap-south-1.compute.amazonaws.com 'sudo docker run -d -p 3000:3000 --name growthjockey-container 048578456468.dkr.ecr.ap-south-1.amazonaws.com/growthjockey-stage:$BUILD_ID'"""
+                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo su'"""
+                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo docker login'"""
+                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo docker ps -a'"""
+                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo docker pull 048578456468.dkr.ecr.ap-south-1.amazonaws.com/growthjockey-stage:$BUILD_ID'"""
+                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo docker run -d -p 3000:3000 --name growthjockey-container 048578456468.dkr.ecr.ap-south-1.amazonaws.com/growthjockey-stage:$BUILD_ID'"""
                             
                             } 
                     }

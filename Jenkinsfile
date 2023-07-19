@@ -98,8 +98,8 @@ pipeline {
                         sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo su'"""
                         sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo docker login'"""
                         sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo docker ps -a'"""
-                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo docker pull 048578456468.dkr.ecr.ap-south-1.amazonaws.com/growthjockey-stage:$BUILD_ID'"""
-                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo docker run -d -p 3000:3000 --name growthjockey-container 048578456468.dkr.ecr.ap-south-1.amazonaws.com/growthjockey-stage:$BUILD_ID'"""
+                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo docker pull 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-stage:$BUILD_ID'"""
+                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-108-197-31.ap-south-1.compute.amazonaws.com 'sudo docker run -d -p 3000:3000 --name intellsys 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-stage:$BUILD_ID'"""
                             
                             } 
                     }
@@ -107,8 +107,8 @@ pipeline {
                         sshagent(['085b53a5-a741-47a5-b931-df84bb49fd62'])  {
                             sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo su'"""
                             sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo docker rm -f \$(sudo docker ps -aq)'"""
-                            sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo docker pull 048578456468.dkr.ecr.ap-south-1.amazonaws.com/growthjockey-prod:$BUILD_ID'"""
-                            sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo docker run -d -p 3000:3000 --name growthjockey-container-$BUILD_ID 048578456468.dkr.ecr.ap-south-1.amazonaws.com/growthjockey-prod:$BUILD_ID'"""
+                            sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo docker pull 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-prod:$BUILD_ID'"""
+                            sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo docker run -d -p 3000:3000 --name intellsys-$BUILD_ID 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-prod:$BUILD_ID'"""
                         }
                 }
 

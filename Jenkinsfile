@@ -78,8 +78,8 @@ pipeline {
                         sshagent(['f74f1a2f-5c3d-49e4-a0e5-646f8d9e87ea']) {
                             def dockerPsOutput = sh(returnStdout: true, script: """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker ps -aq'""")
                             if (dockerPsOutput.trim()) {
-                                sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo su'"""
-                                sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker rm -f \$(sudo docker ps -aq)'"""
+                                sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-6-162-95.ap-south-1.compute.amazonaws.com 'sudo su'"""
+                                sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-6-162-95-129.ap-south-1.compute.amazonaws.com 'sudo docker rm -f \$(sudo docker ps -aq)'"""
                             }  else {
                                 echo 'No containers found.'
                     }
@@ -105,10 +105,10 @@ pipeline {
                     }
                 else if (env.BRANCH_NAME == 'prod') {
                         sshagent(['f74f1a2f-5c3d-49e4-a0e5-646f8d9e87ea'])  {
-                            sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo su'"""
-                            sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo docker rm -f \$(sudo docker ps -aq)'"""
-                            sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo docker pull 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-prod:$BUILD_ID'"""
-                            sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-110-15-54.ap-south-1.compute.amazonaws.com 'sudo docker run -d -p 3000:3000 --name intellsys-$BUILD_ID 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-prod:$BUILD_ID'"""
+                            sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-6-162-95.ap-south-1.compute.amazonaws.com 'sudo su'"""
+                            sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-6-162-95.ap-south-1.compute.amazonaws.com 'sudo docker rm -f \$(sudo docker ps -aq)'"""
+                            sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-6-162-95.ap-south-1.compute.amazonaws.com 'sudo docker pull 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-prod:$BUILD_ID'"""
+                            sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-6-162-95.ap-south-1.compute.amazonaws.com 'sudo docker run -d -p 3000:3000 --name intellsys-$BUILD_ID 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-prod:$BUILD_ID'"""
                         }
                 }
 

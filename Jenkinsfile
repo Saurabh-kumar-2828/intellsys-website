@@ -98,8 +98,8 @@ pipeline {
               script{
                  if (env.BRANCH_NAME == 'staging') {
                     sshagent(['f74f1a2f-5c3d-49e4-a0e5-646f8d9e87ea'])  {
-                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker pull intellsys-stage:latest 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-stage:$BUILD_ID'"""
-                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker run -d -p 3001:3000 --name intellsys-fallback intellsys-stage:latest 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-stage:$BUILD_ID'"""
+                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker pull 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-stage:$BUILD_ID'"""
+                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker run -d -p 3001:3000 --name intellsys-fallback  048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-stage:$BUILD_ID'"""
                         sh '''
                         ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com \
                         \'while [[ "$(curl -vL -s -o /dev/null -w "%{http_code}" localhost:3001)" -ne 200 ]]; do sleep 1; done\'
@@ -107,7 +107,7 @@ pipeline {
                         sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo sed -i s~http://localhost:3000~http://localhost:3001~g /etc/nginx/sites-enabled/default'"""
                         sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo nginx -s reload'"""
                         sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker rm -f intellsys-container'"""
-                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker run -d -p 3000:3000 --name intellsys-container intellsys-stage:latest 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-stage:$BUILD_ID'"""
+                        sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker run -d -p 3000:3000 --name intellsys-container 048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-stage:$BUILD_ID'"""
                         sh '''
                         ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com \
                         \'while [[ "$(curl -vL -s -o /dev/null -w "%{http_code}" localhost:3000)" -ne 200 ]]; do sleep 1; done\'

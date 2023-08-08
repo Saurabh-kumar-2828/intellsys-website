@@ -65,21 +65,24 @@ pipeline {
                 script {
                     if (env.BRANCH_NAME == 'staging') {
                         sshagent(['f74f1a2f-5c3d-49e4-a0e5-646f8d9e87ea'])  {
-                            def dockerPsOutput = sh(returnStdout: true, script: """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker ps -aq'""")
-                            if (dockerPsOutput.trim()) {
+                            def commandOutput = sh(script: "ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker ps -a | grep intellsys-fallback | wc -l'", returnStdout: true).trim()
+                            def count = commandOutput.toInteger()
+                            if (count == 1) {
                                 sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo su'"""
-                                sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker rm -f \$(sudo docker ps -aq)'"""
-                            }  else {
-                                echo 'No containers found.'
-                    }
+                                sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-13-126-188-129.ap-south-1.compute.amazonaws.com 'sudo docker rm -f intellsys-fallback'"""
+                            }  
+                            else {
+                                    echo "no container"
+                            }
                         }
                     }
                     else if (env.BRANCH_NAME == 'prod') {
                         sshagent(['f74f1a2f-5c3d-49e4-a0e5-646f8d9e87ea']) {
-                            def dockerPsOutput = sh(returnStdout: true, script: """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-6-162-95.ap-south-1.compute.amazonaws.com 'sudo docker ps -aq'""")
-                            if (dockerPsOutput.trim()) {
+                            def commandOutput = sh(script: "ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-6-162-95.ap-south-1.compute.amazonaws.com 'sudo docker ps -a | grep intellsys-fallback | wc -l'", returnStdout: true).trim()
+                            def count = commandOutput.toInteger()
+                            if (count == 1) {
                                 sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-6-162-95.ap-south-1.compute.amazonaws.com 'sudo su'"""
-                                sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-6-162-95.ap-south-1.compute.amazonaws.com 'sudo docker rm -f \$(sudo docker ps -aq)'"""
+                                sh """ssh -o StrictHostKeyChecking=no ubuntu@ec2-3-6-162-95.ap-south-1.compute.amazonaws.com 'sudo docker rm -f intellsys-fallback'"""
                             }  else {
                                 echo 'No containers found.'
                     }

@@ -30,50 +30,52 @@ type LoaderData = {
 
 export const loader: LoaderFunction = async ({request}) => {
     try {
+        const urlSearchParams = new URL(request.url).searchParams;
+
+        const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
+        const companyId = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("state"));
+        if (authorizationCode == null || companyId == null) {
+            throw new Response(null, {status: 400});
+        }
+
+        let refreshToken: string;
+
+        const memoryCache = await getMemoryCache();
+
+        const cacheKey = `${DataSourceIds.googleAnalytics}: ${authorizationCode}`;
+        const cachedValue = await memoryCache.get(cacheKey);
+        if (cachedValue != null) {
+            refreshToken = cachedValue;
+        } else {
+            const refreshToken_ = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
+            if (refreshToken_ instanceof Error) {
+                throw refreshToken_;
+            }
+            await memoryCache.set(cacheKey, refreshToken_);
+            refreshToken = refreshToken_;
+        }
+
+        const accessibleAccounts = await getAccessibleAccounts(refreshToken);
+        if (accessibleAccounts instanceof Error) {
+            throw accessibleAccounts;
+        }
+
+        // TODO: Filter accessible account
+
+        // TODO: Get multiple accounts
+        const loaderData: LoaderData = {
+            data: encrypt(refreshToken),
+            accessibleAccounts: accessibleAccounts,
+            companyId: getUuidFromUnknown(companyId),
+        };
+
+        return json(loaderData);
     } catch (error_) {
         const error = getErrorFromUnknown(error_);
         logBackendError(error);
+
+        throw error;
     }
-    const urlSearchParams = new URL(request.url).searchParams;
-
-    const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
-    const companyId = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("state"));
-    if (authorizationCode == null || companyId == null) {
-        throw new Response(null, {status: 400});
-    }
-
-    let refreshToken: string;
-
-    const memoryCache = await getMemoryCache();
-
-    const cacheKey = `${DataSourceIds.googleAnalytics}: ${authorizationCode}`;
-    const cachedValue = await memoryCache.get(cacheKey);
-    if (cachedValue != null) {
-        refreshToken = cachedValue;
-    } else {
-        const refreshToken_ = await getGoogleAdsRefreshToken(authorizationCode, getUuidFromUnknown(companyId), getUuidFromUnknown(ConnectorType.GoogleAds));
-        if (refreshToken_ instanceof Error) {
-            throw refreshToken_;
-        }
-        await memoryCache.set(cacheKey, refreshToken_);
-        refreshToken = refreshToken_;
-    }
-
-    const accessibleAccounts = await getAccessibleAccounts(refreshToken);
-    if (accessibleAccounts instanceof Error) {
-        throw accessibleAccounts;
-    }
-
-    // TODO: Filter accessible account
-
-    // TODO: Get multiple accounts
-    const loaderData: LoaderData = {
-        data: encrypt(refreshToken),
-        accessibleAccounts: accessibleAccounts,
-        companyId: getUuidFromUnknown(companyId),
-    };
-
-    return json(loaderData);
 };
 
 export const action: ActionFunction = async ({request}) => {
@@ -120,6 +122,7 @@ export const action: ActionFunction = async ({request}) => {
             accountId: googleAdsCredentials.googleAccountId,
             accountName: selectedAccount.customerClientName,
         });
+
         if (response instanceof Error) {
             return response;
         }

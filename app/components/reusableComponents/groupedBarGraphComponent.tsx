@@ -6,7 +6,7 @@ import React from "react";
 import {plotMargins, scale, YAxisDisplay} from "~/backend/utilities/utilities.server";
 import {legend} from "../d3Componenets/legend";
 
-type lineDataObject = {
+type DataObject = {
     dates: Array<string>;
     yMax: number;
     title: string;
@@ -14,7 +14,7 @@ type lineDataObject = {
 };
 
 interface props {
-    data: lineDataObject;
+    data: DataObject;
     container?: string | null;
     className?: string | null;
     xScale?: ScaleBand<string>;

@@ -1,13 +1,21 @@
 import {axisBottom, axisLeft, axisRight} from "d3-axis";
 import type {ScaleLinear} from "d3-scale";
-import {NumberValue, scaleBand, scaleLinear} from "d3-scale";
+import {scaleBand, scaleLinear} from "d3-scale";
 import {select} from "d3-selection";
-import React, {Ref, useRef} from "react";
+import React, {useEffect, useRef} from "react";
 import BarGraphComponent from "~/components/d3Componenets/barGraphComponent";
-import {LineGraphComponent} from "~/components/d3Componenets/lineGraphComponent";
 import {legend} from "~/components/d3Componenets/legend";
 import {plotMargins, Scale} from "~/utilities/utilities";
-import * as d3 from 'd3';
+import LineGraphComponent from "./lineGraphComponent";
+
+interface IProps {
+    data?: number[];
+    height: number;
+    xValues: Array<string>;
+    children: any;
+    className: string
+    title: string
+}
 
 export type legendObject = {
     color: string;
@@ -22,18 +30,16 @@ type scaleObject = {
     legends: Array<legendObject>;
 };
 
-export function ComposedChart(props: {xValues: Array<string>; className: string; children: any; title: string; height: number; width: number; ref: React.MutableRefObject<null>}) {
+export function ComposedChart(props: IProps) {
+    const d3Container = useRef(null);
+
     const height = props.height;
     const padding = 0.2;
     const innerHeight = height - plotMargins.top - plotMargins.bottom;
-    const innerWidth = 60 * props.xValues.length;
+    const innerWidth = 30 * props.xValues.length; // TODO: Fix 60
     const width = innerWidth + plotMargins.left + plotMargins.right;
     const legendBoxTopMargin = 20;
     const legendBoxLeftMargin = 25;
-
-    if (props.children == null) {
-        return null;
-    }
 
     // Common x-scale
     const xScale = scaleBand()
@@ -42,128 +48,107 @@ export function ComposedChart(props: {xValues: Array<string>; className: string;
         .padding(padding)
         .round(true);
 
-    // useEffect(() => {
+    useEffect(() => {
+        const svg = select(d3Container.current);
 
-    // Plot graph
-    const node = select(props.ref.current);
+        svg.select(".xAxis").remove();
+        svg.select(".yAxis").remove();
+        svg.select(".grid-lines").remove();
 
-    node.attr("width", width).attr("height", height);
-    node.selectAll("*").remove();
+        svg.append("g")
+            .attr("transform", `translate(${plotMargins.left},${height - plotMargins.bottom})`)
+            .attr("class", "xAxis")
+            .call(axisBottom(xScale));
 
-    // X-axis
-    node.append("g")
-        .attr("transform", `translate(${plotMargins.left},${height - plotMargins.bottom})`)
-        .attr("class", "xAxis")
-        .call(axisBottom(xScale));
+        // Enter new D3 elements
+        svg.selectAll(".tick")
+            .selectAll("text")
+            .style("text-anchor", "end")
+            .style("font-weight", 500)
+            .style("font-size", 12)
+            .style("color", "#CCC0C0")
+            .style("font-family", "Poppins")
+            .style("font-style", "normal")
+            .attr("dx", "-.18em")
+            .attr("transform", "rotate(-35)");
 
-    node.selectAll(".tick")
-        .selectAll("text")
-        .style("text-anchor", "end")
-        .style("font-weight", 500)
-        .style("font-size", 12)
-        .style("color", "#CCC0C0")
-        .style("font-family", "Poppins")
-        .style("font-style", "normal")
-        .attr("dx", "-.18em")
-        .attr("transform", "rotate(-35)");
+        const yAxisScales = getAllYAxisScales(props.children, innerHeight);
 
-    // // Y-axis
-    // const yAxisScales = getAllYAxisScales(props.children, innerHeight);
+        if (yAxisScales.length <= 2) {
+            // Left-axis
+            svg.append("g")
+                .attr("transform", `translate( ${plotMargins.left}, ${plotMargins.top})`)
+                .attr("class", "yAxis")
+                .style("font-weight", 400)
+                .style("font-size", 12)
+                .style("color", "#CCC0C0")
+                .style("font-family", "Poppins")
+                .style("font-style", "normal")
+                .call(axisLeft(yAxisScales[0].yScale));
 
-    // if (yAxisScales.length <= 2) {
+            // Left-axis Legend
+            svg.call(legend, {data: yAxisScales[0].legends, x: plotMargins.left / 2, y: legendBoxTopMargin});
 
-    //     console.log("4");
-    //     // Left-axis
-    //     node.append("g")
-    //         .attr("transform", `translate(${plotMargins.left}, ${plotMargins.top})`)
-    //         .attr("class", "yAxis")
-    //         .style("font-weight", 400)
-    //         .style("font-size", 12)
-    //         .style("color", "#CCC0C0")
-    //         .style("font-family", "Poppins")
-    //         .style("font-style", "normal")
-    //         .call(axisLeft(yAxisScales[0].yScale));
+            // Right-axis
+            if (yAxisScales.length == 2) {
+                svg.append("g")
+                    .attr("transform", `translate(${plotMargins.left + innerWidth}, ${plotMargins.top})`)
+                    .attr("class", "yAxis")
+                    .call(axisRight(yAxisScales[1].yScale));
 
-    //     console.log("5");
+                // Right-axis Legend
+                svg.call(legend, {data: yAxisScales[1].legends, x: innerWidth - plotMargins.left, y: legendBoxTopMargin});
+            }
 
-    //     // Legend
-    //     node.call(legend, {data: yAxisScales[0].legends, x: plotMargins.left / 2, y: legendBoxTopMargin});
+            svg.selectAll(".tick").selectAll("text").style("font-weight", 400).style("color", "#CCC0C0").style("font-size", 12).style("font-family", "Poppins").style("font-style", "normal");
 
-    //     // Right-axis
-    //     if (yAxisScales.length == 2) {
-    //         node.append("g")
-    //             .attr("transform", `translate(${plotMargins.left + innerWidth}, ${plotMargins.top})`)
-    //             .attr("class", "yAxis")
-    //             .call(axisRight(yAxisScales[1].yScale));
+        } else {
+            let legendsFromAllScales: Array<legendObject> = [];
+            yAxisScales.map((value: scaleObject) => {
+                legendsFromAllScales = legendsFromAllScales.concat(value.legends);
+            });
+            svg.call(legend, {data: legendsFromAllScales, x: plotMargins.left / 2, y: legendBoxTopMargin});
 
-    //         // Legend
-    //         node.call(legend, {data: yAxisScales[1].legends, x: innerWidth - plotMargins.left, y: legendBoxTopMargin});
-    //     }
+        }
 
-    //     console.log("6");
+        // Grid lines
+        svg.append("g")
+            .attr("class", "grid-lines")
+            .attr("transform", `translate(${plotMargins.left}, ${plotMargins.top})`)
+            .selectAll("line")
+            .data(yAxisScales[0].yScale.ticks())
+            .join("line")
+            .attr("x1", xScale.bandwidth())
+            .attr("x2", innerWidth)
+            .attr("y1", (d) => yAxisScales[0].yScale(d))
+            .attr("y2", (d) => yAxisScales[0].yScale(d))
+            .style("stroke", "#CCC0C0")
+            .style("opacity", 0.3)
+            .style("stroke-dasharray", 10)
+            .style("fill", "none");
 
-    //     node.selectAll(".tick").selectAll("text").style("font-weight", 400).style("color", "#CCC0C0").style("font-size", 12).style("font-family", "Poppins").style("font-style", "normal");
+    }, [height, innerHeight, props.children, xScale, props.data, innerWidth, props.title, width, props.className]);
 
-    //     console.log("6");
-
-    // } else {
-    //     var legendsFromAllScales: Array<legendObject> = [];
-    //     yAxisScales.map((value: scaleObject) => {
-    //         legendsFromAllScales = legendsFromAllScales.concat(value.legends);
-    //     });
-    //     node.call(legend, {data: legendsFromAllScales, x: plotMargins.left / 2, y: legendBoxTopMargin});
-
-    // }
-
-    // console.log(1);
-    // // Grid lines
-    // node.append("g")
-    //     .attr("class", "grid-lines")
-    //     .attr("transform", `translate(${plotMargins.left}, ${plotMargins.top})`)
-    //     .selectAll("line")
-    //     .data(yAxisScales[0].yScale.ticks())
-    //     .join("line")
-    //     .attr("x1", xScale.bandwidth())
-    //     .attr("x2", innerWidth)
-    //     .attr("y1", (d) => yAxisScales[0].yScale(d))
-    //     .attr("y2", (d) => yAxisScales[0].yScale(d))
-    //     .style("stroke", "#CCC0C0")
-    //     .style("opacity", 0.3)
-    //     .style("stroke-dasharray", 10)
-    //     .style("fill", "none");
-
-
-    // console.log(2);
-
-    // // }, [ref, props.xValues, props.className, props.children, props.title, props.height, props.width]);
-
-    // // Title of graph
-    // node.append("text")
-    //     .attr("x", width / 2)
-    //     .attr("y", plotMargins.top / 2)
-    //     .attr("text-anchor", "middle")
-    //     .style("font-size", "20px")
-    //     .text(props.title)
-    //     .attr("class", "tw-fill-white");
-
-    // console.log(3);
 
     return (
-        <svg
-            className={props.className ? props.className : ""}
-            ref={props.ref}
-        >
-            {/* {React.Children.map(props.children, (child) => {
+        <>
+            <svg
+                className="d3-component"
+                width={width}
+                height={height}
+                ref={d3Container}
+            >
+            </svg>
+            {React.Children.map(props.children, (child) => {
                 if (child == null) {
                     return null;
                 }
-                const childClass = child.type.displayName;
-                if (childClass == "BarGraphComponent") {
+                if (child.key == "BarGraph") {
                     return (
                         <BarGraphComponent
                             data={child.props.data}
                             className={props.className ? props.className : ""}
-                            container={ref.current}
+                            forwardedRef={d3Container}
                             xScale={xScale}
                             scale={child.props.scale}
                             width={width}
@@ -172,12 +157,12 @@ export function ComposedChart(props: {xValues: Array<string>; className: string;
                         />
                     );
                 }
-                if (childClass == "LineGraphComponent") {
+                if (child.key == "LineGraph") {
                     return (
                         <LineGraphComponent
                             data={child.props.data}
                             className={props.className ? props.className : ""}
-                            container={ref.current}
+                            forwardedRef={d3Container}
                             xScale={xScale}
                             scale={child.props.scale}
                             width={width}
@@ -186,9 +171,9 @@ export function ComposedChart(props: {xValues: Array<string>; className: string;
                         />
                     );
                 }
-            })} */}
-            h1
-        </svg>
+            })}
+        </>
+
     );
 }
 

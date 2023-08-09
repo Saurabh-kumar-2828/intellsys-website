@@ -29,7 +29,7 @@ export type GoogleAnalyticsAccessiblePropertyIds = {
  * Retrieves a list of all Google Ads accounts that you are able to act upon directly given your current credentials.
  */
 export async function getAccessiblePropertyIds(refreshToken: string): Promise<Array<GoogleAnalyticsAccessiblePropertyIds> | Error> {
-    const googleAdsHelperUrl = getRequiredEnvironmentVariableNew("INTELLSYS_GOOGLE_ADS_HELPER_URL");
+    const googleAdsHelperUrl = getRequiredEnvironmentVariableNew("INTELLSYS_PYTHON_HELPER_URL");
 
     const formdata = new FormData();
     formdata.append("client_id", getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_ID"));

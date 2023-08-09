@@ -140,6 +140,7 @@ export async function getAccessTokenForUser(userId: string) {
     return {
         // TODO: Use createAuthenticationToken instead
         // TODO: Figure out a better return type here?
+
         accessTokenJwt: jwt.sign(accessToken, getRequiredEnvironmentVariableNew("JWT_SECRET")) as unknown as Jwt,
         userId: userId,
     };
@@ -196,7 +197,6 @@ export async function createCompany(domain: string): Promise<Company | Error> {
     if (result1 instanceof Error) {
         return result1;
     }
-    console.log("Company's database initialized");
 
     const intellsysStorage1CredentialStr = await getCredentialFromKms(getUuidFromUnknown(getRequiredEnvironmentVariableNew("INTELLSYS_STORAGE_1_CREDENTIAL_ID")));
 

@@ -62,7 +62,7 @@ export async function getGoogleAdsRefreshToken(authorizationCode: string, compan
  * Retrieves a list of all Google Ads accounts that you are able to act upon directly given your current credentials.
  */
 export async function getAccessibleAccounts(refreshToken: string): Promise<Array<GoogleAdsAccessibleAccount> | Error> {
-    const googleAdsHelperUrl = getRequiredEnvironmentVariableNew("INTELLSYS_GOOGLE_ADS_HELPER_URL");
+    const googleAdsHelperUrl = getRequiredEnvironmentVariableNew("INTELLSYS_PYTHON_HELPER_URL");
 
     var formdata = new FormData();
     formdata.append("developer_token", getRequiredEnvironmentVariableNew("GOOGLE_DEVELOPER_TOKEN"));

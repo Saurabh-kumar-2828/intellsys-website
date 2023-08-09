@@ -77,6 +77,8 @@ export const loader: LoaderFunction = async ({request, params}) => {
     } catch (error_) {
         const error = getErrorFromUnknown(error_);
         logBackendError(error);
+
+        throw error;
     }
 };
 

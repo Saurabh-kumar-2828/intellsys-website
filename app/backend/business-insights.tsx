@@ -1,5 +1,4 @@
 import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import type {Credentials} from "~/backend/utilities/data-management/credentials.server";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
 import type {Integer} from "~/global-common-typescript/typeDefinitions";
@@ -60,9 +59,9 @@ export type FacebookAdsData = {
 
 export type AdsDataAggregatedRow = {
     date: Iso8601Date;
-    amountSpent: number;
-    impressions: number;
-    clicks: number;
+    amountSpent: Integer;
+    impressions: Integer;
+    clicks: Integer;
     campaignName: string;
     platform: string;
     category: string;
@@ -74,83 +73,83 @@ export type GoogleAnalyticsDataAggregatedRow = {
     "adUnitName": string,
     "newVsReturning": string,
     "platform": string,
-    "active1DayUsers": Number,
-    "active28DayUsers": Number,
-    "active7DayUsers": Number,
-    "activeUsers": Number,
-    "addToCarts": Number,
-    "adUnitExposure": Number,
-    "averagePurchaseRevenue": Number,
-    "averagePurchaseRevenuePerPayingUser": Number,
-    "averagePurchaseRevenuePerUser": Number,
-    "averageRevenuePerUser": Number,
-    "averageSessionDuration": Number,
-    "bounceRate": Number,
-    "cartToViewRate": Number,
-    "checkouts": Number,
-    "conversions": Number,
-    "conversionsTest_Ride": Number,
-    "conversionsTRD": Number,
-    "conversionsTRH_CYTR": Number,
-    "conversionsTRH_OTPverified": Number,
-    "conversionsPurchase": Number,
-    "crashAffectedUsers": Number,
-    "crashFreeUsersRate": Number,
-    "dauPerMau": Number,
-    "dauPerWau": Number,
-    "ecommercePurchases": Number,
-    "engagedSessions": Number,
-    "engagementRate": Number,
-    "eventCount": Number,
-    "eventCountPerUser": Number,
-    "eventsPerSession": Number,
-    "eventValue": Number,
-    "firstTimePurchaserConversionRate": Number,
-    "firstTimePurchasers": Number,
-    "firstTimePurchasersPerNewUser": Number,
-    "grossPurchaseRevenue": Number,
-    "itemListClickEvents": Number,
-    "itemListClickThroughRate": Number,
-    "itemListViewEvents": Number,
-    "itemPromotionClickThroughRate": Number,
-    "itemViewEvents": Number,
-    "newUsers": Number,
-    "promotionClicks": Number,
-    "promotionViews": Number,
-    "publisherAdClicks": Number,
-    "publisherAdImpressions": Number,
-    "purchaseRevenue": Number,
-    "purchaseToViewRate": Number,
-    "purchaserConversionRate": Number,
-    "refundAmount": Number,
-    "screenPageViews": Number,
-    "screenPageViewsPerSession": Number,
-    "screenPageViewsPerUser": Number,
-    "scrolledUsers": Number,
-    "sessionConversionRate": Number,
-    "sessionConversionRateTestRide": Number,
-    "sessionConversionRateTRD": Number,
-    "sessionConversionRateTRH_CYTR": Number,
-    "sessionConversionRateTRH_OTPverified": Number,
-    "sessionConversionRatePurchase": Number,
-    "sessions": Number,
-    "sessionsPerUser": Number,
-    "shippingAmount": Number,
-    "taxAmount": Number,
-    "totalAdRevenue": Number,
-    "totalPurchasers": Number,
-    "totalRevenue": Number,
-    "totalUsers": Number,
-    "transactions": Number,
-    "transactionsPerPurchaser": Number,
-    "userConversionRate": Number,
-    "userConversionRateTestRide": Number,
-    "userConversionRateTRD": Number,
-    "userConversionRateTRH_CYTR": Number,
-    "userConversionRateTRH_Otpverified": Number,
-    "userConversionRatePurchase": Number,
-    "userEngagementDuration": Number,
-    "wauPerMau": Number,
+    "active1DayUsers": Integer,
+    "active28DayUsers": Integer,
+    "active7DayUsers": Integer,
+    "activeUsers": Integer,
+    "addToCarts": Integer,
+    "adUnitExposure": Integer,
+    "averagePurchaseRevenue": Integer,
+    "averagePurchaseRevenuePerPayingUser": Integer,
+    "averagePurchaseRevenuePerUser": Integer,
+    "averageRevenuePerUser": Integer,
+    "averageSessionDuration": Integer,
+    "bounceRate": Integer,
+    "cartToViewRate": Integer,
+    "checkouts": Integer,
+    "conversions": Integer,
+    "conversionsTest_Ride": Integer,
+    "conversionsTRD": Integer,
+    "conversionsTRH_CYTR": Integer,
+    "conversionsTRH_OTPverified": Integer,
+    "conversionsPurchase": Integer,
+    "crashAffectedUsers": Integer,
+    "crashFreeUsersRate": Integer,
+    "dauPerMau": Integer,
+    "dauPerWau": Integer,
+    "ecommercePurchases": Integer,
+    "engagedSessions": Integer,
+    "engagementRate": Integer,
+    "eventCount": Integer,
+    "eventCountPerUser": Integer,
+    "eventsPerSession": Integer,
+    "eventValue": Integer,
+    "firstTimePurchaserConversionRate": Integer,
+    "firstTimePurchasers": Integer,
+    "firstTimePurchasersPerNewUser": Integer,
+    "grossPurchaseRevenue": Integer,
+    "itemListClickEvents": Integer,
+    "itemListClickThroughRate": Integer,
+    "itemListViewEvents": Integer,
+    "itemPromotionClickThroughRate": Integer,
+    "itemViewEvents": Integer,
+    "newUsers": Integer,
+    "promotionClicks": Integer,
+    "promotionViews": Integer,
+    "publisherAdClicks": Integer,
+    "publisherAdImpressions": Integer,
+    "purchaseRevenue": Integer,
+    "purchaseToViewRate": Integer,
+    "purchaserConversionRate": Integer,
+    "refundAmount": Integer,
+    "screenPageViews": Integer,
+    "screenPageViewsPerSession": Integer,
+    "screenPageViewsPerUser": Integer,
+    "scrolledUsers": Integer,
+    "sessionConversionRate": Integer,
+    "sessionConversionRateTestRide": Integer,
+    "sessionConversionRateTRD": Integer,
+    "sessionConversionRateTRH_CYTR": Integer,
+    "sessionConversionRateTRH_OTPverified": Integer,
+    "sessionConversionRatePurchase": Integer,
+    "sessions": Integer,
+    "sessionsPerUser": Integer,
+    "shippingAmount": Integer,
+    "taxAmount": Integer,
+    "totalAdRevenue": Integer,
+    "totalPurchasers": Integer,
+    "totalRevenue": Integer,
+    "totalUsers": Integer,
+    "transactions": Integer,
+    "transactionsPerPurchaser": Integer,
+    "userConversionRate": Integer,
+    "userConversionRateTestRide": Integer,
+    "userConversionRateTRD": Integer,
+    "userConversionRateTRH_CYTR": Integer,
+    "userConversionRateTRH_Otpverified": Integer,
+    "userConversionRatePurchase": Integer,
+    "userEngagementDuration": Integer,
+    "wauPerMau": Integer,
 }
 
 export type GoogleAdsDataAggregatedRow = {
@@ -159,8 +158,8 @@ export type GoogleAdsDataAggregatedRow = {
     campaignId: string;
     campaignName: string;
     averageCost: any;
-    impressions: any;
-    clicks: any;
+    impressions: Integer;
+    clicks: Integer;
     interactionEventTypes: any;
     valuePerAllConversions: any;
     videoViewRate: any;
@@ -168,8 +167,8 @@ export type GoogleAdsDataAggregatedRow = {
     viewThroughConversions: any;
     conversionsFromInteractionsRate: any;
     conversionsValue: any;
-    conversions: any;
-    costMicros: any;
+    conversions: Integer;
+    costMicros: Integer;
     costPerAllConversions: any;
     ctr: any;
     engagementRate: any;
@@ -191,21 +190,40 @@ export type GoogleAdsDataAggregatedRow = {
     valuePerAllConversionsByConversionDate: any;
 }
 
+export type AdsActionStatsObject = {
+    actionType: String,
+    value: Integer
+}
 
 export type FacebookAdsAggregatedRow = {
     accountCurrency: string,
     accountId: string,
     accountName: string,
-    clicks: string,
+    adId: string,
+    adName: string,
+    conversions: Array<AdsActionStatsObject>, // TODO: Figure type of it -> as in API it is of type list<AdsActionStats>
+    clicks: Integer,
     createdTime: string,
-    dateStart: string,
-    dateStop: string,
-    frequency: string,
-    impressions: string,
-    reach: string,
-    spend: string,
+    date: Iso8601Date,
+    frequency: Integer,
+    impressions: Integer,
+    reach: Integer,
+    spend: Integer,
     campaignId: string,
     campaignName: string,
+    costPerAdClick: Array<AdsActionStatsObject>, // list<AdsActionStats>
+    costPerConversion: Array<AdsActionStatsObject>, // list<AdsActionStats>
+    costPerUniqueClick: Integer,
+    cpc: Integer,
+    cpm: Integer,
+    cpp: Integer,
+    ctr: Integer,
+    inlineLinkClicks: Integer,
+    inlineLinkClickCtr: Integer,
+    // inlinePostEngagement: Integer,
+    location: string,
+    socialSpend: Integer,
+    adsetId: string
 }
 
 // TODO: Remove? At the very least, refactor to use getGoogleAdsData and getFacebookAdsData.
@@ -231,8 +249,8 @@ function rowToGoogleAdsDataAggregatedRow(row: unknown): GoogleAdsDataAggregatedR
         campaignId: row.campaignid,
         campaignName: row.campaignname,
         averageCost: row.averagecost,
-        impressions: row.impressions,
-        clicks: row.clicks,
+        impressions: parseInt(row.impressions),
+        clicks: parseInt(row.clicks),
         interactionEventTypes: row.interactioneventtypes,
         valuePerAllConversions: row.valueperallconversions,
         videoViewRate: row.videoviewrate,
@@ -240,8 +258,8 @@ function rowToGoogleAdsDataAggregatedRow(row: unknown): GoogleAdsDataAggregatedR
         viewThroughConversions: row.viewthroughconversions,
         conversionsFromInteractionsRate: row.conversionsfrominteractionsrate,
         conversionsValue: row.conversionsvalue,
-        conversions: row.conversions,
-        costMicros: row.costmicros,
+        conversions: parseInt(row.conversions),
+        costMicros: parseInt(row.costmicros),
         costPerAllConversions: row.costperallconversions,
         ctr: row.ctr,
         engagementRate: row.engagementrate,
@@ -271,18 +289,44 @@ function rowToFacebookAdsDataAggregatedRow(row: unknown): FacebookAdsAggregatedR
         accountCurrency: row.accountcurrency,
         accountId: row.accountid,
         accountName: row.accountname,
-        clicks: row.clicks,
+        adId: row.adid,
+        adName: row.adname,
+        conversions: rowToAdsActionStatsObject(row.conversions),
+        clicks: parseInt(row.clicks),
         createdTime: row.createdtime,
-        dateStart: row.datestart,
-        dateStop: row.datestop,
-        frequency: row.frequency,
-        impressions: row.impressions,
-        reach: row.reach,
-        spend: row.spend,
+        date: row.datestart,
+        frequency: parseInt(row.frequency),
+        impressions: parseInt(row.impressions),
+        reach: parseInt(row.reach),
+        spend: parseInt(row.spend),
         campaignId: row.campaignid,
         campaignName: row.campaignname,
+        cpc: parseInt(row.cpc),
+        cpm: parseInt(row.cpm),
+        cpp: parseInt(row.cpp),
+        ctr: parseInt(row.ctr),
+        inlineLinkClickCtr: parseInt(row.inlinelinkclickctr),
+        inlineLinkClicks: parseInt(row. inlinelinkclicks),
+        location: row.location,
+        socialSpend: parseInt(row.socialspend),
+        adsetId: row.adsetid,
+        costPerAdClick: rowToAdsActionStatsObject(row.costperadclick),
+        costPerUniqueClick: parseInt(row.costperuniqueclick),
+        costPerConversion: rowToAdsActionStatsObject(row.costperconversion)
     }
+
     return facebookAdsAggregatedRow
+}
+
+function rowToAdsActionStatsObject(row: unknown): Array<AdsActionStatsObject> {
+    if (!Array.isArray(row)) {
+        return []; // Return an empty array if the input is not an array
+    }
+
+    return row.map((currentItem) => ({
+        actionType: currentItem.action_type,
+        value: parseInt(currentItem.value)
+    }));
 }
 
 function rowToGoogleAnalyticsDataAggregatedRow(row: unknown): GoogleAnalyticsDataAggregatedRow {
@@ -422,7 +466,7 @@ export async function getGoogleAdsData(minDate: Iso8601Date, maxDate: Iso8601Dat
             data->'metrics'->>'interactions' as interactions,
             data->'metrics'->>'allConversionsByConversionDate' as allConversionsByConversionDate,
             data->'metrics'->>'valuePerAllConversionsByConversionDate' as valuePerAllConversionsByConversionDate,
-            DATE((data->'segments'->>'date')) AS date,
+            data->'segments'->>'date' AS date,
             data->'segments'->>'hour' AS hour,
             'Google' AS platform,
             data->'metrics'->>'clicks' as clicks,
@@ -587,16 +631,31 @@ export async function getFacebookAdsData(minDate: Iso8601Date, maxDate: Iso8601D
             data->>'account_currency' as accountCurrency,
             data->>'account_id' as accountId,
             data->>'account_name' as accountName,
+            data->>'ad_id' as adId,
+            data->>'ad_name' as adName,
             data->>'clicks' as clicks,
             data->>'created_time' as createdTime,
-            DATE((data->>'date_start')::date) as dateStart,
+            data->>'date_start' as dateStart,
             data->>'date_stop' as dateStop,
             data->>'frequency' as frequency,
             data->>'impressions' as impressions,
             data->>'reach' as reach,
             data->>'spend' as spend,
             data->>'campaign_id' as campaignId,
-            data->>'campaign_name' as campaignName
+            data->>'campaign_name' as campaignName,
+            data->>'cpc' AS cpc,
+            data->>'cpp' AS cpp,
+            data->>'ctr' AS ctr,
+            data->>'cpm' AS cpm,
+            data->>'inline_link_clicks' AS inlineLinkClicks,
+            data->>'inline_link_click_ctr' AS inlineLinkClickCtr,
+            data->>'location' AS location,
+            data->>'social_spend' AS socialSpend,
+            data->>'adset_id' AS adsetId,
+            data->>'conversions' AS conversions,
+            data->>'cost_per_ad_click' AS costPerAdClick,
+            data->>'cost_per_conversion' AS costPerConversion,
+            data->>'cost_per_unique_click' AS costPerUniqueClick
         FROM
             ${tableName}
         WHERE
@@ -617,4 +676,3 @@ export async function getFacebookAdsData(minDate: Iso8601Date, maxDate: Iso8601D
         rows: result.rows.map((row) => rowToFacebookAdsDataAggregatedRow(row)),
     };
 }
-

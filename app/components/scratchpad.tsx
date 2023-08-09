@@ -10,12 +10,15 @@ import {toast} from "react-toastify";
 import type {TimeGranularity} from "~/backend/business-insights";
 import {filterToHumanReadableString, filterToTextColor, TimeZones, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
-import { concatenateNonNullStringsWithSpaces, numberToHumanFriendlyString } from "~/global-common-typescript/utilities/utilities";
+import {concatenateNonNullStringsWithAmpersand, concatenateNonNullStringsWithSpaces, numberToHumanFriendlyString} from "~/global-common-typescript/utilities/utilities";
 
 export function FancySearchableSelect(props: {className?: string; options: Array<string>; label: string; selectedOption; setSelectedOption}) {
     return (
         <div className={props.className}>
-            <Listbox value={props.selectedOption} onChange={props.setSelectedOption}>
+            <Listbox
+                value={props.selectedOption}
+                onChange={props.setSelectedOption}
+            >
                 <Listbox.Button>
                     <div className="tw-bg-dark-bg-500 tw-p-2 tw-rounded-md tw-text-left">
                         <b>{props.label}</b>
@@ -25,7 +28,11 @@ export function FancySearchableSelect(props: {className?: string; options: Array
 
                 <Listbox.Options className="tw-w-fit tw-absolute tw-top-16 tw-bg-dark-bg-500 tw-rounded-md tw-max-h-[calc(100vh-20rem)] tw-border tw-border-fg tw-overflow-auto">
                     {props.options.map((option, optionIndex) => (
-                        <Listbox.Option value={option} key={optionIndex} className="tw-p-2 tw-cursor-pointer">
+                        <Listbox.Option
+                            value={option}
+                            key={optionIndex}
+                            className="tw-p-2 tw-cursor-pointer"
+                        >
                             <div className={props.selectedOption == option ? "tw-text-white tw-font-bold" : "tw-text-fg"}>{option}</div>
                         </Listbox.Option>
                     ))}
@@ -38,7 +45,11 @@ export function FancySearchableSelect(props: {className?: string; options: Array
 export function FancySearchableMultiSelect(props: {className?: string; options: Array<string>; label: string; selectedOptions; setSelectedOptions; filterType: QueryFilterType}) {
     return (
         <div className={props.className}>
-            <Listbox value={props.selectedOptions} onChange={props.setSelectedOptions} multiple>
+            <Listbox
+                value={props.selectedOptions}
+                onChange={props.setSelectedOptions}
+                multiple
+            >
                 <Listbox.Button>
                     <div className="tw-bg-dark-bg-500 tw-p-2 tw-rounded-md tw-text-left tw-flex tw-flex-row tw-items-center">
                         <Funnel className={concatenateNonNullStringsWithSpaces("tw-w-4 tw-h-4 tw-cursor-help", filterToTextColor(props.filterType))} />
@@ -50,7 +61,11 @@ export function FancySearchableMultiSelect(props: {className?: string; options: 
 
                 <Listbox.Options className="tw-w-fit tw-absolute tw-top-16 tw-bg-dark-bg-500 tw-rounded-md tw-max-h-[calc(100vh-20rem)] tw-border tw-border-fg tw-overflow-auto tw-z-10">
                     {props.options.map((option, optionIndex) => (
-                        <Listbox.Option value={option} key={optionIndex} className="tw-p-2 tw-cursor-pointer">
+                        <Listbox.Option
+                            value={option}
+                            key={optionIndex}
+                            className="tw-p-2 tw-cursor-pointer"
+                        >
                             <div className={props.selectedOptions.includes(option) ? "tw-text-white tw-font-bold" : "tw-text-fg"}>{option}</div>
                         </Listbox.Option>
                     ))}
@@ -64,7 +79,13 @@ export function FancyCalendar(props: {label; value; setValue; id}) {
     return (
         <div className="tw-flex tw-flex-row tw-items-center tw-bg-dark-bg-500 tw-rounded-md tw-p-2 tw-gap-x-1">
             <label htmlFor={props.id}>{props.label}:</label>
-            <input type="date" value={props.value} onChange={(e) => props.setValue(e.target.value)} className="tw-bg-dark-bg-500 tw-h-6" id={props.id} />
+            <input
+                type="date"
+                value={props.value}
+                onChange={(e) => props.setValue(e.target.value)}
+                className="tw-bg-dark-bg-500 tw-h-6"
+                id={props.id}
+            />
         </div>
     );
 }
@@ -77,10 +98,18 @@ export function Card(props: {information: string; label: string; className?: str
         >
             {props.metaInformation == null && props.metaQuery == null ? null : (
                 <div className="tw-absolute tw-top-4 tw-right-4 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
-                    {props.metaInformation == null ? null : <InfoCircle title={props.metaInformation} className="tw-w-4 tw-h-4 tw-cursor-help" />}
+                    {props.metaInformation == null ? null : (
+                        <InfoCircle
+                            title={props.metaInformation}
+                            className="tw-w-4 tw-h-4 tw-cursor-help"
+                        />
+                    )}
 
                     {props.metaQuery == null ? null : (
-                        <button title={props.metaQuery} onClick={async (e) => await navigator.clipboard.writeText(props.metaQuery)}>
+                        <button
+                            title={props.metaQuery}
+                            onClick={async (e) => await navigator.clipboard.writeText(props.metaQuery)}
+                        >
                             <Clipboard className="tw-w-4 tw-h-4" />
                         </button>
                     )}
@@ -109,10 +138,18 @@ export function CustomCard(props: {information: string; informationClassName: st
         >
             {props.metaInformation == null && props.metaQuery == null ? null : (
                 <div className="tw-absolute tw-top-4 tw-right-4 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
-                    {props.metaInformation == null ? null : <InfoCircle title={props.metaInformation} className="tw-w-4 tw-h-4 tw-cursor-help" />}
+                    {props.metaInformation == null ? null : (
+                        <InfoCircle
+                            title={props.metaInformation}
+                            className="tw-w-4 tw-h-4 tw-cursor-help"
+                        />
+                    )}
 
                     {props.metaQuery == null ? null : (
-                        <button title={props.metaQuery} onClick={async (e) => await navigator.clipboard.writeText(props.metaQuery)}>
+                        <button
+                            title={props.metaQuery}
+                            onClick={async (e) => await navigator.clipboard.writeText(props.metaQuery)}
+                        >
                             <Clipboard className="tw-w-4 tw-h-4" />
                         </button>
                     )}
@@ -166,10 +203,18 @@ export function ValueDisplayingCard<T>(props: {queryInformation: T; contentExtra
 
             {props.queryInformation.metaInformation == null && props.queryInformation.metaQuery == null ? null : (
                 <div className="tw-absolute tw-top-4 tw-right-4 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
-                    {props.queryInformation.metaInformation == null ? null : <InfoCircle title={props.queryInformation.metaInformation} className="tw-w-4 tw-h-4 tw-cursor-help" />}
+                    {props.queryInformation.metaInformation == null ? null : (
+                        <InfoCircle
+                            title={props.queryInformation.metaInformation}
+                            className="tw-w-4 tw-h-4 tw-cursor-help"
+                        />
+                    )}
 
                     {props.queryInformation.metaQuery == null ? null : (
-                        <button title={props.queryInformation.metaQuery} onClick={(e) => navigator.clipboard.writeText(props.queryInformation.metaQuery)}>
+                        <button
+                            title={props.queryInformation.metaQuery}
+                            onClick={(e) => navigator.clipboard.writeText(props.queryInformation.metaQuery)}
+                        >
                             <Clipboard className="tw-w-4 tw-h-4" />
                         </button>
                     )}
@@ -219,10 +264,18 @@ export function ValueDisplayingCardWithTarget({
         <div className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-rounded-md tw-p-8 tw-grid tw-grid-cols-1 tw-content-center tw-text-center", className)}>
             {explanation == null && equivalentQuery == null ? null : (
                 <div className="tw-absolute tw-top-4 tw-right-4 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
-                    {explanation == null ? null : <InfoCircle title={explanation} className="tw-w-4 tw-h-4 tw-cursor-help" />}
+                    {explanation == null ? null : (
+                        <InfoCircle
+                            title={explanation}
+                            className="tw-w-4 tw-h-4 tw-cursor-help"
+                        />
+                    )}
 
                     {equivalentQuery == null ? null : (
-                        <button title={equivalentQuery} onClick={(e) => navigator.clipboard.writeText(equivalentQuery)}>
+                        <button
+                            title={equivalentQuery}
+                            onClick={(e) => navigator.clipboard.writeText(equivalentQuery)}
+                        >
                             <Clipboard className="tw-w-4 tw-h-4" />
                         </button>
                     )}
@@ -350,10 +403,18 @@ export function DateDisplayingCard(props: {information: any; label: string; clas
         >
             {props.metaInformation == null && props.metaQuery == null ? null : (
                 <div className="tw-absolute tw-top-4 tw-right-4 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
-                    {props.metaInformation == null ? null : <InfoCircle title={props.metaInformation} className="tw-w-4 tw-h-4 tw-cursor-help" />}
+                    {props.metaInformation == null ? null : (
+                        <InfoCircle
+                            title={props.metaInformation}
+                            className="tw-w-4 tw-h-4 tw-cursor-help"
+                        />
+                    )}
 
                     {props.metaQuery == null ? null : (
-                        <button title={props.metaQuery} onClick={async (e) => await navigator.clipboard.writeText(props.metaQuery)}>
+                        <button
+                            title={props.metaQuery}
+                            onClick={async (e) => await navigator.clipboard.writeText(props.metaQuery)}
+                        >
                             <Clipboard className="tw-w-4 tw-h-4" />
                         </button>
                     )}
@@ -375,13 +436,24 @@ export function DateDisplayingCard(props: {information: any; label: string; clas
 
 export function GenericCard(props: {content: JSX.Element; label?: string; className?: string; metaQuery?: string; metaInformation?: string}) {
     return (
-        <div className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-rounded-md tw-p-4 tw-grid tw-grid-cols-1", props.className)} title={props.information}>
+        <div
+            className={concatenateNonNullStringsWithSpaces("tw-relative tw-overflow-auto tw-bg-dark-bg-500 tw-rounded-md tw-p-4 tw-grid tw-grid-cols-1", props.className)}
+            title={props.information}
+        >
             {props.metaInformation == null && props.metaQuery == null ? null : (
                 <div className="tw-absolute tw-top-4 tw-right-4 tw-opacity-50 tw-flex tw-flex-row tw-gap-x-4">
-                    {props.metaInformation == null ? null : <InfoCircle title={props.metaInformation} className="tw-w-4 tw-h-4 tw-cursor-help" />}
+                    {props.metaInformation == null ? null : (
+                        <InfoCircle
+                            title={props.metaInformation}
+                            className="tw-w-4 tw-h-4 tw-cursor-help"
+                        />
+                    )}
 
                     {props.metaQuery == null ? null : (
-                        <button title={props.metaQuery} onClick={(e) => navigator.clipboard.writeText(props.metaQuery)}>
+                        <button
+                            title={props.metaQuery}
+                            onClick={(e) => navigator.clipboard.writeText(props.metaQuery)}
+                        >
                             <Clipboard className="tw-w-4 tw-h-4" />
                         </button>
                     )}
@@ -436,7 +508,11 @@ export function DateFilterSection(props: {
 
     let m = [...Array(12).keys()];
     // const months = m.map((num) => `${DateTime.now().startOf("month").minus({months: num}).monthLong}, ${DateTime.now().startOf("month").minus({months: num}).year}`)
-    const months = m.map((num) => DateTime.now().startOf("month").minus({months: num+1}))
+    const months = m.map((num) =>
+        DateTime.now()
+            .startOf("month")
+            .minus({months: num + 1}),
+    );
 
     const startDateId = useId();
     const endDateId = useId();
@@ -449,7 +525,12 @@ export function DateFilterSection(props: {
             )}
         >
             <div className="tw-flex-1 tw-flex tw-flex-row tw-items-center tw-gap-x-4 tw-gap-y-4 tw-flex-wrap">
-                    <FancySearchableSelect label="Granularity" options={props.granularities} selectedOption={props.selectedGranularity} setSelectedOption={props.setSelectedGranularity} />
+                <FancySearchableSelect
+                    label="Granularity"
+                    options={props.granularities}
+                    selectedOption={props.selectedGranularity}
+                    setSelectedOption={props.setSelectedGranularity}
+                />
 
                 <button
                     type="button"
@@ -480,19 +561,9 @@ export function DateFilterSection(props: {
                 <div className={props.className}>
                     <Listbox
                         onChange={(dateTime: DateTime) => {
-                            console.log(dateTime)
-                            props.setSelectedMinDate(
-                                DateTime.now()
-                                .startOf("month")
-                                .set({month: dateTime.month, year: dateTime.year})
-                                .toISODate(),
-                            );
-                            props.setSelectedMaxDate(
-                                DateTime.now()
-                                .set({month: dateTime.month, year: dateTime.year})
-                                .endOf("month")
-                                .toISODate(),
-                            );
+                            console.log(dateTime);
+                            props.setSelectedMinDate(DateTime.now().startOf("month").set({month: dateTime.month, year: dateTime.year}).toISODate());
+                            props.setSelectedMaxDate(DateTime.now().set({month: dateTime.month, year: dateTime.year}).endOf("month").toISODate());
                         }}
                     >
                         <Listbox.Button>
@@ -501,7 +572,11 @@ export function DateFilterSection(props: {
 
                         <Listbox.Options className="tw-w-fit tw-absolute tw-top-16 tw-bg-dark-bg-500 tw-rounded-md tw-max-h-[calc(100vh-20rem)] tw-border tw-border-fg tw-overflow-auto tw-z-100">
                             {months.map((option, optionIndex) => (
-                                <Listbox.Option value={option} key={optionIndex} className="tw-p-2 tw-cursor-pointer">
+                                <Listbox.Option
+                                    value={option}
+                                    key={optionIndex}
+                                    className="tw-p-2 tw-cursor-pointer"
+                                >
                                     <div>{`${option.monthLong}, ${option.year}`}</div>
                                 </Listbox.Option>
                             ))}
@@ -512,10 +587,20 @@ export function DateFilterSection(props: {
 
             <div className="tw-flex tw-flex-row tw-gap-x-4">
                 {/* TODO: Load value from urlSearchParams */}
-                <FancyCalendar label="Start Date" value={props.selectedMinDate} setValue={props.setSelectedMinDate} id={startDateId} />
+                <FancyCalendar
+                    label="Start Date"
+                    value={props.selectedMinDate}
+                    setValue={props.setSelectedMinDate}
+                    id={startDateId}
+                />
 
                 {/* TODO: Load value from urlSearchParams */}
-                <FancyCalendar label="End Date" value={props.selectedMaxDate} setValue={props.setSelectedMaxDate} id={endDateId} />
+                <FancyCalendar
+                    label="End Date"
+                    value={props.selectedMaxDate}
+                    setValue={props.setSelectedMaxDate}
+                    id={endDateId}
+                />
 
                 <Link
                     to={concatenateNonNullStringsWithAmpersand(

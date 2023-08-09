@@ -140,7 +140,7 @@ export async function initializeConnectorAndSubConnector(
     comments: string,
     connectorTableType: ConnectorTableType,
     // TODO: Fix ConnectorType typing
-    connectorType: ConnectorType,
+    connectorType: ConnectorType
 ): Promise<void | Error> {
     const currentTimestamp = getCurrentIsoTimestamp();
 
@@ -464,7 +464,6 @@ function rowToConnector(row: unknown): ConnectorConfig {
 
 export async function deleteConnector(connectorId: Uuid, accountId: string, tablePrefix: string) {
     // TODO: Add transactions
-
     const connector = await getSourceAndDestinationId(connectorId);
     if (connector instanceof Error) {
         return connector;
@@ -478,6 +477,7 @@ export async function deleteConnector(connectorId: Uuid, accountId: string, tabl
     await deleteCredentialFromKms(connector.sourceId);
 
     await deleteCompanyIdToConnectorIdMapping(connectorId);
+
     await deleteConnectorAndSubConnector(connectorId);
 
     // Delete data from google ads data

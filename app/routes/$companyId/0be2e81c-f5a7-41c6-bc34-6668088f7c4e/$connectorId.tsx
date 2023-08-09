@@ -1,4 +1,3 @@
-import * as Tabs from "@radix-ui/react-tabs";
 import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
 import {useLoaderData, useMatches} from "@remix-run/react";
@@ -10,25 +9,21 @@ import type {GoogleAdsDataAggregatedRow} from "~/backend/business-insights";
 import {getGoogleAdsData, getTimeGranularityFromUnknown, TimeGranularity} from "~/backend/business-insights";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
-import {DateFilterSection, GenericCard} from "~/components/scratchpad";
+import {DateFilterSection, GenericCard, ValueDisplayingCardWithTarget} from "~/components/scratchpad";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {defaultColumnDefinitions, getDates} from "~/utilities/utilities";
+import {ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
+import {Scale, aggregateByDate, defaultColumnDefinitions, getDates, microValue} from "~/utilities/utilities";
 import "ag-grid-enterprise";
 import {getNonEmptyStringFromUnknown, getStringFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import type {CompanyLoaderData} from "~/routes/$companyId";
-import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
-import {Line} from "react-chartjs-2";
-import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
-import {
-    agGridDateComparator,
-    dateToMediumNoneEnFormat,
-    getSingletonValue,
-    numberToHumanFriendlyString,
-    roundOffToTwoDigits,
-} from "~/global-common-typescript/utilities/utilities";
-
+import {agGridDateComparator, dateToMediumNoneEnFormat, getDataPoints, getMaxFromArray, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/global-common-typescript/utilities/utilities";
+import type {Integer} from "~/global-common-typescript/typeDefinitions";
+import * as Tabs from "@radix-ui/react-tabs";
+import {ComposedChart} from "~/components/d3Componenets/composedChart";
+import LineGraphComponent from "~/components/d3Componenets/lineGraphComponent";
+import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 // Google ads
 
 export const meta: MetaFunction = () => {
@@ -41,7 +36,7 @@ export const links: LinksFunction = () => {
     return [
         {rel: "stylesheet", href: "https://unpkg.com/ag-grid-community/styles/ag-grid.css"},
         {rel: "stylesheet", href: "https://unpkg.com/ag-grid-community/styles/ag-theme-alpine.css"},
-        {rel: "stylesheet", href: styles},
+        {rel: "stylesheet", href: styles}
     ];
 };
 
@@ -56,6 +51,23 @@ type LoaderData = {
     companyId: Uuid;
     connectorId: Uuid;
 };
+
+type CampaignMetrics = {
+    campaignName: string;
+    impressions: Integer;
+    clicks: Integer;
+}
+
+type GoogleAdsMetrics = {
+    impressions: Integer;
+    clicks: Integer;
+    ctr: Integer;
+    averageCpc: Integer;
+    cost: Integer;
+    conversions: Integer;
+    costPerConversions: Integer;
+    averageCpm: Integer // Cost per thousand impressions
+}
 
 export const loader: LoaderFunction = async ({request, params}) => {
     const accessToken = await getAccessTokenFromCookies(request);
@@ -121,8 +133,8 @@ export const loader: LoaderFunction = async ({request, params}) => {
     // TODO: Add filters
     const loaderData: LoaderData = {
         appliedSelectedGranularity: selectedGranularity,
-        appliedMinDate: minDate,
-        appliedMaxDate: maxDate,
+        appliedMinDate: getStringFromUnknown(minDate),
+        appliedMaxDate: getStringFromUnknown(maxDate),
         googleAdsData: googleAdsData,
         companyId: getUuidFromUnknown(companyId),
         connectorId: getUuidFromUnknown(connectorId),
@@ -214,242 +226,458 @@ function Connector({
 }
 
 function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Array<GoogleAdsDataAggregatedRow>; granularity: TimeGranularity; minDate: Iso8601Date; maxDate: Iso8601Date}) {
-    // if (granularity == TimeGranularity.daily) {
-    //     const dailyDistributionOfData = aggregateHourlyData(adsData);
-    //     adsData = Object.values(dailyDistributionOfData);
-    // }
-
-    // TODO: Fix amount name
-    const microValue = Math.pow(10, 6);
-    ChartJS.register(CategoryScale, LinearScale, Title, Tooltip, Legend, PointElement, LineElement);
-
     const dates = getDates(minDate, maxDate);
-    const dayWiseSpend = adsData.map((row) => parseInt(row.clicks));
+    const aggregatedMetrics = getAggregatedMetrics(adsData);
 
-    const labels = dates;
-    const data = {
-        labels,
-        datasets: [
-            {
-                label: "Daily Spend",
-                data: dayWiseSpend,
-                borderColor: "rgb(212, 172, 13)",
-                backgroundColor: "rgb(212, 172, 13)",
-            },
-        ],
-    };
+    const dayWiseImpressions = aggregateByDate(adsData, "impressions", dates);
+    const dayWiseClicks = aggregateByDate(adsData, "clicks", dates);
+    const dayWiseConversions = aggregateByDate(adsData, "conversions", dates);
 
-    const options = {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: "top",
-            },
-            title: {
-                display: true,
-                text: "Day-wise distribution of total clicks",
-            },
-        },
-    };
+    const impressionsDataPoints = getDataPoints(dates, dayWiseImpressions);
+    const clicksDataPoints = getDataPoints(dates, dayWiseClicks);
+    const conversionsDataPoints = getDataPoints(dates, dayWiseConversions);
+
+    const maxValueImpression = getMaxFromArray(dayWiseImpressions);
+    const maxValueClicks = getMaxFromArray(dayWiseClicks);
+    const maxValueConversions = getMaxFromArray(dayWiseConversions);
+
+    const lineCharHeight = 600;
 
     return (
-        <div className="tw-grid tw-grid-cols-1 tw-p-2">
-            <div className="tw-row-start-1">
-                <GenericCard
-                    className="tw-rounded-tl-none"
-                    content={
-                        <div className="tw-grid tw-grid-cols-4">
-                            <div className="tw-row-start-1 tw-col-start-2 tw-col-span-2 tw-grid">
-                                <Line
-                                    options={options}
-                                    data={data}
-                                    className="tw-row-start-1 tw-col-start-1"
-                                />
-                            </div>
-                        </div>
-                    }
-                    metaQuery={""}
+        <>
+
+            <div className="tw-grid tw-grid-cols-4 tw-gap-4 ">
+                <div className="tw-col-start-1">
+                    <ValueDisplayingCardWithTarget
+                        label={"Impressions"}
+                        value={aggregatedMetrics.impressions}
+                        target={0}
+                        type={ValueDisplayingCardInformationType.integer}
+                    />
+                </div>
+                <div className="tw-col-start-2">
+                    <ValueDisplayingCardWithTarget
+                        label={"Average CPC"}
+                        value={aggregatedMetrics.averageCpc}
+                        target={0}
+                        type={ValueDisplayingCardInformationType.float}
+                    />
+                </div>
+                <div className="tw-col-start-3">
+                    <ValueDisplayingCardWithTarget
+                        label={"Clicks"}
+                        value={aggregatedMetrics.clicks}
+                        target={0}
+                        type={ValueDisplayingCardInformationType.integer}
+                    />
+                </div>
+                <div className="tw-col-start-4">
+                    <ValueDisplayingCardWithTarget
+                        label={"Conversions"}
+                        value={aggregatedMetrics.conversions}
+                        target={0}
+                        type={ValueDisplayingCardInformationType.integer}
+                    />
+                </div>
+                <div className="tw-col-start-1">
+                    <ValueDisplayingCardWithTarget
+                        label={"Cost"}
+                        value={aggregatedMetrics.cost}
+                        target={0}
+                        type={ValueDisplayingCardInformationType.integer}
+                    />
+                </div>
+                <div className="tw-col-start-2">
+                    <ValueDisplayingCardWithTarget
+                        label={"CTR"}
+                        value={aggregatedMetrics.ctr}
+                        target={0}
+                        type={ValueDisplayingCardInformationType.percentage}
+                    />
+                </div>
+                <div className="tw-col-start-3">
+                    <ValueDisplayingCardWithTarget
+                    label={"Average CPM"}
+                    value={aggregatedMetrics.averageCpm}
+                    target={0}
+                    type={ValueDisplayingCardInformationType.float}
                 />
+                </div>
+                <div className="tw-col-start-4">
+                    <ValueDisplayingCardWithTarget
+                        label={"Cost / Conversions"}
+                        value={aggregatedMetrics.costPerConversions} // TODO: Add rupees symbol
+                        target={0}
+                        type={ValueDisplayingCardInformationType.float}
+                    />
+                </div>
             </div>
 
-            <VerticalSpacer className="tw-row-start-2 tw-h-8" />
+            <VerticalSpacer className="tw-h-3" />
 
-            <Tabs.Root
-                defaultValue="1"
-                className="tw-row-start-3"
-            >
-                <Tabs.List>
-                    <Tabs.Trigger
-                        value="1"
-                        className="lp-tab tw-rounded-tl-md"
-                    >
-                        {granularity} Distribution
-                    </Tabs.Trigger>
-                    <Tabs.Trigger
-                        value="2"
-                        className="lp-tab tw-rounded-tr-md"
-                    >
-                        Raw Data
-                    </Tabs.Trigger>
-                </Tabs.List>
-                <Tabs.Content value="1">
+            <div className="tw-grid tw-grid-cols-2 tw-gap-4 ">
+                <div className="tw-col-start-1">
                     <GenericCard
                         className="tw-rounded-tl-none"
                         content={
-                            <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
-                                <AgGridReact
-                                    rowData={adsData.map((object) => ({
-                                        date: object.date,
-                                        hour: object.hour,
-                                        campaignId: object.campaignId,
-                                        campaignName: object.campaignName,
-                                        averageCost: numberToHumanFriendlyString(object.averageCost),
-                                        impressions: numberToHumanFriendlyString(object.impressions),
-                                        clicks: numberToHumanFriendlyString(object.clicks),
-                                        averageCpc: numberToHumanFriendlyString(object.averageCpc / microValue),
-                                        averageCpe: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpe / microValue)),
-                                        averageCpm: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpm / microValue)),
-                                        averageCpv: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpv / microValue)),
-                                        interactionEventTypes: numberToHumanFriendlyString(object.interactionEventTypes),
-                                        valuePerAllConversions: numberToHumanFriendlyString(object.valuePerAllConversions),
-                                        videoViewRate: roundOffToTwoDigits(object.videoViewRate),
-                                        videoViews: roundOffToTwoDigits(object.videoViews),
-                                        viewThroughConversions: numberToHumanFriendlyString(object.viewThroughConversions),
-                                        conversionsFromInteractionsRate: numberToHumanFriendlyString(object.conversionsFromInteractionsRate),
-                                        conversionsValue: numberToHumanFriendlyString(object.conversionsValue),
-                                        conversions: numberToHumanFriendlyString(object.conversions),
-                                        costMicros: numberToHumanFriendlyString(object.costMicros / microValue),
-                                        costPerAllConversions: numberToHumanFriendlyString(object.costPerAllConversions),
-                                        ctr: roundOffToTwoDigits(object.ctr),
-                                        engagementRate: numberToHumanFriendlyString(object.engagementRate),
-                                        engagements: numberToHumanFriendlyString(object.engagements),
-                                        activeViewImpressions: numberToHumanFriendlyString(object.activeViewImpressions),
-                                        activeViewMeasurability: numberToHumanFriendlyString(object.activeViewMeasurability),
-                                        activeViewMeasurableCostMicros: numberToHumanFriendlyString(object.activeViewMeasurableCostMicros),
-                                        activeViewMeasurableImpressions: numberToHumanFriendlyString(object.activeViewMeasurableImpressions),
-                                        allConversionsFromInteractionsRate: roundOffToTwoDigits(object.allConversionsFromInteractionsRate),
-                                        allConversionsValue: numberToHumanFriendlyString(object.allConversionsValue),
-                                        allConversions: numberToHumanFriendlyString(object.allConversions),
-                                        interactionRate: roundOffToTwoDigits(object.interactionRate),
-                                        interactions: numberToHumanFriendlyString(object.interactions),
-                                        allConversionsByConversionDate: numberToHumanFriendlyString(object.allConversionsByConversionDate),
-                                        valuePerAllConversionsByConversionDate: numberToHumanFriendlyString(object.valuePerAllConversionsByConversionDate),
-                                    }))}
-                                    columnDefs={[
-                                        {
-                                            headerName: "Date",
-                                            valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date),
-                                            filter: "agDateColumnFilter",
-                                            comparator: agGridDateComparator,
-                                            resizable: true,
-                                        },
-                                        {headerName: "hour", field: "hour", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "CampaignId", field: "campaignId", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "campaignName", field: "campaignName", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "averageCost", field: "averageCost", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "impressions", field: "impressions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "clicks", field: "clicks", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "amountSpent", field: "amountSpent", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "averageCpc", field: "averageCpc", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "averageCpe", field: "averageCpe", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "averageCpm", field: "averageCpm", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "averageCpv", field: "averageCpv", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "interactionEventTypes", field: "interactionEventTypes", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "valuePerAllConversions", field: "valuePerAllConversions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "videoViewRate", field: "videoViewRate", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "videoViews", field: "videoViews", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "viewThroughConversions", field: "viewThroughConversions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "conversionsFromInteractionsRate", field: "conversionsFromInteractionsRate", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "conversionsValue", field: "conversionsValue", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "conversions", field: "conversions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "costMicros", field: "costMicros", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "costPerAllConversions", field: "costPerAllConversions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "ctr", field: "ctr", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "engagementRate", field: "engagementRate", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "engagements", field: "engagements", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "activeViewImpressions", field: "activeViewImpressions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "activeViewMeasurability", field: "activeViewMeasurability", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "activeViewMeasurableCostMicros", field: "activeViewMeasurableCostMicros", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "activeViewMeasurableImpressions", field: "activeViewMeasurableImpressions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "allConversionsFromInteractionsRate", field: "allConversionsFromInteractionsRate", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "allConversionsValue", field: "allConversionsValue", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "allConversions", field: "allConversions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "interactionRate", field: "interactionRate", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "interactions", field: "interactions", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "allConversionsByConversionDate", field: "allConversionsByConversionDate", cellClass: "!tw-px-0", resizable: true},
-                                        {headerName: "valuePerAllConversionsByConversionDate", field: "valuePerAllConversionsByConversionDate", cellClass: "!tw-px-0", resizable: true},
-                                    ]}
-                                    defaultColDef={defaultColumnDefinitions}
-                                    animateRows={true}
-                                    enableRangeSelection={true}
-                                    // frameworkComponents={{
-                                    //     progressCellRenderer,
-                                    // }}
-                                />
-                            </div>
+                            <ComposedChart
+                                height={lineCharHeight}
+                                xValues={dates}
+                                className={""}
+                                title={"Day-wise Distribution of Impressions"}
+                                children={
+                                    <LineGraphComponent
+                                        key="LineGraph"
+                                        scale={Scale.dataDriven}
+                                        data={{
+                                            xValues: dates,
+                                            yMax: maxValueImpression,
+                                            series: {
+                                                values: impressionsDataPoints,
+                                                name: "Impressions",
+                                                color: "Green",
+                                            }
+                                        }} className={""}
+                                    />
+                                }
+                            />
                         }
                     />
-                </Tabs.Content>
-            </Tabs.Root>
-        </div>
+                </div>
+                <div className="tw-col-start-2">
+                    <GenericCard
+                        className="tw-col-start-2 tw-rounded-tl-none"
+                        content={
+                            <ComposedChart
+                                height={lineCharHeight}
+                                xValues={dates}
+                                className={""}
+                                title={"Day-wise Distribution of Clicks"}
+                                children={
+                                    <LineGraphComponent
+                                        key="LineGraph"
+                                        scale={Scale.dataDriven}
+                                        data={{
+                                            xValues: dates,
+                                            yMax: maxValueClicks,
+                                            series: {
+                                                values: clicksDataPoints,
+                                                name: "Clicks",
+                                                color: "White",
+                                            }
+                                        }} className={""}
+                                    />
+                                }
+                            />
+                        }
+                    />
+                </div>
+                <div className="tw-col-start-1">
+                    <GenericCard
+                        className="tw-rounded-tl-none"
+                        content={
+                            <ComposedChart
+                                height={lineCharHeight}
+                                xValues={dates}
+                                className={""}
+                                title={"Day-wise Distribution of Conversions"}
+                                children={
+                                    <LineGraphComponent
+                                        key="LineGraph"
+                                        scale={Scale.dataDriven}
+                                        data={{
+                                            xValues: dates,
+                                            yMax: maxValueConversions,
+                                            series: {
+                                                values: conversionsDataPoints,
+                                                name: "Conversions",
+                                                color: "Blue",
+                                            }
+                                        }} className={""}
+                                    />
+                                }
+                            />
+                        }
+                    />
+                </div>
+                <div className="tw-col-start-2">
+
+                    <AccountOverview
+                        adsData={adsData}
+                        minDate={minDate}
+                        maxDate={maxDate}
+                    />
+                </div>
+            </div>
+
+            <VerticalSpacer className="tw-h-3" />
+
+            <div className="tw-grid tw-grid-cols-2 tw-gap-2">
+                {/* Campaign overview: Impressions and CTR */}
+                <div className="tw-col-start-1">
+                    <div className="tw-col-start-2">
+                        <Tabs.Root
+                            defaultValue="1"
+                            className="tw-row-start-3"
+                        >
+                            <Tabs.List>
+                                <Tabs.Trigger
+                                    value="1"
+                                    className="lp-tab tw-rounded-tl-md"
+                                >
+                                    Campaign's Overview
+                                </Tabs.Trigger>
+                                <Tabs.Trigger
+                                    value="2"
+                                    className="lp-tab tw-rounded-tr-md"
+                                >
+                                    Raw Data
+                                </Tabs.Trigger>
+                            </Tabs.List>
+                            <Tabs.Content value="1">
+                                <CampaignsOverview adsData={adsData} />
+                            </Tabs.Content>
+                            <Tabs.Content value="2">
+                                <RawData adsData={adsData} />
+                            </Tabs.Content>
+                        </Tabs.Root>
+                    </div>
+                </div>
+
+            </div>
+        </>
     );
 }
 
-function aggregateHourlyData(adsData: Array<GoogleAdsDataAggregatedRow>) {
-    var result = Object.values(adsData);
-    var response = result.reduce((acc: {[key: string]: GoogleAdsDataAggregatedRow}, obj) => {
-        var key = `${obj.date}_${obj.campaignName}`;
+function CampaignsOverview({adsData}: {adsData: Array<GoogleAdsDataAggregatedRow>}) {
+    const impressionsAndCtrGroupByCampaigns = getImpressionsAndCtrGroupByCampaign(adsData);
 
-        if (!acc[key]) {
-            const googleAdsRow: GoogleAdsDataAggregatedRow = {
-                date: "",
-                hour: 0,
-                campaignId: "",
-                campaignName: "",
-                averageCost: 0,
+    return (
+        <GenericCard
+            className="tw-rounded-tl-none"
+            label="Campaigns overview"
+            content={
+                <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                    <AgGridReact
+                        rowData={impressionsAndCtrGroupByCampaigns.map((object) => ({
+                            campaignName: object.campaignName,
+                            impressions: object.impressions,
+                            clicks: object.clicks,
+                            ctr: object.impressions == 0 ? 0 : `${roundOffToTwoDigits((object.clicks / object.impressions) * 100)}%`
+
+                        }))}
+                        columnDefs={[
+                            {headerName: "Campaign Name", field: "campaignName", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "Impressions", field: "impressions", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "Clicks", field: "clicks", cellClass: "!tw-px-2", resizable: true},
+                            {headerName: "CTR", field: "ctr", cellClass: "!tw-px-2", resizable: true},
+
+                        ]}
+                        defaultColDef={defaultColumnDefinitions}
+                        animateRows={true}
+                        enableRangeSelection={true}
+                    />
+                </div>
+            }
+        />
+    )
+}
+
+function AccountOverview({adsData, minDate, maxDate}: {adsData: Array<GoogleAdsDataAggregatedRow>, minDate: Iso8601Date; maxDate: Iso8601Date}) {
+    const aggregatedMetrics = getAggregatedMetrics(adsData);
+
+    return (
+        <GenericCard
+            className="tw-rounded-tl-none"
+            label="Account overview"
+            content={
+                <div className="tw-col-span-12 tw-h-[320px] ag-theme-alpine-dark">
+                    <AgGridReact
+                        rowData={Object.entries(aggregatedMetrics).map((object) => ({
+                            metric: object[0],
+                            value: numberToHumanFriendlyString(roundOffToTwoDigits(object[1])) // TODO: Add isPercentage for ctr metric
+                        }))}
+                        columnDefs={[
+                            {headerName: "Metric", field: "metric", cellClass: "tw-px-2", resizable: true},
+                            {headerName: `${minDate} - ${maxDate}`, field: "value", cellClass: "tw-px-2", resizable: true}
+
+                        ]}
+                        defaultColDef={defaultColumnDefinitions}
+                        animateRows={true}
+                        domLayout="autoHeight"
+                        enableRangeSelection={true}
+                    />
+                </div>
+            }
+        />
+    )
+}
+
+function RawData({adsData}: {adsData: Array<GoogleAdsDataAggregatedRow>}) {
+    return (
+        <GenericCard
+            className="tw-rounded-tl-none"
+            label="Raw Google Ads data"
+            content={
+                <div className="tw-col-span-12 tw-h-[640px] ag-theme-alpine-dark">
+                    <AgGridReact
+                        rowData={adsData.map((object) => ({
+                            date: object.date,
+                            hour: object.hour,
+                            campaignId: object.campaignId,
+                            campaignName: object.campaignName,
+                            averageCost: numberToHumanFriendlyString(object.averageCost),
+                            impressions: numberToHumanFriendlyString(object.impressions),
+                            clicks: numberToHumanFriendlyString(object.clicks),
+                            averageCpc: numberToHumanFriendlyString(object.averageCpc / microValue),
+                            averageCpe: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpe / microValue)),
+                            averageCpm: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpm / microValue)),
+                            averageCpv: numberToHumanFriendlyString(roundOffToTwoDigits(object.averageCpv / microValue)),
+                            interactionEventTypes: numberToHumanFriendlyString(object.interactionEventTypes),
+                            valuePerAllConversions: numberToHumanFriendlyString(object.valuePerAllConversions),
+                            videoViewRate: roundOffToTwoDigits(object.videoViewRate),
+                            videoViews: roundOffToTwoDigits(object.videoViews),
+                            viewThroughConversions: numberToHumanFriendlyString(object.viewThroughConversions),
+                            conversionsFromInteractionsRate: numberToHumanFriendlyString(object.conversionsFromInteractionsRate),
+                            conversionsValue: numberToHumanFriendlyString(object.conversionsValue),
+                            conversions: numberToHumanFriendlyString(object.conversions),
+                            costMicros: numberToHumanFriendlyString(object.costMicros / microValue),
+                            costPerAllConversions: numberToHumanFriendlyString(object.costPerAllConversions),
+                            ctr: roundOffToTwoDigits(object.ctr),
+                            engagementRate: numberToHumanFriendlyString(object.engagementRate),
+                            engagements: numberToHumanFriendlyString(object.engagements),
+                            activeViewImpressions: numberToHumanFriendlyString(object.activeViewImpressions),
+                            activeViewMeasurability: numberToHumanFriendlyString(object.activeViewMeasurability),
+                            activeViewMeasurableCostMicros: numberToHumanFriendlyString(object.activeViewMeasurableCostMicros),
+                            activeViewMeasurableImpressions: numberToHumanFriendlyString(object.activeViewMeasurableImpressions),
+                            allConversionsFromInteractionsRate: roundOffToTwoDigits(object.allConversionsFromInteractionsRate),
+                            allConversionsValue: numberToHumanFriendlyString(object.allConversionsValue),
+                            allConversions: numberToHumanFriendlyString(object.allConversions),
+                            interactionRate: roundOffToTwoDigits(object.interactionRate),
+                            interactions: numberToHumanFriendlyString(object.interactions),
+                            allConversionsByConversionDate: numberToHumanFriendlyString(object.allConversionsByConversionDate),
+                            valuePerAllConversionsByConversionDate: numberToHumanFriendlyString(object.valuePerAllConversionsByConversionDate),
+                        }))}
+                        columnDefs={[
+                            {
+                                headerName: "Date",
+                                valueGetter: (params) => dateToMediumNoneEnFormat(params.data.date),
+                                filter: "agDateColumnFilter",
+                                comparator: agGridDateComparator,
+                                resizable: true,
+                            },
+                            {headerName: "hour", field: "hour", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "CampaignId", field: "campaignId", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "campaignName", field: "campaignName", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "averageCost", field: "averageCost", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "impressions", field: "impressions", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "clicks", field: "clicks", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "amountSpent", field: "amountSpent", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "averageCpc", field: "averageCpc", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "averageCpe", field: "averageCpe", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "averageCpm", field: "averageCpm", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "averageCpv", field: "averageCpv", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "interactionEventTypes", field: "interactionEventTypes", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "valuePerAllConversions", field: "valuePerAllConversions", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "videoViewRate", field: "videoViewRate", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "videoViews", field: "videoViews", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "viewThroughConversions", field: "viewThroughConversions", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "conversionsFromInteractionsRate", field: "conversionsFromInteractionsRate", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "conversionsValue", field: "conversionsValue", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "conversions", field: "conversions", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "costMicros", field: "costMicros", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "costPerAllConversions", field: "costPerAllConversions", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "ctr", field: "ctr", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "engagementRate", field: "engagementRate", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "engagements", field: "engagements", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "activeViewImpressions", field: "activeViewImpressions", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "activeViewMeasurability", field: "activeViewMeasurability", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "activeViewMeasurableCostMicros", field: "activeViewMeasurableCostMicros", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "activeViewMeasurableImpressions", field: "activeViewMeasurableImpressions", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "allConversionsFromInteractionsRate", field: "allConversionsFromInteractionsRate", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "allConversionsValue", field: "allConversionsValue", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "allConversions", field: "allConversions", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "interactionRate", field: "interactionRate", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "interactions", field: "interactions", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "allConversionsByConversionDate", field: "allConversionsByConversionDate", cellClass: "!tw-px-0", resizable: true},
+                            {headerName: "valuePerAllConversionsByConversionDate", field: "valuePerAllConversionsByConversionDate", cellClass: "!tw-px-0", resizable: true},
+                        ]}
+                        defaultColDef={defaultColumnDefinitions}
+                        animateRows={true}
+                        enableRangeSelection={true}
+                    // frameworkComponents={{
+                    //     progressCellRenderer,
+                    // }}
+                    />
+                </div>
+            }
+        />
+    )
+}
+
+function getImpressionsAndCtrGroupByCampaign(googleAdsData: Array<GoogleAdsDataAggregatedRow>): Array<CampaignMetrics> {
+
+    const result = googleAdsData.reduce((accumulatedResult: {[key: string]: CampaignMetrics}, currentObject) => {
+        var campaignName = currentObject.campaignName;
+        const impressions = currentObject.impressions;
+        const clicks = currentObject.clicks;
+
+        if (!accumulatedResult[campaignName]) {
+            const googleAdsMetrics: CampaignMetrics = {
+                campaignName: campaignName,
                 impressions: 0,
-                clicks: 0,
-                interactionEventTypes: 0,
-                valuePerAllConversions: 0,
-                videoViewRate: 0,
-                videoViews: 0,
-                viewThroughConversions: 0,
-                conversionsFromInteractionsRate: 0,
-                conversionsValue: 0,
-                conversions: 0,
-                costMicros: 0,
-                costPerAllConversions: 0,
-                ctr: 0,
-                engagementRate: 0,
-                engagements: 0,
-                activeViewImpressions: 0,
-                activeViewMeasurability: 0,
-                activeViewMeasurableCostMicros: 0,
-                activeViewMeasurableImpressions: 0,
-                allConversionsFromInteractionsRate: 0,
-                allConversionsValue: 0,
-                averageCpc: 0,
-                allConversions: 0,
-                averageCpe: 0,
-                averageCpm: 0,
-                averageCpv: 0,
-                interactionRate: 0,
-                interactions: 0,
-                allConversionsByConversionDate: 0,
-                valuePerAllConversionsByConversionDate: 0,
-            };
-            acc[key] = googleAdsRow;
+                clicks: 0
+            }
+            accumulatedResult[campaignName] = googleAdsMetrics;
         }
 
-        acc[key].campaignId = obj.campaignId;
-        acc[key].date = obj.date;
-        acc[key].campaignName = obj.campaignName;
-        acc[key].clicks = parseInt(acc[key].clicks) + parseInt(obj.clicks);
-        acc[key].impressions += parseInt(obj.impressions);
-        acc[key].averageCost += parseInt(obj.averageCost);
+        accumulatedResult[campaignName].impressions += impressions;
+        accumulatedResult[campaignName].clicks += clicks;
 
-        return acc;
-    }, {});
+        return accumulatedResult;
 
-    return response;
+    }, {})
+
+    return Object.values(result);
+}
+
+function getAggregatedMetrics(googleAdsData: Array<GoogleAdsDataAggregatedRow>): GoogleAdsMetrics {
+
+    const initialObject: GoogleAdsMetrics = {
+        impressions: 0,
+        clicks: 0,
+        ctr: 0,
+        averageCpc: 0,
+        cost: 0,
+        conversions: 0,
+        costPerConversions: 0,
+        averageCpm: 0
+    }
+
+    const aggregatedMetrics = googleAdsData.reduce((accumulatedResult, currentObject) => {
+
+        accumulatedResult.impressions += currentObject.impressions;
+        accumulatedResult.clicks += currentObject.clicks;
+        accumulatedResult.cost += currentObject.costMicros;
+        accumulatedResult.conversions += currentObject.conversions;
+
+        return accumulatedResult;
+
+    }, initialObject)
+
+    aggregatedMetrics.cost = aggregatedMetrics.cost / microValue;
+
+    // CPM = Cost per thousand metrics
+    aggregatedMetrics.averageCpm = (aggregatedMetrics.impressions / 1000) == 0 ? 0 : aggregatedMetrics.cost / (aggregatedMetrics.impressions / 1000);
+
+    // CTR = total clicks / total impressions
+    aggregatedMetrics.ctr = aggregatedMetrics.impressions == 0 ? 0.0 : (aggregatedMetrics.clicks / aggregatedMetrics.impressions);
+
+    // Cost-per-conversions = Total cost / Total conversions
+    aggregatedMetrics.costPerConversions = aggregatedMetrics.conversions == 0 ? 0 : (aggregatedMetrics.cost / aggregatedMetrics.conversions);
+
+    // Average cost-per-click
+    aggregatedMetrics.averageCpc = aggregatedMetrics.clicks == 0 ? 0 : (aggregatedMetrics.cost / aggregatedMetrics.clicks);
+
+    return aggregatedMetrics;
 }

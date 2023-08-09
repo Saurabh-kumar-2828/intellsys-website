@@ -1,4 +1,5 @@
 import {DateTime} from "luxon";
+import {Iso8601Date} from "./typeDefinitions";
 
 // export function getUrlForResource(resourceRelativePath) {
 //     return `${process.env.NEXT_PUBLIC_FRONTEND_URL}/resources/${resourceRelativePath}`;
@@ -206,4 +207,11 @@ export function getDomainFromEmail(email: string): string {
     }
 
     return email.split("@")[1];
+}
+
+export const microValue = Math.pow(10, 6);
+
+export function getDateFromDateTimestamp(date: string): string {
+    console.log(typeof date);
+    return date.substring(0, 10);
 }

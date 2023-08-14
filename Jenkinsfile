@@ -30,7 +30,7 @@ pipeline {
                     if (env.BRANCH_NAME == 'staging') {
                         withCredentials([usernamePassword(credentialsId: '9831574e-4c5c-4476-b75b-0924dfb662dd', passwordVariable: 'DockerCredentials', usernameVariable: 'DockerUser')]) { 
                             sh "docker login -u growthjockey -p ${DockerCredentials}"
-                            sh "docker build --build-arg BASE_IMAGE=048578456468.dkr.ecr.ap-south-1.amazonaws.com/base-images:intellsys-stage -t intellsys-stage:latest ."
+                            sh "docker build --build-arg BASE_IMAGE=048578456468.dkr.ecr.ap-south-1.amazonaws.com/base-images:intellsys-stage -t intellsys-stage-final:latest ."
                             } 
                     }
                     else if (env.BRANCH_NAME == 'prod') {

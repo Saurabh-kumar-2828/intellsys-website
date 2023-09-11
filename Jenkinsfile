@@ -36,6 +36,8 @@ pipeline {
         IP_PROD = "3.6.162.95"
     }
 
+    tools {nodejs "node"}
+
     stages {
         stage("Logging into AWS ECR") {
             steps {
@@ -75,6 +77,26 @@ pipeline {
                             sed -i "s/COMMIT_ID/\${commitId}/g" app/routes/health-check.tsx
                         """
                     }
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == "staging") {
+                        DIRECTORY = "staging"
+                    } else if (env.BRANCH_NAME == "prod") {
+                        DIRECTORY = "prod"
+                    } else {
+                        return
+                    }
+                    sh """
+                    cd /var/lib/jenkins/workspace/${GITHUB_REPOSITORY_NAME}_${DIRECTORY}
+                    """
+                    sh 'npm install -g npm@latest'
+                    sh 'npm install'
+                    sh 'npm run build'
                 }
             }
         }

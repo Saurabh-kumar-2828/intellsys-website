@@ -1,13 +1,10 @@
 ARG BASE_IMAGE
-FROM ${BASE_IMAGE} 
-
-WORKDIR /intellsys
+FROM ${BASE_IMAGE}
+WORKDIR /intellsys-website
 COPY package*.json ./
 RUN npm install
-
-COPY . .
-RUN npm run build
-
+COPY build ./build
+COPY public ./public
+#COPY server.js ./
 EXPOSE 3000
-
 CMD [ "npm", "start" ]

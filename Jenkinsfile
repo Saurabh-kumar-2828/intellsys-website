@@ -36,20 +36,32 @@ pipeline {
         IP_PROD = "3.6.162.95"
     }
 
-    tools {nodejs "node"}
+    tools {
+        nodejs "node"
+    }
 
     stages {
         stage("Logging into AWS ECR") {
             steps {
                 script {
-                    sh "sudo aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URI}"
+                    if (env.BRANCH_NAME == "prod" || env.BRANCH_NAME == "stage") {
+                        sh "sudo aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URI}"
+                    } else {
+                        return
+                    }
                 }
             }
         }
 
         stage("Cloning git website") {
             steps {
-                git branch: env.BRANCH_NAME, credentialsId: "33c357dc-5f11-4930-9063-07bc866f7cff", url: "https://github.com/GrowthJockey/${GITHUB_REPOSITORY_NAME}.git"
+                script {
+                    if (env.BRANCH_NAME == "prod" || env.BRANCH_NAME == "stage") {
+                        git branch: env.BRANCH_NAME, credentialsId: "33c357dc-5f11-4930-9063-07bc866f7cff", url: "https://github.com/GrowthJockey/${GITHUB_REPOSITORY_NAME}.git"
+                    } else {
+                        return
+                    }
+                }
             }
         }
 
@@ -72,16 +84,13 @@ pipeline {
                             git rev-parse ${env.BRANCH_NAME}
                         """, returnStdout: true).trim()
 
-                        sh """
-                            cd /var/lib/jenkins/workspace/${GITHUB_REPOSITORY_NAME}_${DIRECTORY}
-                            sed -i "s/COMMIT_ID/\${commitId}/g" app/routes/health-check.tsx
-                        """
+                        sh "sed -i \"s/COMMIT_ID/${commitId}/g\" app/routes/health-check.tsx"
                     }
                 }
             }
         }
 
-        stage('Build') {
+        stage("Build") {
             steps {
                 script {
                     if (env.BRANCH_NAME == "staging") {
@@ -91,12 +100,10 @@ pipeline {
                     } else {
                         return
                     }
-                    sh """
-                    cd /var/lib/jenkins/workspace/${GITHUB_REPOSITORY_NAME}_${DIRECTORY}
-                    """
-                    sh 'npm install -g npm@latest'
-                    sh 'npm install'
-                    sh 'npm run build'
+
+                    sh "cd /var/lib/jenkins/workspace/${GITHUB_REPOSITORY_NAME}_${DIRECTORY}"
+                    sh "npm ci"
+                    sh "npm run build"
                 }
             }
         }
@@ -114,7 +121,7 @@ pipeline {
 
                     withCredentials([usernamePassword(credentialsId: "9831574e-4c5c-4476-b75b-0924dfb662dd", passwordVariable: "DOCKER_CREDENTIALS", usernameVariable: "DOCKER_USER")]) {
                         sh "docker login -u growthjockey -p ${DOCKER_CREDENTIALS}"
-                        sh "docker build  --build-arg BASE_IMAGE=${BASE_IMAGE} -t ${ECR_REPOSITORY_NAME}:latest ."
+                        sh "docker build --build-arg BASE_IMAGE=${BASE_IMAGE} -t ${ECR_REPOSITORY_NAME}:latest ."
                     }
                 }
             }
@@ -133,13 +140,13 @@ pipeline {
                         return
                     }
 
-                    sh "docker tag ${ECR_REPOSITORY_NAME}:latest ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${BUILD_ID}"
+                    sh "docker tag ${ECR_REPOSITORY_NAME}:latest ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${env.BUILD_ID}"
                     sh "docker push ${DOCKER_IMAGE}:${env.BUILD_ID}"
                 }
             }
         }
 
-        stage("Docker") {
+        stage("Removing fallback container") {
             steps {
                 script {
                     if (env.BRANCH_NAME == "staging") {
@@ -168,7 +175,7 @@ pipeline {
             }
         }
 
-        stage("Deployment") {
+        stage("Deploy") {
             steps {
                 script {
                     if (env.BRANCH_NAME == "staging") {
@@ -191,7 +198,6 @@ pipeline {
                             'while [[ \"\$(curl -vL -s -o /dev/null -w \"%{http_code}\" localhost:${FALLBACK_PORT})\" -ne 200 ]]; do sleep 1; done'"
                         sh "ssh ubuntu@${ADDRESS} 'sudo sed -i s~http://localhost:${CONTAINER_PORT}~http://localhost:${FALLBACK_PORT}~g ${NGINX_FILE}'"
                         sh "ssh ubuntu@${ADDRESS} 'sudo nginx -s reload'"
-
                         def commandOutput = sh(script: fullSshCommand, returnStdout: true).trim()
                         def count = commandOutput.toInteger()
 

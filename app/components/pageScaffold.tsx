@@ -1,4 +1,4 @@
-import {useTransition} from "@remix-run/react";
+import {useNavigation} from "@remix-run/react";
 import {ToastContainer} from "react-toastify";
 import {LoaderComponent} from "~/components/loaderComponent";
 import {SignedInHeaderComponent} from "~/components/signedInHeaderComponent";
@@ -15,11 +15,11 @@ export function PageScaffold({
     currentCompany: Company;
     children;
 }) {
-    const transition = useTransition();
+    const navigation = useNavigation();
 
     return (
         <div className="tw-grid tw-grid-rows-[auto_1fr] tw-min-h-screen">
-            {transition.state == "idle" ? null : <LoaderComponent />}
+            {navigation.state == "idle" ? null : <LoaderComponent />}
             {user == null || accessibleCompanies == null || currentCompany == null ? <div /> : (
                 <SignedInHeaderComponent
                     user={user}

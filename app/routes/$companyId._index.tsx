@@ -1,4 +1,4 @@
-import type {LoaderFunction, MetaFunction} from "@remix-run/node";
+import type {LoaderFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import {Link, useLoaderData, useMatches} from "@remix-run/react";
 import {PlusCircle} from "react-bootstrap-icons";
@@ -114,12 +114,6 @@ export const loader: LoaderFunction = async ({request, params}) => {
     };
 
     return json(loaderData);
-};
-
-export const meta: MetaFunction = () => {
-    return {
-        title: "Intellsys",
-    };
 };
 
 export default function () {

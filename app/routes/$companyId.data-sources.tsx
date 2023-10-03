@@ -207,7 +207,7 @@ function DataSources({
                                             <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.id}</td>
 
                                             <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                                <Form method="post">
+                                                <Form method="POST">
                                                     <HiddenFormField
                                                         name="action"
                                                         value="deleteGoogleAds"
@@ -242,7 +242,7 @@ function DataSources({
                 <VerticalSpacer className="tw-h-4" />
 
                 <Form
-                    method="post"
+                    method="POST"
                     className="tw-w-full tw-grid tw-grid-cols-[auto_auto] tw-justify-center tw-place-items-center tw-gap-x-4"
                 >
                     <HiddenFormField
@@ -310,7 +310,7 @@ function DataSources({
                                             <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.id}</td>
 
                                             <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                                <Form method="post">
+                                                <Form method="POST">
                                                     <HiddenFormField
                                                         name="action"
                                                         value="deleteFacebookAds"
@@ -345,7 +345,7 @@ function DataSources({
                 <VerticalSpacer className="tw-h-4" />
 
                 <Form
-                    method="post"
+                    method="POST"
                     className="tw-w-full tw-grid tw-grid-cols-[auto_auto] tw-justify-center tw-place-items-center tw-gap-x-4"
                 >
                     <input
@@ -405,7 +405,7 @@ function DataSources({
                                             <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">{connector.id}</td>
 
                                             <td className="tw-w-full tw-border tw-border-solid tw-border-white tw-p-2 tw-whitespace-nowrap">
-                                                <Form method="post">
+                                                <Form method="POST">
                                                     <HiddenFormField
                                                         name="action"
                                                         value="deleteGoogleAnalytics"
@@ -440,7 +440,7 @@ function DataSources({
                 <VerticalSpacer className="tw-h-4" />
 
                 <Form
-                    method="post"
+                    method="POST"
                     className="tw-w-full tw-grid tw-grid-cols-[auto_auto] tw-justify-center tw-place-items-center tw-gap-x-4"
                 >
                     <input

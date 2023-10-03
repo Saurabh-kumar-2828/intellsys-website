@@ -50,13 +50,13 @@ export async function sendOtp(email: string): Promise<void | Error> {
         body: body,
     };
 
-    const response = await fetch("https://mailer.intellsys.ai/values_from_json", requestOptions);
+    // const response = await fetch("https://mailer.intellsys.ai/values_from_json", requestOptions);
 
-    if (!response.ok) {
-        console.log(response.status);
-        console.log(response.text());
-        return new Error("Failed to send email");
-    }
+    // if (!response.ok) {
+    //     console.log(response.status);
+    //     console.log(response.text());
+    //     return new Error("Failed to send email");
+    // }
 }
 
 export async function verifyOtp(email: string, otp: string): Promise<{success: boolean}> {

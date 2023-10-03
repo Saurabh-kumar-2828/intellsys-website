@@ -220,7 +220,7 @@ function OAuthCallback({accessibleAccounts, data, companyId}: {data: string; com
 
                     <div>
                         <Form
-                            method="post"
+                            method="POST"
                             className="tw-row-auto tw-grid"
                         >
                             <HiddenFormField

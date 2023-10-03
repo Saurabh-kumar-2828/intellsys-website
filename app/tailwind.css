@@ -20,9 +20,9 @@
         font-size: 16px;
     }
 
-    .lp-tab {
+    /* .lp-tab {
         @apply tw-p-4 tw-bg-dark-bg-500 radix-tab-active:tw-font-bold radix-tab-active:tw-text-white radix-tab-active:tw-shadow-[0_-2px_0_#ffffff_inset];
-    }
+    } */
 
     /* TODO: Fix this, `is` is very ambiguous and confusing */
     .is-button {
@@ -129,4 +129,14 @@
         border-image-source: linear-gradient(145.53deg, #1e40ca 0%, #ffffff 105.25%);
         border-radius: 12px !important;
     }
+}
+
+.ag-theme-alpine-dark {
+    --ag-font-size: 14px;
+    --ag-font-family: Poppins;
+    --ag-font-weight: 400;
+}
+
+.ag-root-wrapper {
+    border-radius: 8px;
 }

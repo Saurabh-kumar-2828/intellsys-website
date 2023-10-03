@@ -1,12 +1,7 @@
 import type {LoaderFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
 import {Form, useLoaderData} from "@remix-run/react";
-import {BarElement, CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
-import csvDownload from "json-to-csv-export";
 import React, {useState} from "react";
-import {TriangleFill} from "react-bootstrap-icons";
-import {Bar} from "react-chartjs-2";
-import {getSearchQueriesWithInfo} from "~/backend/livguard.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
@@ -14,17 +9,21 @@ import {EmptyFlexFiller} from "~/global-common-typescript/components/emptyFlexFi
 import type {Uuid} from "~/global-common-typescript/typeDefinitions";
 import {getNonEmptyStringFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {concatenateNonNullStringsWithSpaces} from "~/global-common-typescript/utilities/utilities";
+import csvDownload from "json-to-csv-export";
+import {TriangleFill} from "react-bootstrap-icons";
+import {Bar} from "react-chartjs-2";
+import {BarElement, CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
 
-export type TermFrequency = {
-    term: string;
-    frequency: number;
+export type ServerLatency = {
+    time: string;
+    latency: null | number;
 };
 
 type LoaderData = {
     startDate: string;
     endDate: string;
-    totalRows: number;
-    termFrequencies: Array<TermFrequency>;
+    totalRows: number,
+    serverLatencies: Array<ServerLatency>;
 };
 
 export const loader: LoaderFunction = async ({request}) => {
@@ -45,87 +44,112 @@ export const loader: LoaderFunction = async ({request}) => {
     const startDate = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("startDate")) ?? new Date().toISOString().slice(0, 10);
     const endDate = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("endDate")) ?? new Date().toISOString().slice(0, 10);
 
-    const searchQueriesWithInfo = await getSearchQueriesWithInfo(startDate, endDate, 999999, 0);
-    if (searchQueriesWithInfo instanceof Error) {
-        throw searchQueriesWithInfo;
-    }
-
-    // TODO: Something is still wrong since we are still seeing capitals here. Investigate.
-    function processTermFrequencies(termFrequencies: Array<TermFrequency>): Array<TermFrequency> {
-        const termFrequenciesMap = new Map<string, number>();
-        for (let termFrequencyIndex = 0; termFrequencyIndex < termFrequencies.length; termFrequencyIndex++) {
-            const termFrequency = termFrequencies[termFrequencyIndex];
-
-            termFrequencies[termFrequencyIndex].term = termFrequency.term;
-            termFrequenciesMap.set(termFrequency.term, termFrequency.frequency);
-        }
-
-        const processedTermFrequencies: Array<TermFrequency> = [];
-        for (let termFrequenciesIndex = 0; termFrequenciesIndex < termFrequencies.length; termFrequenciesIndex++) {
-            const termFrequency = termFrequencies[termFrequenciesIndex];
-
-            processedTermFrequencies[termFrequenciesIndex] = {
-                term: termFrequency.term,
-                frequency: termFrequency.frequency
-                    - (termFrequenciesMap.get(`${termFrequency.term}a`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}b`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}c`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}d`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}e`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}f`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}g`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}h`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}i`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}j`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}k`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}l`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}m`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}n`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}o`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}p`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}q`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}r`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}s`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}t`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}u`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}v`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}w`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}x`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}y`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}z`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}0`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}1`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}2`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}3`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}4`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}5`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}6`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}7`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}8`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}9`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term} `) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}-`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term},`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}.`) ?? 0),
-            };
-        }
-        return processedTermFrequencies.sort((a, b) => b.frequency - a.frequency);
-    }
+    // TODO: Generate this properly
+    const serverLatencies: Array<ServerLatency> = [
+        {
+            time: "2023-06-09T17-00-00Z",
+            latency: 40.82,
+        },
+        {
+            time: "2023-06-08T17-00-00Z",
+            latency: 25.87,
+        },
+        {
+            time: "2023-06-07T17-00-00Z",
+            latency: 69.94,
+        },
+        {
+            time: "2023-06-06T17-00-00Z",
+            latency: 73.33,
+        },
+        {
+            time: "2023-06-05T17-00-00Z",
+            latency: 84.97,
+        },
+        {
+            time: "2023-06-04T17-00-00Z",
+            latency: 33.3,
+        },
+        {
+            time: "2023-06-03T17-00-00Z",
+            latency: 42.73,
+        },
+        {
+            time: "2023-06-02T17-00-00Z",
+            latency: 47.75,
+        },
+        {
+            time: "2023-06-01T17-00-00Z",
+            latency: 42.93,
+        },
+        {
+            time: "2023-05-31T17-00-00Z",
+            latency: 65.07,
+        },
+        {
+            time: "2023-05-30T17-00-00Z",
+            latency: 52.9,
+        },
+        {
+            time: "2023-05-29T17-00-00Z",
+            latency: 55.12,
+        },
+        {
+            time: "2023-05-28T17-00-00Z",
+            latency: 55.43,
+        },
+        {
+            time: "2023-05-27T17-00-00Z",
+            latency: 79.1,
+        },
+        {
+            time: "2023-05-26T17-00-00Z",
+            latency: 63.65,
+        },
+        {
+            time: "2023-05-25T17-00-00Z",
+            latency: 44.93,
+        },
+        {
+            time: "2023-05-24T17-00-00Z",
+            latency: 68.97,
+        },
+        {
+            time: "2023-05-23T17-00-00Z",
+            latency: 35.23,
+        },
+        {
+            time: "2023-05-22T17-00-00Z",
+            latency: 17.52,
+        },
+        {
+            time: "2023-05-21T17-00-00Z",
+            latency: 34.47,
+        },
+        {
+            time: "2023-05-20T17-00-00Z",
+            latency: 52.22,
+        },
+        {
+            time: "2023-05-19T17-00-00Z",
+            latency: 19.18,
+        },
+    ].reverse();
 
     const loaderData: LoaderData = {
         startDate: startDate,
         endDate: endDate,
-        totalRows: searchQueriesWithInfo.nRows,
-        termFrequencies: processTermFrequencies(searchQueriesWithInfo.rows),
+        totalRows: 22,
+        serverLatencies: serverLatencies,
     };
 
     return json(loaderData);
 };
 
 export default function () {
-    const {startDate: originalStartDate, endDate: originalEndDate, totalRows, termFrequencies} = useLoaderData() as LoaderData;
+    const {startDate: originalStartDate, endDate: originalEndDate, totalRows, serverLatencies} = useLoaderData() as LoaderData;
 
-    const [rows, setRows] = useState(() => structuredClone(termFrequencies));
+    const [rows, setRows] = useState(() => structuredClone(serverLatencies));
 
     const [rowsToInsert, setRowsToInsert] = useState<Array<Uuid>>([]);
     const [rowsToUpdate, setRowsToUpdate] = useState<Array<Uuid>>([]);
@@ -134,20 +158,20 @@ export default function () {
     const [startDate, setStartDate] = useState(originalStartDate);
     const [endDate, setEndDate] = useState(originalEndDate);
 
-    function markRowAsInserted(row: TermFrequency) {
-        if (rowsToInsert.includes(row.term)) {
+    function markRowAsInserted(row: ServerLatency) {
+        if (rowsToInsert.includes(row.time)) {
             return;
         }
 
-        setRowsToInsert([...rowsToInsert, row.term]);
+        setRowsToInsert([...rowsToInsert, row.time]);
     }
 
-    function markRowAsUpdated(row: TermFrequency) {
-        if (rowsToInsert.includes(row.term) || rowsToUpdate.includes(row.term)) {
+    function markRowAsUpdated(row: ServerLatency) {
+        if (rowsToInsert.includes(row.time) || rowsToUpdate.includes(row.time)) {
             return;
         }
 
-        setRowsToUpdate([...rowsToUpdate, row.term]);
+        setRowsToUpdate([...rowsToUpdate, row.time]);
     }
 
     // chartjs graphs
@@ -156,7 +180,7 @@ export default function () {
     return (
         <div className="tw-grid tw-grid-cols-12 tw-gap-x-6 tw-gap-y-6 tw-p-8">
             <div className="tw-col-span-12 tw-text-[3rem] tw-text-center tw-relative">
-                Search Queries
+                Server Latencies
                 <button
                     type="button"
                     className="tw-absolute tw-left-0 tw-top-4 tw-bottom-4 tw-px-8 tw-py-2 tw-bg-primary disabled:tw-bg-slate-700 tw-text-white disabled:tw-text-[#888888] tw-text-[1rem] tw-rounded-full"
@@ -194,7 +218,7 @@ export default function () {
                 </button>
                 {/* <fetcher.Form */}
                 <Form
-                    method="post"
+                    method="POST"
                     action="/update-locations"
                     className="tw-absolute tw-right-0 tw-top-4 tw-bottom-4 tw-flex"
                 >
@@ -241,7 +265,7 @@ export default function () {
                 />
 
                 <a
-                    href={`/livguard/search-queries?startDate=${startDate}&endDate=${endDate}`}
+                    href={`/livguard/server-latencies?startDate=${startDate}&endDate=${endDate}`}
                     className="tw-top-4 tw-bottom-4 tw-px-8 tw-py-2 tw-bg-primary disabled:tw-bg-slate-700 tw-text-white disabled:tw-text-[#888888] tw-text-[1rem] tw-rounded-full"
                 >
                     Update
@@ -249,7 +273,9 @@ export default function () {
 
                 <EmptyFlexFiller />
 
-                <div>Search Queries: {totalRows}</div>
+                <div>
+                    Total rows: {totalRows}
+                </div>
 
                 <button
                     type="button"
@@ -258,7 +284,7 @@ export default function () {
                         csvDownload({
                             data: rows.map((row) => flattenObject(row)),
                             delimiter: ",",
-                            filename: "search-queries.csv",
+                            filename: "server-latencies.csv",
                         });
                     }}
                 >
@@ -276,16 +302,16 @@ export default function () {
                             },
                             title: {
                                 display: true,
-                                text: "Search term frequencies",
+                                text: "Server latencies",
                             },
                         },
                     }}
                     data={{
-                        labels: rows.slice(0, 20).map((row) => row.term),
+                        labels: rows.map((row) => row.time),
                         datasets: [
                             {
-                                label: "Frequency",
-                                data: rows.slice(0, 20).map((row) => row.frequency),
+                                label: "Latency",
+                                data: rows.map((row) => row.latency),
                                 backgroundColor: "rgba(75, 192, 192, 0.2)",
                                 borderColor: "rgb(75, 192, 192)",
                             },
@@ -344,17 +370,25 @@ function DataTable<T>({
                         className="tw-px-4 tw-py-2"
                         style={{outline: "1px solid white"}}
                     >
-                        term
+                        <div className="tw-flex tw-flex-row tw-gap-x-4 tw-items-center tw-justify-center">
+                            <div>
+                                time
+                            </div>
+                            <TriangleFill className="tw-w-3 tw-h-3 tw-rotate-180" />
+                        </div>
                     </th>
                     <th
                         className="tw-px-4 tw-py-2"
                         style={{outline: "1px solid white"}}
                     >
-                        <div className="tw-flex tw-flex-row tw-gap-x-4 tw-items-center tw-justify-center">
-                            <div>frequency</div>
-                            <TriangleFill className="tw-w-3 tw-h-3 tw-rotate-180" />
-                        </div>
+                        latency
                     </th>
+                    {/* <th
+                        className="tw-px-4 tw-py-2"
+                        style={{outline: "1px solid white"}}
+                    >
+                        updatedAt
+                    </th> */}
                 </tr>
             </thead>
 
@@ -364,24 +398,39 @@ function DataTable<T>({
                     itemBuilder={(row, rowIndex) => (
                         <tr
                             className={
-                                rowsToInsert.includes(row.term)
-                                    ? "tw-bg-green-600"
-                                    : rowsToUpdate.includes(row.term)
-                                    ? "tw-bg-yellow-600"
-                                    : rowsToDelete.includes(row.term)
-                                    ? "tw-bg-red-400"
-                                    : undefined
+                                rowsToInsert.includes(row.time) ? "tw-bg-green-600" : rowsToUpdate.includes(row.time) ? "tw-bg-yellow-600" : rowsToDelete.includes(row.time) ? "tw-bg-red-400" : undefined
                             }
                             key={rowIndex}
                         >
+                            {/* <td className="tw-p-d" style={{border: "1px solid white"}}>
+                                <div className="tw-bg-primary-1 tw-rounded-full tw-w-8 tw-h-8" />
+                            </td> */}
                             <td style={{border: "1px solid white"}}>
                                 {/* <EditableTextField object={location} property="id" onChangeCallback={() => markLocationAsUpdated(location)} className="tw-whitespace-nowrap tw-overflow-hidden" placeholder="" /> */}
-                                <div className="tw-px-4 tw-py-2 tw-whitespace-nowrap tw-overflow-hidden">{row.term}</div>
+                                <div className="tw-px-4 tw-py-2 tw-whitespace-nowrap tw-overflow-hidden">{row.time}</div>
                             </td>
                             <td style={{border: "1px solid white"}}>
                                 {/* <EditableTextField object={location} property="id" onChangeCallback={() => markLocationAsUpdated(location)} className="tw-whitespace-nowrap tw-overflow-hidden" placeholder="" /> */}
-                                <div className="tw-px-4 tw-py-2 tw-whitespace-nowrap tw-overflow-hidden">{row.frequency}</div>
+                                <div className="tw-px-4 tw-py-2 tw-whitespace-nowrap tw-overflow-hidden">{row.latency}</div>
                             </td>
+                            {/* <td style={{border: "1px solid white"}}>
+                                <input
+                                    type="text"
+                                    value={row.formResponse.name}
+                                    onChange={(e) => {
+                                        row.formResponse.name = e.target.value;
+                                        markRowAsUpdated(row);
+                                    }}
+                                    className="tw-whitespace-nowrap tw-overflow-hidden tw-bg-transparent tw-px-4 tw-py-2"
+                                    placeholder=""
+                                />
+                            </td> */}
+                            {/* <td
+                                style={{border: "1px solid white"}}
+                                className="tw-px-4 tw-py-2"
+                            >
+                                <TreeRepresentation object={row.formResponse} />
+                            </td> */}
                         </tr>
                     )}
                 />

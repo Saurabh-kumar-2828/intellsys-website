@@ -1,10 +1,11 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
+import type {LinksFunction, LoaderFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
+import type {MetaFunction} from "@remix-run/react";
 import {useLoaderData, useMatches} from "@remix-run/react";
 import "ag-grid-enterprise";
 import {AgGridReact} from "ag-grid-react";
-import styles from "app/styles.css";
+import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
 import {DateTime} from "luxon";
 import {useState} from "react";
 import type {AdsActionStatsObject, FacebookAdsAggregatedRow, FacebookAdsData} from "~/backend/business-insights";
@@ -27,17 +28,11 @@ import {Scale, aggregateByDate, defaultColumnDefinitions, getDates} from "~/util
 
 // Facebook ads
 
-export const meta: MetaFunction = () => {
-    return {
-        title: "Facebook Ads Funnel - Intellsys",
-    };
-};
-
-export const links: LinksFunction = () => {
+export const meta: MetaFunction = ({data, matches}) => {
     return [
-        {rel: "stylesheet", href: "https://unpkg.com/ag-grid-community/styles/ag-grid.css"},
-        {rel: "stylesheet", href: "https://unpkg.com/ag-grid-community/styles/ag-theme-alpine.css"},
-        {rel: "stylesheet", href: styles},
+        {
+            title: "Facebook Ads Funnel - Intellsys",
+        },
     ];
 };
 

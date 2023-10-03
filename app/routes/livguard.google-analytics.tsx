@@ -374,7 +374,7 @@ export default function () {
                 </button>
                 {/* <fetcher.Form */}
                 <Form
-                    method="post"
+                    method="POST"
                     action="/update-locations"
                     className="tw-absolute tw-right-0 tw-top-4 tw-bottom-4 tw-flex"
                 >

@@ -109,3 +109,7 @@ export enum DataSourceIds {
     facebookAds = "3350d73d-64c1-4c88-92b4-0d791d954ae9",
     googleAnalytics = "6cd015ff-ec2e-412a-a777-f983fbdcb63e",
 }
+
+export type GenericActionData = {
+    error: string | null;
+};

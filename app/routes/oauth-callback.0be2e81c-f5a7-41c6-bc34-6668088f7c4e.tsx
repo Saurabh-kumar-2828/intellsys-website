@@ -210,7 +210,7 @@ function OAuthCallback({data, accessibleAccounts, companyId}: {data: string; acc
                         <VerticalSpacer className="tw-h-8" />
 
                         <Form
-                            method="post"
+                            method="POST"
                             className="tw-grid"
                         >
                             <input

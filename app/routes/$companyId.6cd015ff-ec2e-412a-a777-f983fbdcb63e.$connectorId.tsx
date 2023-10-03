@@ -1,14 +1,14 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
+import type {LinksFunction, LoaderFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
+import type {MetaFunction} from "@remix-run/react";
 import {useLoaderData, useMatches} from "@remix-run/react";
 import "ag-grid-enterprise";
 import {AgGridReact} from "ag-grid-react";
-import styles from "app/styles.css";
+import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
 import {DateTime} from "luxon";
 import {useState} from "react";
 import {Line} from "react-chartjs-2";
-import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
 import type {GoogleAnalyticsData, GoogleAnalyticsDataAggregatedRow} from "~/backend/business-insights";
 import {TimeGranularity, getGoogleAnalyticsData, getTimeGranularityFromUnknown} from "~/backend/business-insights";
 import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
@@ -16,26 +16,20 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {PageScaffold} from "~/components/pageScaffold";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
+import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getNonEmptyStringFromUnknown, getStringFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {agGridDateComparator, dateToMediumNoneEnFormat, getSingletonValue} from "~/global-common-typescript/utilities/utilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {defaultColumnDefinitions, getDates} from "~/utilities/utilities";
-import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
-import {agGridDateComparator, dateToMediumNoneEnFormat, getSingletonValue} from "~/global-common-typescript/utilities/utilities";
 
 // Google analytics
 
-export const meta: MetaFunction = () => {
-    return {
-        title: "Google Analytics Report - Intellsys",
-    };
-};
-
-export const links: LinksFunction = () => {
+export const meta: MetaFunction = ({data, matches}) => {
     return [
-        {rel: "stylesheet", href: "https://unpkg.com/ag-grid-community/styles/ag-grid.css"},
-        {rel: "stylesheet", href: "https://unpkg.com/ag-grid-community/styles/ag-theme-alpine.css"},
-        {rel: "stylesheet", href: styles},
+        {
+            title: "Google Analytics Report - Intellsys",
+        },
     ];
 };
 

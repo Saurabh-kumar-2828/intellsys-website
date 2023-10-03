@@ -210,7 +210,7 @@ function OAuthCallback({data, accessiblePropertyIds, companyId, className}: {dat
                         </RadioGroup>
 
                         <Form
-                            method="post"
+                            method="POST"
                             className="tw-grid"
                         >
                             <input

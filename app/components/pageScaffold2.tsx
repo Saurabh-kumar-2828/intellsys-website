@@ -1,13 +1,13 @@
-import {Link, useTransition} from "@remix-run/react";
+import {Link, useNavigation} from "@remix-run/react";
 import {ToastContainer} from "react-toastify";
 import {LoaderComponent} from "~/components/loaderComponent";
 
 export function PageScaffold2({children}: {children}) {
-    const transition = useTransition();
+    const navigation = useNavigation();
 
     return (
         <div className="tw-grid tw-grid-rows-[auto_1fr] tw-min-h-screen">
-            {transition.state == "idle" ? null : <LoaderComponent />}
+            {navigation.state == "idle" ? null : <LoaderComponent />}
             {/* {user == null || accessibleCompanies == null || currentCompany == null ? (
                 <div />
             ) : (

@@ -1,42 +1,35 @@
-import type {LinksFunction, LoaderFunction, MetaFunction} from "@remix-run/node";
+import * as Tabs from "@radix-ui/react-tabs";
+import type {LinksFunction, LoaderFunction} from "@remix-run/node";
 import {json, redirect} from "@remix-run/node";
+import type {MetaFunction} from "@remix-run/react";
 import {useLoaderData, useMatches} from "@remix-run/react";
+import "ag-grid-enterprise";
 import {AgGridReact} from "ag-grid-react";
-import styles from "app/styles.css";
+import {CategoryScale, Chart as ChartJS, Legend, LineElement, LinearScale, PointElement, Title, Tooltip} from "chart.js";
 import {DateTime} from "luxon";
 import {useState} from "react";
+import {Line} from "react-chartjs-2";
 import type {GoogleAdsDataAggregatedRow} from "~/backend/business-insights";
-import {getGoogleAdsData, getTimeGranularityFromUnknown, TimeGranularity} from "~/backend/business-insights";
+import {TimeGranularity, getGoogleAdsData, getTimeGranularityFromUnknown} from "~/backend/business-insights";
+import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelper.server";
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
-import {DateFilterSection, GenericCard, ValueDisplayingCardWithTarget} from "~/components/scratchpad";
-import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
-import {Scale, aggregateByDate, defaultColumnDefinitions, getDates, microValue} from "~/utilities/utilities";
-import "ag-grid-enterprise";
-import {getNonEmptyStringFromUnknown, getStringFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
 import {PageScaffold} from "~/components/pageScaffold";
+import {DateFilterSection, GenericCard} from "~/components/scratchpad";
+import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
+import {getNonEmptyStringFromUnknown, getStringFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
+import {agGridDateComparator, dateToMediumNoneEnFormat, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/global-common-typescript/utilities/utilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
-import {agGridDateComparator, dateToMediumNoneEnFormat, getDataPoints, getMaxFromArray, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/global-common-typescript/utilities/utilities";
-import type {Integer} from "~/global-common-typescript/typeDefinitions";
-import * as Tabs from "@radix-ui/react-tabs";
-import {ComposedChart} from "~/components/d3Componenets/composedChart";
-import LineGraphComponent from "~/components/d3Componenets/lineGraphComponent";
-import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
+import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
+import {defaultColumnDefinitions, getDates} from "~/utilities/utilities";
+
 // Google ads
 
-export const meta: MetaFunction = () => {
-    return {
-        title: "Google Ads Report - Intellsys",
-    };
-};
-
-export const links: LinksFunction = () => {
+export const meta: MetaFunction = ({data, matches}) => {
     return [
-        {rel: "stylesheet", href: "https://unpkg.com/ag-grid-community/styles/ag-grid.css"},
-        {rel: "stylesheet", href: "https://unpkg.com/ag-grid-community/styles/ag-theme-alpine.css"},
-        {rel: "stylesheet", href: styles}
+        {
+            title: "Google Ads Report - Intellsys",
+        },
     ];
 };
 

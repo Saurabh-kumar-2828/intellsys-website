@@ -1,9 +1,7 @@
 /** @type {import('tailwindcss').Config} */
-const defaultTheme = require('tailwindcss/defaultTheme')
-const plugin = require("tailwindcss/plugin");
-
 module.exports = {
-    content: ["./app/**/*.{js,jsx,ts,tsx}"],
+    content: ["./root.{js,jsx,ts,tsx}", "./app/**/*.{js,jsx,ts,tsx}"],
+    darkMode: "class",
     theme: {
         extend: {
             colors: {
@@ -25,16 +23,13 @@ module.exports = {
             spacing: {
                 default: "2rem",
             },
-            fontFamily: {
-                sans: ['Poppins', ...defaultTheme.fontFamily.sans]
-            }
         },
     },
-    plugins: [
-        plugin(({addVariant}) => {
-            addVariant("radix-tab-active", "&[data-state='active']");
-            addVariant("hocus", ["&:hover", "&:focus"]);
-        }),
-    ],
+    // plugins: [
+    //     plugin(({addVariant}) => {
+    //         addVariant("radix-tab-active", "&[data-state='active']");
+    //         addVariant("hocus", ["&:hover", "&:focus"]);
+    //     }),
+    // ],
     prefix: "tw-",
 };

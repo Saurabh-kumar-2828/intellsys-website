@@ -34,6 +34,8 @@ pipeline {
         IP_STAGE = "13.126.188.129"
         // IP address of production server
         IP_PROD = "3.6.162.95"
+        // Name of the jenkins pipeline
+        JENKINS_JOB = "intellsys-website"
     }
 
     tools {
@@ -79,7 +81,7 @@ pipeline {
                     def commitId
                     withCredentials([gitUsernamePassword(credentialsId: "33c357dc-5f11-4930-9063-07bc866f7cff", gitToolName: "Default")]) {
                         commitId = sh(script: """
-                            cd /var/lib/jenkins/workspace/${GITHUB_REPOSITORY_NAME}_${DIRECTORY}
+                            cd /var/lib/jenkins/workspace/${JENKINS_JOB}_${DIRECTORY}
                             git checkout ${env.BRANCH_NAME}
                             git rev-parse ${env.BRANCH_NAME}
                         """, returnStdout: true).trim()
@@ -101,7 +103,7 @@ pipeline {
                         return
                     }
 
-                    sh "cd /var/lib/jenkins/workspace/${GITHUB_REPOSITORY_NAME}_${DIRECTORY}"
+                    sh "cd /var/lib/jenkins/workspace/${JENKINS_JOB}_${DIRECTORY}"
                     sh "npm ci"
                     sh "npm run build"
                 }

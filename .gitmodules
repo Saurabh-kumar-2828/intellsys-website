@@ -6,10 +6,10 @@
 	url = ../common-remix--kms--intellsys-kms.git
 [submodule "app/common--database-manager--postgres"]
 	path = app/common--database-manager--postgres
-	url = ../common--database-manager--postgres.git
+	url = ../common--database-manager--postgres
 [submodule "app/common-remix--utilities"]
 	path = app/common-remix--utilities
 	url = ../common-remix--utilities.git
 [submodule "app/common--type-definitions"]
 	path = app/common--type-definitions
-	url = ../common--type-definitions
+	url = ../common--type-definitions.git

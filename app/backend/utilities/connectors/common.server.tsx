@@ -1,14 +1,13 @@
 import {DateTime} from "luxon";
-import {getRequiredEnvironmentVariable} from "~/backend/utilities/utilities.server";
-import type {PostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
-import type {Iso8601DateTime, Uuid} from "~/global-common-typescript/typeDefinitions";
+import type {PostgresDatabaseManager} from "~/common--database-manager--postgres/postgresDatabaseManager.server";
+import {getPostgresDatabaseManager} from "~/common--database-manager--postgres/postgresDatabaseManager.server";
+import {getRequiredEnvironmentVariable} from "~/common-remix--utilities/utilities.server";
+import type {Iso8601DateTime, Uuid} from "~/common--type-definitions/typeDefinitions";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getCurrentIsoTimestamp, getSingletonValue, getSingletonValueOrNull} from "~/global-common-typescript/utilities/utilities";
 import {ConnectorType} from "~/utilities/typeDefinitions";
 import type {ConnectorTableType} from "~/utilities/typeDefinitions";
-import {deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
+import {deleteCredentialFromKms} from "~/common-remix--kms--intellsys-kms/kms.server";
 
 export type ConnectorId = Uuid;
 
@@ -84,7 +83,7 @@ export async function getDestinationCredentialId(companyId: Uuid): Promise<Uuid 
 }
 
 export function getRedirectUri(companyId: Uuid, dataSource: Uuid): string | Error {
-    const redirectBaseUri = getRequiredEnvironmentVariableNew("REDIRECT_BASE_URI");
+    const redirectBaseUri = getRequiredEnvironmentVariable("REDIRECT_BASE_URI");
 
     if (dataSource == ConnectorType.FacebookAds) {
         const url = `${redirectBaseUri}/oauth-callback/3350d73d-64c1-4c88-92b4-0d791d954ae9`;
@@ -140,7 +139,7 @@ export async function initializeConnectorAndSubConnector(
     comments: string,
     connectorTableType: ConnectorTableType,
     // TODO: Fix ConnectorType typing
-    connectorType: ConnectorType
+    connectorType: ConnectorType,
 ): Promise<void | Error> {
     const currentTimestamp = getCurrentIsoTimestamp();
 

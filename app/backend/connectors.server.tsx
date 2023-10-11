@@ -1,6 +1,6 @@
 import {getSystemConnectorsDatabaseManager} from "~/backend/utilities/connectors/common.server";
-import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
-import type {Integer, Iso8601DateTime, Uuid} from "~/global-common-typescript/typeDefinitions";
+import {getRequiredEnvironmentVariable} from "~/common-remix--utilities/utilities.server";
+import type {Integer, Iso8601DateTime, Uuid} from "~/common--type-definitions/typeDefinitions";
 
 export enum ConnectorType {
     Freshsales = "3ec459aa-ecbd-4829-a89a-9d4284887a1a",
@@ -32,14 +32,14 @@ export type connectorMetadata = {
  * @returns : No. of rows deleted and inserted.
  */
 export async function ingestHistoricalDataFromConnectorsApi(connectorId: Uuid, duration: Integer, connector: Uuid): Promise<void | Error> {
-    const url = `${getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_URL")}/${connector}/historical`;
+    const url = `${getRequiredEnvironmentVariable("INTELLSYS_CONNECTOR_URL")}/${connector}/historical`;
 
     const body = new FormData();
     body.set("connectorId", connectorId);
     body.set("duration", duration.toString());
 
     const headers = new Headers();
-    headers.append("Authorization", getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_TOKEN"));
+    headers.append("Authorization", getRequiredEnvironmentVariable("INTELLSYS_CONNECTOR_TOKEN"));
 
     const response = await fetch(url, {
         method: "POST",
@@ -63,14 +63,14 @@ export async function ingestHistoricalDataFromConnectorsApi(connectorId: Uuid, d
  * @returns : No. of rows deleted and inserted.
  */
 export async function ingestFutureDataFromConnectorsApi(connectorId: Uuid, resyncDuration: Integer, connector: Uuid): Promise<void | Error> {
-    const url = `${getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_URL")}/${connector}/future`;
+    const url = `${getRequiredEnvironmentVariable("INTELLSYS_CONNECTOR_URL")}/${connector}/future`;
 
     const body = new FormData();
     body.set("connectorId", connectorId);
     body.set("resyncDuration", resyncDuration.toString());
 
     const headers = new Headers();
-    headers.append("Authorization", getRequiredEnvironmentVariableNew("INTELLSYS_CONNECTOR_TOKEN"));
+    headers.append("Authorization", getRequiredEnvironmentVariable("INTELLSYS_CONNECTOR_TOKEN"));
 
     const response = await fetch(url, {
         method: "POST",

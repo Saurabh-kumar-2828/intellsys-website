@@ -14,7 +14,7 @@ import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {SectionHeader} from "~/components/scratchpad";
 import {logBackendError} from "~/global-common-typescript/server/logging.server";
-import type {Uuid} from "~/global-common-typescript/typeDefinitions";
+import type {Uuid} from "~/common--type-definitions/typeDefinitions";
 import {getErrorFromUnknown, getNonEmptyStringFromUnknown, getObjectFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {concatenateNonNullStringsWithSpaces, generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getMemoryCache} from "~/utilities/memoryCache";
@@ -30,6 +30,7 @@ type LoaderData = {
 
 export const loader: LoaderFunction = async ({request}) => {
     try {
+        console.log("1");
         const urlSearchParams = new URL(request.url).searchParams;
 
         const authorizationCode = safeParse(getNonEmptyStringFromUnknown, urlSearchParams.get("code"));
@@ -46,6 +47,7 @@ export const loader: LoaderFunction = async ({request}) => {
         const cacheKey = `${DataSourceIds.googleAds}: ${authorizationCode}`;
         const cachedValue = await memoryCache.get(cacheKey);
         if (cachedValue != null) {
+            console.log("2");
             refreshToken = cachedValue;
         } else {
             const refreshToken_ = await getGoogleAdsRefreshToken(authorizationCode, companyId, getUuidFromUnknown(ConnectorType.GoogleAnalytics));
@@ -70,8 +72,10 @@ export const loader: LoaderFunction = async ({request}) => {
             companyId: companyId,
         };
 
+        console.log("5");
         return json(loaderData);
     } catch (error_) {
+        console.log("6");
         const error = getErrorFromUnknown(error_);
         logBackendError(error);
     }
@@ -137,7 +141,7 @@ export const action: ActionFunction = async ({request}) => {
     }
 };
 
-export default function () {
+export default function OAuthCallbackExport() {
     const {data, accessiblePropertyIds, companyId} = useLoaderData() as LoaderData;
 
     // const routeMatches = useMatches();

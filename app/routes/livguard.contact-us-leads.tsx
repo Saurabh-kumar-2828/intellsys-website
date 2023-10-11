@@ -7,7 +7,7 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {EmptyFlexFiller} from "~/global-common-typescript/components/emptyFlexFiller";
-import type {Uuid} from "~/global-common-typescript/typeDefinitions";
+import type {Uuid} from "~/common--type-definitions/typeDefinitions";
 import {getNonEmptyStringFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {concatenateNonNullStringsWithSpaces} from "~/global-common-typescript/utilities/utilities";
 import csvDownload from "json-to-csv-export";
@@ -184,9 +184,7 @@ export default function () {
 
                 <EmptyFlexFiller />
 
-                <div>
-                    Total leads: {totalRows}
-                </div>
+                <div>Total leads: {totalRows}</div>
 
                 <button
                     type="button"
@@ -260,9 +258,7 @@ function DataTable<T>({
                         style={{outline: "1px solid white"}}
                     >
                         <div className="tw-flex tw-flex-row tw-gap-x-4 tw-items-center tw-justify-center">
-                            <div>
-                                createdAt
-                            </div>
+                            <div>createdAt</div>
                             <TriangleFill className="tw-w-3 tw-h-3 tw-rotate-180" />
                         </div>
                     </th>

@@ -1,8 +1,9 @@
 import {TimeGranularity, getFacebookAdsData, getGoogleAdsData, getGoogleAnalyticsData} from "../business-insights";
-import type {Uuid} from "~/global-common-typescript/typeDefinitions";
-import type {ConnectorConfig} from "./connectors/common.server";
-import {getDestinationCredentialId} from "./connectors/common.server";
-import {getCurrentIsoTimestamp, numberToHumanFriendlyString} from "~/global-common-typescript/utilities/utilities";
+import type {Uuid} from "~/utilities/typeDefinitions";
+import type {ConnectorConfig} from "~/backend/utilities/connectors/common.server";
+import {getDestinationCredentialId} from "~/backend/utilities/connectors/common.server";
+import {getCurrentIsoTimestamp} from "~/global-common-typescript/utilities/utilities";
+import {numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export async function getSummarizedViewOfGoogleAdsConnector(
     connector: ConnectorConfig,
@@ -55,7 +56,6 @@ export async function getSummarizedViewOfFacebookAdsConnector(
       }
     | Error
 > {
-
     const dateToday = getCurrentIsoTimestamp();
 
     const databaseCredentialId = await getDestinationCredentialId(companyId);
@@ -118,10 +118,9 @@ export async function getSummarizedViewOfGoogleAnalyticsConnector(
         {dauPerMau: 0, wauPerMau: 0, sessions: 0},
     );
 
-
     return {
         sessions: sessions,
         dauPerMau: dauPerMau,
-        wauPerMau: wauPerMau
+        wauPerMau: wauPerMau,
     };
 }

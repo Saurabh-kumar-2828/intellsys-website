@@ -18,13 +18,24 @@ import LineGraphComponent from "~/components/d3Componenets/lineGraphComponent";
 import {PageScaffold} from "~/components/pageScaffold";
 import {DateFilterSection, GenericCard, ValueDisplayingCardWithTarget} from "~/components/scratchpad";
 import {HorizontalSpacer} from "~/global-common-typescript/components/horizontalSpacer";
-import type {Integer} from "~/global-common-typescript/typeDefinitions";
+import type {Integer} from "~/common--type-definitions/typeDefinitions";
 import {getNonEmptyStringFromUnknown, getStringFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {agGridDateComparator, dateToMediumNoneEnFormat, getDataPoints, getMaxFromArray, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/global-common-typescript/utilities/utilities";
+import {getSingletonValue} from "~/global-common-typescript/utilities/utilities";
+import {
+    Scale,
+    aggregateByDate,
+    defaultColumnDefinitions,
+    getDates,
+    getMaxFromArray,
+    getDataPoints,
+    agGridDateComparator,
+    dateToMediumNoneEnFormat,
+    numberToHumanFriendlyString,
+    roundOffToTwoDigits,
+} from "~/utilities/utilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
 import {ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
-import {Scale, aggregateByDate, defaultColumnDefinitions, getDates} from "~/utilities/utilities";
 
 // Facebook ads
 
@@ -41,15 +52,15 @@ type CampaignMetrics = {
     spend: Integer;
     inlineLinkClicks: Integer;
     clicks: Integer;
-    impressions: Integer
-}
+    impressions: Integer;
+};
 
 type AdMetrics = {
     adId: string;
     adName: string;
     impressions: Integer;
     cpc: Integer;
-}
+};
 
 type LoaderData = {
     appliedMinDate: Iso8601Date;
@@ -64,20 +75,20 @@ type LoaderData = {
 };
 
 type FacebookAdsMetrics = {
-    conversions: Integer,
-    clicks: Integer,
-    frequency: Integer,
-    impressions: Integer,
-    reach: Integer,
-    cpc: Integer,
-    cpm: Integer,
-    cpp: Integer,
-    ctr: Integer,
-    spend: Integer,
-    costPerAdClick: Integer,
-    inlineLinkClicks: Integer,
-    inlineLinkClickCtr: Integer,
-}
+    conversions: Integer;
+    clicks: Integer;
+    frequency: Integer;
+    impressions: Integer;
+    reach: Integer;
+    cpc: Integer;
+    cpm: Integer;
+    cpp: Integer;
+    ctr: Integer;
+    spend: Integer;
+    costPerAdClick: Integer;
+    inlineLinkClicks: Integer;
+    inlineLinkClickCtr: Integer;
+};
 
 export const loader: LoaderFunction = async ({request, params}) => {
     const accessToken = await getAccessTokenFromCookies(request);
@@ -288,12 +299,15 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                         type={ValueDisplayingCardInformationType.integer}
                     />
                 </div>
-
             </div>
             <HorizontalSpacer className="tw-h-3" />
             <div className="tw-grid tw-grid-cols-2 tw-p-2 tw-gap-4">
                 <div className="tw-col-start-1">
-                    <AccountOverview aggregatedMetrics={aggregatedMetrics} minDate={minDate} maxDate={maxDate} />
+                    <AccountOverview
+                        aggregatedMetrics={aggregatedMetrics}
+                        minDate={minDate}
+                        maxDate={maxDate}
+                    />
                 </div>
                 <div className="tw-col-start-2">
                     <CampaignOverview adsData={adsData} />
@@ -320,8 +334,9 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                                 values: clicksDataPoints,
                                                 name: "Clicks",
                                                 color: "Red",
-                                            }
-                                        }} className={""}
+                                            },
+                                        }}
+                                        className={""}
                                     />
                                 }
                             />
@@ -348,8 +363,9 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                                 values: impressionsDataPoints,
                                                 name: "Impressions",
                                                 color: "Green",
-                                            }
-                                        }} className={""}
+                                            },
+                                        }}
+                                        className={""}
                                     />
                                 }
                             />
@@ -376,8 +392,9 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                                 values: linkClickDataPoints,
                                                 name: "Link-Clicks",
                                                 color: "White",
-                                            }
-                                        }} className={""}
+                                            },
+                                        }}
+                                        className={""}
                                     />
                                 }
                             />
@@ -404,8 +421,9 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                                 values: reachDataPoints,
                                                 name: "Reach",
                                                 color: "Purple",
-                                            }
-                                        }} className={""}
+                                            },
+                                        }}
+                                        className={""}
                                     />
                                 }
                             />
@@ -491,13 +509,11 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                     />
                 </div>
             </div>
-
         </>
     );
 }
 
-function AccountOverview({aggregatedMetrics, minDate, maxDate}: {aggregatedMetrics: FacebookAdsMetrics, minDate: Iso8601Date, maxDate: Iso8601Date}) {
-
+function AccountOverview({aggregatedMetrics, minDate, maxDate}: {aggregatedMetrics: FacebookAdsMetrics; minDate: Iso8601Date; maxDate: Iso8601Date}) {
     return (
         <GenericCard
             className="tw-rounded-tl-none"
@@ -507,12 +523,11 @@ function AccountOverview({aggregatedMetrics, minDate, maxDate}: {aggregatedMetri
                     <AgGridReact
                         rowData={Object.entries(aggregatedMetrics).map((object) => ({
                             metric: object[0],
-                            value: numberToHumanFriendlyString(roundOffToTwoDigits(object[1])) // TODO: Add isPercentage for ctr metric
+                            value: numberToHumanFriendlyString(roundOffToTwoDigits(object[1])), // TODO: Add isPercentage for ctr metric
                         }))}
                         columnDefs={[
                             {headerName: "Metric", field: "metric", cellClass: "tw-px-2", resizable: true},
-                            {headerName: `${minDate} - ${maxDate}`, field: "value", cellClass: "tw-px-2", resizable: true}
-
+                            {headerName: `${minDate} - ${maxDate}`, field: "value", cellClass: "tw-px-2", resizable: true},
                         ]}
                         defaultColDef={defaultColumnDefinitions}
                         animateRows={true}
@@ -522,7 +537,7 @@ function AccountOverview({aggregatedMetrics, minDate, maxDate}: {aggregatedMetri
                 </div>
             }
         />
-    )
+    );
 }
 
 function CampaignOverview({adsData}: {adsData: Array<FacebookAdsAggregatedRow>}) {
@@ -541,14 +556,14 @@ function CampaignOverview({adsData}: {adsData: Array<FacebookAdsAggregatedRow>})
                             inlineLinkClicks: numberToHumanFriendlyString(object.inlineLinkClicks),
                             clicks: numberToHumanFriendlyString(object.clicks),
                             impressions: numberToHumanFriendlyString(object.impressions),
-                            inlineLinkClicksCtr: object.impressions == 0 ? `${0.0}` : `${roundOffToTwoDigits(((object).inlineLinkClicks / object.impressions) * 100)}%`
+                            inlineLinkClicksCtr: object.impressions == 0 ? `${0.0}` : `${roundOffToTwoDigits((object.inlineLinkClicks / object.impressions) * 100)}%`,
                         }))}
                         columnDefs={[
                             {headerName: "Campaign Name", field: "campaignName", cellClass: "!tw-px-2", resizable: true},
                             {headerName: "Spend", field: "spend", cellClass: "!tw-px-2", resizable: true},
                             {headerName: "Clicks", field: "clicks", cellClass: "!tw-px-2", resizable: true},
                             {headerName: "Impressions", field: "impressions", cellClass: "!tw-px-2", resizable: true},
-                            {headerName: "Link Clicks Ctr", field: "inlineLinkClicksCtr", cellClass: "!tw-px-2", resizable: true}
+                            {headerName: "Link Clicks Ctr", field: "inlineLinkClicksCtr", cellClass: "!tw-px-2", resizable: true},
                         ]}
                         defaultColDef={defaultColumnDefinitions}
                         animateRows={true}
@@ -557,11 +572,10 @@ function CampaignOverview({adsData}: {adsData: Array<FacebookAdsAggregatedRow>})
                 </div>
             }
         />
-    )
+    );
 }
 
 function getMetricsGroupByCampaign(facebookAdsData: Array<FacebookAdsAggregatedRow>): Array<CampaignMetrics> {
-
     const result = facebookAdsData.reduce((accumulatedResult: {[key: string]: CampaignMetrics}, currentObject) => {
         let campaignId = currentObject.campaignId;
         const impressions = currentObject.impressions;
@@ -569,15 +583,14 @@ function getMetricsGroupByCampaign(facebookAdsData: Array<FacebookAdsAggregatedR
         const spend = currentObject.spend;
         const clicks = currentObject.clicks;
 
-
         if (!accumulatedResult[campaignId]) {
             const facebookAdsMetrics: CampaignMetrics = {
                 campaignName: currentObject.campaignName,
                 spend: 0,
                 inlineLinkClicks: 0,
                 clicks: 0,
-                impressions: 0
-            }
+                impressions: 0,
+            };
             accumulatedResult[campaignId] = facebookAdsMetrics;
         }
 
@@ -587,13 +600,12 @@ function getMetricsGroupByCampaign(facebookAdsData: Array<FacebookAdsAggregatedR
         accumulatedResult[campaignId].clicks += clicks;
 
         return accumulatedResult;
-    }, {})
+    }, {});
 
     return Object.values(result);
 }
 
 function getAggregatedMetrics(facebookAdsData: Array<FacebookAdsAggregatedRow>): FacebookAdsMetrics {
-
     const initialObject: FacebookAdsMetrics = {
         conversions: 0,
         clicks: 0,
@@ -607,11 +619,10 @@ function getAggregatedMetrics(facebookAdsData: Array<FacebookAdsAggregatedRow>):
         spend: 0, // cost
         costPerAdClick: 0,
         inlineLinkClicks: 0,
-        inlineLinkClickCtr: 0
-    }
+        inlineLinkClickCtr: 0,
+    };
 
     const aggregatedMetrics = facebookAdsData.reduce((accumulatedResult, currentObject) => {
-
         accumulatedResult.impressions += currentObject.impressions;
         accumulatedResult.clicks += currentObject.clicks;
         accumulatedResult.reach += currentObject.reach;
@@ -619,8 +630,7 @@ function getAggregatedMetrics(facebookAdsData: Array<FacebookAdsAggregatedRow>):
         accumulatedResult.inlineLinkClicks += currentObject.inlineLinkClicks;
 
         return accumulatedResult;
-
-    }, initialObject)
+    }, initialObject);
 
     // Conversions
     aggregatedMetrics.conversions = facebookAdsData.reduce((totalConversions: number, currentRow: FacebookAdsAggregatedRow) => {
@@ -632,10 +642,10 @@ function getAggregatedMetrics(facebookAdsData: Array<FacebookAdsAggregatedRow>):
     }, 0);
 
     // Frequency = Total Impressions / Total Reach
-    aggregatedMetrics.frequency = aggregatedMetrics.reach == 0 ? 0 : (aggregatedMetrics.impressions / aggregatedMetrics.reach);
+    aggregatedMetrics.frequency = aggregatedMetrics.reach == 0 ? 0 : aggregatedMetrics.impressions / aggregatedMetrics.reach;
 
     // CPM = Cost per thousand impressiosn
-    aggregatedMetrics.cpm = (aggregatedMetrics.impressions / 1000) == 0 ? 0 : aggregatedMetrics.spend / (aggregatedMetrics.impressions / 1000);
+    aggregatedMetrics.cpm = aggregatedMetrics.impressions / 1000 == 0 ? 0 : aggregatedMetrics.spend / (aggregatedMetrics.impressions / 1000);
 
     // CTR = total clicks / total impressions
     aggregatedMetrics.ctr = aggregatedMetrics.impressions == 0 ? 0.0 : (aggregatedMetrics.clicks / aggregatedMetrics.impressions) * 100;
@@ -647,7 +657,7 @@ function getAggregatedMetrics(facebookAdsData: Array<FacebookAdsAggregatedRow>):
     aggregatedMetrics.cpc = aggregatedMetrics.spend == 0 ? 0 : aggregatedMetrics.spend / aggregatedMetrics.clicks;
 
     // CPP: cost per thousand reach
-    aggregatedMetrics.cpp = (aggregatedMetrics.reach / 1000) == 0 ? 0 : aggregatedMetrics.spend / (aggregatedMetrics.reach / 1000);
+    aggregatedMetrics.cpp = aggregatedMetrics.reach / 1000 == 0 ? 0 : aggregatedMetrics.spend / (aggregatedMetrics.reach / 1000);
 
     return aggregatedMetrics;
 }

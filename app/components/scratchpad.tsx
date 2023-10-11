@@ -1,8 +1,7 @@
-import {Listbox} from "@headlessui/react";
+import {Listbox, RadioGroup, Switch} from "@headlessui/react";
 import {Link} from "@remix-run/react";
 import {ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip} from "chart.js";
 import {DateTime, Info} from "luxon";
-import {RadioGroup, Switch} from "@headlessui/react";
 import {useId} from "react";
 import {CheckCircle, ChevronDown, Circle, Clipboard, Funnel, FunnelFill, InfoCircle} from "react-bootstrap-icons";
 import {Doughnut} from "react-chartjs-2";
@@ -10,7 +9,8 @@ import {toast} from "react-toastify";
 import type {TimeGranularity} from "~/backend/business-insights";
 import {filterToHumanReadableString, filterToTextColor, TimeZones, ValueDisplayingCardInformationType} from "~/utilities/typeDefinitions";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
-import {concatenateNonNullStringsWithAmpersand, concatenateNonNullStringsWithSpaces, numberToHumanFriendlyString} from "~/global-common-typescript/utilities/utilities";
+import {concatenateNonNullStringsWithSpaces} from "~/global-common-typescript/utilities/utilities";
+import {concatenateNonNullStringsWithAmpersand, numberToHumanFriendlyString} from "~/utilities/utilities";
 
 export function FancySearchableSelect(props: {className?: string; options: Array<string>; label: string; selectedOption; setSelectedOption}) {
     return (

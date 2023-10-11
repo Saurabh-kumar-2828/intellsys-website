@@ -14,7 +14,7 @@ import {SectionHeader} from "~/components/scratchpad";
 import {HiddenFormField} from "~/global-common-typescript/components/hiddenFormField";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {logBackendError} from "~/global-common-typescript/server/logging.server";
-import type {Uuid} from "~/global-common-typescript/typeDefinitions";
+import type {Uuid} from "~/common--type-definitions/typeDefinitions";
 import {getErrorFromUnknown, getNonEmptyStringFromUnknown, getObjectFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getMemoryCache} from "~/utilities/memoryCache";

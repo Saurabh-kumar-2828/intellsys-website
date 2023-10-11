@@ -9,9 +9,9 @@ import {
     initializeConnectorAndSubConnector,
     mapCompanyIdToConnectorId,
 } from "~/backend/utilities/connectors/common.server";
-import {addCredentialToKms, deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
-import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
+import {addCredentialToKms, deleteCredentialFromKms} from "~/common-remix--kms--intellsys-kms/kms.server";
+import {TransactionCommand, getPostgresDatabaseManager} from "~/common--database-manager--postgres/postgresDatabaseManager.server";
+import {getRequiredEnvironmentVariable} from "~/common-remix--utilities/utilities.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
@@ -42,9 +42,9 @@ export async function getFacebookAdsAccessToken(authorizationCode: string, compa
         return redirectUri;
     }
 
-    const apiVersion = getRequiredEnvironmentVariableNew("FACEBOOK_API_VERSION");
-    const clientId = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_ID");
-    const clientSecret = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_SECRET");
+    const apiVersion = getRequiredEnvironmentVariable("FACEBOOK_API_VERSION");
+    const clientId = getRequiredEnvironmentVariable("FACEBOOK_CLIENT_ID");
+    const clientSecret = getRequiredEnvironmentVariable("FACEBOOK_CLIENT_SECRET");
 
     const url = `${facebookApiBaseUrl}/${apiVersion}/oauth/access_token?client_id=${clientId}&client_secret=${clientSecret}&redirect_uri=${redirectUri}&code=${authorizationCode}`;
 
@@ -63,9 +63,9 @@ export async function getFacebookAdsAccessToken(authorizationCode: string, compa
  * @returns New access token.
  */
 export async function refreshFacebookAdsAccessToken(oldAccessToken: string): Promise<FacebookAdsSourceCredentials | Error> {
-    const apiVersion = getRequiredEnvironmentVariableNew("FACEBOOK_API_VERSION");
-    const clientId = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_ID");
-    const clientSecret = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_SECRET");
+    const apiVersion = getRequiredEnvironmentVariable("FACEBOOK_API_VERSION");
+    const clientId = getRequiredEnvironmentVariable("FACEBOOK_CLIENT_ID");
+    const clientSecret = getRequiredEnvironmentVariable("FACEBOOK_CLIENT_SECRET");
 
     const url = `${facebookApiBaseUrl}/${apiVersion}/oauth/access_token?client_id=${clientId}&client_secret=${clientSecret}&fb_exchange_token=${oldAccessToken}&grant_type=fb_exchange_token`;
 
@@ -175,8 +175,8 @@ function mapTokenToFacebookAdsSourceCredentialsType(credentials: unknown): Faceb
 }
 
 export function getFacebookAuthorizationCodeUrl(redirectUri: string, state: string) {
-    const apiVersion = getRequiredEnvironmentVariableNew("FACEBOOK_API_VERSION");
-    const clientId = getRequiredEnvironmentVariableNew("FACEBOOK_CLIENT_ID");
+    const apiVersion = getRequiredEnvironmentVariable("FACEBOOK_API_VERSION");
+    const clientId = getRequiredEnvironmentVariable("FACEBOOK_CLIENT_ID");
 
     const url = `https://www.facebook.com/${apiVersion}/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${facebookAdsScope}&state=${state}`;
 
@@ -184,7 +184,7 @@ export function getFacebookAuthorizationCodeUrl(redirectUri: string, state: stri
 }
 
 export async function getAccessibleAccounts(credentials: FacebookAdsSourceCredentials, companyId: Uuid) {
-    const apiVersion = getRequiredEnvironmentVariableNew("FACEBOOK_API_VERSION");
+    const apiVersion = getRequiredEnvironmentVariable("FACEBOOK_API_VERSION");
     const fields = "account_id,account_status,business,business_name,users,name";
     let after = "";
     const accessibleAccounts: Array<FacebookAccessibleAccount> = [];

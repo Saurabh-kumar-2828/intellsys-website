@@ -18,10 +18,10 @@ import {PageScaffold} from "~/components/pageScaffold";
 import {DateFilterSection, GenericCard} from "~/components/scratchpad";
 import {VerticalSpacer} from "~/global-common-typescript/components/verticalSpacer";
 import {getNonEmptyStringFromUnknown, getStringFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
-import {agGridDateComparator, dateToMediumNoneEnFormat, getSingletonValue, numberToHumanFriendlyString, roundOffToTwoDigits} from "~/global-common-typescript/utilities/utilities";
+import {getSingletonValue} from "~/global-common-typescript/utilities/utilities";
+import {numberToHumanFriendlyString, dateToMediumNoneEnFormat, agGridDateComparator, roundOffToTwoDigits, defaultColumnDefinitions, getDates} from "~/utilities/utilities";
 import type {CompanyLoaderData} from "~/routes/$companyId";
 import type {Iso8601Date, Uuid} from "~/utilities/typeDefinitions";
-import {defaultColumnDefinitions, getDates} from "~/utilities/utilities";
 
 // Google ads
 
@@ -49,7 +49,7 @@ type CampaignMetrics = {
     campaignName: string;
     impressions: Integer;
     clicks: Integer;
-}
+};
 
 type GoogleAdsMetrics = {
     impressions: Integer;
@@ -59,8 +59,8 @@ type GoogleAdsMetrics = {
     cost: Integer;
     conversions: Integer;
     costPerConversions: Integer;
-    averageCpm: Integer // Cost per thousand impressions
-}
+    averageCpm: Integer; // Cost per thousand impressions
+};
 
 export const loader: LoaderFunction = async ({request, params}) => {
     const accessToken = await getAccessTokenFromCookies(request);
@@ -238,7 +238,6 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
 
     return (
         <>
-
             <div className="tw-grid tw-grid-cols-4 tw-gap-4 ">
                 <div className="tw-col-start-1">
                     <ValueDisplayingCardWithTarget
@@ -290,11 +289,11 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                 </div>
                 <div className="tw-col-start-3">
                     <ValueDisplayingCardWithTarget
-                    label={"Average CPM"}
-                    value={aggregatedMetrics.averageCpm}
-                    target={0}
-                    type={ValueDisplayingCardInformationType.float}
-                />
+                        label={"Average CPM"}
+                        value={aggregatedMetrics.averageCpm}
+                        target={0}
+                        type={ValueDisplayingCardInformationType.float}
+                    />
                 </div>
                 <div className="tw-col-start-4">
                     <ValueDisplayingCardWithTarget
@@ -329,8 +328,9 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                                 values: impressionsDataPoints,
                                                 name: "Impressions",
                                                 color: "Green",
-                                            }
-                                        }} className={""}
+                                            },
+                                        }}
+                                        className={""}
                                     />
                                 }
                             />
@@ -357,8 +357,9 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                                 values: clicksDataPoints,
                                                 name: "Clicks",
                                                 color: "White",
-                                            }
-                                        }} className={""}
+                                            },
+                                        }}
+                                        className={""}
                                     />
                                 }
                             />
@@ -385,8 +386,9 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                                                 values: conversionsDataPoints,
                                                 name: "Conversions",
                                                 color: "Blue",
-                                            }
-                                        }} className={""}
+                                            },
+                                        }}
+                                        className={""}
                                     />
                                 }
                             />
@@ -394,7 +396,6 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                     />
                 </div>
                 <div className="tw-col-start-2">
-
                     <AccountOverview
                         adsData={adsData}
                         minDate={minDate}
@@ -436,7 +437,6 @@ function CampaignsSection({adsData, granularity, minDate, maxDate}: {adsData: Ar
                         </Tabs.Root>
                     </div>
                 </div>
-
             </div>
         </>
     );
@@ -456,15 +456,13 @@ function CampaignsOverview({adsData}: {adsData: Array<GoogleAdsDataAggregatedRow
                             campaignName: object.campaignName,
                             impressions: object.impressions,
                             clicks: object.clicks,
-                            ctr: object.impressions == 0 ? 0 : `${roundOffToTwoDigits((object.clicks / object.impressions) * 100)}%`
-
+                            ctr: object.impressions == 0 ? 0 : `${roundOffToTwoDigits((object.clicks / object.impressions) * 100)}%`,
                         }))}
                         columnDefs={[
                             {headerName: "Campaign Name", field: "campaignName", cellClass: "!tw-px-0", resizable: true},
                             {headerName: "Impressions", field: "impressions", cellClass: "!tw-px-0", resizable: true},
                             {headerName: "Clicks", field: "clicks", cellClass: "!tw-px-2", resizable: true},
                             {headerName: "CTR", field: "ctr", cellClass: "!tw-px-2", resizable: true},
-
                         ]}
                         defaultColDef={defaultColumnDefinitions}
                         animateRows={true}
@@ -473,10 +471,10 @@ function CampaignsOverview({adsData}: {adsData: Array<GoogleAdsDataAggregatedRow
                 </div>
             }
         />
-    )
+    );
 }
 
-function AccountOverview({adsData, minDate, maxDate}: {adsData: Array<GoogleAdsDataAggregatedRow>, minDate: Iso8601Date; maxDate: Iso8601Date}) {
+function AccountOverview({adsData, minDate, maxDate}: {adsData: Array<GoogleAdsDataAggregatedRow>; minDate: Iso8601Date; maxDate: Iso8601Date}) {
     const aggregatedMetrics = getAggregatedMetrics(adsData);
 
     return (
@@ -488,12 +486,11 @@ function AccountOverview({adsData, minDate, maxDate}: {adsData: Array<GoogleAdsD
                     <AgGridReact
                         rowData={Object.entries(aggregatedMetrics).map((object) => ({
                             metric: object[0],
-                            value: numberToHumanFriendlyString(roundOffToTwoDigits(object[1])) // TODO: Add isPercentage for ctr metric
+                            value: numberToHumanFriendlyString(roundOffToTwoDigits(object[1])), // TODO: Add isPercentage for ctr metric
                         }))}
                         columnDefs={[
                             {headerName: "Metric", field: "metric", cellClass: "tw-px-2", resizable: true},
-                            {headerName: `${minDate} - ${maxDate}`, field: "value", cellClass: "tw-px-2", resizable: true}
-
+                            {headerName: `${minDate} - ${maxDate}`, field: "value", cellClass: "tw-px-2", resizable: true},
                         ]}
                         defaultColDef={defaultColumnDefinitions}
                         animateRows={true}
@@ -503,7 +500,7 @@ function AccountOverview({adsData, minDate, maxDate}: {adsData: Array<GoogleAdsD
                 </div>
             }
         />
-    )
+    );
 }
 
 function RawData({adsData}: {adsData: Array<GoogleAdsDataAggregatedRow>}) {
@@ -598,18 +595,17 @@ function RawData({adsData}: {adsData: Array<GoogleAdsDataAggregatedRow>}) {
                         defaultColDef={defaultColumnDefinitions}
                         animateRows={true}
                         enableRangeSelection={true}
-                    // frameworkComponents={{
-                    //     progressCellRenderer,
-                    // }}
+                        // frameworkComponents={{
+                        //     progressCellRenderer,
+                        // }}
                     />
                 </div>
             }
         />
-    )
+    );
 }
 
 function getImpressionsAndCtrGroupByCampaign(googleAdsData: Array<GoogleAdsDataAggregatedRow>): Array<CampaignMetrics> {
-
     const result = googleAdsData.reduce((accumulatedResult: {[key: string]: CampaignMetrics}, currentObject) => {
         var campaignName = currentObject.campaignName;
         const impressions = currentObject.impressions;
@@ -619,8 +615,8 @@ function getImpressionsAndCtrGroupByCampaign(googleAdsData: Array<GoogleAdsDataA
             const googleAdsMetrics: CampaignMetrics = {
                 campaignName: campaignName,
                 impressions: 0,
-                clicks: 0
-            }
+                clicks: 0,
+            };
             accumulatedResult[campaignName] = googleAdsMetrics;
         }
 
@@ -628,14 +624,12 @@ function getImpressionsAndCtrGroupByCampaign(googleAdsData: Array<GoogleAdsDataA
         accumulatedResult[campaignName].clicks += clicks;
 
         return accumulatedResult;
-
-    }, {})
+    }, {});
 
     return Object.values(result);
 }
 
 function getAggregatedMetrics(googleAdsData: Array<GoogleAdsDataAggregatedRow>): GoogleAdsMetrics {
-
     const initialObject: GoogleAdsMetrics = {
         impressions: 0,
         clicks: 0,
@@ -644,33 +638,31 @@ function getAggregatedMetrics(googleAdsData: Array<GoogleAdsDataAggregatedRow>):
         cost: 0,
         conversions: 0,
         costPerConversions: 0,
-        averageCpm: 0
-    }
+        averageCpm: 0,
+    };
 
     const aggregatedMetrics = googleAdsData.reduce((accumulatedResult, currentObject) => {
-
         accumulatedResult.impressions += currentObject.impressions;
         accumulatedResult.clicks += currentObject.clicks;
         accumulatedResult.cost += currentObject.costMicros;
         accumulatedResult.conversions += currentObject.conversions;
 
         return accumulatedResult;
-
-    }, initialObject)
+    }, initialObject);
 
     aggregatedMetrics.cost = aggregatedMetrics.cost / microValue;
 
     // CPM = Cost per thousand metrics
-    aggregatedMetrics.averageCpm = (aggregatedMetrics.impressions / 1000) == 0 ? 0 : aggregatedMetrics.cost / (aggregatedMetrics.impressions / 1000);
+    aggregatedMetrics.averageCpm = aggregatedMetrics.impressions / 1000 == 0 ? 0 : aggregatedMetrics.cost / (aggregatedMetrics.impressions / 1000);
 
     // CTR = total clicks / total impressions
-    aggregatedMetrics.ctr = aggregatedMetrics.impressions == 0 ? 0.0 : (aggregatedMetrics.clicks / aggregatedMetrics.impressions);
+    aggregatedMetrics.ctr = aggregatedMetrics.impressions == 0 ? 0.0 : aggregatedMetrics.clicks / aggregatedMetrics.impressions;
 
     // Cost-per-conversions = Total cost / Total conversions
-    aggregatedMetrics.costPerConversions = aggregatedMetrics.conversions == 0 ? 0 : (aggregatedMetrics.cost / aggregatedMetrics.conversions);
+    aggregatedMetrics.costPerConversions = aggregatedMetrics.conversions == 0 ? 0 : aggregatedMetrics.cost / aggregatedMetrics.conversions;
 
     // Average cost-per-click
-    aggregatedMetrics.averageCpc = aggregatedMetrics.clicks == 0 ? 0 : (aggregatedMetrics.cost / aggregatedMetrics.clicks);
+    aggregatedMetrics.averageCpc = aggregatedMetrics.clicks == 0 ? 0 : aggregatedMetrics.cost / aggregatedMetrics.clicks;
 
     return aggregatedMetrics;
 }

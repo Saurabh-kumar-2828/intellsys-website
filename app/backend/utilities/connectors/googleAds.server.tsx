@@ -1,4 +1,4 @@
-import type {Uuid} from "~/global-common-typescript/typeDefinitions";
+import type {Uuid} from "~/common--type-definitions/typeDefinitions";
 import type {GoogleAdsCredentials} from "./googleOAuth.server";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {
@@ -9,10 +9,10 @@ import {
     initializeConnectorAndSubConnector,
     mapCompanyIdToConnectorId,
 } from "./common.server";
-import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
+import {TransactionCommand, getPostgresDatabaseManager} from "~/common--database-manager--postgres/postgresDatabaseManager.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {ConnectorTableType, ConnectorType, dataSourcesAbbreviations} from "~/utilities/typeDefinitions";
-import {addCredentialToKms, deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
+import {addCredentialToKms, deleteCredentialFromKms} from "~/common-remix--kms--intellsys-kms/kms.server";
 import {ingestHistoricalDataFromConnectorsApi} from "~/backend/connectors.server";
 
 export async function ingestAndStoreGoogleAdsData(credentials: GoogleAdsCredentials, companyId: Uuid, connectorId: Uuid, extraInformation: {[key: string]: any}): Promise<void | Error> {

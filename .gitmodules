@@ -1,3 +1,15 @@
 [submodule "app/global-common-typescript"]
 	path = app/global-common-typescript
 	url = ../global-common-typescript.git
+[submodule "app/common-remix--kms--intellsys-kms"]
+	path = app/common-remix--kms--intellsys-kms
+	url = ../common-remix--kms--intellsys-kms.git
+[submodule "app/common--database-manager--postgres"]
+	path = app/common--database-manager--postgres
+	url = ../common--database-manager--postgres.git
+[submodule "app/common-remix--utilities"]
+	path = app/common-remix--utilities
+	url = ../common-remix--utilities.git
+[submodule "app/common--type-definitions"]
+	path = app/common--type-definitions
+	url = ../common--type-definitions

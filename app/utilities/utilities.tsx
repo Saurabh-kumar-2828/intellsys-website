@@ -1,5 +1,7 @@
 import {DateTime} from "luxon";
 import {Iso8601Date} from "./typeDefinitions";
+import {Integer} from "~/common--type-definitions/typeDefinitions";
+import {PointObject} from "~/components/d3Componenets/common";
 
 // export function getUrlForResource(resourceRelativePath) {
 //     return `${process.env.NEXT_PUBLIC_FRONTEND_URL}/resources/${resourceRelativePath}`;
@@ -214,4 +216,72 @@ export const microValue = Math.pow(10, 6);
 export function getDateFromDateTimestamp(date: string): string {
     console.log(typeof date);
     return date.substring(0, 10);
+}
+
+export function concatenateNonNullStringsWithAmpersand(...strs: Array<string | null | undefined>) {
+    // TODO: Do this properly
+    // TODO: Ensure this handles undefined
+    return strs.join("&");
+}
+
+export function numberToHumanFriendlyString(n, isFloat = false, shorten = true, isPercentage = false) {
+    if (n == null || isNaN(n)) {
+        return "?";
+    }
+
+    if (isPercentage) {
+        if (isFloat) {
+            return `${(n * 100).toFixed(2)}%`;
+        } else {
+            return `${n * 100}%`;
+        }
+    }
+
+    if (!shorten || n < 10 ** 3) {
+        if (isFloat) {
+            return n.toFixed(2);
+        } else {
+            return n;
+        }
+    } else if (n < 10 ** 5) {
+        return `${(n / 10 ** 3).toFixed(2)}K`;
+    } else if (n < 10 ** 7) {
+        return `${(n / 10 ** 5).toFixed(2)}L`;
+    } else {
+        return `${(n / 10 ** 7).toFixed(2)}Cr`;
+    }
+}
+
+export function dateToMediumNoneEnFormat(date: string) {
+    if (date == null) {
+        return null;
+    }
+
+    return new Intl.DateTimeFormat("en", {timeZone: "Asia/Kolkata", dateStyle: "medium"}).format(new Date(date));
+}
+
+export function agGridDateComparator(a: string, b: string) {
+    const aa = new Date(a);
+    const bb = new Date(b);
+    if (aa > bb) {
+        return 1;
+    } else if (aa < bb) {
+        return -1;
+    } else {
+        return 0;
+    }
+}
+
+export function roundOffToTwoDigits(n) {
+    return Number(n).toFixed(2);
+}
+
+export function getDataPoints(xValues: Array<string>, yValues: Array<Integer>): Array<PointObject> {
+    return yValues.map((currentValue, index) => {
+        return {xValue: xValues[index], value: currentValue};
+    });
+}
+
+export function getMaxFromArray(arr: Array<any>) {
+    return arr.reduce((a, b) => Math.max(a, b), -Infinity);
 }

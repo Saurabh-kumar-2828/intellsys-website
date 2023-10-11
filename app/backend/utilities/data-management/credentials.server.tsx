@@ -1,5 +1,5 @@
 import type {Uuid} from "~/utilities/typeDefinitions";
-import {getCredentialFromKms, updateCredentialInKms} from "~/global-common-typescript/server/kms.server";
+import {getCredentialFromKms, updateCredentialInKms} from "~/common-remix--kms--intellsys-kms/kms.server";
 import {getSystemPostgresDatabaseManager} from "~/backend/utilities/connectors/common.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {getSingletonValue} from "~/global-common-typescript/utilities/utilities";

@@ -6,7 +6,7 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {EmptyFlexFiller} from "~/global-common-typescript/components/emptyFlexFiller";
-import type {Uuid} from "~/global-common-typescript/typeDefinitions";
+import type {Uuid} from "~/common--type-definitions/typeDefinitions";
 import {getNonEmptyStringFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {concatenateNonNullStringsWithSpaces} from "~/global-common-typescript/utilities/utilities";
 import csvDownload from "json-to-csv-export";
@@ -22,7 +22,7 @@ export type ServerLatency = {
 type LoaderData = {
     startDate: string;
     endDate: string;
-    totalRows: number,
+    totalRows: number;
     serverLatencies: Array<ServerLatency>;
 };
 
@@ -273,9 +273,7 @@ export default function () {
 
                 <EmptyFlexFiller />
 
-                <div>
-                    Total rows: {totalRows}
-                </div>
+                <div>Total rows: {totalRows}</div>
 
                 <button
                     type="button"
@@ -371,9 +369,7 @@ function DataTable<T>({
                         style={{outline: "1px solid white"}}
                     >
                         <div className="tw-flex tw-flex-row tw-gap-x-4 tw-items-center tw-justify-center">
-                            <div>
-                                time
-                            </div>
+                            <div>time</div>
                             <TriangleFill className="tw-w-3 tw-h-3 tw-rotate-180" />
                         </div>
                     </th>
@@ -398,7 +394,13 @@ function DataTable<T>({
                     itemBuilder={(row, rowIndex) => (
                         <tr
                             className={
-                                rowsToInsert.includes(row.time) ? "tw-bg-green-600" : rowsToUpdate.includes(row.time) ? "tw-bg-yellow-600" : rowsToDelete.includes(row.time) ? "tw-bg-red-400" : undefined
+                                rowsToInsert.includes(row.time)
+                                    ? "tw-bg-green-600"
+                                    : rowsToUpdate.includes(row.time)
+                                    ? "tw-bg-yellow-600"
+                                    : rowsToDelete.includes(row.time)
+                                    ? "tw-bg-red-400"
+                                    : undefined
                             }
                             key={rowIndex}
                         >

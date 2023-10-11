@@ -11,7 +11,7 @@ import {getAccessTokenFromCookies} from "~/backend/utilities/cookieSessionsHelpe
 import {getUrlFromRequest} from "~/backend/utilities/utilities.server";
 import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {EmptyFlexFiller} from "~/global-common-typescript/components/emptyFlexFiller";
-import type {Uuid} from "~/global-common-typescript/typeDefinitions";
+import type {Uuid} from "~/common--type-definitions/typeDefinitions";
 import {getNonEmptyStringFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {concatenateNonNullStringsWithSpaces} from "~/global-common-typescript/utilities/utilities";
 
@@ -66,47 +66,48 @@ export const loader: LoaderFunction = async ({request}) => {
 
             processedTermFrequencies[termFrequenciesIndex] = {
                 term: termFrequency.term,
-                frequency: termFrequency.frequency
-                    - (termFrequenciesMap.get(`${termFrequency.term}a`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}b`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}c`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}d`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}e`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}f`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}g`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}h`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}i`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}j`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}k`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}l`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}m`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}n`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}o`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}p`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}q`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}r`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}s`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}t`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}u`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}v`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}w`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}x`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}y`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}z`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}0`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}1`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}2`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}3`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}4`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}5`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}6`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}7`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}8`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}9`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term} `) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}-`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term},`) ?? 0)
-                    - (termFrequenciesMap.get(`${termFrequency.term}.`) ?? 0),
+                frequency:
+                    termFrequency.frequency -
+                    (termFrequenciesMap.get(`${termFrequency.term}a`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}b`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}c`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}d`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}e`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}f`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}g`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}h`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}i`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}j`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}k`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}l`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}m`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}n`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}o`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}p`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}q`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}r`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}s`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}t`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}u`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}v`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}w`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}x`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}y`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}z`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}0`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}1`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}2`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}3`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}4`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}5`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}6`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}7`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}8`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}9`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term} `) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}-`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term},`) ?? 0) -
+                    (termFrequenciesMap.get(`${termFrequency.term}.`) ?? 0),
             };
         }
         return processedTermFrequencies.sort((a, b) => b.frequency - a.frequency);

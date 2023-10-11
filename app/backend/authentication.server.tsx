@@ -2,10 +2,10 @@ import type {Jwt} from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 import {getSystemPostgresDatabaseManager} from "~/backend/utilities/connectors/common.server";
 import type {AccessToken} from "~/backend/utilities/cookieSessionsHelper.server";
-import {addCredentialToKms, getCredentialFromKms} from "~/global-common-typescript/server/kms.server";
-import type {PostgresDatabaseCredentials} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
+import {addCredentialToKms, getCredentialFromKms} from "~/common-remix--kms--intellsys-kms/kms.server";
+import type {PostgresDatabaseCredentials} from "~/common--database-manager--postgres/postgresDatabaseManager.server";
+import {getPostgresDatabaseManager} from "~/common--database-manager--postgres/postgresDatabaseManager.server";
+import {getRequiredEnvironmentVariable} from "~/common-remix--utilities/utilities.server";
 import {getErrorFromUnknown, getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid, getSingletonValue, getUnixTimeInSeconds} from "~/global-common-typescript/utilities/utilities";
 import type {Company, User, Uuid} from "~/utilities/typeDefinitions";
@@ -32,7 +32,7 @@ export async function sendOtp(email: string): Promise<void | Error> {
 
     var headers = new Headers();
     headers.append("Content-Type", "application/json");
-    headers.append("Authorization", `Bearer ${getRequiredEnvironmentVariableNew("INTELLSYS_MAILER_TOKEN")}`);
+    headers.append("Authorization", `Bearer ${getRequiredEnvironmentVariable("INTELLSYS_MAILER_TOKEN")}`);
 
     var body = JSON.stringify({
         template_path: "https://intellsys-optimizer.b-cdn.net/intellsys-mailer/intellsys_otp_template.txt",
@@ -134,14 +134,14 @@ function getActiveOtps() {
 export async function getAccessTokenForUser(userId: string) {
     const accessToken: AccessToken = {
         userId: userId,
-        schemaVersion: getRequiredEnvironmentVariableNew("COOKIE_SCHEMA_VERSION"),
+        schemaVersion: getRequiredEnvironmentVariable("COOKIE_SCHEMA_VERSION"),
     };
 
     return {
         // TODO: Use createAuthenticationToken instead
         // TODO: Figure out a better return type here?
 
-        accessTokenJwt: jwt.sign(accessToken, getRequiredEnvironmentVariableNew("JWT_SECRET")) as unknown as Jwt,
+        accessTokenJwt: jwt.sign(accessToken, getRequiredEnvironmentVariable("JWT_SECRET")) as unknown as Jwt,
         userId: userId,
     };
 }
@@ -198,7 +198,7 @@ export async function createCompany(domain: string): Promise<Company | Error> {
         return result1;
     }
 
-    const intellsysStorage1CredentialStr = await getCredentialFromKms(getUuidFromUnknown(getRequiredEnvironmentVariableNew("INTELLSYS_STORAGE_1_CREDENTIAL_ID")));
+    const intellsysStorage1CredentialStr = await getCredentialFromKms(getUuidFromUnknown(getRequiredEnvironmentVariable("INTELLSYS_STORAGE_1_CREDENTIAL_ID")));
 
     if (intellsysStorage1CredentialStr instanceof Error) {
         return intellsysStorage1CredentialStr;
@@ -214,8 +214,7 @@ export async function createCompany(domain: string): Promise<Company | Error> {
     };
 
     const databaseCredentialId = generateUuid();
-    const result2 = await addCredentialToKms(databaseCredentialId,
-         JSON.stringify(databaseCredential), `Intellsys - Company database - ${companyId}`);
+    const result2 = await addCredentialToKms(databaseCredentialId, JSON.stringify(databaseCredential), `Intellsys - Company database - ${companyId}`);
     if (result2 instanceof Error) {
         return result2;
     }
@@ -265,7 +264,7 @@ async function addCompanyEntryToIntellsys(id: Uuid, domain: string, databaseCred
 }
 
 async function createDatabaseForCompany(id: Uuid): Promise<void | Error> {
-    const postgresDatabaseManager = await getPostgresDatabaseManager(getUuidFromUnknown(getRequiredEnvironmentVariableNew("INTELLSYS_STORAGE_1_CREDENTIAL_ID")));
+    const postgresDatabaseManager = await getPostgresDatabaseManager(getUuidFromUnknown(getRequiredEnvironmentVariable("INTELLSYS_STORAGE_1_CREDENTIAL_ID")));
 
     if (postgresDatabaseManager instanceof Error) {
         return postgresDatabaseManager;

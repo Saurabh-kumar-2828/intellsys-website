@@ -6,7 +6,7 @@ import {Scale, plotMargins} from "~/utilities/utilities";
 import type {DataObject} from "./common";
 import type React from "react";
 import {useEffect} from "react";
-import type {Integer} from "~/global-common-typescript/typeDefinitions";
+import type {Integer} from "~/common--type-definitions/typeDefinitions";
 import {bisector} from "d3-array";
 import {transition} from "d3-transition";
 
@@ -21,20 +21,10 @@ interface props {
     padding: Integer;
 }
 
-export const LineGraphComponent: React.FC<props> = ({
-    data,
-    className,
-    forwardedRef,
-    xScale,
-    scale,
-    width,
-    height,
-    padding
-}) => {
-
+export const LineGraphComponent: React.FC<props> = ({data, className, forwardedRef, xScale, scale, width, height, padding}) => {
     useEffect(() => {
         drawLineChart(data, xScale);
-    },);
+    });
 
     const drawLineChart = (data: DataObject, xScale: ScaleBand<string>) => {
         if (height == undefined || width == undefined) {
@@ -160,9 +150,9 @@ export const LineGraphComponent: React.FC<props> = ({
         //         //         `translate(${xScale(d0.xValue) + 30}, ${yScale(d0.value) - 30})`,
         //         //     );
         //     });
-    }
+    };
 
     return null;
-}
+};
 
 export default LineGraphComponent;

@@ -14,7 +14,7 @@ import {ItemBuilder} from "~/components/reusableComponents/itemBuilder";
 import {VerticalSpacer} from "~/components/reusableComponents/verticalSpacer";
 import {SectionHeader} from "~/components/scratchpad";
 import {logBackendError} from "~/global-common-typescript/server/logging.server";
-import type {Uuid} from "~/global-common-typescript/typeDefinitions";
+import type {Uuid} from "~/common--type-definitions/typeDefinitions";
 import {getErrorFromUnknown, getNonEmptyStringFromUnknown, getObjectFromUnknown, getUuidFromUnknown, safeParse} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import {getMemoryCache} from "~/utilities/memoryCache";

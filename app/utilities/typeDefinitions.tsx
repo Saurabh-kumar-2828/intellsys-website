@@ -1,4 +1,4 @@
-import type {Uuid as GlobalUuid} from "~/global-common-typescript/typeDefinitions";
+import type {Uuid as GlobalUuid} from "~/common--type-definitions/typeDefinitions";
 
 // TODO: Add support for the concept of "has field been fetched" for better validation
 export type User = {
@@ -85,7 +85,7 @@ export const ConnectorType = {
     GoogleAds: "800c28ce-43ea-44b8-b6fc-077f44566296" as Uuid,
     FacebookAds: "d80731db-155e-4a24-bc58-158a57edabd7" as Uuid,
     GoogleAnalytics: "cc991d2b-dc83-458e-8e8d-9b47164c735f" as Uuid,
-}
+};
 
 // Get it from intellsys-connectors
 export enum ConnectorTableType {

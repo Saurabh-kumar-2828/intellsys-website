@@ -1,5 +1,5 @@
-import {TransactionCommand, getPostgresDatabaseManager} from "~/global-common-typescript/server/postgresDatabaseManager.server";
-import {getRequiredEnvironmentVariableNew} from "~/global-common-typescript/server/utilities.server";
+import {TransactionCommand, getPostgresDatabaseManager} from "~/common--database-manager--postgres/postgresDatabaseManager.server";
+import {getRequiredEnvironmentVariable} from "~/common-remix--utilities/utilities.server";
 import {getUuidFromUnknown} from "~/global-common-typescript/utilities/typeValidationUtilities";
 import {generateUuid} from "~/global-common-typescript/utilities/utilities";
 import type {Uuid} from "~/utilities/typeDefinitions";
@@ -12,7 +12,7 @@ import {
     initializeConnectorAndSubConnector,
     mapCompanyIdToConnectorId,
 } from "./common.server";
-import {addCredentialToKms, deleteCredentialFromKms} from "~/global-common-typescript/server/kms.server";
+import {addCredentialToKms, deleteCredentialFromKms} from "~/common-remix--kms--intellsys-kms/kms.server";
 import {ingestHistoricalDataFromConnectorsApi} from "~/backend/connectors.server";
 
 export type GoogleAnalyticsCredentials = {
@@ -29,11 +29,11 @@ export type GoogleAnalyticsAccessiblePropertyIds = {
  * Retrieves a list of all Google Ads accounts that you are able to act upon directly given your current credentials.
  */
 export async function getAccessiblePropertyIds(refreshToken: string): Promise<Array<GoogleAnalyticsAccessiblePropertyIds> | Error> {
-    const googleAdsHelperUrl = getRequiredEnvironmentVariableNew("INTELLSYS_PYTHON_HELPER_URL");
+    const googleAdsHelperUrl = getRequiredEnvironmentVariable("INTELLSYS_PYTHON_HELPER_URL");
 
     const formdata = new FormData();
-    formdata.append("client_id", getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_ID"));
-    formdata.append("client_secret", getRequiredEnvironmentVariableNew("GOOGLE_CLIENT_SECRET"));
+    formdata.append("client_id", getRequiredEnvironmentVariable("GOOGLE_CLIENT_ID"));
+    formdata.append("client_secret", getRequiredEnvironmentVariable("GOOGLE_CLIENT_SECRET"));
     formdata.append("refresh_token", refreshToken);
 
     const requestOptions = {

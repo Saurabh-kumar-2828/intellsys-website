@@ -15,11 +15,11 @@ pipeline {
         // URI OF ECR
         ECR_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         // Complete URI of base image of stage environment
-        // BASE_IMAGE_STAGING = "XYZ"
+        BASE_IMAGE_STAGING = "048578456468.dkr.ecr.ap-south-1.amazonaws.com/base-images:intellsys-stage"
         // Complete URI of base image of prod environment
         BASE_IMAGE_PROD = "048578456468.dkr.ecr.ap-south-1.amazonaws.com/base-images:intellsys-prod"
         // Complete URI of docker image of stage environment
-        // DOCKER_IMAGE_STAGING = "XYZ"
+        DOCKER_IMAGE_STAGING = "048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-stage"
         // Complete URI of docker image of prod environment
         DOCKER_IMAGE_PROD = "048578456468.dkr.ecr.ap-south-1.amazonaws.com/intellsys-prod"
         // Path to nginx configuration file
@@ -31,10 +31,10 @@ pipeline {
         // Port used for fallback server
         FALLBACK_PORT = "3001"
         // IP address of staging server
-        //IP_STAGE = "XYZ"
+        IP_STAGE = "13.126.188.129"
         // IP address of production server
         IP_PROD = "3.6.162.95"
-        // Name of jenkins pipeline
+        // Name of the jenkins pipeline
         JENKINS_JOB = "intellsys-website"
     }
 
@@ -46,7 +46,7 @@ pipeline {
         stage("Logging into AWS ECR") {
             steps {
                 script {
-                    if (env.BRANCH_NAME == "prod") {
+                    if (env.BRANCH_NAME == "prod" || env.BRANCH_NAME == "stage") {
                         sh "sudo aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URI}"
                     } else {
                         return
@@ -58,7 +58,7 @@ pipeline {
         stage("Cloning git website") {
             steps {
                 script {
-                    if (env.BRANCH_NAME == "prod") {
+                    if (env.BRANCH_NAME == "prod" || env.BRANCH_NAME == "stage") {
                         git branch: env.BRANCH_NAME, credentialsId: "33c357dc-5f11-4930-9063-07bc866f7cff", url: "https://github.com/GrowthJockey/${GITHUB_REPOSITORY_NAME}.git"
                     } else {
                         return
@@ -70,7 +70,9 @@ pipeline {
         stage("Git fetch") {
             steps {
                 script {
-                    if (env.BRANCH_NAME == "prod") {
+                    if (env.BRANCH_NAME == "staging") {
+                        DIRECTORY = "staging"
+                    } else if (env.BRANCH_NAME == "prod") {
                         DIRECTORY = "prod"
                     } else {
                         return
@@ -93,11 +95,14 @@ pipeline {
         stage("Build") {
             steps {
                 script {
-                    if (env.BRANCH_NAME == "prod") {
+                    if (env.BRANCH_NAME == "staging") {
+                        DIRECTORY = "staging"
+                    } else if (env.BRANCH_NAME == "prod") {
                         DIRECTORY = "prod"
                     } else {
                         return
                     }
+
                     sh "cd /var/lib/jenkins/workspace/${JENKINS_JOB}_${DIRECTORY}"
                     sh "npm ci"
                     sh "npm run build"
@@ -108,7 +113,9 @@ pipeline {
         stage("Building image") {
             steps {
                 script {
-                    if (env.BRANCH_NAME == "prod") {
+                    if (env.BRANCH_NAME == "staging") {
+                        BASE_IMAGE = BASE_IMAGE_STAGING
+                    } else if (env.BRANCH_NAME == "prod") {
                         BASE_IMAGE = BASE_IMAGE_PROD
                     } else {
                         return
@@ -116,7 +123,7 @@ pipeline {
 
                     withCredentials([usernamePassword(credentialsId: "9831574e-4c5c-4476-b75b-0924dfb662dd", passwordVariable: "DOCKER_CREDENTIALS", usernameVariable: "DOCKER_USER")]) {
                         sh "docker login -u growthjockey -p ${DOCKER_CREDENTIALS}"
-                        sh "docker build --build-arg BASE_IMAGE=048578456468.dkr.ecr.ap-south-1.amazonaws.com/base-images:intellsys-website-prod -t ${ECR_REPOSITORY_NAME}:latest ."
+                        sh "docker build --build-arg BASE_IMAGE=${BASE_IMAGE} -t ${ECR_REPOSITORY_NAME}:latest ."
                     }
                 }
             }
@@ -125,23 +132,28 @@ pipeline {
         stage("Pushing to ECR") {
             steps {
                 script {
-                    if (env.BRANCH_NAME == "prod") {
+                    if (env.BRANCH_NAME == "staging") {
+                        ENVIRONMENT = "stage"
+                        DOCKER_IMAGE = DOCKER_IMAGE_STAGING
+                    } else if (env.BRANCH_NAME == "prod") {
                         ENVIRONMENT = "prod"
                         DOCKER_IMAGE = DOCKER_IMAGE_PROD
                     } else {
                         return
                     }
 
-                    sh "docker tag ${ECR_REPOSITORY_NAME}:latest ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${BUILD_ID}"
+                    sh "docker tag ${ECR_REPOSITORY_NAME}:latest ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${env.BUILD_ID}"
                     sh "docker push ${DOCKER_IMAGE}:${env.BUILD_ID}"
                 }
             }
         }
 
-        stage("Docker") {
+        stage("Removing fallback container") {
             steps {
                 script {
-                    if (env.BRANCH_NAME == "prod") {
+                    if (env.BRANCH_NAME == "staging") {
+                        ADDRESS = IP_STAGE
+                    } else if (env.BRANCH_NAME == "prod") {
                         ADDRESS = IP_PROD
                     } else {
                         return
@@ -165,10 +177,13 @@ pipeline {
             }
         }
 
-        stage("Deployment") {
+        stage("Deploy") {
             steps {
                 script {
-                    if (env.BRANCH_NAME == "prod") {
+                    if (env.BRANCH_NAME == "staging") {
+                        ADDRESS = IP_STAGE
+                        ENVIRONMENT = "stage"
+                    } else if (env.BRANCH_NAME == "prod") {
                         ADDRESS = IP_PROD
                         ENVIRONMENT = "prod"
                     } else {
@@ -185,7 +200,6 @@ pipeline {
                             'while [[ \"\$(curl -vL -s -o /dev/null -w \"%{http_code}\" localhost:${FALLBACK_PORT})\" -ne 200 ]]; do sleep 1; done'"
                         sh "ssh ubuntu@${ADDRESS} 'sudo sed -i s~http://localhost:${CONTAINER_PORT}~http://localhost:${FALLBACK_PORT}~g ${NGINX_FILE}'"
                         sh "ssh ubuntu@${ADDRESS} 'sudo nginx -s reload'"
-
                         def commandOutput = sh(script: fullSshCommand, returnStdout: true).trim()
                         def count = commandOutput.toInteger()
 
@@ -202,6 +216,13 @@ pipeline {
                         sh "ssh ubuntu@${ADDRESS} 'sudo docker rm -f ${ECR_REPOSITORY_NAME}-fallback'"
                     }
                 }
+            }
+        }
+
+        stage('Workspace Cleanup') {
+            steps {
+                cleanWs()
+                //checkout scm
             }
         }
     }

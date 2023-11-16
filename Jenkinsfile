@@ -43,6 +43,12 @@ pipeline {
     }
 
     stages {
+        stage("Slack Message") {
+            steps {
+                slackSend channel: "C05CFBKKGMT", message: "The deployment process has started for ${JENKINS_JOB}"
+            }
+        }
+
         stage("Logging into AWS ECR") {
             steps {
                 script {

@@ -45,7 +45,11 @@ pipeline {
     stages {
         stage("Slack Message") {
             steps {
-                slackSend channel: "C05CFBKKGMT", message: "The deployment process has started for ${JENKINS_JOB}"
+                script {
+                    if (env.BRANCH_NAME == "prod" || env.BRANCH_NAME == "stage") {
+                        slackSend channel: "C05CFBKKGMT", message: "The deployment process has started for ${JENKINS_JOB}. Branch is ${env.BRANCH_NAME}"
+                    }
+                }
             }
         }
 

@@ -240,10 +240,9 @@ pipeline {
             }
         }
 
-        stage('Workspace Cleanup') {
+        stage("Workspace Cleanup") {
             steps {
                 cleanWs()
-                //checkout scm
             }
         }
     }

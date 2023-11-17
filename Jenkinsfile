@@ -45,7 +45,7 @@ pipeline {
     }
 
     stages {
-        stage("Slack Message") {
+        stage("Slack message") {
             steps {
                 script {
                     if (env.BRANCH_NAME == "prod" || env.BRANCH_NAME == "stage") {
@@ -135,7 +135,7 @@ pipeline {
 
                     withCredentials([usernamePassword(credentialsId: "9831574e-4c5c-4476-b75b-0924dfb662dd", passwordVariable: "DOCKER_CREDENTIALS", usernameVariable: "DOCKER_USER")]) {
                         sh "docker login -u growthjockey -p ${DOCKER_CREDENTIALS}"
-                        sh "docker build  -t ${ECR_REPOSITORY_NAME}:latest ."
+                        sh "docker build -t ${ECR_REPOSITORY_NAME}:latest ."
                     }
                 }
             }
@@ -240,7 +240,7 @@ pipeline {
             }
         }
 
-        stage("Workspace Cleanup") {
+        stage("Workspace cleanup") {
             steps {
                 cleanWs()
             }

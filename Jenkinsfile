@@ -79,27 +79,18 @@ pipeline {
             }
         }
 
-        stage("Git fetch") {
+        stage("Health check") {
             steps {
                 script {
-                    if (env.BRANCH_NAME == "staging") {
-                        DIRECTORY = "staging"
-                    } else if (env.BRANCH_NAME == "prod") {
-                        DIRECTORY = "prod"
-                    } else {
-                        return
-                    }
-
-                    def commitId
-                    withCredentials([gitUsernamePassword(credentialsId: "33c357dc-5f11-4930-9063-07bc866f7cff", gitToolName: "Default")]) {
-                        commitId = sh(script: """
-                            cd /var/lib/jenkins/workspace/${JENKINS_JOB}_${DIRECTORY}
-                            git checkout ${env.BRANCH_NAME}
-                            git rev-parse ${env.BRANCH_NAME}
-                        """, returnStdout: true).trim()
-
-                        sh "sed -i \"s/COMMIT_ID/${commitId}/g\" app/routes/health-check.tsx"
-                    }
+                    def deploymentTime = new Date().format("yyyy-MM-dd HH:mm:ss")
+                    def commitId = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+                    def deploymentInfo = [
+                        deploymentTime: deploymentTime,
+                        commitId: commitId
+                    ]
+                    def jsonContent = groovy.json.JsonOutput.toJson(deploymentInfo)
+                    def directory = "./app"
+                    writeJSON file: "${directory}/healthCheck.json", json: deploymentInfo
                 }
             }
         }

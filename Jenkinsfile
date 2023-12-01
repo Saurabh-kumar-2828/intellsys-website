@@ -113,6 +113,28 @@ pipeline {
             }
         }
 
+        stage("Add environment variables") {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == "staging") {
+                        DIRECTORY = "staging"
+                        CREDENTIAL_ID = "5a9540f1-4c8b-40ce-92fd-14457f79c37a"
+                    } else if (env.BRANCH_NAME == "prod") {
+                        DIRECTORY = "prod"
+                        CREDENTIAL_ID = "0fb3850e-afdf-4968-b491-a4d1149f6ec2"
+                    } else {
+                        return
+                    }
+
+                    sh "cd /var/lib/jenkins/workspace/${JENKINS_JOB}_${DIRECTORY}"
+                    withCredentials([string(credentialsId: "${CREDENTIAL_ID}", variable: 'DOPPLER_TOKEN')]) {
+                        sh "doppler secrets download --token=${DOPPLER_TOKEN} --no-file --format env | sed 's/^/ENV /' > env"
+                        sh "cat env >> Dockerfile"
+                    }
+                }
+            }
+        }
+
         stage("Building image") {
             steps {
                 script {
@@ -186,11 +208,9 @@ pipeline {
                     if (env.BRANCH_NAME == "staging") {
                         ADDRESS = IP_STAGE
                         ENVIRONMENT = "stage"
-                        CREDENTIAL_ID = "5a9540f1-4c8b-40ce-92fd-14457f79c37a"
                     } else if (env.BRANCH_NAME == "prod") {
                         ADDRESS = IP_PROD
                         ENVIRONMENT = "prod"
-                        CREDENTIAL_ID = "0fb3850e-afdf-4968-b491-a4d1149f6ec2"
                     } else {
                         return
                     }
@@ -200,11 +220,7 @@ pipeline {
 
                     sshagent(["f74f1a2f-5c3d-49e4-a0e5-646f8d9e87ea"]) {
                         sh "ssh ubuntu@${ADDRESS} 'sudo docker pull ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${env.BUILD_ID}'"
-
-                        withCredentials([string(credentialsId: "${CREDENTIAL_ID}", variable: 'DOPPLER_TOKEN')]) {
-                            sh "ssh ubuntu@${ADDRESS} 'sudo docker run -e DOPPLER_TOKEN=${DOPPLER_TOKEN} -d -p ${FALLBACK_PORT}:${DOCKER_PORT} --name ${ECR_REPOSITORY_NAME}-fallback ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${env.BUILD_ID}'"
-                        }
-
+                        sh "ssh ubuntu@${ADDRESS} 'sudo docker run -d -p ${FALLBACK_PORT}:${DOCKER_PORT} --name ${ECR_REPOSITORY_NAME}-fallback ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${env.BUILD_ID}'"
                         sh "ssh ubuntu@${ADDRESS} \
                             'while [[ \"\$(curl -vL -s -o /dev/null -w \"%{http_code}\" localhost:${FALLBACK_PORT})\" -ne 200 ]]; do sleep 1; done'"
                         sh "ssh ubuntu@${ADDRESS} 'sudo sed -i s~http://localhost:${CONTAINER_PORT}~http://localhost:${FALLBACK_PORT}~g ${NGINX_FILE}'"
@@ -217,10 +233,7 @@ pipeline {
                             sh "ssh ubuntu@${ADDRESS} 'sudo docker rm -f ${ECR_REPOSITORY_NAME}-container'"
                         }
 
-                        withCredentials([string(credentialsId: "${CREDENTIAL_ID}", variable: 'DOPPLER_TOKEN')]) {
-                            sh "ssh ubuntu@${ADDRESS} 'sudo docker run -e DOPPLER_TOKEN=${DOPPLER_TOKEN} -d -p ${CONTAINER_PORT}:${DOCKER_PORT} --name ${ECR_REPOSITORY_NAME}-container ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${env.BUILD_ID}'"
-                        }
-
+                        sh "ssh ubuntu@${ADDRESS} 'sudo docker run -d -p ${CONTAINER_PORT}:${DOCKER_PORT} --name ${ECR_REPOSITORY_NAME}-container ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${env.BUILD_ID}'"
                         sh "ssh ubuntu@${ADDRESS} \
                             'while [[ \"\$(curl -vL -s -o /dev/null -w \"%{http_code}\" localhost:${CONTAINER_PORT})\" -ne 200 ]]; do sleep 1; done'"
                         sh "ssh ubuntu@${ADDRESS} 'sudo sed -i s~http://localhost:${FALLBACK_PORT}~http://localhost:${CONTAINER_PORT}~g ${NGINX_FILE}'"

@@ -29,11 +29,14 @@ pipeline {
         // Port which has been exposed in Dockerfile
         DOCKER_PORT = "3000"
         // Port on which app is running
-        CONTAINER_PORT = "3000"
+        CONTAINER_PORT_1 = "3000"
+        CONTAINER_PORT_2 = "3001"
+        CONTAINER_PORT_3 = "3002"
+        CONTAINER_PORT_4 = "3003"
         // Port used for fallback server
-        FALLBACK_PORT = "3001"
+        FALLBACK_PORT = "4000"
         // IP address of staging server
-        IP_STAGE = "13.126.188.129"
+        IP_STAGE = "13.200.248.22"
         // IP address of production server
         IP_PROD = "3.6.162.95"
         // Name of the jenkins pipeline
@@ -118,7 +121,7 @@ pipeline {
                 script {
                     if (env.BRANCH_NAME == "staging") {
                         DIRECTORY = "staging"
-                        CREDENTIAL_ID = "5a9540f1-4c8b-40ce-92fd-14457f79c37a"
+                        CREDENTIAL_ID = "d04cab60-dd9b-4a94-88b6-ee79eea48c1f"
                     } else if (env.BRANCH_NAME == "prod") {
                         DIRECTORY = "prod"
                         CREDENTIAL_ID = "0fb3850e-afdf-4968-b491-a4d1149f6ec2"
@@ -215,28 +218,33 @@ pipeline {
                         return
                     }
 
-                    def dockerCommand = "sudo docker ps -a | grep ${ECR_REPOSITORY_NAME}-container | wc -l"
-                    def fullSshCommand = "ssh ubuntu@${ADDRESS} '${dockerCommand}'"
+                    def fullSshCommand
+                    for (int containerNumber = 1; containerNumber <= 4; containerNumber++) {
+                        def dockerCommand = "sudo docker ps -a | grep ${ECR_REPOSITORY_NAME}-container-${containerNumber} | wc -l"
+                        fullSshCommand = "ssh ubuntu@${ADDRESS} '${dockerCommand}'"
+                    }
 
                     sshagent(["f74f1a2f-5c3d-49e4-a0e5-646f8d9e87ea"]) {
                         sh "ssh ubuntu@${ADDRESS} 'sudo docker pull ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${env.BUILD_ID}'"
                         sh "ssh ubuntu@${ADDRESS} 'sudo docker run -d -p ${FALLBACK_PORT}:${DOCKER_PORT} --name ${ECR_REPOSITORY_NAME}-fallback ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${env.BUILD_ID}'"
                         sh "ssh ubuntu@${ADDRESS} \
                             'while [[ \"\$(curl -vL -s -o /dev/null -w \"%{http_code}\" localhost:${FALLBACK_PORT})\" -ne 200 ]]; do sleep 1; done'"
-                        sh "ssh ubuntu@${ADDRESS} 'sudo sed -i s~http://localhost:${CONTAINER_PORT}~http://localhost:${FALLBACK_PORT}~g ${NGINX_FILE}'"
+                        sh "ssh ubuntu@${ADDRESS} 'sudo sed -i s~http://backend~http://localhost:${FALLBACK_PORT}~g ${NGINX_FILE}'"
                         sh "ssh ubuntu@${ADDRESS} 'sudo nginx -s reload'"
                         def commandOutput = sh(script: fullSshCommand, returnStdout: true).trim()
                         def count = commandOutput.toInteger()
 
-                        if (count == 1) {
-                            sh "ssh ubuntu@${ADDRESS} 'sudo su'"
-                            sh "ssh ubuntu@${ADDRESS} 'sudo docker rm -f ${ECR_REPOSITORY_NAME}-container'"
+                        for (int containerNumber = 1; containerNumber <= 4; containerNumber++) {
+                            sh "ssh ubuntu@${ADDRESS} 'sudo docker rm -f ${ECR_REPOSITORY_NAME}-container-${containerNumber} '"
                         }
 
-                        sh "ssh ubuntu@${ADDRESS} 'sudo docker run -d -p ${CONTAINER_PORT}:${DOCKER_PORT} --name ${ECR_REPOSITORY_NAME}-container ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${env.BUILD_ID}'"
+                        for (int containerNumber = 1; containerNumber <= 4; containerNumber++) {
+                            def containerPort = this."CONTAINER_PORT_${containerNumber}"
+                            sh "ssh ubuntu@${ADDRESS} 'sudo docker run -d -p ${containerPort}:${DOCKER_PORT} --name ${ECR_REPOSITORY_NAME}-container-${containerNumber} ${ECR_URI}/${ECR_REPOSITORY_NAME}-${ENVIRONMENT}:${env.BUILD_ID}'"
+                        }
                         sh "ssh ubuntu@${ADDRESS} \
-                            'while [[ \"\$(curl -vL -s -o /dev/null -w \"%{http_code}\" localhost:${CONTAINER_PORT})\" -ne 200 ]]; do sleep 1; done'"
-                        sh "ssh ubuntu@${ADDRESS} 'sudo sed -i s~http://localhost:${FALLBACK_PORT}~http://localhost:${CONTAINER_PORT}~g ${NGINX_FILE}'"
+                            'while [[ \"\$(curl -vL -s -o /dev/null -w \"%{http_code}\" localhost:${CONTAINER_PORT_1})\" -ne 200 ]]; do sleep 1; done'"
+                        sh "ssh ubuntu@${ADDRESS} 'sudo sed -i s~http://localhost:${FALLBACK_PORT}~http://backend~g ${NGINX_FILE}'"
                         sh "ssh ubuntu@${ADDRESS} 'sudo nginx -s reload'"
                         sh "ssh ubuntu@${ADDRESS} 'sudo docker rm -f ${ECR_REPOSITORY_NAME}-fallback'"
                     }

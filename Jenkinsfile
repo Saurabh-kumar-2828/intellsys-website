@@ -7,7 +7,7 @@ pipeline {
         // Doppler token
         DOPPLER_TOKEN="DOPPLER_TOKEN"
         // Name of github repository of this project
-        GITHUB_REPOSITORY_NAME = "intellsys-website"
+        GITHUB_REPOSITORY_NAME = "intellsys--website"
         // Username of docker hub account
         DOCKER_USER = "growthjockey"
         // The AWS region where the servers and ECR repositories are located
@@ -34,13 +34,13 @@ pipeline {
         CONTAINER_PORT_3 = "3002"
         CONTAINER_PORT_4 = "3003"
         // Port used for fallback server
-        FALLBACK_PORT = "4000"
+        FALLBACK_PORT = "3004"
         // IP address of staging server
         IP_STAGE = "13.200.248.22"
         // IP address of production server
         IP_PROD = "3.6.162.95"
         // Name of the jenkins pipeline
-        JENKINS_JOB = "intellsys-website"
+        JENKINS_JOB = "intellsys--website"
     }
 
     tools {
